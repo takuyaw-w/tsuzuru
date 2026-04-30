@@ -5,26 +5,42 @@ export interface RuntimeViewProps {
   readonly event: RuntimeEvent;
   readonly onChoice?: (itemIndex: number) => void;
   readonly onContinue?: () => void;
+  readonly onAdvance?: () => void;
+  readonly canAdvance?: boolean;
 }
 
-export function RuntimeView({ event, onChoice, onContinue }: RuntimeViewProps): ComponentChildren {
+export function RuntimeView({
+  event,
+  onChoice,
+  onContinue,
+  onAdvance,
+  canAdvance = true,
+}: RuntimeViewProps): ComponentChildren {
   switch (event.type) {
     case "narration":
       return (
-        <section className="tzr-runtime-view tzr-runtime-view--narration">
+        <AdvanceableMessage
+          className="tzr-runtime-view--narration"
+          onAdvance={onAdvance}
+          canAdvance={canAdvance}
+        >
           {event.lines.map((line, index) => (
             <p key={index}>{line.text}</p>
           ))}
-        </section>
+        </AdvanceableMessage>
       );
     case "dialogue":
       return (
-        <section className="tzr-runtime-view tzr-runtime-view--dialogue">
+        <AdvanceableMessage
+          className="tzr-runtime-view--dialogue"
+          onAdvance={onAdvance}
+          canAdvance={canAdvance}
+        >
           <p className="tzr-runtime-view__speaker">{event.speaker}</p>
           {event.lines.map((line, index) => (
             <p key={index}>{line.text}</p>
           ))}
-        </section>
+        </AdvanceableMessage>
       );
     case "choice":
       return (
@@ -43,7 +59,11 @@ export function RuntimeView({ event, onChoice, onContinue }: RuntimeViewProps): 
       );
     case "waitClick":
       return (
-        <RuntimeControlMessage label="Waiting for click" buttonLabel="Continue" onContinue={onContinue} />
+        <RuntimeControlMessage
+          label="Waiting for click"
+          buttonLabel="Continue"
+          onContinue={onContinue}
+        />
       );
     case "page":
       return <RuntimeControlMessage label="Page break" buttonLabel="Continue" onContinue={onContinue} />;
@@ -68,6 +88,34 @@ export function RuntimeView({ event, onChoice, onContinue }: RuntimeViewProps): 
     case "if":
       return <RuntimeStatusMessage label={`If: ${event.result ? "true" : "false"} (${event.branch})`} />;
   }
+}
+
+interface AdvanceableMessageProps {
+  readonly children: ComponentChildren;
+  readonly className: string;
+  readonly onAdvance: (() => void) | undefined;
+  readonly canAdvance: boolean;
+}
+
+function AdvanceableMessage({
+  children,
+  className,
+  onAdvance,
+  canAdvance,
+}: AdvanceableMessageProps): ComponentChildren {
+  const isAdvanceable = onAdvance !== undefined && canAdvance;
+
+  return (
+    <section
+      className={`tzr-runtime-view ${className}${isAdvanceable ? " tzr-runtime-view--advanceable" : ""}`}
+      onClick={isAdvanceable ? onAdvance : undefined}
+    >
+      {children}
+      {isAdvanceable ? (
+        <p className="tzr-runtime-view__advance-hint">Click to continue</p>
+      ) : null}
+    </section>
+  );
 }
 
 interface RuntimeStatusMessageProps {

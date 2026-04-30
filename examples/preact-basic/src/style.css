@@ -53,6 +53,17 @@ button {
   font-weight: 700;
 }
 
+.tzr-runtime-view--advanceable {
+  cursor: pointer;
+}
+
+.tzr-runtime-view__advance-hint {
+  margin-top: 18px;
+  color: #7b8794;
+  font-size: 13px;
+  text-align: right;
+}
+
 .tzr-runtime-view__choices {
   display: grid;
   gap: 8px;

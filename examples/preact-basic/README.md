@@ -6,7 +6,8 @@ It parses and compiles `scenario/main.tzr` on startup, passes the compiled docum
 
 Runtime control is intentionally small:
 
-- non-blocking events advance with the `Step` button
+- narration and dialogue advance when the message area is clicked
+- `Debug Step` remains available for runtime inspection
 - `waitClick` and `page` continue through `runtime.continueClick`
 - `wait` is handled by `useRuntime` with `autoClearWait: true`
 - transient events such as scene, label, state, jump, if, and pluginCommand advance through `autoStepTransientEvents: true`

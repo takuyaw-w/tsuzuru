@@ -14,14 +14,23 @@ interface AppProps {
   event: RuntimeEvent;
   onChoice: (itemIndex: number) => void;
   onContinue: () => void;
+  onAdvance: () => void;
 }
 
-export function App({ event, onChoice, onContinue }: AppProps) {
-  return <RuntimeView event={event} onChoice={onChoice} onContinue={onContinue} />;
+export function App({ event, onChoice, onContinue, onAdvance }: AppProps) {
+  return (
+    <RuntimeView
+      event={event}
+      onChoice={onChoice}
+      onContinue={onContinue}
+      onAdvance={onAdvance}
+      canAdvance={event.type === "narration" || event.type === "dialogue"}
+    />
+  );
 }
 ```
 
-`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, label, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button.
+`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, label, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button. Narration and dialogue can call `onAdvance()` when their display area is clicked and `canAdvance` is true. `RuntimeView` is a UI-layer convenience component; host applications decide whether advancing is currently allowed by passing or withholding callbacks.
 
 ## useRuntime
 
@@ -49,6 +58,8 @@ export function App({ document }: AppProps) {
           event={runtime.event}
           onChoice={runtime.choose}
           onContinue={runtime.continueClick}
+          onAdvance={runtime.step}
+          canAdvance={!runtime.isBlocked}
         />
       )}
       <button type="button" onClick={runtime.step} disabled={runtime.isBlocked}>

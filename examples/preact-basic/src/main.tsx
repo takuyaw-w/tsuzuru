@@ -52,6 +52,18 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const canAdvanceText =
+    (runtime.event?.type === "narration" || runtime.event?.type === "dialogue") &&
+    !runtime.isBlocked &&
+    !runtime.state.isStopped;
+
+  const advanceText = () => {
+    if (!canAdvanceText) {
+      return;
+    }
+
+    runtime.step();
+  };
 
   const saveSnapshot = () => {
     localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(runtime.createSaveData()));
@@ -95,6 +107,8 @@ function RuntimeApp({ document }: RuntimeAppProps) {
             event={runtime.event}
             onChoice={runtime.choose}
             onContinue={runtime.continueClick}
+            onAdvance={advanceText}
+            canAdvance={canAdvanceText}
           />
         )}
       </div>
@@ -104,7 +118,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
         onClick={runtime.step}
         disabled={runtime.isBlocked || runtime.state.isStopped || runtime.event?.type === "end"}
       >
-        Step
+        Debug Step
       </button>
       <div className="save-controls" aria-label="Save controls">
         <button type="button" onClick={saveSnapshot}>

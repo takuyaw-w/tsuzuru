@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isValidElement, type ComponentChildren, type VNode } from "preact";
 import {
   compileTzr,
   parseTzr,
@@ -12,6 +13,7 @@ import {
   isRuntimeSaveData,
   isTransientRuntimeEvent,
   restoreRuntimeSnapshotForView,
+  RuntimeView,
 } from "../src/index.js";
 
 const snapshot: RuntimeSnapshot = {
@@ -43,6 +45,15 @@ function compileScript(source: string): CompiledTzrDocument {
   }
 
   return compiled.document;
+}
+
+function expectVNode(value: ComponentChildren): VNode {
+  expect(isValidElement(value)).toBe(true);
+  if (!isValidElement(value)) {
+    throw new Error("expected VNode");
+  }
+
+  return value;
 }
 
 describe("isAutoSteppableRuntimeEvent", () => {
@@ -277,5 +288,62 @@ describe("restoreRuntimeSnapshotForView", () => {
     expect(result.event).toEqual({ type: "waitClick" });
     expect(result.state.pointer).toEqual(waitClickSnapshot.pointer);
     expect(result.state.isWaitingForClick).toBe(true);
+  });
+});
+
+describe("RuntimeView", () => {
+  it("makes narration advanceable when onAdvance is enabled", () => {
+    const onAdvance = () => undefined;
+    const view = expectVNode(
+      RuntimeView({
+        event: { type: "narration", lines: [{ text: "The classroom was quiet." }] },
+        onAdvance,
+        canAdvance: true,
+      }),
+    );
+    const props = view.props as Readonly<Record<string, unknown>>;
+
+    expect(props.onAdvance).toBe(onAdvance);
+    expect(props.canAdvance).toBe(true);
+    expect(props.className).toBe("tzr-runtime-view--narration");
+  });
+
+  it("makes dialogue advanceable when onAdvance is enabled", () => {
+    const onAdvance = () => undefined;
+    const view = expectVNode(
+      RuntimeView({
+        event: {
+          type: "dialogue",
+          speaker: "Haruka",
+          lines: [{ text: "You came." }],
+        },
+        onAdvance,
+        canAdvance: true,
+      }),
+    );
+    const props = view.props as Readonly<Record<string, unknown>>;
+
+    expect(props.onAdvance).toBe(onAdvance);
+    expect(props.canAdvance).toBe(true);
+    expect(props.className).toBe("tzr-runtime-view--dialogue");
+  });
+
+  it("does not advance from the choice container", () => {
+    const onAdvance = () => undefined;
+    const view = expectVNode(
+      RuntimeView({
+        event: {
+          type: "choice",
+          question: "What do you do?",
+          items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+        },
+        onAdvance,
+        canAdvance: true,
+      }),
+    );
+    const props = view.props as Readonly<Record<string, unknown>>;
+
+    expect(props.onClick).toBeUndefined();
+    expect(props.className).toBe("tzr-runtime-view tzr-runtime-view--choice");
   });
 });
