@@ -950,4 +950,230 @@ We meet again.
       },
     ]);
   });
+
+  it("expands registered macros and removes MacroInstruction from compiled instructions", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$enter("haruka", "smile", "center")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        enter(call) {
+          return [
+            {
+              type: "CommandInstruction",
+              name: "show",
+              args: call.args,
+              loc: call.loc,
+            },
+          ];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "prologue" },
+      { type: "CommandInstruction", name: "show" },
+    ]);
+    expect(compiled.document.instructions.some((instruction) => instruction.type === "MacroInstruction")).toBe(false);
+  });
+
+  it("reports unknown macros", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$missing()
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Unknown macro "$missing".',
+        sourceLine: "$missing()",
+      },
+    ]);
+  });
+
+  it("expands macros inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+$enter("haruka")
+@else
+$exit("haruka")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        enter(call) {
+          return [{ type: "CommandInstruction", name: "show", args: call.args, loc: call.loc }];
+        },
+        exit(call) {
+          return [{ type: "CommandInstruction", name: "hide", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "prologue" },
+      {
+        type: "IfInstruction",
+        thenBranch: [{ type: "CommandInstruction", name: "show" }],
+        elseBranch: [{ type: "CommandInstruction", name: "hide" }],
+      },
+    ]);
+    const ifInstruction = compiled.document.instructions[1];
+    expect(ifInstruction?.type).toBe("IfInstruction");
+    if (ifInstruction?.type !== "IfInstruction") {
+      throw new Error("expected IfInstruction");
+    }
+    expect(ifInstruction.thenBranch.some((instruction) => instruction.type === "MacroInstruction")).toBe(false);
+    expect(ifInstruction.elseBranch?.some((instruction) => instruction.type === "MacroInstruction")).toBe(false);
+  });
+
+  it("rejects macro expansion results that create structural or control-flow instructions", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$bad()
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        bad(call) {
+          return [
+            { type: "SceneInstruction", id: "generated", loc: call.loc },
+            { type: "LabelInstruction", id: "generated", loc: call.loc },
+            {
+              type: "IfInstruction",
+              condition: 'flag("x")',
+              conditionExpression: {
+                type: "FlagCondition",
+                name: "x",
+                loc: call.loc,
+              },
+              thenBranch: [],
+              loc: call.loc,
+            },
+            { type: "ChoiceInstruction", question: "Choose", items: [], loc: call.loc },
+          ];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "SceneInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "LabelInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "IfInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "ChoiceInstruction".',
+        sourceLine: "$bad()",
+      },
+    ]);
+  });
+
+  it("rejects macros that return @jump commands", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$badJump()
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        badJump(call) {
+          return [{ type: "CommandInstruction", name: "jump", args: [], loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$badJump" must not return @jump commands.',
+        sourceLine: "$badJump()",
+      },
+    ]);
+  });
 });

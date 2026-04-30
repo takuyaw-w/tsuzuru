@@ -46,5 +46,7 @@ export type {
   SceneInstruction,
   TzrInstruction,
 } from "./ir.js";
+export type { MacroContext, MacroDefinition, MacroEntry, MacroExpandFunction, MacroMap } from "./macro.js";
+export { expandMacro } from "./macro.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";

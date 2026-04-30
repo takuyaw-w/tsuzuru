@@ -13,13 +13,18 @@ import type {
 import { isCoreCommandName, type CoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 import type { CompiledTzrDocument, DeclarationIndexEntry, TzrInstruction } from "./ir.js";
+import { expandMacro, type MacroMap } from "./macro.js";
 
 export type CompileResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly Diagnostic[] };
 
-export function compileTzr(document: TzrDocument): CompileResult {
-  const compiler = new TzrCompiler(document);
+export interface CompileOptions {
+  readonly macros?: MacroMap;
+}
+
+export function compileTzr(document: TzrDocument, options: CompileOptions = {}): CompileResult {
+  const compiler = new TzrCompiler(document, options);
   return compiler.compile();
 }
 
@@ -28,7 +33,10 @@ class TzrCompiler {
   private readonly labels = new Map<string, LabelDeclaration>();
   private readonly scenes = new Map<string, SceneDeclaration>();
 
-  public constructor(private readonly document: TzrDocument) { }
+  public constructor(
+    private readonly document: TzrDocument,
+    private readonly options: CompileOptions,
+  ) {}
 
   public compile(): CompileResult {
     this.collectDeclarations();
@@ -36,11 +44,9 @@ class TzrCompiler {
     this.validateCommands();
     this.validateTargets();
 
-    if (this.errors.length > 0) {
-      return { ok: false, errors: this.errors };
-    }
+    const compiled = this.buildCompiledDocument();
 
-    return { ok: true, document: this.buildCompiledDocument(), errors: [] };
+    return this.errors.length > 0 ? { ok: false, errors: this.errors } : { ok: true, document: compiled, errors: [] };
   }
 
   private collectDeclarations(): void {
@@ -338,7 +344,7 @@ class TzrCompiler {
   }
 
   private buildCompiledDocument(): CompiledTzrDocument {
-    const instructions = buildInstructions(this.document.body);
+    const instructions = this.buildInstructions(this.document.body);
     const indexes = buildDeclarationIndexes(instructions);
     return {
       type: "CompiledTzrDocument",
@@ -349,6 +355,50 @@ class TzrCompiler {
       scenes: indexes.scenes,
     };
   }
+
+  private buildInstructions(statements: readonly TzrStatement[]): readonly TzrInstruction[] {
+    return statements.flatMap((statement) => this.toInstructions(statement));
+  }
+
+  private toInstructions(statement: TzrStatement): readonly TzrInstruction[] {
+    const instruction = toInstruction(statement, (statements) => this.buildInstructions(statements));
+
+    if (instruction.type !== "MacroInstruction") {
+      return [instruction];
+    }
+
+    const macro = this.options.macros?.[instruction.name];
+    if (macro === undefined) {
+      this.addError(instruction.loc.start, `Unknown macro "$${instruction.name}".`);
+      return [];
+    }
+
+    const expanded = expandMacro(macro, instruction, { filePath: this.document.filePath });
+    return this.validateMacroExpansion(instruction, expanded);
+  }
+
+  private validateMacroExpansion(
+    macro: TzrInstruction & { readonly type: "MacroInstruction" },
+    instructions: readonly TzrInstruction[],
+  ): readonly TzrInstruction[] {
+    const accepted: TzrInstruction[] = [];
+
+    for (const instruction of instructions) {
+      if (isForbiddenMacroInstruction(instruction)) {
+        this.addError(macro.loc.start, `Macro "$${macro.name}" returned forbidden instruction "${instruction.type}".`);
+        continue;
+      }
+
+      if (instruction.type === "CommandInstruction" && instruction.name === "jump") {
+        this.addError(macro.loc.start, `Macro "$${macro.name}" must not return @jump commands.`);
+        continue;
+      }
+
+      accepted.push(instruction);
+    }
+
+    return accepted;
+  }
 }
 
 interface DeclarationIndexes {
@@ -356,11 +406,10 @@ interface DeclarationIndexes {
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
-function buildInstructions(statements: readonly TzrStatement[]): readonly TzrInstruction[] {
-  return statements.map((statement) => toInstruction(statement));
-}
-
-function toInstruction(statement: TzrStatement): TzrInstruction {
+function toInstruction(
+  statement: TzrStatement,
+  buildNestedInstructions: (statements: readonly TzrStatement[]) => readonly TzrInstruction[],
+): TzrInstruction {
   switch (statement.type) {
     case "SceneDeclaration":
       return {
@@ -414,11 +463,21 @@ function toInstruction(statement: TzrStatement): TzrInstruction {
         type: "IfInstruction",
         condition: statement.condition,
         conditionExpression: statement.conditionExpression,
-        thenBranch: buildInstructions(statement.thenBranch),
-        ...(statement.elseBranch === undefined ? {} : { elseBranch: buildInstructions(statement.elseBranch) }),
+        thenBranch: buildNestedInstructions(statement.thenBranch),
+        ...(statement.elseBranch === undefined ? {} : { elseBranch: buildNestedInstructions(statement.elseBranch) }),
         loc: statement.loc,
       };
   }
+}
+
+function isForbiddenMacroInstruction(instruction: TzrInstruction): boolean {
+  return (
+    instruction.type === "SceneInstruction" ||
+    instruction.type === "LabelInstruction" ||
+    instruction.type === "IfInstruction" ||
+    instruction.type === "ChoiceInstruction" ||
+    instruction.type === "MacroInstruction"
+  );
 }
 
 function buildDeclarationIndexes(instructions: readonly TzrInstruction[]): DeclarationIndexes {
