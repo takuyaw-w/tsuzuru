@@ -245,5 +245,24 @@ Plugin handlers are synchronous. They receive the already-advanced state and the
 
 `restoreRuntimeState(snapshot)` returns a `RuntimeState`.
 
-Snapshots do not write to storage. LocalStorage, IndexedDB, save slots, migration, compression, and encryption are outside the current runtime API.
+For v0.1, `RuntimeSnapshot` intentionally stores `RuntimeState` directly and plainly. This keeps restore logic simple and matches the current runtime model.
 
+One important constraint is `branchFrames`. Current branch frames include the branch `instructions` themselves:
+
+```ts
+{
+  instructions,
+  instructionIndex
+}
+```
+
+This is straightforward to restore because the runtime can resume branch execution without re-resolving anything from `CompiledTzrDocument`. It also fits the current implementation, where active branches are represented as instruction lists.
+
+The tradeoffs are:
+
+- save data can become larger because branch instructions are embedded
+- compatibility is weak if the scenario document changes after the snapshot is created
+
+A future snapshot format may store a branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `CompiledTzrDocument`.
+
+Migration, compatibility handling, compression, and encryption are outside the current runtime API. Snapshots also do not write to storage. LocalStorage, IndexedDB, and save slot management are host/UI layer responsibilities.
