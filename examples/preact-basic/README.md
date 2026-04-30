@@ -11,6 +11,7 @@ Runtime control is intentionally small:
 - `waitClick` and `page` continue through `runtime.continueClick`
 - `wait` is handled by `useRuntime` with `autoClearWait: true`
 - transient events such as scene, label, state, jump, if, and pluginCommand advance through `autoStepTransientEvents: true`
+- `RuntimeView` receives `runtime.visibleEvent`, so auto-stepped transient events are not shown in the normal UI
 - `choice` calls `runtime.choose` from the clicked item index
 - `@bg(...)` is handled by a minimal plugin command handler
 - `Save`, `Load`, and `Clear Save` persist runtime save data in `localStorage`

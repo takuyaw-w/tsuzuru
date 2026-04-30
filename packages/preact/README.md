@@ -53,9 +53,9 @@ export function App({ document }: AppProps) {
 
   return (
     <>
-      {runtime.event === null ? null : (
+      {runtime.visibleEvent === null ? null : (
         <RuntimeView
-          event={runtime.event}
+          event={runtime.visibleEvent}
           onChoice={runtime.choose}
           onContinue={runtime.continueClick}
           onAdvance={runtime.step}
@@ -70,9 +70,11 @@ export function App({ document }: AppProps) {
 }
 ```
 
-The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `createSaveData`, `restoreSaveData`, `blockReason`, `isBlocked`, and `autoStepError`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
+The hook returns `state`, `event`, `visibleEvent`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `createSaveData`, `restoreSaveData`, `blockReason`, `isBlocked`, and `autoStepError`. `event` is the latest runtime event. `visibleEvent` is the latest event intended for UI rendering. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
 
 `autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `label`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
+
+Host applications that want to avoid flicker from auto-stepped transient events should pass `visibleEvent` to `RuntimeView`. Passing `event` directly is still useful for debug views because `RuntimeView` can render status output for scene, label, state, jump, if, and pluginCommand events.
 
 `if` events are auto-steppable only when their nested event is also auto-steppable. For example, an `if` event that immediately produces a nested `state` or `jump` event advances automatically, but an `if` event that produces nested narration, dialogue, choice, wait, stop, end, or unsupported output stops so the host can render or inspect it.
 
@@ -80,7 +82,7 @@ The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `
 
 `RuntimeSnapshot` is state-only data created from `RuntimeState`. It does not include `RuntimeEvent`, which remains a transient rendering signal. `createSnapshot()` and `restoreSnapshot(snapshot)` are low-level APIs for state persistence. When restoring a state-only snapshot, `restoreSnapshot` can recover blocking events such as choice, wait, or waitClick from the restored state, but it cannot recover a non-blocking narration or dialogue event that was visible when the snapshot was created.
 
-For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
+For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. `createSaveData()` stores `visibleEvent`, not the latest transient runtime event, so auto-stepped scene, label, state, jump, if, and pluginCommand events do not become the restored screen. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
 
 `isRuntimeSaveData(value)` provides v0.1 lightweight validation for host-owned save data. It checks the save data version, basic snapshot pointer shape, and current event type shape, but it is not a full schema validator for every runtime event. Because data loaded from `localStorage` or another host store may be stale or corrupted, pass parsed data through `isRuntimeSaveData` before calling `restoreSaveData`. `restoreSaveData` assumes the value has already been accepted as `RuntimeSaveData`.
 

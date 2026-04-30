@@ -9,7 +9,9 @@ import {
 } from "@tsuzuru/core";
 import {
   createRuntimeSaveData,
+  getRenderableRuntimeEvent,
   isAutoSteppableRuntimeEvent,
+  isRenderableRuntimeEvent,
   isRuntimeSaveData,
   isTransientRuntimeEvent,
   restoreRuntimeSnapshotForView,
@@ -168,6 +170,71 @@ describe("isAutoSteppableRuntimeEvent", () => {
     const event: RuntimeEvent = { type: "if", result: true, branch: "then" };
 
     expect(isTransientRuntimeEvent(event)).toBe(isAutoSteppableRuntimeEvent(event));
+  });
+});
+
+describe("isRenderableRuntimeEvent", () => {
+  it("allows blocking or inspectable runtime events to render", () => {
+    const events: readonly RuntimeEvent[] = [
+      { type: "narration", lines: [{ text: "The classroom was quiet." }] },
+      { type: "dialogue", speaker: "Haruka", lines: [{ text: "You came." }] },
+      {
+        type: "choice",
+        question: "What do you do?",
+        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+      },
+      { type: "waitClick" },
+      { type: "page" },
+      { type: "wait", durationMs: 500 },
+      { type: "stop" },
+      { type: "end" },
+      { type: "unsupported", instructionType: "MacroInstruction" },
+    ];
+
+    for (const event of events) {
+      expect(isRenderableRuntimeEvent(event), event.type).toBe(true);
+      expect(getRenderableRuntimeEvent(event)).toBe(event);
+    }
+  });
+
+  it("rejects non-renderable transient runtime events", () => {
+    const events: readonly RuntimeEvent[] = [
+      { type: "scene", id: "prologue" },
+      { type: "label", id: "start" },
+      { type: "state", command: "flag", name: "met", value: true },
+      { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "pluginCommand", name: "bg" },
+    ];
+
+    for (const event of events) {
+      expect(isRenderableRuntimeEvent(event), event.type).toBe(false);
+      expect(getRenderableRuntimeEvent(event)).toBeNull();
+    }
+  });
+
+  it("uses nested if events only when the nested event is renderable", () => {
+    const nestedDialogue: RuntimeEvent = {
+      type: "dialogue",
+      speaker: "Haruka",
+      lines: [{ text: "You came." }],
+    };
+    const renderableIf: RuntimeEvent = {
+      type: "if",
+      result: true,
+      branch: "then",
+      event: nestedDialogue,
+    };
+    const transientIf: RuntimeEvent = {
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "label", id: "start" },
+    };
+
+    expect(isRenderableRuntimeEvent(renderableIf)).toBe(true);
+    expect(getRenderableRuntimeEvent(renderableIf)).toBe(nestedDialogue);
+    expect(isRenderableRuntimeEvent(transientIf)).toBe(false);
+    expect(getRenderableRuntimeEvent(transientIf)).toBeNull();
   });
 });
 

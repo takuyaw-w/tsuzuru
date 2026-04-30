@@ -32,6 +32,7 @@ export interface UseRuntimeOptions {
 export interface UseRuntimeResult {
   readonly state: RuntimeState;
   readonly event: RuntimeEvent | null;
+  readonly visibleEvent: RuntimeEvent | null;
   readonly step: () => void;
   readonly continueClick: () => void;
   readonly choose: (itemIndex: number) => void;
@@ -48,6 +49,7 @@ export interface UseRuntimeResult {
 export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOptions = {}): UseRuntimeResult {
   const [state, setState] = useState<RuntimeState>(() => createInitialRuntimeState(document));
   const [event, setEvent] = useState<RuntimeEvent | null>(null);
+  const [visibleEvent, setVisibleEvent] = useState<RuntimeEvent | null>(null);
   const autoClearWait = options.autoClearWait ?? true;
   const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
   const autoStepMaxSteps = options.autoStepMaxSteps ?? 1000;
@@ -65,6 +67,10 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
       const result = stepRuntime(document, nextState, stepOptions);
       setState(result.state);
       setEvent(result.event);
+      const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
+      if (nextVisibleEvent !== null) {
+        setVisibleEvent(nextVisibleEvent);
+      }
     },
     [document, stepOptions],
   );
@@ -79,6 +85,10 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
 
       const result = stepRuntime(document, currentState, stepOptions);
       setEvent(result.event);
+      const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
+      if (nextVisibleEvent !== null) {
+        setVisibleEvent(nextVisibleEvent);
+      }
       return result.state;
     });
   }, [document, stepOptions]);
@@ -93,6 +103,10 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
 
       const result = stepRuntime(document, clearClickWait(currentState), stepOptions);
       setEvent(result.event);
+      const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
+      if (nextVisibleEvent !== null) {
+        setVisibleEvent(nextVisibleEvent);
+      }
       return result.state;
     });
   }, [document, stepOptions]);
@@ -109,6 +123,10 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
         const resolved = resolveChoice(document, currentState, itemIndex);
         const result = stepRuntime(document, resolved.state, stepOptions);
         setEvent(result.event);
+        const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
+        if (nextVisibleEvent !== null) {
+          setVisibleEvent(nextVisibleEvent);
+        }
         return result.state;
       });
     },
@@ -119,6 +137,7 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     const initialState = createInitialRuntimeState(document);
     setState(initialState);
     setEvent(null);
+    setVisibleEvent(null);
     setAutoStepCount(0);
     setAutoStepError(null);
   }, [document]);
@@ -129,18 +148,20 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     const result = restoreRuntimeSnapshotForView(document, snapshot, stepOptions);
     setState(result.state);
     setEvent(result.event);
+    setVisibleEvent(result.event === null ? null : getRenderableRuntimeEvent(result.event));
     setAutoStepCount(0);
     setAutoStepError(null);
   }, [document, stepOptions]);
 
   const createSaveData = useCallback(
-    () => createRuntimeSaveData(createRuntimeSnapshot(state), event),
-    [event, state],
+    () => createRuntimeSaveData(createRuntimeSnapshot(state), visibleEvent),
+    [state, visibleEvent],
   );
 
   const restoreSaveData = useCallback((saveData: RuntimeSaveData) => {
     setState(restoreRuntimeState(saveData.snapshot));
     setEvent(saveData.event);
+    setVisibleEvent(saveData.event);
     setAutoStepCount(0);
     setAutoStepError(null);
   }, []);
@@ -199,6 +220,7 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   return {
     state,
     event,
+    visibleEvent,
     step,
     continueClick,
     choose,
@@ -236,6 +258,35 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
     case "end":
     case "unsupported":
       return false;
+    default:
+      return assertNever(event);
+  }
+}
+
+export function isRenderableRuntimeEvent(event: RuntimeEvent): boolean {
+  return getRenderableRuntimeEvent(event) !== null;
+}
+
+export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | null {
+  switch (event.type) {
+    case "narration":
+    case "dialogue":
+    case "choice":
+    case "waitClick":
+    case "page":
+    case "wait":
+    case "stop":
+    case "end":
+    case "unsupported":
+      return event;
+    case "if":
+      return event.event === undefined ? null : getRenderableRuntimeEvent(event.event);
+    case "scene":
+    case "label":
+    case "state":
+    case "jump":
+    case "pluginCommand":
+      return null;
     default:
       return assertNever(event);
   }

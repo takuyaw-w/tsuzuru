@@ -53,7 +53,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     autoStepTransientEvents: true,
   });
   const canAdvanceText =
-    (runtime.event?.type === "narration" || runtime.event?.type === "dialogue") &&
+    (runtime.visibleEvent?.type === "narration" || runtime.visibleEvent?.type === "dialogue") &&
     !runtime.isBlocked &&
     !runtime.state.isStopped;
 
@@ -100,11 +100,11 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     <main className="app">
       <h1>Tsuzuru Preact Basic</h1>
       <div className="runtime-panel">
-        {runtime.event === null ? (
+        {runtime.visibleEvent === null ? (
           <p className="placeholder">No event yet.</p>
         ) : (
           <RuntimeView
-            event={runtime.event}
+            event={runtime.visibleEvent}
             onChoice={runtime.choose}
             onContinue={runtime.continueClick}
             onAdvance={advanceText}

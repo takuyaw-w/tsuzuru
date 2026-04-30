@@ -8,7 +8,9 @@ export {
   restoreRuntimeSnapshotForView,
 } from "./runtime-save.js";
 export {
+  getRenderableRuntimeEvent,
   isAutoSteppableRuntimeEvent,
+  isRenderableRuntimeEvent,
   isTransientRuntimeEvent,
   useRuntime,
 } from "./use-runtime.js";
