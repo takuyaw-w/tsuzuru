@@ -12,9 +12,10 @@ import type {
 } from "./ast.js";
 import { isCoreCommandName, type CoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
+import type { CompiledTzrDocument, DeclarationIndexEntry } from "./ir.js";
 
 export type CompileResult =
-  | { readonly ok: true; readonly document: TzrDocument; readonly errors: readonly [] }
+  | { readonly ok: true; readonly document: CompiledTzrDocument; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly Diagnostic[] };
 
 export function compileTzr(document: TzrDocument): CompileResult {
@@ -38,7 +39,7 @@ class TzrCompiler {
       return { ok: false, errors: this.errors };
     }
 
-    return { ok: true, document: this.document, errors: [] };
+    return { ok: true, document: this.buildCompiledDocument(), errors: [] };
   }
 
   private collectDeclarations(): void {
@@ -319,6 +320,61 @@ class TzrCompiler {
   private sourceLine(line: number): string {
     return this.document.sourceLines[line - 1] ?? "";
   }
+
+  private buildCompiledDocument(): CompiledTzrDocument {
+    const indexes = buildDeclarationIndexes(this.document.body);
+    return {
+      type: "CompiledTzrDocument",
+      filePath: this.document.filePath,
+      body: this.document.body,
+      labels: indexes.labels,
+      scenes: indexes.scenes,
+    };
+  }
+}
+
+interface DeclarationIndexes {
+  readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
+}
+
+function buildDeclarationIndexes(statements: readonly TzrStatement[]): DeclarationIndexes {
+  const labels: Record<string, DeclarationIndexEntry> = {};
+  const scenes: Record<string, DeclarationIndexEntry> = {};
+  let statementIndex = 0;
+
+  function visit(nodes: readonly TzrStatement[]): void {
+    for (const statement of nodes) {
+      const currentIndex = statementIndex;
+      statementIndex += 1;
+
+      if (statement.type === "LabelDeclaration") {
+        labels[statement.id] = {
+          id: statement.id,
+          statementIndex: currentIndex,
+          loc: statement.loc,
+        };
+      }
+
+      if (statement.type === "SceneDeclaration") {
+        scenes[statement.id] = {
+          id: statement.id,
+          statementIndex: currentIndex,
+          loc: statement.loc,
+        };
+      }
+
+      if (statement.type === "IfBlock") {
+        visit(statement.thenBranch);
+        if (statement.elseBranch !== undefined) {
+          visit(statement.elseBranch);
+        }
+      }
+    }
+  }
+
+  visit(statements);
+  return { labels, scenes };
 }
 
 function countHashes(value: string): number {

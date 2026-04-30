@@ -26,7 +26,78 @@ describe("compileTzr", () => {
     if (!compiled.ok) {
       throw new Error("expected compiler success");
     }
-    expect(compiled.document).toBe(parsed.document);
+    expect(compiled.document).toMatchObject({
+      type: "CompiledTzrDocument",
+      filePath: "scenario/main.tzr",
+      body: parsed.document.body,
+    });
+  });
+
+  it("builds a label index for the compiled document", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+#label("inside")
+@else
+#label("fallback")
+@endif
+#label("after")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.labels).toMatchObject({
+      inside: { id: "inside", statementIndex: 2 },
+      fallback: { id: "fallback", statementIndex: 3 },
+      after: { id: "after", statementIndex: 4 },
+    });
+    expect(compiled.document.labels.inside?.loc.start).toEqual({
+      filePath: "scenario/main.tzr",
+      line: 3,
+      column: 1,
+    });
+  });
+
+  it("builds a scene index for the compiled document", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+#label("start")
+#scene("chapter_1")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.scenes).toMatchObject({
+      prologue: { id: "prologue", statementIndex: 0 },
+      chapter_1: { id: "chapter_1", statementIndex: 2 },
+    });
+    expect(compiled.document.scenes.chapter_1?.loc.start).toEqual({
+      filePath: "scenario/main.tzr",
+      line: 3,
+      column: 1,
+    });
   });
 
   it("reports duplicate labels and scenes", () => {
