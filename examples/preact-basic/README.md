@@ -2,14 +2,14 @@
 
 This example combines `@tsuzuru/core` and `@tsuzuru/preact` in a minimal Vite + Preact app.
 
-It parses and compiles `scenario/main.tzr` on startup, creates an initial runtime state, and passes each `RuntimeEvent` to `RuntimeView`.
+It parses and compiles `scenario/main.tzr` on startup, passes the compiled document to `useRuntime`, and renders each `RuntimeEvent` with `RuntimeView`.
 
 Runtime control is intentionally small:
 
 - non-blocking events advance with the `Step` button
-- `waitClick` and `page` continue through `RuntimeView`'s continue button
-- `wait` uses `setTimeout`, then calls `clearWait`
-- `choice` calls `resolveChoice` from the clicked item index
+- `waitClick` and `page` continue through `runtime.continueClick`
+- `wait` is handled by `useRuntime` with `autoClearWait: true`
+- `choice` calls `runtime.choose` from the clicked item index
 - `@bg(...)` is handled by a minimal plugin command handler
 
 ## Run

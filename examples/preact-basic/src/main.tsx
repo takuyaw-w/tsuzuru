@@ -1,20 +1,12 @@
 import { render } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useMemo } from "preact/hooks";
 import {
-  clearClickWait,
-  clearWait,
   compileTzr,
-  createInitialRuntimeState,
-  getRuntimeBlockReason,
   parseTzr,
-  resolveChoice,
-  stepRuntime,
   type CompiledTzrDocument,
-  type RuntimeEvent,
   type RuntimePluginCommandHandler,
-  type RuntimeState,
 } from "@tsuzuru/core";
-import { RuntimeView } from "@tsuzuru/preact";
+import { RuntimeView, useRuntime } from "@tsuzuru/preact";
 import scenarioSource from "../scenario/main.tzr?raw";
 import "./style.css";
 
@@ -52,76 +44,30 @@ interface RuntimeAppProps {
 }
 
 function RuntimeApp({ document }: RuntimeAppProps) {
-  const [state, setState] = useState<RuntimeState>(() => createInitialRuntimeState(document));
-  const [event, setEvent] = useState<RuntimeEvent | null>(null);
-
-  const stepFrom = useCallback(
-    (nextState: RuntimeState) => {
-      const result = stepRuntime(document, nextState, { commandHandlers });
-      setState(result.state);
-      setEvent(result.event);
-    },
-    [document],
-  );
-
-  useEffect(() => {
-    stepFrom(createInitialRuntimeState(document));
-  }, [document, stepFrom]);
-
-  useEffect(() => {
-    if (event?.type !== "wait" || state.pendingWait === null) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      stepFrom(clearWait(state));
-    }, state.pendingWait.durationMs);
-
-    return () => window.clearTimeout(timer);
-  }, [event, state, stepFrom]);
-
-  const handleContinue = useCallback(() => {
-    if (getRuntimeBlockReason(state) !== "click") {
-      return;
-    }
-
-    stepFrom(clearClickWait(state));
-  }, [state, stepFrom]);
-
-  const handleChoice = useCallback(
-    (itemIndex: number) => {
-      if (state.pendingChoice === null) {
-        return;
-      }
-
-      stepFrom(resolveChoice(document, state, itemIndex).state);
-    },
-    [document, state, stepFrom],
-  );
-
-  const handleStep = useCallback(() => {
-    if (getRuntimeBlockReason(state) !== null || state.isStopped || event?.type === "end") {
-      return;
-    }
-
-    stepFrom(state);
-  }, [event, state, stepFrom]);
+  const runtime = useRuntime(document, {
+    commandHandlers,
+    autoClearWait: true,
+  });
 
   return (
     <main className="app">
       <h1>Tsuzuru Preact Basic</h1>
       <div className="runtime-panel">
-        {event === null ? (
+        {runtime.event === null ? (
           <p className="placeholder">No event yet.</p>
         ) : (
-          <RuntimeView event={event} onChoice={handleChoice} onContinue={handleContinue} />
+          <RuntimeView
+            event={runtime.event}
+            onChoice={runtime.choose}
+            onContinue={runtime.continueClick}
+          />
         )}
       </div>
       <button
         type="button"
         className="step-button"
-        onClick={handleStep}
-        disabled={getRuntimeBlockReason(state) !== null || state.isStopped || event?.type === "end"}
+        onClick={runtime.step}
+        disabled={runtime.isBlocked || runtime.state.isStopped || runtime.event?.type === "end"}
       >
         Step
       </button>
