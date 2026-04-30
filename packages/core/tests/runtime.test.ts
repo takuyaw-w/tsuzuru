@@ -32,6 +32,7 @@ The classroom was quiet.
       },
       variables: {},
       flags: {},
+      branchFrames: [],
       isStopped: false,
       isWaitingForClick: false,
     });
@@ -323,6 +324,8 @@ describe("stepRuntime", () => {
       event: { type: "waitClick" },
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.branchFrames).toHaveLength(1);
+    expect(result.state.branchFrames[0]?.instructionIndex).toBe(1);
     expect(result.state.isWaitingForClick).toBe(true);
   });
 
@@ -337,6 +340,8 @@ describe("stepRuntime", () => {
       event: { type: "page" },
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.branchFrames).toHaveLength(1);
+    expect(result.state.branchFrames[0]?.instructionIndex).toBe(1);
     expect(result.state.isWaitingForClick).toBe(true);
   });
 
@@ -350,6 +355,7 @@ describe("stepRuntime", () => {
       branch: "none",
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.branchFrames).toEqual([]);
     expect(result.state.isWaitingForClick).toBe(false);
   });
 
@@ -369,8 +375,70 @@ describe("stepRuntime", () => {
       event: { type: "state", command: "inc", name: "affection", value: 2 },
     });
     expect(first.state.pointer.instructionIndex).toBe(1);
+    expect(first.state.branchFrames).toHaveLength(1);
     expect(first.state.variables).toEqual({ affection: 2 });
     expect(second.event).toEqual({ type: "page" });
+  });
+
+  it("executes multiple thenBranch instructions across multiple steps", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("saw_branch")\n@endif\n@page()\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+
+    const first = stepRuntime(document, initial);
+    const second = stepRuntime(document, first.state);
+
+    expect(first.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "state", command: "inc", name: "affection", value: 1 },
+    });
+    expect(first.state.branchFrames[0]?.instructionIndex).toBe(1);
+    expect(second.event).toEqual({ type: "state", command: "flag", name: "saw_branch", value: true });
+    expect(second.state.pointer.instructionIndex).toBe(1);
+    expect(second.state.branchFrames[0]?.instructionIndex).toBe(2);
+    expect(second.state.variables).toEqual({ affection: 1 });
+    expect(second.state.flags).toEqual({ met_haruka: true, saw_branch: true });
+  });
+
+  it("executes multiple elseBranch instructions across multiple steps", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@else\n@set(name="route", value="common")\n@flag("used_else")\n@endif\n@page()\n');
+
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    expect(first.event).toEqual({
+      type: "if",
+      result: false,
+      branch: "else",
+      event: { type: "state", command: "set", name: "route", value: "common" },
+    });
+    expect(second.event).toEqual({ type: "state", command: "flag", name: "used_else", value: true });
+    expect(second.state.pointer.instructionIndex).toBe(1);
+    expect(second.state.branchFrames[0]?.instructionIndex).toBe(2);
+    expect(second.state.variables).toEqual({ route: "common" });
+    expect(second.state.flags).toEqual({ used_else: true });
+  });
+
+  it("returns to the next top-level instruction after a branch frame finishes", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("done")\n@endif\n@page()\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+
+    const first = stepRuntime(document, initial);
+    const second = stepRuntime(document, first.state);
+    const third = stepRuntime(document, second.state);
+
+    expect(third.event).toEqual({ type: "page" });
+    expect(third.state.pointer.instructionIndex).toBe(2);
+    expect(third.state.branchFrames).toEqual([]);
+    expect(third.state.variables).toEqual({ affection: 1 });
+    expect(third.state.flags).toEqual({ met_haruka: true, done: true });
   });
 
   it("does not advance past a branch @jump target", () => {
@@ -393,6 +461,20 @@ describe("stepRuntime", () => {
       },
     });
     expect(result.state.pointer.instructionIndex).toBe(2);
+    expect(result.state.branchFrames).toEqual([]);
+  });
+
+  it("keeps branch frames JSON serializable", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("saw_branch")\n@endif\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+
+    const result = stepRuntime(document, initial);
+
+    expect(result.state.branchFrames).toHaveLength(1);
+    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
   });
 
   it("does not mutate state when executing IfInstruction", () => {

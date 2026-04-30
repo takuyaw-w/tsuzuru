@@ -7,6 +7,11 @@ export interface RuntimePointer {
   readonly instructionIndex: number;
 }
 
+export interface RuntimeBranchFrame {
+  readonly instructions: readonly TzrInstruction[];
+  readonly instructionIndex: number;
+}
+
 export type RuntimeValue = string | number | boolean;
 
 export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
@@ -17,6 +22,7 @@ export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
+  readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly isStopped: boolean;
   readonly isWaitingForClick: boolean;
 }
@@ -112,24 +118,36 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     },
     variables: {},
     flags: {},
+    branchFrames: [],
     isStopped: false,
     isWaitingForClick: false,
   };
 }
 
 export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState): RuntimeStepResult {
-  const instruction = document.instructions[state.pointer.instructionIndex];
+  const normalizedState = popFinishedBranchFrames(state);
+  const activeFrame = getActiveBranchFrame(normalizedState);
+  if (activeFrame !== undefined) {
+    const instruction = activeFrame.instructions[activeFrame.instructionIndex];
+    if (instruction === undefined) {
+      return stepRuntime(document, popActiveBranchFrame(normalizedState));
+    }
+
+    return stepInstruction(document, normalizedState, instruction, advanceActiveBranchFrame(normalizedState));
+  }
+
+  const instruction = document.instructions[normalizedState.pointer.instructionIndex];
   if (instruction === undefined) {
     return {
       state: {
-        ...state,
+        ...normalizedState,
         isStopped: true,
       },
       event: { type: "end" },
     };
   }
 
-  return stepInstruction(document, state, instruction, advanceInstruction(document, state));
+  return stepInstruction(document, normalizedState, instruction, advanceInstruction(document, normalizedState));
 }
 
 function stepInstruction(
@@ -223,6 +241,7 @@ function stepCommandInstruction(
     return {
       state: {
         ...state,
+        branchFrames: [],
         pointer: {
           filePath: document.filePath,
           instructionIndex: target.statementIndex,
@@ -305,9 +324,8 @@ function stepIfInstruction(
   const result = evaluateCondition(instruction.conditionExpression, state);
   const branch = result ? instruction.thenBranch : instruction.elseBranch;
   const branchName = result ? "then" : branch === undefined ? "none" : "else";
-  const branchInstruction = branch?.[0];
 
-  if (branchInstruction === undefined) {
+  if (branch === undefined || branch.length === 0) {
     return {
       state: nextState,
       event: {
@@ -318,7 +336,19 @@ function stepIfInstruction(
     };
   }
 
-  const branchResult = stepInstruction(document, state, branchInstruction, nextState);
+  const branchState = pushBranchFrame(nextState, branch);
+  const branchInstruction = branch[0];
+  if (branchInstruction === undefined) {
+    return {
+      state: nextState,
+      event: {
+        type: "if",
+        result,
+        branch: branchName,
+      },
+    };
+  }
+  const branchResult = stepInstruction(document, branchState, branchInstruction, advanceActiveBranchFrame(branchState));
 
   return {
     state: branchResult.state,
@@ -328,6 +358,68 @@ function stepIfInstruction(
       branch: branchName,
       event: branchResult.event,
     },
+  };
+}
+
+function getActiveBranchFrame(state: RuntimeState): RuntimeBranchFrame | undefined {
+  return state.branchFrames[state.branchFrames.length - 1];
+}
+
+function popFinishedBranchFrames(state: RuntimeState): RuntimeState {
+  let branchFrames = state.branchFrames;
+  while (branchFrames.length > 0) {
+    const activeFrame = branchFrames[branchFrames.length - 1];
+    if (activeFrame === undefined || activeFrame.instructionIndex < activeFrame.instructions.length) {
+      break;
+    }
+    branchFrames = branchFrames.slice(0, -1);
+  }
+
+  if (branchFrames === state.branchFrames) {
+    return state;
+  }
+
+  return {
+    ...state,
+    branchFrames,
+  };
+}
+
+function popActiveBranchFrame(state: RuntimeState): RuntimeState {
+  return {
+    ...state,
+    branchFrames: state.branchFrames.slice(0, -1),
+  };
+}
+
+function pushBranchFrame(state: RuntimeState, instructions: readonly TzrInstruction[]): RuntimeState {
+  return {
+    ...state,
+    branchFrames: [
+      ...state.branchFrames,
+      {
+        instructions,
+        instructionIndex: 0,
+      },
+    ],
+  };
+}
+
+function advanceActiveBranchFrame(state: RuntimeState): RuntimeState {
+  const activeFrame = getActiveBranchFrame(state);
+  if (activeFrame === undefined) {
+    return state;
+  }
+
+  return {
+    ...state,
+    branchFrames: [
+      ...state.branchFrames.slice(0, -1),
+      {
+        ...activeFrame,
+        instructionIndex: activeFrame.instructionIndex + 1,
+      },
+    ],
   };
 }
 

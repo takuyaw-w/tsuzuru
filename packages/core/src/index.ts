@@ -59,6 +59,7 @@ export type {
   LabelRuntimeEvent,
   NarrationRuntimeEvent,
   PageRuntimeEvent,
+  RuntimeBranchFrame,
   RuntimeEvent,
   RuntimeFlags,
   RuntimePointer,
