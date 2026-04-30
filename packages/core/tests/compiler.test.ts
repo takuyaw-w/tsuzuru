@@ -1176,4 +1176,112 @@ $badJump()
       },
     ]);
   });
+
+  it("validates invalid core command instructions returned by macros", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$badWait("500")
+$badPage("x")
+$badSet(name="route")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        badWait(call) {
+          return [{ type: "CommandInstruction", name: "wait", args: call.args, loc: call.loc }];
+        },
+        badPage(call) {
+          return [{ type: "CommandInstruction", name: "page", args: call.args, loc: call.loc }];
+        },
+        badSet(call) {
+          return [{ type: "CommandInstruction", name: "set", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 10,
+        message: "@wait expects a number argument.",
+        sourceLine: '$badWait("500")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: "@page expects no arguments.",
+        sourceLine: '$badPage("x")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: '@set requires a named "value" argument.',
+        sourceLine: '$badSet(name="route")',
+      },
+    ]);
+  });
+
+  it("validates macro output core commands inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+$badThen("500")
+@else
+$badElse("x")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        badThen(call) {
+          return [{ type: "CommandInstruction", name: "wait", args: call.args, loc: call.loc }];
+        },
+        badElse(call) {
+          return [{ type: "CommandInstruction", name: "page", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 10,
+        message: "@wait expects a number argument.",
+        sourceLine: '$badThen("500")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 1,
+        message: "@page expects no arguments.",
+        sourceLine: '$badElse("x")',
+      },
+    ]);
+  });
 });

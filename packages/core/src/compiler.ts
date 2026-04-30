@@ -12,7 +12,7 @@ import type {
 } from "./ast.js";
 import { isCoreCommandName, type CoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
-import type { CompiledTzrDocument, DeclarationIndexEntry, TzrInstruction } from "./ir.js";
+import type { CommandInstruction, CompiledTzrDocument, DeclarationIndexEntry, TzrInstruction } from "./ir.js";
 import { expandMacro, type MacroMap } from "./macro.js";
 
 export type CompileResult =
@@ -41,10 +41,10 @@ class TzrCompiler {
   public compile(): CompileResult {
     this.collectDeclarations();
     this.validateDeclarationPlacement();
-    this.validateCommands();
     this.validateTargets();
 
     const compiled = this.buildCompiledDocument();
+    this.validateCompiledInstructions(compiled.instructions);
 
     return this.errors.length > 0 ? { ok: false, errors: this.errors } : { ok: true, document: compiled, errors: [] };
   }
@@ -111,28 +111,6 @@ class TzrCompiler {
     }
   }
 
-  private validateCommands(): void {
-    this.validateCommandsIn(this.document.body);
-  }
-
-  private validateCommandsIn(statements: readonly TzrStatement[]): void {
-    for (const statement of statements) {
-      if (statement.type === "CommandStatement") {
-        this.validateCoreCommandArguments(statement);
-      }
-      if (statement.type === "IfBlock") {
-        this.validateIfCommands(statement);
-      }
-    }
-  }
-
-  private validateIfCommands(ifBlock: IfBlock): void {
-    this.validateCommandsIn(ifBlock.thenBranch);
-    if (ifBlock.elseBranch !== undefined) {
-      this.validateCommandsIn(ifBlock.elseBranch);
-    }
-  }
-
   private validateTargetsIn(statements: readonly TzrStatement[]): void {
     for (const statement of statements) {
       if (statement.type === "CommandStatement") {
@@ -168,7 +146,21 @@ class TzrCompiler {
     }
   }
 
-  private validateCoreCommandArguments(command: CommandStatement): void {
+  private validateCompiledInstructions(instructions: readonly TzrInstruction[]): void {
+    for (const instruction of instructions) {
+      if (instruction.type === "CommandInstruction") {
+        this.validateCoreCommandArguments(instruction);
+      }
+      if (instruction.type === "IfInstruction") {
+        this.validateCompiledInstructions(instruction.thenBranch);
+        if (instruction.elseBranch !== undefined) {
+          this.validateCompiledInstructions(instruction.elseBranch);
+        }
+      }
+    }
+  }
+
+  private validateCoreCommandArguments(command: CommandInstruction): void {
     if (!isCoreCommandName(command.name)) {
       return;
     }
@@ -201,7 +193,7 @@ class TzrCompiler {
   }
 
   private validateSinglePositionalArgument(
-    command: CommandStatement,
+    command: CommandInstruction,
     name: CoreCommandName,
     expectedType: TzrValue["type"],
     expectedLabel: "number" | "string",
@@ -222,13 +214,13 @@ class TzrCompiler {
     }
   }
 
-  private validateNoArguments(command: CommandStatement, name: CoreCommandName): void {
+  private validateNoArguments(command: CommandInstruction, name: CoreCommandName): void {
     if (command.args.length > 0) {
       this.addError(command.loc.start, `@${name} expects no arguments.`);
     }
   }
 
-  private validateSetArguments(command: CommandStatement): void {
+  private validateSetArguments(command: CommandInstruction): void {
     const named = this.validateNamedOnlyArguments(command, "set", ["name", "value"]);
     const name = named.get("name");
     const value = named.get("value");
@@ -246,7 +238,7 @@ class TzrCompiler {
     }
   }
 
-  private validateIncrementArguments(command: CommandStatement, name: "inc" | "dec"): void {
+  private validateIncrementArguments(command: CommandInstruction, name: "inc" | "dec"): void {
     const named = this.validateNamedOnlyArguments(command, name, ["name", "by"]);
     const variableName = named.get("name");
     const by = named.get("by");
@@ -265,7 +257,7 @@ class TzrCompiler {
   }
 
   private validateNamedOnlyArguments(
-    command: CommandStatement,
+    command: CommandInstruction,
     name: CoreCommandName,
     allowedNames: readonly string[],
   ): ReadonlyMap<string, NamedArgument> {
