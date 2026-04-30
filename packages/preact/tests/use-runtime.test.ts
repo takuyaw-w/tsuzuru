@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
-import type { RuntimeEvent } from "@tsuzuru/core";
-import { isAutoSteppableRuntimeEvent, isTransientRuntimeEvent } from "../src/index.js";
+import type { RuntimeEvent, RuntimeSnapshot } from "@tsuzuru/core";
+import {
+  createRuntimeSaveData,
+  isAutoSteppableRuntimeEvent,
+  isRuntimeSaveData,
+  isTransientRuntimeEvent,
+} from "../src/index.js";
+
+const snapshot: RuntimeSnapshot = {
+  version: 1,
+  pointer: {
+    filePath: "scenario/main.tzr",
+    instructionIndex: 1,
+  },
+  variables: {},
+  flags: {},
+  branchFrames: [],
+  pendingChoice: null,
+  pendingWait: null,
+  isStopped: false,
+  isWaitingForClick: false,
+};
 
 describe("isAutoSteppableRuntimeEvent", () => {
   it("allows non-blocking runtime events to auto-step", () => {
@@ -114,5 +134,40 @@ describe("isAutoSteppableRuntimeEvent", () => {
     const event: RuntimeEvent = { type: "if", result: true, branch: "then" };
 
     expect(isTransientRuntimeEvent(event)).toBe(isAutoSteppableRuntimeEvent(event));
+  });
+});
+
+describe("RuntimeSaveData", () => {
+  it("creates save data with version, state-only snapshot, and current event", () => {
+    const event: RuntimeEvent = {
+      type: "dialogue",
+      speaker: "Haruka",
+      lines: [{ text: "You came." }],
+    };
+    const saveData = createRuntimeSaveData(snapshot, event);
+
+    expect(saveData.version).toBe(1);
+    expect(saveData.snapshot).toBe(snapshot);
+    expect(saveData.event).toBe(event);
+    expect("event" in saveData.snapshot).toBe(false);
+  });
+
+  it("accepts valid save data with null event", () => {
+    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, null))).toBe(true);
+  });
+
+  it("accepts valid save data with object event", () => {
+    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, { type: "label", id: "start" }))).toBe(
+      true,
+    );
+  });
+
+  it("rejects save data with a mismatched version", () => {
+    expect(isRuntimeSaveData({ version: 2, snapshot, event: null })).toBe(false);
+  });
+
+  it("rejects save data without a snapshot object", () => {
+    expect(isRuntimeSaveData({ version: 1, event: null })).toBe(false);
+    expect(isRuntimeSaveData({ version: 1, snapshot: null, event: null })).toBe(false);
   });
 });

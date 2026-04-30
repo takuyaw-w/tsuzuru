@@ -59,7 +59,7 @@ export function App({ document }: AppProps) {
 }
 ```
 
-The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `blockReason`, `isBlocked`, and `autoStepError`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
+The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `createSaveData`, `restoreSaveData`, `blockReason`, `isBlocked`, and `autoStepError`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
 
 `autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `label`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
 
@@ -67,7 +67,9 @@ The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `
 
 `autoStepMaxSteps` defaults to `1000`. It limits consecutive automatic steps so a label/jump loop cannot keep scheduling timers forever. When the limit is reached, auto-step stops and `autoStepError` contains a message.
 
-`createSnapshot()` returns a `RuntimeSnapshot` created from the current `RuntimeState`. `restoreSnapshot(snapshot)` restores that state and clears the current `RuntimeEvent` and auto-step error state. Snapshots are for persistent runtime state only; they do not include `RuntimeEvent`, which remains a transient rendering signal. Host applications own where snapshots are stored, such as `localStorage`, IndexedDB, or a remote save service.
+`RuntimeSnapshot` is state-only data created from `RuntimeState`. It does not include `RuntimeEvent`, which remains a transient rendering signal. `createSnapshot()` and `restoreSnapshot(snapshot)` are low-level APIs for state persistence. When restoring a state-only snapshot, `restoreSnapshot` can recover blocking events such as choice, wait, or waitClick from the restored state, but it cannot recover a non-blocking narration or dialogue event that was visible when the snapshot was created.
+
+For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
 
 ## Scripts
 

@@ -24,6 +24,12 @@ export interface UseRuntimeOptions {
   readonly autoStepMaxSteps?: number;
 }
 
+export interface RuntimeSaveData {
+  readonly version: 1;
+  readonly snapshot: RuntimeSnapshot;
+  readonly event: RuntimeEvent | null;
+}
+
 export interface UseRuntimeResult {
   readonly state: RuntimeState;
   readonly event: RuntimeEvent | null;
@@ -33,6 +39,8 @@ export interface UseRuntimeResult {
   readonly reset: () => void;
   readonly createSnapshot: () => RuntimeSnapshot;
   readonly restoreSnapshot: (snapshot: RuntimeSnapshot) => void;
+  readonly createSaveData: () => RuntimeSaveData;
+  readonly restoreSaveData: (saveData: RuntimeSaveData) => void;
   readonly blockReason: RuntimeBlockReason | null;
   readonly isBlocked: boolean;
   readonly autoStepError: string | null;
@@ -119,8 +127,27 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   const createSnapshot = useCallback(() => createRuntimeSnapshot(state), [state]);
 
   const restoreSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
-    setState(restoreRuntimeState(snapshot));
-    setEvent(null);
+    const restoredState = restoreRuntimeState(snapshot);
+    if (getRuntimeBlockReason(restoredState) === null) {
+      setState(restoredState);
+      setEvent(null);
+    } else {
+      const result = stepRuntime(document, restoredState, stepOptions);
+      setState(result.state);
+      setEvent(result.event);
+    }
+    setAutoStepCount(0);
+    setAutoStepError(null);
+  }, [document, stepOptions]);
+
+  const createSaveData = useCallback(
+    () => createRuntimeSaveData(createRuntimeSnapshot(state), event),
+    [event, state],
+  );
+
+  const restoreSaveData = useCallback((saveData: RuntimeSaveData) => {
+    setState(restoreRuntimeState(saveData.snapshot));
+    setEvent(saveData.event);
     setAutoStepCount(0);
     setAutoStepError(null);
   }, []);
@@ -185,10 +212,35 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     reset,
     createSnapshot,
     restoreSnapshot,
+    createSaveData,
+    restoreSaveData,
     blockReason,
     isBlocked: blockReason !== null,
     autoStepError,
   };
+}
+
+export function createRuntimeSaveData(
+  snapshot: RuntimeSnapshot,
+  event: RuntimeEvent | null,
+): RuntimeSaveData {
+  return {
+    version: 1,
+    snapshot,
+    event,
+  };
+}
+
+export function isRuntimeSaveData(value: unknown): value is RuntimeSaveData {
+  if (!isObjectRecord(value)) {
+    return false;
+  }
+
+  return (
+    value.version === 1 &&
+    isObjectRecord(value.snapshot) &&
+    (value.event === null || isObjectRecord(value.event))
+  );
 }
 
 export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
@@ -221,6 +273,10 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled runtime event: ${JSON.stringify(value)}`);
+}
+
+function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }
 
 /**

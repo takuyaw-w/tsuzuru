@@ -5,9 +5,8 @@ import {
   parseTzr,
   type CompiledTzrDocument,
   type RuntimePluginCommandHandler,
-  type RuntimeSnapshot,
 } from "@tsuzuru/core";
-import { RuntimeView, useRuntime } from "@tsuzuru/preact";
+import { RuntimeView, isRuntimeSaveData, useRuntime } from "@tsuzuru/preact";
 import scenarioSource from "../scenario/main.tzr?raw";
 import "./style.css";
 
@@ -55,7 +54,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
   });
 
   const saveSnapshot = () => {
-    localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(runtime.createSnapshot()));
+    localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(runtime.createSaveData()));
     setSaveStatus("Saved");
   };
 
@@ -67,8 +66,13 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     }
 
     try {
-      const snapshot = JSON.parse(savedSnapshot) as RuntimeSnapshot;
-      runtime.restoreSnapshot(snapshot);
+      const saveData = JSON.parse(savedSnapshot) as unknown;
+      if (!isRuntimeSaveData(saveData)) {
+        setSaveStatus("Failed to load save data");
+        return;
+      }
+
+      runtime.restoreSaveData(saveData);
       setSaveStatus("Loaded");
     } catch {
       setSaveStatus("Failed to load save data");
