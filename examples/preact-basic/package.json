@@ -1,0 +1,20 @@
+{
+  "name": "@tsuzuru/example-preact-basic",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && vite build",
+    "dev": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && vite",
+    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:*",
+    "@tsuzuru/preact": "workspace:*",
+    "preact": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.0.10"
+  }
+}
