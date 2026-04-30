@@ -31,6 +31,12 @@ describe("compileTzr", () => {
       filePath: "scenario/main.tzr",
       body: parsed.document.body,
     });
+    expect(compiled.document.instructions.map((instruction) => instruction.type)).toEqual([
+      "SceneDeclaration",
+      "ChoiceBlock",
+      "LabelDeclaration",
+      "CommandStatement",
+    ]);
   });
 
   it("builds a label index for the compiled document", () => {
@@ -62,6 +68,18 @@ describe("compileTzr", () => {
       fallback: { id: "fallback", statementIndex: 3 },
       after: { id: "after", statementIndex: 4 },
     });
+    expect(compiled.document.instructions[compiled.document.labels.inside?.statementIndex ?? -1]).toMatchObject({
+      type: "LabelDeclaration",
+      id: "inside",
+    });
+    expect(compiled.document.instructions[compiled.document.labels.fallback?.statementIndex ?? -1]).toMatchObject({
+      type: "LabelDeclaration",
+      id: "fallback",
+    });
+    expect(compiled.document.instructions[compiled.document.labels.after?.statementIndex ?? -1]).toMatchObject({
+      type: "LabelDeclaration",
+      id: "after",
+    });
     expect(compiled.document.labels.inside?.loc.start).toEqual({
       filePath: "scenario/main.tzr",
       line: 3,
@@ -92,6 +110,14 @@ describe("compileTzr", () => {
     expect(compiled.document.scenes).toMatchObject({
       prologue: { id: "prologue", statementIndex: 0 },
       chapter_1: { id: "chapter_1", statementIndex: 2 },
+    });
+    expect(compiled.document.instructions[compiled.document.scenes.prologue?.statementIndex ?? -1]).toMatchObject({
+      type: "SceneDeclaration",
+      id: "prologue",
+    });
+    expect(compiled.document.instructions[compiled.document.scenes.chapter_1?.statementIndex ?? -1]).toMatchObject({
+      type: "SceneDeclaration",
+      id: "chapter_1",
     });
     expect(compiled.document.scenes.chapter_1?.loc.start).toEqual({
       filePath: "scenario/main.tzr",

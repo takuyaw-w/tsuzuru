@@ -12,7 +12,7 @@ import type {
 } from "./ast.js";
 import { isCoreCommandName, type CoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
-import type { CompiledTzrDocument, DeclarationIndexEntry } from "./ir.js";
+import type { CompiledTzrDocument, DeclarationIndexEntry, TzrInstruction } from "./ir.js";
 
 export type CompileResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument; readonly errors: readonly [] }
@@ -28,7 +28,7 @@ class TzrCompiler {
   private readonly labels = new Map<string, LabelDeclaration>();
   private readonly scenes = new Map<string, SceneDeclaration>();
 
-  public constructor(private readonly document: TzrDocument) {}
+  public constructor(private readonly document: TzrDocument) { }
 
   public compile(): CompileResult {
     this.collectDeclarations();
@@ -322,11 +322,13 @@ class TzrCompiler {
   }
 
   private buildCompiledDocument(): CompiledTzrDocument {
-    const indexes = buildDeclarationIndexes(this.document.body);
+    const instructions = buildInstructions(this.document.body);
+    const indexes = buildDeclarationIndexes(instructions);
     return {
       type: "CompiledTzrDocument",
       filePath: this.document.filePath,
       body: this.document.body,
+      instructions,
       labels: indexes.labels,
       scenes: indexes.scenes,
     };
@@ -338,32 +340,12 @@ interface DeclarationIndexes {
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
-function buildDeclarationIndexes(statements: readonly TzrStatement[]): DeclarationIndexes {
-  const labels: Record<string, DeclarationIndexEntry> = {};
-  const scenes: Record<string, DeclarationIndexEntry> = {};
-  let statementIndex = 0;
+function buildInstructions(statements: readonly TzrStatement[]): readonly TzrInstruction[] {
+  const instructions: TzrInstruction[] = [];
 
   function visit(nodes: readonly TzrStatement[]): void {
     for (const statement of nodes) {
-      const currentIndex = statementIndex;
-      statementIndex += 1;
-
-      if (statement.type === "LabelDeclaration") {
-        labels[statement.id] = {
-          id: statement.id,
-          statementIndex: currentIndex,
-          loc: statement.loc,
-        };
-      }
-
-      if (statement.type === "SceneDeclaration") {
-        scenes[statement.id] = {
-          id: statement.id,
-          statementIndex: currentIndex,
-          loc: statement.loc,
-        };
-      }
-
+      instructions.push(statement);
       if (statement.type === "IfBlock") {
         visit(statement.thenBranch);
         if (statement.elseBranch !== undefined) {
@@ -374,6 +356,31 @@ function buildDeclarationIndexes(statements: readonly TzrStatement[]): Declarati
   }
 
   visit(statements);
+  return instructions;
+}
+
+function buildDeclarationIndexes(instructions: readonly TzrInstruction[]): DeclarationIndexes {
+  const labels: Record<string, DeclarationIndexEntry> = {};
+  const scenes: Record<string, DeclarationIndexEntry> = {};
+
+  for (const [statementIndex, statement] of instructions.entries()) {
+    if (statement.type === "LabelDeclaration") {
+      labels[statement.id] = {
+        id: statement.id,
+        statementIndex,
+        loc: statement.loc,
+      };
+    }
+
+    if (statement.type === "SceneDeclaration") {
+      scenes[statement.id] = {
+        id: statement.id,
+        statementIndex,
+        loc: statement.loc,
+      };
+    }
+  }
+
   return { labels, scenes };
 }
 
