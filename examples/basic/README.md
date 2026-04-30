@@ -28,6 +28,18 @@ pnpm --filter @tsuzuru/example-basic start
 
 The script builds `@tsuzuru/core`, compiles this example, and runs `dist/run.js` with Node.
 
+Expected output includes:
+
+```txt
+#scene prologue
+plugin command: bg:school_evening
+waitClick
+wait 300ms
+choice: What do you do?
+host: choose item 0 for this CLI example
+final variables: { haruka_affection: 1 }
+```
+
 For type checking only:
 
 ```sh
