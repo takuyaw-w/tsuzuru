@@ -544,4 +544,252 @@ describe("compileTzr", () => {
       },
     ]);
   });
+
+  it("accepts valid state core command arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@set(name="route", value="haruka")
+@set(name="score", value=10)
+@set(name="cleared", value=true)
+@inc(name="haruka_affection", by=1)
+@dec(name="haruka_affection", by=1)
+@flag("met_haruka")
+@unflag("met_haruka")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(compileTzr(parsed.document).ok).toBe(true);
+  });
+
+  it("reports invalid @set arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@set()
+@set(name="route")
+@set(value="haruka")
+@set(name=route, value="haruka")
+@set(name="route", value=haruka)
+@set(name="route", value="haruka", extra=true)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: '@set requires a named "name" argument.',
+        sourceLine: "@set()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: '@set requires a named "value" argument.',
+        sourceLine: "@set()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: '@set requires a named "value" argument.',
+        sourceLine: '@set(name="route")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: '@set requires a named "name" argument.',
+        sourceLine: '@set(value="haruka")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 11,
+        message: '@set argument "name" must be string.',
+        sourceLine: '@set(name=route, value="haruka")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 26,
+        message: '@set argument "value" must be string, number, or boolean.',
+        sourceLine: '@set(name="route", value=haruka)',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 7,
+        column: 36,
+        message: '@set does not allow argument "extra".',
+        sourceLine: '@set(name="route", value="haruka", extra=true)',
+      },
+    ]);
+  });
+
+  it("reports invalid @inc and @dec arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@inc(name="affection")
+@inc(name="affection", by="1")
+@dec(name=affection, by=1)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: '@inc requires a named "by" argument.',
+        sourceLine: '@inc(name="affection")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 27,
+        message: '@inc argument "by" must be number.',
+        sourceLine: '@inc(name="affection", by="1")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 11,
+        message: '@dec argument "name" must be string.',
+        sourceLine: "@dec(name=affection, by=1)",
+      },
+    ]);
+  });
+
+  it("reports invalid @flag and @unflag arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@flag()
+@flag(123)
+@flag("x", "extra")
+@unflag()
+@unflag(123)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: "@flag expects exactly 1 positional string argument.",
+        sourceLine: "@flag()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 7,
+        message: "@flag expects a string argument.",
+        sourceLine: "@flag(123)",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: "@flag expects exactly 1 positional string argument.",
+        sourceLine: '@flag("x", "extra")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 1,
+        message: "@unflag expects exactly 1 positional string argument.",
+        sourceLine: "@unflag()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 9,
+        message: "@unflag expects a string argument.",
+        sourceLine: "@unflag(123)",
+      },
+    ]);
+  });
+
+  it("validates state core command arguments inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@set(name="route", value=haruka)
+@else
+@inc(name="affection", by="1")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 26,
+        message: '@set argument "value" must be string, number, or boolean.',
+        sourceLine: '@set(name="route", value=haruka)',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 27,
+        message: '@inc argument "by" must be number.',
+        sourceLine: '@inc(name="affection", by="1")',
+      },
+    ]);
+  });
 });

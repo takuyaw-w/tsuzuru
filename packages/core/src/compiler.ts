@@ -4,6 +4,7 @@ import type {
   IfBlock,
   JumpTarget,
   LabelDeclaration,
+  NamedArgument,
   SceneDeclaration,
   TzrDocument,
   TzrStatement,
@@ -163,10 +164,15 @@ class TzrCompiler {
         this.validateNoArguments(command, name);
         return;
       case "set":
+        this.validateSetArguments(command);
+        return;
       case "inc":
       case "dec":
+        this.validateIncrementArguments(command, name);
+        return;
       case "flag":
       case "unflag":
+        this.validateSinglePositionalArgument(command, name, "StringValue", "string");
         return;
     }
   }
@@ -196,6 +202,83 @@ class TzrCompiler {
   private validateNoArguments(command: CommandStatement, name: CoreCommandName): void {
     if (command.args.length > 0) {
       this.addError(command.loc.start, `@${name} expects no arguments.`);
+    }
+  }
+
+  private validateSetArguments(command: CommandStatement): void {
+    const named = this.validateNamedOnlyArguments(command, "set", ["name", "value"]);
+    const name = named.get("name");
+    const value = named.get("value");
+
+    if (name === undefined) {
+      this.addError(command.loc.start, '@set requires a named "name" argument.');
+    } else {
+      this.validateNamedValueType("set", name, ["StringValue"], "string");
+    }
+
+    if (value === undefined) {
+      this.addError(command.loc.start, '@set requires a named "value" argument.');
+    } else {
+      this.validateNamedValueType("set", value, ["StringValue", "NumberValue", "BooleanValue"], "string, number, or boolean");
+    }
+  }
+
+  private validateIncrementArguments(command: CommandStatement, name: "inc" | "dec"): void {
+    const named = this.validateNamedOnlyArguments(command, name, ["name", "by"]);
+    const variableName = named.get("name");
+    const by = named.get("by");
+
+    if (variableName === undefined) {
+      this.addError(command.loc.start, `@${name} requires a named "name" argument.`);
+    } else {
+      this.validateNamedValueType(name, variableName, ["StringValue"], "string");
+    }
+
+    if (by === undefined) {
+      this.addError(command.loc.start, `@${name} requires a named "by" argument.`);
+    } else {
+      this.validateNamedValueType(name, by, ["NumberValue"], "number");
+    }
+  }
+
+  private validateNamedOnlyArguments(
+    command: CommandStatement,
+    name: CoreCommandName,
+    allowedNames: readonly string[],
+  ): ReadonlyMap<string, NamedArgument> {
+    const allowed = new Set(allowedNames);
+    const named = new Map<string, NamedArgument>();
+
+    for (const argument of command.args) {
+      if (argument.type !== "NamedArgument") {
+        this.addError(argument.loc.start, `@${name} expects only named arguments: ${allowedNames.join(", ")}.`);
+        continue;
+      }
+
+      if (!allowed.has(argument.name)) {
+        this.addError(argument.loc.start, `@${name} does not allow argument "${argument.name}".`);
+        continue;
+      }
+
+      if (named.has(argument.name)) {
+        this.addError(argument.loc.start, `@${name} has duplicate argument "${argument.name}".`);
+        continue;
+      }
+
+      named.set(argument.name, argument);
+    }
+
+    return named;
+  }
+
+  private validateNamedValueType(
+    commandName: CoreCommandName,
+    argument: NamedArgument,
+    allowedTypes: readonly TzrValue["type"][],
+    expectedLabel: string,
+  ): void {
+    if (!allowedTypes.includes(argument.value.type)) {
+      this.addError(argument.value.loc.start, `@${commandName} argument "${argument.name}" must be ${expectedLabel}.`);
     }
   }
 
