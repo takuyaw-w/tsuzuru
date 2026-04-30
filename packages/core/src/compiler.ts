@@ -7,7 +7,9 @@ import type {
   SceneDeclaration,
   TzrDocument,
   TzrStatement,
+  TzrValue,
 } from "./ast.js";
+import { isCoreCommandName, type CoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 
 export type CompileResult =
@@ -28,6 +30,7 @@ class TzrCompiler {
 
   public compile(): CompileResult {
     this.collectDeclarations();
+    this.validateCommands();
     this.validateTargets();
 
     if (this.errors.length > 0) {
@@ -84,6 +87,28 @@ class TzrCompiler {
     this.validateTargetsIn(this.document.body);
   }
 
+  private validateCommands(): void {
+    this.validateCommandsIn(this.document.body);
+  }
+
+  private validateCommandsIn(statements: readonly TzrStatement[]): void {
+    for (const statement of statements) {
+      if (statement.type === "CommandStatement") {
+        this.validateCoreCommandArguments(statement);
+      }
+      if (statement.type === "IfBlock") {
+        this.validateIfCommands(statement);
+      }
+    }
+  }
+
+  private validateIfCommands(ifBlock: IfBlock): void {
+    this.validateCommandsIn(ifBlock.thenBranch);
+    if (ifBlock.elseBranch !== undefined) {
+      this.validateCommandsIn(ifBlock.elseBranch);
+    }
+  }
+
   private validateTargetsIn(statements: readonly TzrStatement[]): void {
     for (const statement of statements) {
       if (statement.type === "CommandStatement") {
@@ -116,6 +141,61 @@ class TzrCompiler {
   private validateChoiceTargets(choice: ChoiceBlock): void {
     for (const item of choice.items) {
       this.validateTarget(item.target);
+    }
+  }
+
+  private validateCoreCommandArguments(command: CommandStatement): void {
+    if (!isCoreCommandName(command.name)) {
+      return;
+    }
+
+    const name = command.name;
+    switch (name) {
+      case "jump":
+        this.validateSinglePositionalArgument(command, name, "StringValue", "string");
+        return;
+      case "wait":
+        this.validateSinglePositionalArgument(command, name, "NumberValue", "number");
+        return;
+      case "waitClick":
+      case "page":
+      case "stop":
+        this.validateNoArguments(command, name);
+        return;
+      case "set":
+      case "inc":
+      case "dec":
+      case "flag":
+      case "unflag":
+        return;
+    }
+  }
+
+  private validateSinglePositionalArgument(
+    command: CommandStatement,
+    name: CoreCommandName,
+    expectedType: TzrValue["type"],
+    expectedLabel: "number" | "string",
+  ): void {
+    if (command.args.length !== 1) {
+      this.addError(command.loc.start, `@${name} expects exactly 1 positional ${expectedLabel} argument.`);
+      return;
+    }
+
+    const argument = command.args[0];
+    if (argument === undefined || argument.type !== "PositionalArgument") {
+      this.addError(command.loc.start, `@${name} expects exactly 1 positional ${expectedLabel} argument.`);
+      return;
+    }
+
+    if (argument.value.type !== expectedType) {
+      this.addError(argument.value.loc.start, `@${name} expects a ${expectedLabel} argument.`);
+    }
+  }
+
+  private validateNoArguments(command: CommandStatement, name: CoreCommandName): void {
+    if (command.args.length > 0) {
+      this.addError(command.loc.start, `@${name} expects no arguments.`);
     }
   }
 

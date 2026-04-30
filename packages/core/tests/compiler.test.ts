@@ -343,4 +343,205 @@ describe("compileTzr", () => {
       },
     ]);
   });
+
+  it("accepts valid core command arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@jump("#known")
+@wait(500)
+@waitClick()
+@page()
+@stop()
+#label("known")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(compileTzr(parsed.document).ok).toBe(true);
+  });
+
+  it("reports invalid @jump arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@jump()
+@jump(123)
+@jump("#known", "extra")
+#label("known")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: "@jump expects exactly 1 positional string argument.",
+        sourceLine: "@jump()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 7,
+        message: "@jump expects a string argument.",
+        sourceLine: "@jump(123)",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: "@jump expects exactly 1 positional string argument.",
+        sourceLine: '@jump("#known", "extra")',
+      },
+    ]);
+  });
+
+  it("reports invalid @wait arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@wait()
+@wait("500")
+@wait(500, 100)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: "@wait expects exactly 1 positional number argument.",
+        sourceLine: "@wait()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 7,
+        message: "@wait expects a number argument.",
+        sourceLine: '@wait("500")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: "@wait expects exactly 1 positional number argument.",
+        sourceLine: "@wait(500, 100)",
+      },
+    ]);
+  });
+
+  it("reports invalid no-argument core commands", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@waitClick(1)
+@page("x")
+@stop("x")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: "@waitClick expects no arguments.",
+        sourceLine: "@waitClick(1)",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: "@page expects no arguments.",
+        sourceLine: '@page("x")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: "@stop expects no arguments.",
+        sourceLine: '@stop("x")',
+      },
+    ]);
+  });
+
+  it("validates core command arguments inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@wait("500")
+@else
+@page("x")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 7,
+        message: "@wait expects a number argument.",
+        sourceLine: '@wait("500")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 1,
+        message: "@page expects no arguments.",
+        sourceLine: '@page("x")',
+      },
+    ]);
+  });
 });

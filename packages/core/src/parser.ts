@@ -477,7 +477,6 @@ class TzrParser {
   private extractJumpTarget(line: SourceLine, args: readonly TzrArgument[]): JumpTarget | undefined {
     const first = args[0];
     if (first === undefined || first.type !== "PositionalArgument" || first.value.type !== "StringValue") {
-      this.addError(line, line.text.indexOf("@jump") + 1, '@jump must receive a string target, for example @jump("#label").');
       return undefined;
     }
     return parseJumpTarget(first.value.value, {
