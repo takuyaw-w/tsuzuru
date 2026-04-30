@@ -1,6 +1,6 @@
-import type { TextLine, TzrArgument, TzrValue } from "./ast.js";
+import type { ChoiceItem, TextLine, TzrArgument, TzrValue } from "./ast.js";
 import { evaluateCondition } from "./condition.js";
-import type { CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
+import type { ChoiceInstruction, CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
 
 export interface RuntimePointer {
   readonly filePath: string;
@@ -18,11 +18,23 @@ export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
 export type RuntimeFlags = Readonly<Record<string, boolean>>;
 
+export interface RuntimeChoiceItem {
+  readonly text: string;
+  readonly targetRaw: string;
+  readonly targetLabel?: string;
+}
+
+export interface RuntimePendingChoice {
+  readonly question: string;
+  readonly items: readonly RuntimeChoiceItem[];
+}
+
 export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
   readonly branchFrames: readonly RuntimeBranchFrame[];
+  readonly pendingChoice: RuntimePendingChoice | null;
   readonly isStopped: boolean;
   readonly isWaitingForClick: boolean;
 }
@@ -38,6 +50,7 @@ export type RuntimeEvent =
   | StateRuntimeEvent
   | JumpRuntimeEvent
   | IfRuntimeEvent
+  | ChoiceRuntimeEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -96,6 +109,12 @@ export interface IfRuntimeEvent {
   readonly event?: RuntimeEvent;
 }
 
+export interface ChoiceRuntimeEvent {
+  readonly type: "choice";
+  readonly question: string;
+  readonly items: readonly RuntimeChoiceItem[];
+}
+
 export interface UnsupportedRuntimeEvent {
   readonly type: "unsupported";
   readonly instructionType: string;
@@ -119,12 +138,20 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     variables: {},
     flags: {},
     branchFrames: [],
+    pendingChoice: null,
     isStopped: false,
     isWaitingForClick: false,
   };
 }
 
 export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState): RuntimeStepResult {
+  if (state.pendingChoice !== null) {
+    return {
+      state,
+      event: choiceEvent(state.pendingChoice),
+    };
+  }
+
   const normalizedState = popFinishedBranchFrames(state);
   const activeFrame = getActiveBranchFrame(normalizedState);
   if (activeFrame !== undefined) {
@@ -182,12 +209,46 @@ function stepInstruction(
     case "IfInstruction":
       return stepIfInstruction(document, state, nextState, instruction);
     case "MacroInstruction":
-    case "ChoiceInstruction":
       return {
         state: nextState,
         event: { type: "unsupported", instructionType: instruction.type },
       };
+    case "ChoiceInstruction":
+      return stepChoiceInstruction(nextState, instruction);
   }
+}
+
+export function resolveChoice(
+  document: CompiledTzrDocument,
+  state: RuntimeState,
+  itemIndex: number,
+): RuntimeStepResult {
+  const item = state.pendingChoice?.items[itemIndex];
+  if (item?.targetLabel === undefined) {
+    return unsupportedInstruction(state, "ChoiceInstruction");
+  }
+
+  const target = document.labels[item.targetLabel];
+  if (target === undefined) {
+    return unsupportedInstruction(state, "ChoiceInstruction");
+  }
+
+  return {
+    state: {
+      ...state,
+      pointer: {
+        filePath: document.filePath,
+        instructionIndex: target.statementIndex,
+      },
+      branchFrames: [],
+      pendingChoice: null,
+    },
+    event: {
+      type: "jump",
+      label: item.targetLabel,
+      instructionIndex: target.statementIndex,
+    },
+  };
 }
 
 function stepCommandInstruction(
@@ -242,6 +303,7 @@ function stepCommandInstruction(
       state: {
         ...state,
         branchFrames: [],
+        pendingChoice: null,
         pointer: {
           filePath: document.filePath,
           instructionIndex: target.statementIndex,
@@ -361,6 +423,37 @@ function stepIfInstruction(
   };
 }
 
+function stepChoiceInstruction(state: RuntimeState, instruction: ChoiceInstruction): RuntimeStepResult {
+  const pendingChoice = {
+    question: instruction.question,
+    items: instruction.items.map(choiceItemToRuntimeChoiceItem),
+  };
+
+  return {
+    state: {
+      ...state,
+      pendingChoice,
+    },
+    event: choiceEvent(pendingChoice),
+  };
+}
+
+function choiceItemToRuntimeChoiceItem(item: ChoiceItem): RuntimeChoiceItem {
+  return {
+    text: item.text,
+    targetRaw: item.target.raw,
+    ...(item.target.label === undefined ? {} : { targetLabel: item.target.label }),
+  };
+}
+
+function choiceEvent(pendingChoice: RuntimePendingChoice): ChoiceRuntimeEvent {
+  return {
+    type: "choice",
+    question: pendingChoice.question,
+    items: pendingChoice.items,
+  };
+}
+
 function getActiveBranchFrame(state: RuntimeState): RuntimeBranchFrame | undefined {
   return state.branchFrames[state.branchFrames.length - 1];
 }
@@ -424,9 +517,13 @@ function advanceActiveBranchFrame(state: RuntimeState): RuntimeState {
 }
 
 function unsupportedCommand(state: RuntimeState): RuntimeStepResult {
+  return unsupportedInstruction(state, "CommandInstruction");
+}
+
+function unsupportedInstruction(state: RuntimeState, instructionType: string): RuntimeStepResult {
   return {
     state,
-    event: { type: "unsupported", instructionType: "CommandInstruction" },
+    event: { type: "unsupported", instructionType },
   };
 }
 

@@ -15,6 +15,7 @@ const baseState: RuntimeState = {
   variables: {},
   flags: {},
   branchFrames: [],
+  pendingChoice: null,
   isStopped: false,
   isWaitingForClick: false,
 };

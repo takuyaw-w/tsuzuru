@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CompiledTzrDocument } from "../src/index.js";
-import { compileTzr, createInitialRuntimeState, parseTzr, stepRuntime } from "../src/index.js";
+import { compileTzr, createInitialRuntimeState, parseTzr, resolveChoice, stepRuntime } from "../src/index.js";
 
 describe("createInitialRuntimeState", () => {
   it("creates a JSON-serializable initial runtime state from a compiled document", () => {
@@ -33,6 +33,7 @@ The classroom was quiet.
       variables: {},
       flags: {},
       branchFrames: [],
+      pendingChoice: null,
       isStopped: false,
       isWaitingForClick: false,
     });
@@ -490,15 +491,118 @@ describe("stepRuntime", () => {
     expect(JSON.stringify(initial)).toBe(before);
   });
 
-  it("returns unsupported for ChoiceInstruction", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+  it("handles ChoiceInstruction by entering pending choice state", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n- "Go" -> #go\n#label("stay")\n#label("go")\n');
     const result = stepRuntime(document, createInitialRuntimeState(document));
 
     expect(result.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [
+        { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
+        { text: "Go", targetRaw: "#go", targetLabel: "go" },
+      ],
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.pendingChoice).toEqual({
+      question: "Choose",
+      items: [
+        { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
+        { text: "Go", targetRaw: "#go", targetLabel: "go" },
+      ],
+    });
+  });
+
+  it("keeps pendingChoice JSON serializable", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.state.pendingChoice).toBeDefined();
+    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
+  });
+
+  it("does not advance while waiting for choice resolution", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    expect(second.event).toEqual(first.event);
+    expect(second.state).toBe(first.state);
+  });
+
+  it("resolves a pending choice by moving to the selected target label", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n- "Go" -> #go\n#label("stay")\n#label("go")\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+
+    const result = resolveChoice(document, choice.state, 1);
+
+    expect(result.event).toEqual({
+      type: "jump",
+      label: "go",
+      instructionIndex: 2,
+    });
+    expect(result.state.pointer).toEqual({
+      filePath: "scenario/main.tzr",
+      instructionIndex: 2,
+    });
+    expect(result.state.pendingChoice).toBeNull();
+  });
+
+  it("clears branch frames when resolving a choice", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n? Choose\n- "Stay" -> #stay\n@endif\n@page()\n#label("stay")\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+    const choice = stepRuntime(document, initial);
+
+    const result = resolveChoice(document, choice.state, 0);
+
+    expect(result.event).toEqual({
+      type: "jump",
+      label: "stay",
+      instructionIndex: 2,
+    });
+    expect(result.state.branchFrames).toEqual([]);
+    expect(result.state.pendingChoice).toBeNull();
+  });
+
+  it("returns unsupported when resolving without a pending choice or with an invalid index", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const initial = createInitialRuntimeState(document);
+    const choice = stepRuntime(document, initial);
+
+    expect(resolveChoice(document, initial, 0).event).toEqual({
       type: "unsupported",
       instructionType: "ChoiceInstruction",
     });
-    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(resolveChoice(document, choice.state, 1).event).toEqual({
+      type: "unsupported",
+      instructionType: "ChoiceInstruction",
+    });
+  });
+
+  it("does not mutate state when executing and resolving ChoiceInstruction", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const initial = createInitialRuntimeState(document);
+    const beforeStep = JSON.stringify(initial);
+    const choice = stepRuntime(document, initial);
+    const beforeResolve = JSON.stringify(choice.state);
+
+    resolveChoice(document, choice.state, 0);
+
+    expect(JSON.stringify(initial)).toBe(beforeStep);
+    expect(JSON.stringify(choice.state)).toBe(beforeResolve);
+  });
+
+  it("steps the target label after resolving a choice", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+    const resolved = resolveChoice(document, choice.state, 0);
+    const label = stepRuntime(document, resolved.state);
+
+    expect(label.event).toEqual({ type: "label", id: "stay" });
+    expect(label.state.pointer.instructionIndex).toBe(2);
   });
 
   it("returns end event and stopped state at script end", () => {

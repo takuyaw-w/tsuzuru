@@ -52,6 +52,7 @@ export { expandMacro } from "./macro.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";
 export type {
+  ChoiceRuntimeEvent,
   DialogueRuntimeEvent,
   EndRuntimeEvent,
   IfRuntimeEvent,
@@ -60,8 +61,10 @@ export type {
   NarrationRuntimeEvent,
   PageRuntimeEvent,
   RuntimeBranchFrame,
+  RuntimeChoiceItem,
   RuntimeEvent,
   RuntimeFlags,
+  RuntimePendingChoice,
   RuntimePointer,
   RuntimeState,
   RuntimeStepResult,
@@ -74,4 +77,4 @@ export type {
   UnsupportedRuntimeEvent,
   WaitClickRuntimeEvent,
 } from "./runtime.js";
-export { createInitialRuntimeState, stepRuntime } from "./runtime.js";
+export { createInitialRuntimeState, resolveChoice, stepRuntime } from "./runtime.js";
