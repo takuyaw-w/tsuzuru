@@ -8,6 +8,7 @@ export {
   restoreRuntimeSnapshotForView,
 } from "./runtime-save.js";
 export {
+  getAutoClearWaitDuration,
   getRenderableRuntimeEvent,
   isAutoSteppableRuntimeEvent,
   isRenderableRuntimeEvent,

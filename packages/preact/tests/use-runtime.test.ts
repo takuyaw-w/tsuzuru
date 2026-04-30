@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import { isValidElement, type ComponentChildren, type VNode } from "preact";
 import {
   compileTzr,
+  createInitialRuntimeState,
   parseTzr,
+  stepRuntime,
   type CompiledTzrDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
 } from "@tsuzuru/core";
 import {
   createRuntimeSaveData,
+  getAutoClearWaitDuration,
   getRenderableRuntimeEvent,
   isAutoSteppableRuntimeEvent,
   isRenderableRuntimeEvent,
@@ -235,6 +238,68 @@ describe("isRenderableRuntimeEvent", () => {
     expect(getRenderableRuntimeEvent(renderableIf)).toBe(nestedDialogue);
     expect(isRenderableRuntimeEvent(transientIf)).toBe(false);
     expect(getRenderableRuntimeEvent(transientIf)).toBeNull();
+  });
+
+  it("uses a nested wait event from an if event as the renderable event", () => {
+    const nestedWait: RuntimeEvent = { type: "wait", durationMs: 500 };
+    const event: RuntimeEvent = {
+      type: "if",
+      result: true,
+      branch: "then",
+      event: nestedWait,
+    };
+
+    expect(isRenderableRuntimeEvent(event)).toBe(true);
+    expect(getRenderableRuntimeEvent(event)).toBe(nestedWait);
+  });
+});
+
+describe("getAutoClearWaitDuration", () => {
+  it("returns the wait duration for a nested wait event from an if event", () => {
+    const document = compileScript(`@flag("ready")
+@if(flag("ready"))
+@wait(500)
+@endif
+`);
+    const flagged = stepRuntime(document, createInitialRuntimeState(document));
+    const waited = stepRuntime(document, flagged.state);
+
+    expect(waited.event).toMatchObject({
+      type: "if",
+      event: { type: "wait", durationMs: 500 },
+    });
+    expect(getRenderableRuntimeEvent(waited.event)).toEqual({ type: "wait", durationMs: 500 });
+    expect(waited.state.pendingWait).toEqual({ durationMs: 500 });
+    expect(getAutoClearWaitDuration(waited.event, waited.state, true)).toBe(500);
+  });
+
+  it("does not auto-clear waitClick, page, or choice events", () => {
+    const blockedState = {
+      ...snapshot,
+      pendingWait: { durationMs: 500 },
+    };
+    const events: readonly RuntimeEvent[] = [
+      { type: "waitClick" },
+      { type: "page" },
+      {
+        type: "choice",
+        question: "What do you do?",
+        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+      },
+    ];
+
+    for (const event of events) {
+      expect(getAutoClearWaitDuration(event, blockedState, true), event.type).toBeNull();
+    }
+  });
+
+  it("does not auto-clear when autoClearWait is disabled", () => {
+    const state = {
+      ...snapshot,
+      pendingWait: { durationMs: 500 },
+    };
+
+    expect(getAutoClearWaitDuration({ type: "wait", durationMs: 500 }, state, false)).toBeNull();
   });
 });
 

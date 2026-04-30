@@ -171,13 +171,14 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   }, [reset]);
 
   useEffect(() => {
-    if (!autoClearWait || event?.type !== "wait" || state.pendingWait === null) {
+    const waitDurationMs = getAutoClearWaitDuration(event, state, autoClearWait);
+    if (waitDurationMs === null) {
       return;
     }
 
     const timer = window.setTimeout(() => {
       stepFrom(clearWait(state));
-    }, state.pendingWait.durationMs);
+    }, waitDurationMs);
 
     return () => window.clearTimeout(timer);
   }, [autoClearWait, event, state, stepFrom]);
@@ -290,6 +291,19 @@ export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | n
     default:
       return assertNever(event);
   }
+}
+
+export function getAutoClearWaitDuration(
+  event: RuntimeEvent | null,
+  state: RuntimeState,
+  autoClearWait: boolean,
+): number | null {
+  if (!autoClearWait || event === null || state.pendingWait === null) {
+    return null;
+  }
+
+  const renderableEvent = getRenderableRuntimeEvent(event);
+  return renderableEvent?.type === "wait" ? state.pendingWait.durationMs : null;
 }
 
 function assertNever(value: never): never {
