@@ -210,7 +210,7 @@ const compiled = compileTzr(parsed.document, {
 });
 ```
 
-For v0.1, plugin command definitions only register the command name. Argument schema validation can be added to these definitions later. Runtime handlers should use the same command names as the compile-time registry.
+The registry key must match the definition name. For example, `bg: { name: "bg" }` is valid, but `bg: { name: "show" }` is a compile-time error. For v0.1, plugin command definitions only register the command name. Argument schema validation can be added to these definitions later. Runtime handlers should use the same command names as the compile-time registry.
 
 `stepRuntime` accepts optional command handlers:
 

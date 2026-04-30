@@ -1003,6 +1003,134 @@ We meet again.
     expect(compiled.ok).toBe(true);
   });
 
+  it("accepts plugin command registry entries whose key matches the definition name", () => {
+    const parsed = parseTzr('@bg("school")\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "bg" },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("reports plugin command registry entries whose key does not match the definition name", () => {
+    const parsed = parseTzr("@wait(500)\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "show" },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command registry key "bg" does not match definition name "show".',
+        sourceLine: "@wait(500)",
+      },
+    ]);
+  });
+
+  it("does not treat mismatched plugin command definitions as registered commands", () => {
+    const parsed = parseTzr('@bg("school")\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "show" },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command registry key "bg" does not match definition name "show".',
+        sourceLine: '@bg("school")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Unknown command "@bg".',
+        sourceLine: '@bg("school")',
+      },
+    ]);
+  });
+
+  it("keeps core commands independent from valid plugin command definitions", () => {
+    const parsed = parseTzr("@wait(500)\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "bg" },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("reports mismatched plugin command registry entries even when the scenario only uses core commands", () => {
+    const parsed = parseTzr("@wait(500)\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        wait: { name: "bg" },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command registry key "wait" does not match definition name "bg".',
+        sourceLine: "@wait(500)",
+      },
+    ]);
+  });
+
   it("accepts core commands without plugin command registration", () => {
     const parsed = parseTzr(
       `#scene("prologue")

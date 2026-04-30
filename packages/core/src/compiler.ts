@@ -50,6 +50,7 @@ class TzrCompiler {
   ) {}
 
   public compile(): CompileResult {
+    this.validatePluginCommandRegistry();
     this.collectDeclarations();
     this.validateDeclarationPlacement();
     this.validateTargets();
@@ -58,6 +59,22 @@ class TzrCompiler {
     this.validateCompiledInstructions(compiled.instructions);
 
     return this.errors.length > 0 ? { ok: false, errors: this.errors } : { ok: true, document: compiled, errors: [] };
+  }
+
+  private validatePluginCommandRegistry(): void {
+    const pluginCommands = this.options.pluginCommands;
+    if (pluginCommands === undefined) {
+      return;
+    }
+
+    for (const [key, definition] of Object.entries(pluginCommands)) {
+      if (definition.name !== key) {
+        this.addError(
+          this.documentStartLocation(),
+          `Plugin command registry key "${key}" does not match definition name "${definition.name}".`,
+        );
+      }
+    }
   }
 
   private collectDeclarations(): void {
@@ -177,10 +194,14 @@ class TzrCompiler {
       return;
     }
 
-    const pluginCommand = this.options.pluginCommands?.[command.name];
-    if (pluginCommand === undefined) {
+    if (!this.hasRegisteredPluginCommand(command.name)) {
       this.addError(command.loc.start, `Unknown command "@${command.name}".`);
     }
+  }
+
+  private hasRegisteredPluginCommand(name: string): boolean {
+    const pluginCommand = this.options.pluginCommands?.[name];
+    return pluginCommand !== undefined && pluginCommand.name === name;
   }
 
   private validateCoreCommandArguments(command: CommandInstruction): void {
@@ -352,6 +373,14 @@ class TzrCompiler {
 
   private addError(location: { readonly filePath: string; readonly line: number; readonly column: number }, message: string): void {
     this.errors.push(createDiagnostic(location, message, this.sourceLine(location.line)));
+  }
+
+  private documentStartLocation(): { readonly filePath: string; readonly line: number; readonly column: number } {
+    return {
+      filePath: this.document.filePath,
+      line: 1,
+      column: 1,
+    };
   }
 
   private sourceLine(line: number): string {
