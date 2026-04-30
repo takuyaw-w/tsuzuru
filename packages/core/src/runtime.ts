@@ -1,5 +1,6 @@
 import type { TextLine, TzrArgument, TzrValue } from "./ast.js";
-import type { CompiledTzrDocument } from "./ir.js";
+import { evaluateCondition } from "./condition.js";
+import type { CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
 
 export interface RuntimePointer {
   readonly filePath: string;
@@ -30,6 +31,7 @@ export type RuntimeEvent =
   | StopRuntimeEvent
   | StateRuntimeEvent
   | JumpRuntimeEvent
+  | IfRuntimeEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -81,6 +83,13 @@ export interface JumpRuntimeEvent {
   readonly instructionIndex: number;
 }
 
+export interface IfRuntimeEvent {
+  readonly type: "if";
+  readonly result: boolean;
+  readonly branch: "then" | "else" | "none";
+  readonly event?: RuntimeEvent;
+}
+
 export interface UnsupportedRuntimeEvent {
   readonly type: "unsupported";
   readonly instructionType: string;
@@ -120,8 +129,15 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
     };
   }
 
-  const nextState = advanceInstruction(document, state);
+  return stepInstruction(document, state, instruction, advanceInstruction(document, state));
+}
 
+function stepInstruction(
+  document: CompiledTzrDocument,
+  state: RuntimeState,
+  instruction: TzrInstruction,
+  nextState: RuntimeState,
+): RuntimeStepResult {
   switch (instruction.type) {
     case "SceneInstruction":
       return {
@@ -144,10 +160,11 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
         event: { type: "dialogue", speaker: instruction.speaker, lines: instruction.lines },
       };
     case "CommandInstruction":
-      return stepCommandInstruction(document, state, instruction.name, instruction.args, instruction.jumpTarget?.label);
+      return stepCommandInstruction(document, state, nextState, instruction.name, instruction.args, instruction.jumpTarget?.label);
+    case "IfInstruction":
+      return stepIfInstruction(document, state, nextState, instruction);
     case "MacroInstruction":
     case "ChoiceInstruction":
-    case "IfInstruction":
       return {
         state: nextState,
         event: { type: "unsupported", instructionType: instruction.type },
@@ -158,12 +175,11 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
 function stepCommandInstruction(
   document: CompiledTzrDocument,
   state: RuntimeState,
+  nextState: RuntimeState,
   name: string,
   args: readonly TzrArgument[],
   jumpLabel: string | undefined,
 ): RuntimeStepResult {
-  const nextState = advanceInstruction(document, state);
-
   if (name === "waitClick") {
     return {
       state: {
@@ -278,6 +294,41 @@ function stepCommandInstruction(
   }
 
   return unsupportedCommand(nextState);
+}
+
+function stepIfInstruction(
+  document: CompiledTzrDocument,
+  state: RuntimeState,
+  nextState: RuntimeState,
+  instruction: IfInstruction,
+): RuntimeStepResult {
+  const result = evaluateCondition(instruction.conditionExpression, state);
+  const branch = result ? instruction.thenBranch : instruction.elseBranch;
+  const branchName = result ? "then" : branch === undefined ? "none" : "else";
+  const branchInstruction = branch?.[0];
+
+  if (branchInstruction === undefined) {
+    return {
+      state: nextState,
+      event: {
+        type: "if",
+        result,
+        branch: branchName,
+      },
+    };
+  }
+
+  const branchResult = stepInstruction(document, state, branchInstruction, nextState);
+
+  return {
+    state: branchResult.state,
+    event: {
+      type: "if",
+      result,
+      branch: branchName,
+      event: branchResult.event,
+    },
+  };
 }
 
 function unsupportedCommand(state: RuntimeState): RuntimeStepResult {

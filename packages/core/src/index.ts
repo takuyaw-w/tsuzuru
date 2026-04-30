@@ -54,6 +54,7 @@ export { parseTzr } from "./parser.js";
 export type {
   DialogueRuntimeEvent,
   EndRuntimeEvent,
+  IfRuntimeEvent,
   JumpRuntimeEvent,
   LabelRuntimeEvent,
   NarrationRuntimeEvent,

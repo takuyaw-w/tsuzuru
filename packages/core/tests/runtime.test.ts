@@ -307,15 +307,105 @@ describe("stepRuntime", () => {
     expect(JSON.stringify(initial)).toBe(before);
   });
 
-  it("returns unsupported for IfInstruction", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n');
+  it("executes the first thenBranch instruction for a true IfInstruction", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@page()\n@else\n@stop()\n@endif\n@page()\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "waitClick" },
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("executes the first elseBranch instruction for a false IfInstruction", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@else\n@page()\n@stop()\n@endif\n@stop()\n');
     const result = stepRuntime(document, createInitialRuntimeState(document));
 
     expect(result.event).toEqual({
-      type: "unsupported",
-      instructionType: "IfInstruction",
+      type: "if",
+      result: false,
+      branch: "else",
+      event: { type: "page" },
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("advances to the next top-level instruction for a false IfInstruction without elseBranch", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n@page()\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({
+      type: "if",
+      result: false,
+      branch: "none",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isWaitingForClick).toBe(false);
+  });
+
+  it("preserves top-level pointer behavior after executing a branch instruction", () => {
+    const document = compileScript('@if(var("affection") >= 1)\n@inc(name="affection", by=1)\n@endif\n@page()\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      variables: { affection: 1 },
+    };
+    const first = stepRuntime(document, initial);
+    const second = stepRuntime(document, first.state);
+
+    expect(first.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "state", command: "inc", name: "affection", value: 2 },
+    });
+    expect(first.state.pointer.instructionIndex).toBe(1);
+    expect(first.state.variables).toEqual({ affection: 2 });
+    expect(second.event).toEqual({ type: "page" });
+  });
+
+  it("does not advance past a branch @jump target", () => {
+    const document = compileScript('@if(flag("go"))\n@jump("#target")\n@endif\n@page()\n#label("target")\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { go: true },
+    };
+
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "jump",
+        label: "target",
+        instructionIndex: 2,
+      },
+    });
+    expect(result.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("does not mutate state when executing IfInstruction", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    };
+    const before = JSON.stringify(initial);
+
+    stepRuntime(document, initial);
+
+    expect(JSON.stringify(initial)).toBe(before);
   });
 
   it("returns unsupported for ChoiceInstruction", () => {
