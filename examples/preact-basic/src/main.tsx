@@ -47,6 +47,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
   const runtime = useRuntime(document, {
     commandHandlers,
     autoClearWait: true,
+    autoStepTransientEvents: true,
   });
 
   return (

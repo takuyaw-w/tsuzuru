@@ -9,6 +9,7 @@ Runtime control is intentionally small:
 - non-blocking events advance with the `Step` button
 - `waitClick` and `page` continue through `runtime.continueClick`
 - `wait` is handled by `useRuntime` with `autoClearWait: true`
+- transient events such as scene, label, state, jump, if, and pluginCommand advance through `autoStepTransientEvents: true`
 - `choice` calls `runtime.choose` from the clicked item index
 - `@bg(...)` is handled by a minimal plugin command handler
 

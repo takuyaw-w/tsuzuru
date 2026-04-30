@@ -38,6 +38,7 @@ interface AppProps {
 export function App({ document }: AppProps) {
   const runtime = useRuntime(document, {
     autoClearWait: true,
+    autoStepTransientEvents: true,
   });
 
   return (
@@ -58,6 +59,8 @@ export function App({ document }: AppProps) {
 ```
 
 The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `blockReason`, and `isBlocked`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
+
+`autoStepTransientEvents` defaults to `false`. When enabled, `scene`, `label`, `state`, `jump`, `if`, and `pluginCommand` events advance automatically one browser tick at a time. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
 
 ## Scripts
 

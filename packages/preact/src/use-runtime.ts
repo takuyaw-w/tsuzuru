@@ -17,6 +17,7 @@ import {
 export interface UseRuntimeOptions {
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
   readonly autoClearWait?: boolean;
+  readonly autoStepTransientEvents?: boolean;
 }
 
 export interface UseRuntimeResult {
@@ -34,6 +35,7 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   const [state, setState] = useState<RuntimeState>(() => createInitialRuntimeState(document));
   const [event, setEvent] = useState<RuntimeEvent | null>(null);
   const autoClearWait = options.autoClearWait ?? true;
+  const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
   const commandHandlers = options.commandHandlers;
 
   const stepOptions = useMemo<RuntimeStepOptions>(
@@ -112,6 +114,24 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     return () => window.clearTimeout(timer);
   }, [autoClearWait, event, state, stepFrom]);
 
+  useEffect(() => {
+    if (
+      !autoStepTransientEvents ||
+      event === null ||
+      !isTransientRuntimeEvent(event) ||
+      isRuntimeBlocked(state) ||
+      state.isStopped
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      stepFrom(state);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [autoStepTransientEvents, event, state, stepFrom]);
+
   const blockReason = getRuntimeBlockReason(state);
 
   return {
@@ -124,4 +144,26 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     blockReason,
     isBlocked: blockReason !== null,
   };
+}
+
+export function isTransientRuntimeEvent(event: RuntimeEvent): boolean {
+  switch (event.type) {
+    case "scene":
+    case "label":
+    case "state":
+    case "jump":
+    case "if":
+    case "pluginCommand":
+      return true;
+    case "narration":
+    case "dialogue":
+    case "choice":
+    case "waitClick":
+    case "page":
+    case "wait":
+    case "stop":
+    case "end":
+    case "unsupported":
+      return false;
+  }
 }
