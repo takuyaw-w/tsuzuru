@@ -50,3 +50,5 @@ export type { MacroContext, MacroDefinition, MacroEntry, MacroExpandFunction, Ma
 export { expandMacro } from "./macro.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";
+export type { RuntimeFlags, RuntimePointer, RuntimeState, RuntimeValue, RuntimeVariables } from "./runtime.js";
+export { createInitialRuntimeState } from "./runtime.js";
