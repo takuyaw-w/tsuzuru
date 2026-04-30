@@ -345,7 +345,7 @@ function buildInstructions(statements: readonly TzrStatement[]): readonly TzrIns
 
   function visit(nodes: readonly TzrStatement[]): void {
     for (const statement of nodes) {
-      instructions.push(statement);
+      instructions.push(toInstruction(statement));
       if (statement.type === "IfBlock") {
         visit(statement.thenBranch);
         if (statement.elseBranch !== undefined) {
@@ -359,12 +359,73 @@ function buildInstructions(statements: readonly TzrStatement[]): readonly TzrIns
   return instructions;
 }
 
+function toInstruction(statement: TzrStatement): TzrInstruction {
+  switch (statement.type) {
+    case "SceneDeclaration":
+      return {
+        type: "SceneInstruction",
+        id: statement.id,
+        loc: statement.loc,
+      };
+    case "LabelDeclaration":
+      return {
+        type: "LabelInstruction",
+        id: statement.id,
+        loc: statement.loc,
+      };
+    case "NarrationBlock":
+      return {
+        type: "NarrationInstruction",
+        lines: statement.lines,
+        loc: statement.loc,
+      };
+    case "SpeakerBlock":
+      return {
+        type: "DialogueInstruction",
+        speaker: statement.speaker,
+        lines: statement.lines,
+        loc: statement.loc,
+      };
+    case "CommandStatement":
+      return {
+        type: "CommandInstruction",
+        name: statement.name,
+        args: statement.args,
+        ...(statement.jumpTarget === undefined ? {} : { jumpTarget: statement.jumpTarget }),
+        loc: statement.loc,
+      };
+    case "MacroStatement":
+      return {
+        type: "MacroInstruction",
+        name: statement.name,
+        args: statement.args,
+        loc: statement.loc,
+      };
+    case "ChoiceBlock":
+      return {
+        type: "ChoiceInstruction",
+        question: statement.question,
+        items: statement.items,
+        loc: statement.loc,
+      };
+    case "IfBlock":
+      return {
+        type: "IfInstruction",
+        condition: statement.condition,
+        conditionExpression: statement.conditionExpression,
+        thenBranch: buildInstructions(statement.thenBranch),
+        ...(statement.elseBranch === undefined ? {} : { elseBranch: buildInstructions(statement.elseBranch) }),
+        loc: statement.loc,
+      };
+  }
+}
+
 function buildDeclarationIndexes(instructions: readonly TzrInstruction[]): DeclarationIndexes {
   const labels: Record<string, DeclarationIndexEntry> = {};
   const scenes: Record<string, DeclarationIndexEntry> = {};
 
   for (const [statementIndex, statement] of instructions.entries()) {
-    if (statement.type === "LabelDeclaration") {
+    if (statement.type === "LabelInstruction") {
       labels[statement.id] = {
         id: statement.id,
         statementIndex,
@@ -372,7 +433,7 @@ function buildDeclarationIndexes(instructions: readonly TzrInstruction[]): Decla
       };
     }
 
-    if (statement.type === "SceneDeclaration") {
+    if (statement.type === "SceneInstruction") {
       scenes[statement.id] = {
         id: statement.id,
         statementIndex,

@@ -32,10 +32,10 @@ describe("compileTzr", () => {
       body: parsed.document.body,
     });
     expect(compiled.document.instructions.map((instruction) => instruction.type)).toEqual([
-      "SceneDeclaration",
-      "ChoiceBlock",
-      "LabelDeclaration",
-      "CommandStatement",
+      "SceneInstruction",
+      "ChoiceInstruction",
+      "LabelInstruction",
+      "CommandInstruction",
     ]);
   });
 
@@ -69,16 +69,21 @@ describe("compileTzr", () => {
       after: { id: "after", statementIndex: 4 },
     });
     expect(compiled.document.instructions[compiled.document.labels.inside?.statementIndex ?? -1]).toMatchObject({
-      type: "LabelDeclaration",
+      type: "LabelInstruction",
       id: "inside",
     });
     expect(compiled.document.instructions[compiled.document.labels.fallback?.statementIndex ?? -1]).toMatchObject({
-      type: "LabelDeclaration",
+      type: "LabelInstruction",
       id: "fallback",
     });
     expect(compiled.document.instructions[compiled.document.labels.after?.statementIndex ?? -1]).toMatchObject({
-      type: "LabelDeclaration",
+      type: "LabelInstruction",
       id: "after",
+    });
+    expect(compiled.document.instructions[1]).toMatchObject({
+      type: "IfInstruction",
+      thenBranch: [{ type: "LabelInstruction", id: "inside" }],
+      elseBranch: [{ type: "LabelInstruction", id: "fallback" }],
     });
     expect(compiled.document.labels.inside?.loc.start).toEqual({
       filePath: "scenario/main.tzr",
@@ -112,11 +117,11 @@ describe("compileTzr", () => {
       chapter_1: { id: "chapter_1", statementIndex: 2 },
     });
     expect(compiled.document.instructions[compiled.document.scenes.prologue?.statementIndex ?? -1]).toMatchObject({
-      type: "SceneDeclaration",
+      type: "SceneInstruction",
       id: "prologue",
     });
     expect(compiled.document.instructions[compiled.document.scenes.chapter_1?.statementIndex ?? -1]).toMatchObject({
-      type: "SceneDeclaration",
+      type: "SceneInstruction",
       id: "chapter_1",
     });
     expect(compiled.document.scenes.chapter_1?.loc.start).toEqual({
