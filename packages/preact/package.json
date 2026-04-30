@@ -11,6 +11,7 @@
   "files": ["dist"],
   "scripts": {
     "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
     "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

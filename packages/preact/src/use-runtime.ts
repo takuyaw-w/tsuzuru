@@ -18,6 +18,7 @@ export interface UseRuntimeOptions {
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
+  readonly autoStepMaxSteps?: number;
 }
 
 export interface UseRuntimeResult {
@@ -29,6 +30,7 @@ export interface UseRuntimeResult {
   readonly reset: () => void;
   readonly blockReason: RuntimeBlockReason | null;
   readonly isBlocked: boolean;
+  readonly autoStepError: string | null;
 }
 
 export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOptions = {}): UseRuntimeResult {
@@ -36,7 +38,10 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   const [event, setEvent] = useState<RuntimeEvent | null>(null);
   const autoClearWait = options.autoClearWait ?? true;
   const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
+  const autoStepMaxSteps = options.autoStepMaxSteps ?? 1000;
   const commandHandlers = options.commandHandlers;
+  const [autoStepCount, setAutoStepCount] = useState(0);
+  const [autoStepError, setAutoStepError] = useState<string | null>(null);
 
   const stepOptions = useMemo<RuntimeStepOptions>(
     () => (commandHandlers === undefined ? {} : { commandHandlers }),
@@ -53,6 +58,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   );
 
   const step = useCallback(() => {
+    setAutoStepCount(0);
+    setAutoStepError(null);
     setState((currentState) => {
       if (isRuntimeBlocked(currentState) || currentState.isStopped) {
         return currentState;
@@ -65,6 +72,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   }, [document, stepOptions]);
 
   const continueClick = useCallback(() => {
+    setAutoStepCount(0);
+    setAutoStepError(null);
     setState((currentState) => {
       if (getRuntimeBlockReason(currentState) !== "click") {
         return currentState;
@@ -78,6 +87,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
 
   const choose = useCallback(
     (itemIndex: number) => {
+      setAutoStepCount(0);
+      setAutoStepError(null);
       setState((currentState) => {
         if (currentState.pendingChoice === null) {
           return currentState;
@@ -96,6 +107,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     const initialState = createInitialRuntimeState(document);
     setState(initialState);
     setEvent(null);
+    setAutoStepCount(0);
+    setAutoStepError(null);
   }, [document]);
 
   useEffect(() => {
@@ -118,19 +131,34 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     if (
       !autoStepTransientEvents ||
       event === null ||
-      !isTransientRuntimeEvent(event) ||
+      !isAutoSteppableRuntimeEvent(event) ||
       isRuntimeBlocked(state) ||
       state.isStopped
     ) {
       return;
     }
 
+    if (autoStepCount >= autoStepMaxSteps) {
+      setAutoStepError(`Auto-step stopped after ${autoStepMaxSteps} consecutive runtime events.`);
+      return;
+    }
+
     const timer = window.setTimeout(() => {
+      setAutoStepCount((currentCount) => currentCount + 1);
       stepFrom(state);
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [autoStepTransientEvents, event, state, stepFrom]);
+  }, [autoStepCount, autoStepMaxSteps, autoStepTransientEvents, event, state, stepFrom]);
+
+  useEffect(() => {
+    if (event === null || isAutoSteppableRuntimeEvent(event)) {
+      return;
+    }
+
+    setAutoStepCount(0);
+    setAutoStepError(null);
+  }, [event]);
 
   const blockReason = getRuntimeBlockReason(state);
 
@@ -143,17 +171,22 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     reset,
     blockReason,
     isBlocked: blockReason !== null,
+    autoStepError,
   };
 }
 
-export function isTransientRuntimeEvent(event: RuntimeEvent): boolean {
+export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
   switch (event.type) {
     case "scene":
     case "label":
     case "state":
     case "jump":
+      return true;
     case "if":
+      return event.event === undefined || isAutoSteppableRuntimeEvent(event.event);
     case "pluginCommand":
+      // Plugin commands are currently non-blocking. A future plugin API can add
+      // explicit blocking metadata and route that decision through this branch.
       return true;
     case "narration":
     case "dialogue":
@@ -165,5 +198,18 @@ export function isTransientRuntimeEvent(event: RuntimeEvent): boolean {
     case "end":
     case "unsupported":
       return false;
+    default:
+      return assertNever(event);
   }
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled runtime event: ${JSON.stringify(value)}`);
+}
+
+/**
+ * @deprecated Use isAutoSteppableRuntimeEvent instead.
+ */
+export function isTransientRuntimeEvent(event: RuntimeEvent): boolean {
+  return isAutoSteppableRuntimeEvent(event);
 }

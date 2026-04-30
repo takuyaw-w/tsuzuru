@@ -39,6 +39,7 @@ export function App({ document }: AppProps) {
   const runtime = useRuntime(document, {
     autoClearWait: true,
     autoStepTransientEvents: true,
+    autoStepMaxSteps: 1000,
   });
 
   return (
@@ -58,13 +59,18 @@ export function App({ document }: AppProps) {
 }
 ```
 
-The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `blockReason`, and `isBlocked`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
+The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `blockReason`, `isBlocked`, and `autoStepError`. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
 
-`autoStepTransientEvents` defaults to `false`. When enabled, `scene`, `label`, `state`, `jump`, `if`, and `pluginCommand` events advance automatically one browser tick at a time. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
+`autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `label`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
+
+`if` events are auto-steppable only when their nested event is also auto-steppable. For example, an `if` event that immediately produces a nested `state` or `jump` event advances automatically, but an `if` event that produces nested narration, dialogue, choice, wait, stop, end, or unsupported output stops so the host can render or inspect it.
+
+`autoStepMaxSteps` defaults to `1000`. It limits consecutive automatic steps so a label/jump loop cannot keep scheduling timers forever. When the limit is reached, auto-step stops and `autoStepError` contains a message.
 
 ## Scripts
 
 ```sh
 pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/preact build
+pnpm --filter @tsuzuru/preact test
 ```

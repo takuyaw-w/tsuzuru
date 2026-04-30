@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "pnpm --filter @tsuzuru/core test",
+    "test": "pnpm --filter @tsuzuru/core test && pnpm --filter @tsuzuru/preact test",
     "typecheck": "pnpm --filter @tsuzuru/core typecheck"
   },
   "devDependencies": {
