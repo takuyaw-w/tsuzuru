@@ -116,7 +116,13 @@ The parser accepts positional and named arguments. Supported values are:
 
 Unknown command names are not parse errors yet.
 
-The current compiler recognizes `@jump(...)` only for target validation. Other command names are preserved but not validated.
+Core-owned command names are registered by `@tsuzuru/core`:
+
+- flow: `jump`, `stop`, `wait`
+- text flow: `waitClick`, `page`
+- state: `set`, `inc`, `dec`, `flag`, `unflag`
+
+The current compiler recognizes `@jump(...)` for target validation. Other command names are preserved but not validated yet. Plugin command validation is not implemented.
 
 ## Macro Calls
 
