@@ -239,4 +239,52 @@ Narration.
       },
     ]);
   });
+
+  it("returns a diagnostic when @if condition is empty", () => {
+    const result = parseTzr(
+      `@if()
+@endif
+`,
+      { filePath: "scenario/broken.tzr" },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 5,
+        message: "@if condition must not be empty.",
+        sourceLine: "@if()",
+      },
+    ]);
+  });
+
+  it("returns a diagnostic when @if condition is whitespace only", () => {
+    const result = parseTzr(
+      `@if(   )
+@endif
+`,
+      { filePath: "scenario/broken.tzr" },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 5,
+        message: "@if condition must not be empty.",
+        sourceLine: "@if(   )",
+      },
+    ]);
+  });
 });

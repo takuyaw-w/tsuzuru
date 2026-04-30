@@ -541,7 +541,14 @@ class TzrParser {
       return undefined;
     }
 
-    return match[1] ?? "";
+    const condition = match[1] ?? "";
+    if (condition.trim().length === 0) {
+      const openParenColumn = line.text.indexOf("(") + 1;
+      this.addError(line, openParenColumn + 1, "@if condition must not be empty.");
+      return undefined;
+    }
+
+    return condition;
   }
 
   private lastStatementEnd(statements: readonly TzrStatement[]): SourceLocation | undefined {
