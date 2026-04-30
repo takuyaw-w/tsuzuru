@@ -32,6 +32,7 @@ class TzrCompiler {
 
   public compile(): CompileResult {
     this.collectDeclarations();
+    this.validateDeclarationPlacement();
     this.validateCommands();
     this.validateTargets();
 
@@ -43,27 +44,13 @@ class TzrCompiler {
   }
 
   private collectDeclarations(): void {
-    this.collectDeclarationsIn(this.document.body);
-  }
-
-  private collectDeclarationsIn(statements: readonly TzrStatement[]): void {
-    for (const statement of statements) {
+    for (const statement of this.document.body) {
       if (statement.type === "SceneDeclaration") {
         this.collectScene(statement);
       }
       if (statement.type === "LabelDeclaration") {
         this.collectLabel(statement);
       }
-      if (statement.type === "IfBlock") {
-        this.collectIfDeclarations(statement);
-      }
-    }
-  }
-
-  private collectIfDeclarations(ifBlock: IfBlock): void {
-    this.collectDeclarationsIn(ifBlock.thenBranch);
-    if (ifBlock.elseBranch !== undefined) {
-      this.collectDeclarationsIn(ifBlock.elseBranch);
     }
   }
 
@@ -87,6 +74,35 @@ class TzrCompiler {
 
   private validateTargets(): void {
     this.validateTargetsIn(this.document.body);
+  }
+
+  private validateDeclarationPlacement(): void {
+    for (const statement of this.document.body) {
+      if (statement.type === "IfBlock") {
+        this.validateIfDeclarationPlacement(statement);
+      }
+    }
+  }
+
+  private validateIfDeclarationPlacement(ifBlock: IfBlock): void {
+    this.validateBranchDeclarationPlacement(ifBlock.thenBranch);
+    if (ifBlock.elseBranch !== undefined) {
+      this.validateBranchDeclarationPlacement(ifBlock.elseBranch);
+    }
+  }
+
+  private validateBranchDeclarationPlacement(statements: readonly TzrStatement[]): void {
+    for (const statement of statements) {
+      if (statement.type === "SceneDeclaration") {
+        this.addError(statement.loc.start, "#scene declarations must be top-level.");
+      }
+      if (statement.type === "LabelDeclaration") {
+        this.addError(statement.loc.start, "#label declarations must be top-level.");
+      }
+      if (statement.type === "IfBlock") {
+        this.validateIfDeclarationPlacement(statement);
+      }
+    }
   }
 
   private validateCommands(): void {
@@ -341,22 +357,7 @@ interface DeclarationIndexes {
 }
 
 function buildInstructions(statements: readonly TzrStatement[]): readonly TzrInstruction[] {
-  const instructions: TzrInstruction[] = [];
-
-  function visit(nodes: readonly TzrStatement[]): void {
-    for (const statement of nodes) {
-      instructions.push(toInstruction(statement));
-      if (statement.type === "IfBlock") {
-        visit(statement.thenBranch);
-        if (statement.elseBranch !== undefined) {
-          visit(statement.elseBranch);
-        }
-      }
-    }
-  }
-
-  visit(statements);
-  return instructions;
+  return statements.map((statement) => toInstruction(statement));
 }
 
 function toInstruction(statement: TzrStatement): TzrInstruction {

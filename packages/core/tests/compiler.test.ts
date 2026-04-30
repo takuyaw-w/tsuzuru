@@ -42,11 +42,8 @@ describe("compileTzr", () => {
   it("builds a label index for the compiled document", () => {
     const parsed = parseTzr(
       `#scene("prologue")
-@if(flag("met_haruka"))
-#label("inside")
-@else
-#label("fallback")
-@endif
+#label("start")
+@waitClick()
 #label("after")
 `,
       { filePath: "scenario/main.tzr" },
@@ -64,31 +61,58 @@ describe("compileTzr", () => {
       throw new Error("expected compiler success");
     }
     expect(compiled.document.labels).toMatchObject({
-      inside: { id: "inside", statementIndex: 2 },
-      fallback: { id: "fallback", statementIndex: 3 },
-      after: { id: "after", statementIndex: 4 },
+      start: { id: "start", statementIndex: 1 },
+      after: { id: "after", statementIndex: 3 },
     });
-    expect(compiled.document.instructions[compiled.document.labels.inside?.statementIndex ?? -1]).toMatchObject({
+    expect(compiled.document.instructions[compiled.document.labels.start?.statementIndex ?? -1]).toMatchObject({
       type: "LabelInstruction",
-      id: "inside",
-    });
-    expect(compiled.document.instructions[compiled.document.labels.fallback?.statementIndex ?? -1]).toMatchObject({
-      type: "LabelInstruction",
-      id: "fallback",
+      id: "start",
     });
     expect(compiled.document.instructions[compiled.document.labels.after?.statementIndex ?? -1]).toMatchObject({
       type: "LabelInstruction",
       id: "after",
     });
+    expect(compiled.document.labels.start?.loc.start).toEqual({
+      filePath: "scenario/main.tzr",
+      line: 2,
+      column: 1,
+    });
+  });
+
+  it("keeps @if branch instructions out of the top-level instruction list", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+:: Haruka
+We meet again.
+@else
+@waitClick()
+@endif
+@page()
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.instructions.map((instruction) => instruction.type)).toEqual([
+      "SceneInstruction",
+      "IfInstruction",
+      "CommandInstruction",
+    ]);
     expect(compiled.document.instructions[1]).toMatchObject({
       type: "IfInstruction",
-      thenBranch: [{ type: "LabelInstruction", id: "inside" }],
-      elseBranch: [{ type: "LabelInstruction", id: "fallback" }],
-    });
-    expect(compiled.document.labels.inside?.loc.start).toEqual({
-      filePath: "scenario/main.tzr",
-      line: 3,
-      column: 1,
+      thenBranch: [{ type: "DialogueInstruction", speaker: "Haruka" }],
+      elseBranch: [{ type: "CommandInstruction", name: "waitClick" }],
     });
   });
 
@@ -311,7 +335,7 @@ describe("compileTzr", () => {
     expect(compileTzr(parsed.document).ok).toBe(true);
   });
 
-  it("reports duplicate labels inside @if blocks", () => {
+  it("reports labels inside @if blocks as invalid placement", () => {
     const parsed = parseTzr(
       `#scene("prologue")
 #label("start")
@@ -338,8 +362,40 @@ describe("compileTzr", () => {
         filePath: "scenario/main.tzr",
         line: 4,
         column: 1,
-        message: 'Duplicate label "#start".',
+        message: "#label declarations must be top-level.",
         sourceLine: '#label("start")',
+      },
+    ]);
+  });
+
+  it("reports scenes inside @if blocks as invalid placement", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+#scene("inside")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: "#scene declarations must be top-level.",
+        sourceLine: '#scene("inside")',
       },
     ]);
   });
