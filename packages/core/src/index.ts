@@ -61,6 +61,7 @@ export type {
   NarrationRuntimeEvent,
   PageRuntimeEvent,
   RuntimeBranchFrame,
+  RuntimeBlockReason,
   RuntimeChoiceItem,
   RuntimeEvent,
   RuntimeFlags,
@@ -79,4 +80,12 @@ export type {
   WaitClickRuntimeEvent,
   WaitRuntimeEvent,
 } from "./runtime.js";
-export { clearWait, createInitialRuntimeState, resolveChoice, stepRuntime } from "./runtime.js";
+export {
+  clearClickWait,
+  clearWait,
+  createInitialRuntimeState,
+  getRuntimeBlockReason,
+  isRuntimeBlocked,
+  resolveChoice,
+  stepRuntime,
+} from "./runtime.js";

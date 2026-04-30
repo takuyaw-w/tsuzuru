@@ -44,6 +44,8 @@ export interface RuntimeState {
   readonly isWaitingForClick: boolean;
 }
 
+export type RuntimeBlockReason = "wait" | "choice" | "click";
+
 export type RuntimeEvent =
   | SceneRuntimeEvent
   | LabelRuntimeEvent
@@ -171,6 +173,13 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
     };
   }
 
+  if (state.isWaitingForClick) {
+    return {
+      state,
+      event: { type: "waitClick" },
+    };
+  }
+
   const normalizedState = popFinishedBranchFrames(state);
   const activeFrame = getActiveBranchFrame(normalizedState);
   if (activeFrame !== undefined) {
@@ -281,6 +290,34 @@ export function clearWait(state: RuntimeState): RuntimeState {
   };
 }
 
+export function clearClickWait(state: RuntimeState): RuntimeState {
+  if (!state.isWaitingForClick) {
+    return state;
+  }
+
+  return {
+    ...state,
+    isWaitingForClick: false,
+  };
+}
+
+export function isRuntimeBlocked(state: RuntimeState): boolean {
+  return getRuntimeBlockReason(state) !== null;
+}
+
+export function getRuntimeBlockReason(state: RuntimeState): RuntimeBlockReason | null {
+  if (state.pendingWait !== null) {
+    return "wait";
+  }
+  if (state.pendingChoice !== null) {
+    return "choice";
+  }
+  if (state.isWaitingForClick) {
+    return "click";
+  }
+  return null;
+}
+
 function stepCommandInstruction(
   document: CompiledTzrDocument,
   state: RuntimeState,
@@ -351,6 +388,7 @@ function stepCommandInstruction(
         branchFrames: [],
         pendingChoice: null,
         pendingWait: null,
+        isWaitingForClick: false,
         pointer: {
           filePath: document.filePath,
           instructionIndex: target.statementIndex,

@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { CompiledTzrDocument } from "../src/index.js";
-import { clearWait, compileTzr, createInitialRuntimeState, parseTzr, resolveChoice, stepRuntime } from "../src/index.js";
+import {
+  clearClickWait,
+  clearWait,
+  compileTzr,
+  createInitialRuntimeState,
+  getRuntimeBlockReason,
+  isRuntimeBlocked,
+  parseTzr,
+  resolveChoice,
+  stepRuntime,
+} from "../src/index.js";
 
 describe("createInitialRuntimeState", () => {
   it("creates a JSON-serializable initial runtime state from a compiled document", () => {
@@ -125,6 +135,36 @@ describe("stepRuntime", () => {
     expect(result.event).toEqual({ type: "waitClick" });
     expect(result.state.pointer.instructionIndex).toBe(1);
     expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("does not advance while waiting for click", () => {
+    const document = compileScript("@waitClick()\n@page()\n");
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    expect(second.event).toEqual({ type: "waitClick" });
+    expect(second.state).toBe(first.state);
+  });
+
+  it("clears click wait with clearClickWait and continues execution", () => {
+    const document = compileScript("@waitClick()\n@page()\n");
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const cleared = clearClickWait(first.state);
+    const second = stepRuntime(document, cleared);
+
+    expect(cleared.isWaitingForClick).toBe(false);
+    expect(second.event).toEqual({ type: "page" });
+    expect(second.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("does not mutate state when clearing click wait", () => {
+    const document = compileScript("@waitClick()\n");
+    const waited = stepRuntime(document, createInitialRuntimeState(document));
+    const before = JSON.stringify(waited.state);
+
+    clearClickWait(waited.state);
+
+    expect(JSON.stringify(waited.state)).toBe(before);
   });
 
   it("handles @page and advances instructionIndex", () => {
@@ -484,7 +524,7 @@ describe("stepRuntime", () => {
 
     const first = stepRuntime(document, initial);
     const second = stepRuntime(document, first.state);
-    const third = stepRuntime(document, second.state);
+    const third = stepRuntime(document, clearClickWait(second.state));
 
     expect(third.event).toEqual({ type: "page" });
     expect(third.state.pointer.instructionIndex).toBe(2);
@@ -540,6 +580,23 @@ describe("stepRuntime", () => {
     stepRuntime(document, initial);
 
     expect(JSON.stringify(initial)).toBe(before);
+  });
+
+  it("reports runtime block reasons", () => {
+    const document = compileScript("@waitClick()\n");
+    const initial = createInitialRuntimeState(document);
+    const clickWait = stepRuntime(document, initial).state;
+    const waitDocument = compileScript("@wait(500)\n");
+    const wait = stepRuntime(waitDocument, createInitialRuntimeState(waitDocument)).state;
+    const choiceDocument = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const choice = stepRuntime(choiceDocument, createInitialRuntimeState(choiceDocument)).state;
+
+    expect(isRuntimeBlocked(initial)).toBe(false);
+    expect(getRuntimeBlockReason(initial)).toBeNull();
+    expect(isRuntimeBlocked(clickWait)).toBe(true);
+    expect(getRuntimeBlockReason(clickWait)).toBe("click");
+    expect(getRuntimeBlockReason(wait)).toBe("wait");
+    expect(getRuntimeBlockReason(choice)).toBe("choice");
   });
 
   it("handles ChoiceInstruction by entering pending choice state", () => {
