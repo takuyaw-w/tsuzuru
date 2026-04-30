@@ -3,13 +3,16 @@ import {
   clearClickWait,
   clearWait,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
   resolveChoice,
+  restoreRuntimeState,
   stepRuntime,
   type CompiledTzrDocument,
   type RuntimeBlockReason,
   type RuntimeEvent,
+  type RuntimeSnapshot,
   type RuntimeState,
   type RuntimeStepOptions,
 } from "@tsuzuru/core";
@@ -28,6 +31,8 @@ export interface UseRuntimeResult {
   readonly continueClick: () => void;
   readonly choose: (itemIndex: number) => void;
   readonly reset: () => void;
+  readonly createSnapshot: () => RuntimeSnapshot;
+  readonly restoreSnapshot: (snapshot: RuntimeSnapshot) => void;
   readonly blockReason: RuntimeBlockReason | null;
   readonly isBlocked: boolean;
   readonly autoStepError: string | null;
@@ -111,6 +116,15 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     setAutoStepError(null);
   }, [document]);
 
+  const createSnapshot = useCallback(() => createRuntimeSnapshot(state), [state]);
+
+  const restoreSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
+    setState(restoreRuntimeState(snapshot));
+    setEvent(null);
+    setAutoStepCount(0);
+    setAutoStepError(null);
+  }, []);
+
   useEffect(() => {
     reset();
   }, [reset]);
@@ -169,6 +183,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     continueClick,
     choose,
     reset,
+    createSnapshot,
+    restoreSnapshot,
     blockReason,
     isBlocked: blockReason !== null,
     autoStepError,

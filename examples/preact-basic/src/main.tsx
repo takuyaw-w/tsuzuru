@@ -1,10 +1,11 @@
 import { render } from "preact";
-import { useMemo } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import {
   compileTzr,
   parseTzr,
   type CompiledTzrDocument,
   type RuntimePluginCommandHandler,
+  type RuntimeSnapshot,
 } from "@tsuzuru/core";
 import { RuntimeView, useRuntime } from "@tsuzuru/preact";
 import scenarioSource from "../scenario/main.tzr?raw";
@@ -29,6 +30,8 @@ const commandHandlers: Record<string, RuntimePluginCommandHandler> = {
   },
 };
 
+const SNAPSHOT_STORAGE_KEY = "tsuzuru:examples:preact-basic:snapshot";
+
 function App() {
   const documentResult = useMemo(() => compileScenario(scenarioSource), []);
 
@@ -44,11 +47,38 @@ interface RuntimeAppProps {
 }
 
 function RuntimeApp({ document }: RuntimeAppProps) {
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const runtime = useRuntime(document, {
     commandHandlers,
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+
+  const saveSnapshot = () => {
+    localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(runtime.createSnapshot()));
+    setSaveStatus("Saved");
+  };
+
+  const loadSnapshot = () => {
+    const savedSnapshot = localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    if (savedSnapshot === null) {
+      setSaveStatus("Failed to load save data");
+      return;
+    }
+
+    try {
+      const snapshot = JSON.parse(savedSnapshot) as RuntimeSnapshot;
+      runtime.restoreSnapshot(snapshot);
+      setSaveStatus("Loaded");
+    } catch {
+      setSaveStatus("Failed to load save data");
+    }
+  };
+
+  const clearSnapshot = () => {
+    localStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+    setSaveStatus("Save cleared");
+  };
 
   return (
     <main className="app">
@@ -72,6 +102,21 @@ function RuntimeApp({ document }: RuntimeAppProps) {
       >
         Step
       </button>
+      <div className="save-controls" aria-label="Save controls">
+        <button type="button" onClick={saveSnapshot}>
+          Save
+        </button>
+        <button type="button" onClick={loadSnapshot}>
+          Load
+        </button>
+        <button type="button" onClick={clearSnapshot}>
+          Clear Save
+        </button>
+      </div>
+      {saveStatus === null ? null : <p className="save-status">{saveStatus}</p>}
+      {runtime.autoStepError === null ? null : (
+        <p className="runtime-error">{runtime.autoStepError}</p>
+      )}
     </main>
   );
 }
