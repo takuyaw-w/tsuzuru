@@ -191,6 +191,201 @@ You never change.
     });
   });
 
+  it("parses supported condition expressions into AST nodes", () => {
+    const cases = [
+      {
+        source: '@if(flag("met_haruka"))\n@endif\n',
+        expected: {
+          type: "FlagCondition",
+          name: "met_haruka",
+        },
+      },
+      {
+        source: '@if(!flag("met_haruka"))\n@endif\n',
+        expected: {
+          type: "NotCondition",
+          expression: {
+            type: "FlagCondition",
+            name: "met_haruka",
+          },
+        },
+      },
+      {
+        source: '@if(var("route") == "haruka")\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "route",
+          operator: "==",
+          value: { type: "StringValue", value: "haruka" },
+        },
+      },
+      {
+        source: '@if(var("route") != "haruka")\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "route",
+          operator: "!=",
+          value: { type: "StringValue", value: "haruka" },
+        },
+      },
+      {
+        source: '@if(var("score") >= 1)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "score",
+          operator: ">=",
+          value: { type: "NumberValue", value: 1 },
+        },
+      },
+      {
+        source: '@if(var("score") <= 1)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "score",
+          operator: "<=",
+          value: { type: "NumberValue", value: 1 },
+        },
+      },
+      {
+        source: '@if(var("score") > 1)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "score",
+          operator: ">",
+          value: { type: "NumberValue", value: 1 },
+        },
+      },
+      {
+        source: '@if(var("score") < 1)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "score",
+          operator: "<",
+          value: { type: "NumberValue", value: 1 },
+        },
+      },
+      {
+        source: '@if(var("cleared") == true)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "cleared",
+          operator: "==",
+          value: { type: "BooleanValue", value: true },
+        },
+      },
+      {
+        source: '@if(var("cleared") == false)\n@endif\n',
+        expected: {
+          type: "VariableComparisonCondition",
+          name: "cleared",
+          operator: "==",
+          value: { type: "BooleanValue", value: false },
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const result = parseTzr(testCase.source, { filePath: "scenario/main.tzr" });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) {
+        throw new Error("expected parser success");
+      }
+
+      expect(result.document.body[0]).toMatchObject({
+        type: "IfBlock",
+        conditionExpression: testCase.expected,
+      });
+    }
+  });
+
+  it("returns diagnostics for unsupported condition expressions", () => {
+    const result = parseTzr(
+      `@if(calcSomething())
+@endif
+@if(player.affection > 3)
+@endif
+@if(flag())
+@endif
+@if(flag(name))
+@endif
+@if(var("score"))
+@endif
+@if(var("score") >= "high")
+@endif
+@if(var("score") === 1)
+@endif
+@if(flag("a") && flag("b"))
+@endif
+`,
+      { filePath: "scenario/broken.tzr" },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: "@if(calcSomething())",
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 3,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: "@if(player.affection > 3)",
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 5,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: "@if(flag())",
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 7,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: "@if(flag(name))",
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 9,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: '@if(var("score"))',
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 11,
+        column: 21,
+        message: 'Condition operator ">=" requires a number value.',
+        sourceLine: '@if(var("score") >= "high")',
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 13,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: '@if(var("score") === 1)',
+      },
+      {
+        filePath: "scenario/broken.tzr",
+        line: 15,
+        column: 5,
+        message: "Invalid condition expression.",
+        sourceLine: '@if(flag("a") && flag("b"))',
+      },
+    ]);
+  });
+
   it("returns a diagnostic when @endif is missing", () => {
     const result = parseTzr(
       `@if(flag("met_haruka"))

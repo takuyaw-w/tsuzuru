@@ -2,16 +2,21 @@ import type {
   ChoiceBlock,
   ChoiceItem,
   CommandStatement,
+  ComparisonOperator,
+  ConditionExpression,
   IfBlock,
   JumpTarget,
   LabelDeclaration,
   MacroStatement,
   NarrationBlock,
+  BooleanValue,
+  NumberValue,
   PositionalArgument,
   SceneDeclaration,
   SourceLocation,
   SourceRange,
   SpeakerBlock,
+  StringValue,
   TextLine,
   TzrArgument,
   TzrDocument,
@@ -39,6 +44,11 @@ interface CallParts {
   readonly name: string;
   readonly args: readonly TzrArgument[];
   readonly loc: SourceRange;
+}
+
+interface ParsedIfCondition {
+  readonly raw: string;
+  readonly expression: ConditionExpression;
 }
 
 export function parseTzr(source: string, options: ParseOptions = {}): ParseResult {
@@ -178,7 +188,8 @@ class TzrParser {
         ? undefined
         : {
             type: "IfBlock",
-            condition,
+            condition: condition.raw,
+            conditionExpression: condition.expression,
             thenBranch,
             ...(elseBranch === undefined ? {} : { elseBranch }),
             loc: { start: headerLoc.start, end },
@@ -192,7 +203,8 @@ class TzrParser {
       ? undefined
       : {
           type: "IfBlock",
-          condition,
+          condition: condition.raw,
+          conditionExpression: condition.expression,
           thenBranch,
           ...(elseBranch === undefined ? {} : { elseBranch }),
           loc: { start: headerLoc.start, end },
@@ -532,7 +544,7 @@ class TzrParser {
     return { filePath: this.filePath, line, column };
   }
 
-  private parseIfCondition(line: SourceLine): string | undefined {
+  private parseIfCondition(line: SourceLine): ParsedIfCondition | undefined {
     const pattern = /^\s*@if\((.*)\)\s*$/;
     const match = pattern.exec(line.text);
     if (match === null) {
@@ -547,11 +559,117 @@ class TzrParser {
       return undefined;
     }
 
-    return condition;
+    const openParenIndex = line.text.indexOf("(");
+    const conditionColumn = openParenIndex + 2;
+    const expression = this.parseConditionExpression(line, condition, conditionColumn);
+    return expression === undefined ? undefined : { raw: condition, expression };
   }
 
   private lastStatementEnd(statements: readonly TzrStatement[]): SourceLocation | undefined {
     return statements.at(-1)?.loc.end;
+  }
+
+  private parseConditionExpression(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): ConditionExpression | undefined {
+    const leadingWhitespaceLength = source.length - source.trimStart().length;
+    const expressionSource = source.trim();
+    const expressionColumn = sourceColumn + leadingWhitespaceLength;
+    const expressionLoc = {
+      start: this.location(line.line, expressionColumn),
+      end: this.location(line.line, expressionColumn + expressionSource.length),
+    };
+
+    const notFlag = /^!flag\("((?:\\.|[^"\\])*)"\)$/.exec(expressionSource);
+    if (notFlag !== null) {
+      const flagName = notFlag[1] ?? "";
+      const flagColumn = expressionColumn + 1;
+      const flagLoc = {
+        start: this.location(line.line, flagColumn),
+        end: expressionLoc.end,
+      };
+      return {
+        type: "NotCondition",
+        expression: {
+          type: "FlagCondition",
+          name: unescapeString(flagName),
+          loc: flagLoc,
+        },
+        loc: expressionLoc,
+      };
+    }
+
+    const flag = /^flag\("((?:\\.|[^"\\])*)"\)$/.exec(expressionSource);
+    if (flag !== null) {
+      return {
+        type: "FlagCondition",
+        name: unescapeString(flag[1] ?? ""),
+        loc: expressionLoc,
+      };
+    }
+
+    if (expressionSource.includes("===") || expressionSource.includes("!==")) {
+      this.addError(line, expressionColumn, "Invalid condition expression.");
+      return undefined;
+    }
+
+    const comparison = /^var\("((?:\\.|[^"\\])*)"\)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(expressionSource);
+    if (comparison !== null) {
+      const name = comparison[1] ?? "";
+      const operator = comparison[2] as ComparisonOperator | undefined;
+      const valueSource = comparison[3] ?? "";
+      if (operator === undefined) {
+        this.addError(line, expressionColumn, "Invalid condition expression.");
+        return undefined;
+      }
+
+      const valueColumn = expressionColumn + expressionSource.lastIndexOf(valueSource);
+      const value = this.parseConditionValue(line, valueSource, valueColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if ((operator === ">" || operator === "<" || operator === ">=" || operator === "<=") && value.type !== "NumberValue") {
+        this.addError(line, value.loc.start.column, `Condition operator "${operator}" requires a number value.`);
+        return undefined;
+      }
+
+      return {
+        type: "VariableComparisonCondition",
+        name: unescapeString(name),
+        operator,
+        value,
+        loc: expressionLoc,
+      };
+    }
+
+    this.addError(line, expressionColumn, "Invalid condition expression.");
+    return undefined;
+  }
+
+  private parseConditionValue(line: SourceLine, source: string, column: number): StringValue | NumberValue | BooleanValue | undefined {
+    const loc = {
+      start: this.location(line.line, column),
+      end: this.location(line.line, column + source.length),
+    };
+
+    const stringMatch = /^"((?:\\.|[^"\\])*)"$/.exec(source);
+    if (stringMatch !== null) {
+      return { type: "StringValue", value: unescapeString(stringMatch[1] ?? ""), loc };
+    }
+
+    if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(source)) {
+      return { type: "NumberValue", value: Number(source), loc };
+    }
+
+    if (source === "true" || source === "false") {
+      return { type: "BooleanValue", value: source === "true", loc };
+    }
+
+    this.addError(line, column, "Invalid condition value.");
+    return undefined;
   }
 }
 

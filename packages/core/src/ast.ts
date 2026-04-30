@@ -87,8 +87,33 @@ export interface ChoiceItem {
 export interface IfBlock {
   readonly type: "IfBlock";
   readonly condition: string;
+  readonly conditionExpression: ConditionExpression;
   readonly thenBranch: readonly TzrStatement[];
   readonly elseBranch?: readonly TzrStatement[];
+  readonly loc: SourceRange;
+}
+
+export type ConditionExpression = FlagCondition | NotCondition | VariableComparisonCondition;
+
+export interface FlagCondition {
+  readonly type: "FlagCondition";
+  readonly name: string;
+  readonly loc: SourceRange;
+}
+
+export interface NotCondition {
+  readonly type: "NotCondition";
+  readonly expression: ConditionExpression;
+  readonly loc: SourceRange;
+}
+
+export type ComparisonOperator = "==" | "!=" | ">=" | "<=" | ">" | "<";
+
+export interface VariableComparisonCondition {
+  readonly type: "VariableComparisonCondition";
+  readonly name: string;
+  readonly operator: ComparisonOperator;
+  readonly value: StringValue | NumberValue | BooleanValue;
   readonly loc: SourceRange;
 }
 

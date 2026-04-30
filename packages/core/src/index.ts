@@ -3,6 +3,9 @@ export type {
   ChoiceBlock,
   ChoiceItem,
   CommandStatement,
+  ComparisonOperator,
+  ConditionExpression,
+  FlagCondition,
   IdentifierValue,
   IfBlock,
   JumpTarget,
@@ -11,6 +14,7 @@ export type {
   NamedArgument,
   NarrationBlock,
   NumberValue,
+  NotCondition,
   PositionalArgument,
   SceneDeclaration,
   SourceLocation,
@@ -22,6 +26,7 @@ export type {
   TzrDocument,
   TzrStatement,
   TzrValue,
+  VariableComparisonCondition,
 } from "./ast.js";
 export type { CompileResult } from "./compiler.js";
 export { compileTzr } from "./compiler.js";
