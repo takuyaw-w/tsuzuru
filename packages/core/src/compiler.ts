@@ -1,4 +1,13 @@
-import type { ChoiceBlock, CommandStatement, JumpTarget, LabelDeclaration, SceneDeclaration, TzrDocument } from "./ast.js";
+import type {
+  ChoiceBlock,
+  CommandStatement,
+  IfBlock,
+  JumpTarget,
+  LabelDeclaration,
+  SceneDeclaration,
+  TzrDocument,
+  TzrStatement,
+} from "./ast.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 
 export type CompileResult =
@@ -29,13 +38,27 @@ class TzrCompiler {
   }
 
   private collectDeclarations(): void {
-    for (const statement of this.document.body) {
+    this.collectDeclarationsIn(this.document.body);
+  }
+
+  private collectDeclarationsIn(statements: readonly TzrStatement[]): void {
+    for (const statement of statements) {
       if (statement.type === "SceneDeclaration") {
         this.collectScene(statement);
       }
       if (statement.type === "LabelDeclaration") {
         this.collectLabel(statement);
       }
+      if (statement.type === "IfBlock") {
+        this.collectIfDeclarations(statement);
+      }
+    }
+  }
+
+  private collectIfDeclarations(ifBlock: IfBlock): void {
+    this.collectDeclarationsIn(ifBlock.thenBranch);
+    if (ifBlock.elseBranch !== undefined) {
+      this.collectDeclarationsIn(ifBlock.elseBranch);
     }
   }
 
@@ -58,13 +81,27 @@ class TzrCompiler {
   }
 
   private validateTargets(): void {
-    for (const statement of this.document.body) {
+    this.validateTargetsIn(this.document.body);
+  }
+
+  private validateTargetsIn(statements: readonly TzrStatement[]): void {
+    for (const statement of statements) {
       if (statement.type === "CommandStatement") {
         this.validateCommandTarget(statement);
       }
       if (statement.type === "ChoiceBlock") {
         this.validateChoiceTargets(statement);
       }
+      if (statement.type === "IfBlock") {
+        this.validateIfTargets(statement);
+      }
+    }
+  }
+
+  private validateIfTargets(ifBlock: IfBlock): void {
+    this.validateTargetsIn(ifBlock.thenBranch);
+    if (ifBlock.elseBranch !== undefined) {
+      this.validateTargetsIn(ifBlock.elseBranch);
     }
   }
 

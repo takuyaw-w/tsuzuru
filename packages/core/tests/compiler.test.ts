@@ -208,4 +208,139 @@ describe("compileTzr", () => {
 
     expect(compileTzr(parsed.document).ok).toBe(true);
   });
+
+  it("reports duplicate labels inside @if blocks", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+#label("start")
+@if(flag("met_haruka"))
+#label("start")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: 'Duplicate label "#start".',
+        sourceLine: '#label("start")',
+      },
+    ]);
+  });
+
+  it("reports missing @jump targets inside @if blocks", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@jump("#missing")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 8,
+        message: 'Unknown label "#missing".',
+        sourceLine: '@jump("#missing")',
+      },
+    ]);
+  });
+
+  it("reports missing choice targets inside @else blocks", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@jump("#known")
+@else
+? Choose
+- "Missing" -> #missing
+@endif
+#label("known")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 16,
+        message: 'Unknown label "#missing".',
+        sourceLine: '- "Missing" -> #missing',
+      },
+    ]);
+  });
+
+  it("reports missing jump targets inside nested @if blocks", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@if(var("affection") >= 3)
+@jump("#nested_missing")
+@endif
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 8,
+        message: 'Unknown label "#nested_missing".',
+        sourceLine: '@jump("#nested_missing")',
+      },
+    ]);
+  });
 });
