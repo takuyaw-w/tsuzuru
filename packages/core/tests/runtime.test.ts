@@ -114,6 +114,67 @@ describe("stepRuntime", () => {
     expect(JSON.stringify(initial)).toBe(before);
   });
 
+  it("handles @waitClick and advances instructionIndex", () => {
+    const document = compileScript("@waitClick()\n");
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "waitClick" });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("handles @page and advances instructionIndex", () => {
+    const document = compileScript("@page()\n");
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "page" });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("handles @stop and advances instructionIndex", () => {
+    const document = compileScript("@stop()\n");
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "stop" });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isStopped).toBe(true);
+  });
+
+  it("returns unsupported for unimplemented CommandInstruction", () => {
+    const document = compileScript('@wait(500)\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({
+      type: "unsupported",
+      instructionType: "CommandInstruction",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.isStopped).toBe(false);
+  });
+
+  it("returns unsupported for IfInstruction", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({
+      type: "unsupported",
+      instructionType: "IfInstruction",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+  });
+
+  it("returns unsupported for ChoiceInstruction", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({
+      type: "unsupported",
+      instructionType: "ChoiceInstruction",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+  });
+
   it("returns end event and stopped state at script end", () => {
     const document = compileScript('#scene("prologue")\n');
     const initial = {

@@ -25,6 +25,10 @@ export type RuntimeEvent =
   | LabelRuntimeEvent
   | NarrationRuntimeEvent
   | DialogueRuntimeEvent
+  | WaitClickRuntimeEvent
+  | PageRuntimeEvent
+  | StopRuntimeEvent
+  | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
 export interface SceneRuntimeEvent {
@@ -46,6 +50,23 @@ export interface DialogueRuntimeEvent {
   readonly type: "dialogue";
   readonly speaker: string;
   readonly lines: readonly TextLine[];
+}
+
+export interface WaitClickRuntimeEvent {
+  readonly type: "waitClick";
+}
+
+export interface PageRuntimeEvent {
+  readonly type: "page";
+}
+
+export interface StopRuntimeEvent {
+  readonly type: "stop";
+}
+
+export interface UnsupportedRuntimeEvent {
+  readonly type: "unsupported";
+  readonly instructionType: string;
 }
 
 export interface EndRuntimeEvent {
@@ -106,14 +127,58 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
         event: { type: "dialogue", speaker: instruction.speaker, lines: instruction.lines },
       };
     case "CommandInstruction":
+      return stepCommandInstruction(document, state, instruction.name);
     case "MacroInstruction":
     case "ChoiceInstruction":
     case "IfInstruction":
       return {
         state: nextState,
-        event: { type: "end" },
+        event: { type: "unsupported", instructionType: instruction.type },
       };
   }
+}
+
+function stepCommandInstruction(
+  document: CompiledTzrDocument,
+  state: RuntimeState,
+  name: string,
+): RuntimeStepResult {
+  const nextState = advanceInstruction(document, state);
+
+  if (name === "waitClick") {
+    return {
+      state: {
+        ...nextState,
+        isWaitingForClick: true,
+      },
+      event: { type: "waitClick" },
+    };
+  }
+
+  if (name === "page") {
+    return {
+      state: {
+        ...nextState,
+        isWaitingForClick: true,
+      },
+      event: { type: "page" },
+    };
+  }
+
+  if (name === "stop") {
+    return {
+      state: {
+        ...nextState,
+        isStopped: true,
+      },
+      event: { type: "stop" },
+    };
+  }
+
+  return {
+    state: nextState,
+    event: { type: "unsupported", instructionType: "CommandInstruction" },
+  };
 }
 
 function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState): RuntimeState {

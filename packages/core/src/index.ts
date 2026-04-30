@@ -56,6 +56,7 @@ export type {
   EndRuntimeEvent,
   LabelRuntimeEvent,
   NarrationRuntimeEvent,
+  PageRuntimeEvent,
   RuntimeEvent,
   RuntimeFlags,
   RuntimePointer,
@@ -64,5 +65,8 @@ export type {
   RuntimeValue,
   RuntimeVariables,
   SceneRuntimeEvent,
+  StopRuntimeEvent,
+  UnsupportedRuntimeEvent,
+  WaitClickRuntimeEvent,
 } from "./runtime.js";
 export { createInitialRuntimeState, stepRuntime } from "./runtime.js";
