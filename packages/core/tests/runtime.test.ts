@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CompiledTzrDocument } from "../src/index.js";
-import { compileTzr, createInitialRuntimeState, parseTzr, resolveChoice, stepRuntime } from "../src/index.js";
+import { clearWait, compileTzr, createInitialRuntimeState, parseTzr, resolveChoice, stepRuntime } from "../src/index.js";
 
 describe("createInitialRuntimeState", () => {
   it("creates a JSON-serializable initial runtime state from a compiled document", () => {
@@ -34,6 +34,7 @@ The classroom was quiet.
       flags: {},
       branchFrames: [],
       pendingChoice: null,
+      pendingWait: null,
       isStopped: false,
       isWaitingForClick: false,
     });
@@ -144,8 +145,58 @@ describe("stepRuntime", () => {
     expect(result.state.isStopped).toBe(true);
   });
 
-  it("returns unsupported for unimplemented CommandInstruction", () => {
+  it("handles @wait by setting pendingWait and advancing instructionIndex", () => {
     const document = compileScript('@wait(500)\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "wait", durationMs: 500 });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.pendingWait).toEqual({ durationMs: 500 });
+  });
+
+  it("does not advance while pendingWait is set", () => {
+    const document = compileScript('@wait(500)\n@page()\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    expect(second.event).toEqual({ type: "wait", durationMs: 500 });
+    expect(second.state).toBe(first.state);
+  });
+
+  it("clears pendingWait with clearWait and continues execution", () => {
+    const document = compileScript('@wait(500)\n@page()\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const cleared = clearWait(first.state);
+    const second = stepRuntime(document, cleared);
+
+    expect(cleared.pendingWait).toBeNull();
+    expect(second.event).toEqual({ type: "page" });
+    expect(second.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("keeps pendingWait JSON serializable", () => {
+    const document = compileScript('@wait(500)\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.state.pendingWait).toEqual({ durationMs: 500 });
+    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
+  });
+
+  it("does not mutate state when executing and clearing @wait", () => {
+    const document = compileScript('@wait(500)\n');
+    const initial = createInitialRuntimeState(document);
+    const beforeStep = JSON.stringify(initial);
+    const waited = stepRuntime(document, initial);
+    const beforeClear = JSON.stringify(waited.state);
+
+    clearWait(waited.state);
+
+    expect(JSON.stringify(initial)).toBe(beforeStep);
+    expect(JSON.stringify(waited.state)).toBe(beforeClear);
+  });
+
+  it("returns unsupported for unimplemented CommandInstruction", () => {
+    const document = compileScript('@bg("school")\n');
     const result = stepRuntime(document, createInitialRuntimeState(document));
 
     expect(result.event).toEqual({

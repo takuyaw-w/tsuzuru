@@ -65,6 +65,7 @@ export type {
   RuntimeEvent,
   RuntimeFlags,
   RuntimePendingChoice,
+  RuntimePendingWait,
   RuntimePointer,
   RuntimeState,
   RuntimeStepResult,
@@ -76,5 +77,6 @@ export type {
   StopRuntimeEvent,
   UnsupportedRuntimeEvent,
   WaitClickRuntimeEvent,
+  WaitRuntimeEvent,
 } from "./runtime.js";
-export { createInitialRuntimeState, resolveChoice, stepRuntime } from "./runtime.js";
+export { clearWait, createInitialRuntimeState, resolveChoice, stepRuntime } from "./runtime.js";

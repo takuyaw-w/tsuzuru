@@ -29,12 +29,17 @@ export interface RuntimePendingChoice {
   readonly items: readonly RuntimeChoiceItem[];
 }
 
+export interface RuntimePendingWait {
+  readonly durationMs: number;
+}
+
 export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
+  readonly pendingWait: RuntimePendingWait | null;
   readonly isStopped: boolean;
   readonly isWaitingForClick: boolean;
 }
@@ -51,6 +56,7 @@ export type RuntimeEvent =
   | JumpRuntimeEvent
   | IfRuntimeEvent
   | ChoiceRuntimeEvent
+  | WaitRuntimeEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -115,6 +121,11 @@ export interface ChoiceRuntimeEvent {
   readonly items: readonly RuntimeChoiceItem[];
 }
 
+export interface WaitRuntimeEvent {
+  readonly type: "wait";
+  readonly durationMs: number;
+}
+
 export interface UnsupportedRuntimeEvent {
   readonly type: "unsupported";
   readonly instructionType: string;
@@ -139,12 +150,20 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     flags: {},
     branchFrames: [],
     pendingChoice: null,
+    pendingWait: null,
     isStopped: false,
     isWaitingForClick: false,
   };
 }
 
 export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState): RuntimeStepResult {
+  if (state.pendingWait !== null) {
+    return {
+      state,
+      event: waitEvent(state.pendingWait),
+    };
+  }
+
   if (state.pendingChoice !== null) {
     return {
       state,
@@ -251,6 +270,17 @@ export function resolveChoice(
   };
 }
 
+export function clearWait(state: RuntimeState): RuntimeState {
+  if (state.pendingWait === null) {
+    return state;
+  }
+
+  return {
+    ...state,
+    pendingWait: null,
+  };
+}
+
 function stepCommandInstruction(
   document: CompiledTzrDocument,
   state: RuntimeState,
@@ -279,6 +309,22 @@ function stepCommandInstruction(
     };
   }
 
+  if (name === "wait") {
+    const durationMs = getPositionalNumber(args, 0);
+    if (durationMs === undefined) {
+      return unsupportedCommand(nextState);
+    }
+
+    const pendingWait = { durationMs };
+    return {
+      state: {
+        ...nextState,
+        pendingWait,
+      },
+      event: waitEvent(pendingWait),
+    };
+  }
+
   if (name === "stop") {
     return {
       state: {
@@ -304,6 +350,7 @@ function stepCommandInstruction(
         ...state,
         branchFrames: [],
         pendingChoice: null,
+        pendingWait: null,
         pointer: {
           filePath: document.filePath,
           instructionIndex: target.statementIndex,
@@ -454,6 +501,13 @@ function choiceEvent(pendingChoice: RuntimePendingChoice): ChoiceRuntimeEvent {
   };
 }
 
+function waitEvent(pendingWait: RuntimePendingWait): WaitRuntimeEvent {
+  return {
+    type: "wait",
+    durationMs: pendingWait.durationMs,
+  };
+}
+
 function getActiveBranchFrame(state: RuntimeState): RuntimeBranchFrame | undefined {
   return state.branchFrames[state.branchFrames.length - 1];
 }
@@ -553,6 +607,14 @@ function getNamedString(args: readonly TzrArgument[], name: string): string | un
 function getNamedNumber(args: readonly TzrArgument[], name: string): number | undefined {
   const argument = getNamedArgument(args, name);
   if (argument?.type !== "NamedArgument" || argument.value.type !== "NumberValue") {
+    return undefined;
+  }
+  return argument.value.value;
+}
+
+function getPositionalNumber(args: readonly TzrArgument[], index: number): number | undefined {
+  const argument = args[index];
+  if (argument?.type !== "PositionalArgument" || argument.value.type !== "NumberValue") {
     return undefined;
   }
   return argument.value.value;
