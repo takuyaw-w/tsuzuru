@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm --filter @tsuzuru/core test && pnpm --filter @tsuzuru/preact test",
-    "typecheck": "pnpm --filter @tsuzuru/core typecheck"
+    "typecheck": "pnpm --filter @tsuzuru/core typecheck && pnpm --filter @tsuzuru/preact typecheck"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

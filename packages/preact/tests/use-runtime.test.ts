@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { RuntimeEvent, RuntimeSnapshot } from "@tsuzuru/core";
+import {
+  compileTzr,
+  parseTzr,
+  type CompiledTzrDocument,
+  type RuntimeEvent,
+  type RuntimeSnapshot,
+} from "@tsuzuru/core";
 import {
   createRuntimeSaveData,
   isAutoSteppableRuntimeEvent,
   isRuntimeSaveData,
   isTransientRuntimeEvent,
+  restoreRuntimeSnapshotForView,
 } from "../src/index.js";
 
 const snapshot: RuntimeSnapshot = {
@@ -21,6 +28,22 @@ const snapshot: RuntimeSnapshot = {
   isStopped: false,
   isWaitingForClick: false,
 };
+
+function compileScript(source: string): CompiledTzrDocument {
+  const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) {
+    throw new Error("expected parser success");
+  }
+
+  const compiled = compileTzr(parsed.document);
+  expect(compiled.ok).toBe(true);
+  if (!compiled.ok) {
+    throw new Error("expected compiler success");
+  }
+
+  return compiled.document;
+}
 
 describe("isAutoSteppableRuntimeEvent", () => {
   it("allows non-blocking runtime events to auto-step", () => {
@@ -166,8 +189,93 @@ describe("RuntimeSaveData", () => {
     expect(isRuntimeSaveData({ version: 2, snapshot, event: null })).toBe(false);
   });
 
-  it("rejects save data without a snapshot object", () => {
+  it("rejects save data without a valid snapshot object", () => {
     expect(isRuntimeSaveData({ version: 1, event: null })).toBe(false);
     expect(isRuntimeSaveData({ version: 1, snapshot: null, event: null })).toBe(false);
+    expect(isRuntimeSaveData({ version: 1, snapshot: { ...snapshot, version: 2 }, event: null })).toBe(
+      false,
+    );
+    expect(isRuntimeSaveData({ version: 1, snapshot: { ...snapshot, pointer: undefined }, event: null })).toBe(
+      false,
+    );
+    expect(
+      isRuntimeSaveData({
+        version: 1,
+        snapshot: { ...snapshot, pointer: { ...snapshot.pointer, filePath: 1 } },
+        event: null,
+      }),
+    ).toBe(false);
+    expect(
+      isRuntimeSaveData({
+        version: 1,
+        snapshot: { ...snapshot, pointer: { ...snapshot.pointer, instructionIndex: "1" } },
+        event: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects object events without a string type", () => {
+    expect(isRuntimeSaveData({ version: 1, snapshot, event: {} })).toBe(false);
+    expect(isRuntimeSaveData({ version: 1, snapshot, event: { type: 1 } })).toBe(false);
+  });
+});
+
+describe("restoreRuntimeSnapshotForView", () => {
+  const document = compileScript("The classroom was quiet.\n");
+
+  it("restores a non-blocking snapshot with a null event", () => {
+    const result = restoreRuntimeSnapshotForView(document, snapshot);
+
+    expect(result.state.pointer).toEqual(snapshot.pointer);
+    expect(result.state.pendingChoice).toBeNull();
+    expect(result.state.pendingWait).toBeNull();
+    expect(result.state.isWaitingForClick).toBe(false);
+    expect(result.event).toBeNull();
+  });
+
+  it("restores a choice event from a pendingChoice snapshot without advancing state", () => {
+    const choiceSnapshot: RuntimeSnapshot = {
+      ...snapshot,
+      pendingChoice: {
+        question: "What do you do?",
+        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+      },
+    };
+
+    const result = restoreRuntimeSnapshotForView(document, choiceSnapshot);
+
+    expect(result.event).toEqual({
+      type: "choice",
+      question: "What do you do?",
+      items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+    });
+    expect(result.state.pointer).toEqual(choiceSnapshot.pointer);
+    expect(result.state.pendingChoice).toEqual(choiceSnapshot.pendingChoice);
+  });
+
+  it("restores a wait event from a pendingWait snapshot without advancing state", () => {
+    const waitSnapshot: RuntimeSnapshot = {
+      ...snapshot,
+      pendingWait: { durationMs: 500 },
+    };
+
+    const result = restoreRuntimeSnapshotForView(document, waitSnapshot);
+
+    expect(result.event).toEqual({ type: "wait", durationMs: 500 });
+    expect(result.state.pointer).toEqual(waitSnapshot.pointer);
+    expect(result.state.pendingWait).toEqual(waitSnapshot.pendingWait);
+  });
+
+  it("restores a waitClick event from an isWaitingForClick snapshot without advancing state", () => {
+    const waitClickSnapshot: RuntimeSnapshot = {
+      ...snapshot,
+      isWaitingForClick: true,
+    };
+
+    const result = restoreRuntimeSnapshotForView(document, waitClickSnapshot);
+
+    expect(result.event).toEqual({ type: "waitClick" });
+    expect(result.state.pointer).toEqual(waitClickSnapshot.pointer);
+    expect(result.state.isWaitingForClick).toBe(true);
   });
 });

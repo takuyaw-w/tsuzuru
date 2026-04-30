@@ -14,7 +14,7 @@ Runtime control is intentionally small:
 - `@bg(...)` is handled by a minimal plugin command handler
 - `Save`, `Load`, and `Clear Save` persist runtime save data in `localStorage`
 
-Save data uses the fixed `localStorage` key `tsuzuru:examples:preact-basic:snapshot`. The stored value is `RuntimeSaveData`, which contains the state-only runtime snapshot and the current `RuntimeEvent` so the visible screen can be restored after loading. It is example-only data for demonstrating `useRuntime` save/load, and compatibility is not guaranteed yet.
+Save data uses the fixed `localStorage` key `tsuzuru:examples:preact-basic:snapshot`. The stored value is `RuntimeSaveData`, which contains the state-only runtime snapshot and the current `RuntimeEvent` so the visible screen can be restored after loading. The example checks parsed data with `isRuntimeSaveData` before restoring it. It is example-only data for demonstrating `useRuntime` save/load, and compatibility is not guaranteed yet.
 
 ## Run
 

@@ -71,6 +71,10 @@ The hook returns `state`, `event`, `step`, `continueClick`, `choose`, `reset`, `
 
 For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
 
+`isRuntimeSaveData(value)` provides v0.1 lightweight validation for host-owned save data. It checks the save data version, basic snapshot pointer shape, and current event type shape, but it is not a full schema validator for every runtime event. Because data loaded from `localStorage` or another host store may be stale or corrupted, pass parsed data through `isRuntimeSaveData` before calling `restoreSaveData`. `restoreSaveData` assumes the value has already been accepted as `RuntimeSaveData`.
+
+Use `restoreSnapshot` only when restoring state-only data is sufficient. For non-blocking narration or dialogue currently visible on screen, use `createSaveData` and `restoreSaveData` so the current event is restored too.
+
 ## Scripts
 
 ```sh

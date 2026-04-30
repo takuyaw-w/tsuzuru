@@ -16,18 +16,17 @@ import {
   type RuntimeState,
   type RuntimeStepOptions,
 } from "@tsuzuru/core";
+import {
+  createRuntimeSaveData,
+  restoreRuntimeSnapshotForView,
+  type RuntimeSaveData,
+} from "./runtime-save.js";
 
 export interface UseRuntimeOptions {
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
   readonly autoStepMaxSteps?: number;
-}
-
-export interface RuntimeSaveData {
-  readonly version: 1;
-  readonly snapshot: RuntimeSnapshot;
-  readonly event: RuntimeEvent | null;
 }
 
 export interface UseRuntimeResult {
@@ -127,15 +126,9 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   const createSnapshot = useCallback(() => createRuntimeSnapshot(state), [state]);
 
   const restoreSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
-    const restoredState = restoreRuntimeState(snapshot);
-    if (getRuntimeBlockReason(restoredState) === null) {
-      setState(restoredState);
-      setEvent(null);
-    } else {
-      const result = stepRuntime(document, restoredState, stepOptions);
-      setState(result.state);
-      setEvent(result.event);
-    }
+    const result = restoreRuntimeSnapshotForView(document, snapshot, stepOptions);
+    setState(result.state);
+    setEvent(result.event);
     setAutoStepCount(0);
     setAutoStepError(null);
   }, [document, stepOptions]);
@@ -220,29 +213,6 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   };
 }
 
-export function createRuntimeSaveData(
-  snapshot: RuntimeSnapshot,
-  event: RuntimeEvent | null,
-): RuntimeSaveData {
-  return {
-    version: 1,
-    snapshot,
-    event,
-  };
-}
-
-export function isRuntimeSaveData(value: unknown): value is RuntimeSaveData {
-  if (!isObjectRecord(value)) {
-    return false;
-  }
-
-  return (
-    value.version === 1 &&
-    isObjectRecord(value.snapshot) &&
-    (value.event === null || isObjectRecord(value.event))
-  );
-}
-
 export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
   switch (event.type) {
     case "scene":
@@ -273,10 +243,6 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled runtime event: ${JSON.stringify(value)}`);
-}
-
-function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null;
 }
 
 /**
