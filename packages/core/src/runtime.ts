@@ -29,6 +29,7 @@ export type RuntimeEvent =
   | PageRuntimeEvent
   | StopRuntimeEvent
   | StateRuntimeEvent
+  | JumpRuntimeEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -72,6 +73,12 @@ export interface StateRuntimeEvent {
   readonly command: StateCommandName;
   readonly name: string;
   readonly value: RuntimeValue;
+}
+
+export interface JumpRuntimeEvent {
+  readonly type: "jump";
+  readonly label: string;
+  readonly instructionIndex: number;
 }
 
 export interface UnsupportedRuntimeEvent {
@@ -137,7 +144,7 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
         event: { type: "dialogue", speaker: instruction.speaker, lines: instruction.lines },
       };
     case "CommandInstruction":
-      return stepCommandInstruction(document, state, instruction.name, instruction.args);
+      return stepCommandInstruction(document, state, instruction.name, instruction.args, instruction.jumpTarget?.label);
     case "MacroInstruction":
     case "ChoiceInstruction":
     case "IfInstruction":
@@ -153,6 +160,7 @@ function stepCommandInstruction(
   state: RuntimeState,
   name: string,
   args: readonly TzrArgument[],
+  jumpLabel: string | undefined,
 ): RuntimeStepResult {
   const nextState = advanceInstruction(document, state);
 
@@ -183,6 +191,32 @@ function stepCommandInstruction(
         isStopped: true,
       },
       event: { type: "stop" },
+    };
+  }
+
+  if (name === "jump") {
+    if (jumpLabel === undefined) {
+      return unsupportedCommand(nextState);
+    }
+
+    const target = document.labels[jumpLabel];
+    if (target === undefined) {
+      return unsupportedCommand(nextState);
+    }
+
+    return {
+      state: {
+        ...state,
+        pointer: {
+          filePath: document.filePath,
+          instructionIndex: target.statementIndex,
+        },
+      },
+      event: {
+        type: "jump",
+        label: jumpLabel,
+        instructionIndex: target.statementIndex,
+      },
     };
   }
 

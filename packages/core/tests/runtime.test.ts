@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CompiledTzrDocument } from "../src/index.js";
 import { compileTzr, createInitialRuntimeState, parseTzr, stepRuntime } from "../src/index.js";
 
 describe("createInitialRuntimeState", () => {
@@ -151,6 +152,73 @@ describe("stepRuntime", () => {
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
     expect(result.state.isStopped).toBe(false);
+  });
+
+  it("executes @jump by moving to the target label instructionIndex", () => {
+    const document = compileScript('@jump("#target")\n#label("middle")\n#label("target")\n');
+    const initial = createInitialRuntimeState(document);
+
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({
+      type: "jump",
+      label: "target",
+      instructionIndex: 2,
+    });
+    expect(result.state.pointer).toEqual({
+      filePath: "scenario/main.tzr",
+      instructionIndex: 2,
+    });
+  });
+
+  it("steps the target LabelInstruction after @jump", () => {
+    const document = compileScript('@jump("#target")\n#label("target")\n');
+    const jumped = stepRuntime(document, createInitialRuntimeState(document));
+    const label = stepRuntime(document, jumped.state);
+
+    expect(label.event).toEqual({ type: "label", id: "target" });
+    expect(label.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("returns unsupported when @jump target label is missing at runtime", () => {
+    const document = compileScript('#label("start")\n');
+    const loc = document.instructions[0]?.loc;
+    if (loc === undefined) {
+      throw new Error("Expected fixture document to contain a label instruction.");
+    }
+    const brokenDocument: CompiledTzrDocument = {
+      ...document,
+      instructions: [
+        {
+          type: "CommandInstruction",
+          name: "jump",
+          args: [],
+          jumpTarget: {
+            raw: "#missing",
+            label: "missing",
+            loc,
+          },
+          loc,
+        },
+      ],
+    };
+    const result = stepRuntime(brokenDocument, createInitialRuntimeState(brokenDocument));
+
+    expect(result.event).toEqual({
+      type: "unsupported",
+      instructionType: "CommandInstruction",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+  });
+
+  it("does not mutate state when executing @jump", () => {
+    const document = compileScript('@jump("#target")\n#label("target")\n');
+    const initial = createInitialRuntimeState(document);
+    const before = JSON.stringify(initial);
+
+    stepRuntime(document, initial);
+
+    expect(JSON.stringify(initial)).toBe(before);
   });
 
   it("executes @set with string, number, and boolean values", () => {
