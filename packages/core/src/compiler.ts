@@ -73,16 +73,31 @@ class TzrCompiler {
       return;
     }
 
-    this.validateSameFileTarget(command.jumpTarget);
+    this.validateTarget(command.jumpTarget);
   }
 
   private validateChoiceTargets(choice: ChoiceBlock): void {
     for (const item of choice.items) {
-      this.validateSameFileTarget(item.target);
+      this.validateTarget(item.target);
     }
   }
 
-  private validateSameFileTarget(target: JumpTarget): void {
+  private validateTarget(target: JumpTarget): void {
+    if (target.raw.length === 0) {
+      this.addError(target.loc.start, "Jump target must not be empty.");
+      return;
+    }
+
+    if (countHashes(target.raw) > 1) {
+      this.addError(target.loc.start, 'Jump target must contain at most one "#".');
+      return;
+    }
+
+    if (target.raw.includes("#") && (target.label === undefined || target.label.length === 0)) {
+      this.addError(target.loc.start, "Jump target must include a label after #.");
+      return;
+    }
+
     if (target.file !== undefined) {
       return;
     }
@@ -104,4 +119,14 @@ class TzrCompiler {
   private sourceLine(line: number): string {
     return this.document.sourceLines[line - 1] ?? "";
   }
+}
+
+function countHashes(value: string): number {
+  let count = 0;
+  for (const char of value) {
+    if (char === "#") {
+      count += 1;
+    }
+  }
+  return count;
 }

@@ -108,6 +108,91 @@ describe("compileTzr", () => {
     ]);
   });
 
+  it("reports invalid jump target formats", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@jump("")
+@jump("#")
+@jump("chapter-01.tzr#")
+@jump("chapter-01.tzr#start#extra")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 8,
+        message: "Jump target must not be empty.",
+        sourceLine: '@jump("")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 8,
+        message: "Jump target must include a label after #.",
+        sourceLine: '@jump("#")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 8,
+        message: "Jump target must include a label after #.",
+        sourceLine: '@jump("chapter-01.tzr#")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 8,
+        message: 'Jump target must contain at most one "#".',
+        sourceLine: '@jump("chapter-01.tzr#start#extra")',
+      },
+    ]);
+  });
+
+  it("reports invalid choice target formats", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+? Choose
+- "Broken" -> #
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 15,
+        message: "Jump target must include a label after #.",
+        sourceLine: '- "Broken" -> #',
+      },
+    ]);
+  });
+
   it("leaves cross-file target validation for a later compiler phase", () => {
     const parsed = parseTzr(
       `#scene("prologue")

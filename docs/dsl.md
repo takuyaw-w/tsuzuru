@@ -148,7 +148,20 @@ Jump targets are normalized into:
 
 The parser does not check whether files or labels exist.
 
-The current compiler validates same-file label targets such as `#start`. Cross-file targets such as `chapter-01.tzr#start` are accepted without existence checks.
+The current compiler validates target shape and same-file labels. Valid target forms are:
+
+- `#label`
+- `file.tzr`
+- `file.tzr#label`
+
+Invalid target forms include:
+
+- empty targets such as `@jump("")`
+- missing labels such as `@jump("#")`
+- missing cross-file labels such as `@jump("chapter-01.tzr#")`
+- multiple `#` separators
+
+Cross-file targets such as `chapter-01.tzr#start` are accepted without existence checks.
 
 ## Choices
 
@@ -172,6 +185,7 @@ The current compiler reports:
 
 - duplicate scenes
 - duplicate labels
+- invalid jump target formats
 - missing same-file `@jump("#label")` targets
 - missing same-file choice targets
 
