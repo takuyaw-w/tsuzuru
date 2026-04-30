@@ -70,6 +70,7 @@ export type {
   RuntimePluginCommandEvent,
   RuntimePluginCommandHandler,
   RuntimePointer,
+  RuntimeSnapshot,
   RuntimeState,
   RuntimeStepResult,
   RuntimeStepOptions,
@@ -87,8 +88,10 @@ export {
   clearClickWait,
   clearWait,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
   resolveChoice,
+  restoreRuntimeState,
   stepRuntime,
 } from "./runtime.js";

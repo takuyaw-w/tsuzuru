@@ -45,6 +45,18 @@ export interface RuntimeState {
   readonly isWaitingForClick: boolean;
 }
 
+export interface RuntimeSnapshot {
+  readonly version: 1;
+  readonly pointer: RuntimePointer;
+  readonly variables: RuntimeVariables;
+  readonly flags: RuntimeFlags;
+  readonly branchFrames: readonly RuntimeBranchFrame[];
+  readonly pendingChoice: RuntimePendingChoice | null;
+  readonly pendingWait: RuntimePendingWait | null;
+  readonly isStopped: boolean;
+  readonly isWaitingForClick: boolean;
+}
+
 export type RuntimeBlockReason = "wait" | "choice" | "click";
 
 export interface RuntimeStepOptions {
@@ -171,6 +183,51 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     pendingWait: null,
     isStopped: false,
     isWaitingForClick: false,
+  };
+}
+
+export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
+  return {
+    version: 1,
+    pointer: { ...state.pointer },
+    variables: { ...state.variables },
+    flags: { ...state.flags },
+    branchFrames: state.branchFrames.map((frame) => ({
+      instructions: frame.instructions,
+      instructionIndex: frame.instructionIndex,
+    })),
+    pendingChoice:
+      state.pendingChoice === null
+        ? null
+        : {
+            question: state.pendingChoice.question,
+            items: state.pendingChoice.items.map((item) => ({ ...item })),
+          },
+    pendingWait: state.pendingWait === null ? null : { ...state.pendingWait },
+    isStopped: state.isStopped,
+    isWaitingForClick: state.isWaitingForClick,
+  };
+}
+
+export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
+  return {
+    pointer: { ...snapshot.pointer },
+    variables: { ...snapshot.variables },
+    flags: { ...snapshot.flags },
+    branchFrames: snapshot.branchFrames.map((frame) => ({
+      instructions: frame.instructions,
+      instructionIndex: frame.instructionIndex,
+    })),
+    pendingChoice:
+      snapshot.pendingChoice === null
+        ? null
+        : {
+            question: snapshot.pendingChoice.question,
+            items: snapshot.pendingChoice.items.map((item) => ({ ...item })),
+          },
+    pendingWait: snapshot.pendingWait === null ? null : { ...snapshot.pendingWait },
+    isStopped: snapshot.isStopped,
+    isWaitingForClick: snapshot.isWaitingForClick,
   };
 }
 

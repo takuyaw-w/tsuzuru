@@ -5,10 +5,12 @@ import {
   clearWait,
   compileTzr,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
   parseTzr,
   resolveChoice,
+  restoreRuntimeState,
   stepRuntime,
 } from "../src/index.js";
 
@@ -826,5 +828,102 @@ describe("stepRuntime", () => {
       ...initial,
       isStopped: true,
     });
+  });
+
+  it("snapshots and restores initial state", () => {
+    const document = compileScript('#scene("prologue")\n');
+    const state = createInitialRuntimeState(document);
+
+    const snapshot = createRuntimeSnapshot(state);
+    const restored = restoreRuntimeState(snapshot);
+
+    expect(snapshot.version).toBe(1);
+    expect(restored).toEqual(state);
+  });
+
+  it("preserves variables and flags in snapshots", () => {
+    const document = compileScript('@set(name="route", value="haruka")\n@flag("met_haruka")\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(second.state));
+
+    expect(restored.variables).toEqual({ route: "haruka" });
+    expect(restored.flags).toEqual({ met_haruka: true });
+  });
+
+  it("preserves pointer in snapshots", () => {
+    const document = compileScript('#scene("prologue")\n#label("start")\n');
+    const state = {
+      ...createInitialRuntimeState(document),
+      pointer: { filePath: "scenario/main.tzr", instructionIndex: 1 },
+    };
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(state));
+
+    expect(restored.pointer).toEqual({ filePath: "scenario/main.tzr", instructionIndex: 1 });
+  });
+
+  it("preserves pendingChoice in snapshots", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(choice.state));
+
+    expect(restored.pendingChoice).toEqual(choice.state.pendingChoice);
+  });
+
+  it("preserves pendingWait in snapshots", () => {
+    const document = compileScript("@wait(500)\n");
+    const wait = stepRuntime(document, createInitialRuntimeState(document));
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(wait.state));
+
+    expect(restored.pendingWait).toEqual({ durationMs: 500 });
+  });
+
+  it("preserves isWaitingForClick in snapshots", () => {
+    const document = compileScript("@waitClick()\n");
+    const waitClick = stepRuntime(document, createInitialRuntimeState(document));
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(waitClick.state));
+
+    expect(restored.isWaitingForClick).toBe(true);
+  });
+
+  it("preserves branchFrames in snapshots", () => {
+    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("done")\n@endif\n@page()\n');
+    const state = stepRuntime(document, {
+      ...createInitialRuntimeState(document),
+      flags: { met_haruka: true },
+    }).state;
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(state));
+
+    expect(restored.branchFrames).toEqual(state.branchFrames);
+    expect(restored.branchFrames[0]?.instructionIndex).toBe(1);
+  });
+
+  it("continues execution with stepRuntime after restore", () => {
+    const document = compileScript('#scene("prologue")\n:: Haruka\nHello.\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const restored = restoreRuntimeState(createRuntimeSnapshot(first.state));
+
+    const second = stepRuntime(document, restored);
+
+    expect(second.event).toMatchObject({
+      type: "dialogue",
+      speaker: "Haruka",
+    });
+    expect(second.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("creates JSON serializable snapshots", () => {
+    const document = compileScript('@set(name="route", value="haruka")\n@wait(500)\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+    const snapshot = createRuntimeSnapshot(second.state);
+
+    expect(JSON.parse(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 });
