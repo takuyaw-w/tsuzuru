@@ -1,6 +1,7 @@
 import type { ChoiceItem, TextLine, TzrArgument, TzrValue } from "./ast.js";
+import { isCoreCommandName } from "./commands.js";
 import { evaluateCondition } from "./condition.js";
-import type { ChoiceInstruction, CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
+import type { ChoiceInstruction, CommandInstruction, CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
 
 export interface RuntimePointer {
   readonly filePath: string;
@@ -46,6 +47,15 @@ export interface RuntimeState {
 
 export type RuntimeBlockReason = "wait" | "choice" | "click";
 
+export interface RuntimeStepOptions {
+  readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
+}
+
+export type RuntimePluginCommandHandler = (
+  state: RuntimeState,
+  instruction: CommandInstruction,
+) => RuntimeStepResult;
+
 export type RuntimeEvent =
   | SceneRuntimeEvent
   | LabelRuntimeEvent
@@ -59,6 +69,7 @@ export type RuntimeEvent =
   | IfRuntimeEvent
   | ChoiceRuntimeEvent
   | WaitRuntimeEvent
+  | RuntimePluginCommandEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -128,6 +139,11 @@ export interface WaitRuntimeEvent {
   readonly durationMs: number;
 }
 
+export interface RuntimePluginCommandEvent {
+  readonly type: "pluginCommand";
+  readonly name: string;
+}
+
 export interface UnsupportedRuntimeEvent {
   readonly type: "unsupported";
   readonly instructionType: string;
@@ -158,7 +174,11 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
   };
 }
 
-export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState): RuntimeStepResult {
+export function stepRuntime(
+  document: CompiledTzrDocument,
+  state: RuntimeState,
+  options: RuntimeStepOptions = {},
+): RuntimeStepResult {
   if (state.pendingWait !== null) {
     return {
       state,
@@ -185,10 +205,10 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
   if (activeFrame !== undefined) {
     const instruction = activeFrame.instructions[activeFrame.instructionIndex];
     if (instruction === undefined) {
-      return stepRuntime(document, popActiveBranchFrame(normalizedState));
+      return stepRuntime(document, popActiveBranchFrame(normalizedState), options);
     }
 
-    return stepInstruction(document, normalizedState, instruction, advanceActiveBranchFrame(normalizedState));
+    return stepInstruction(document, normalizedState, instruction, advanceActiveBranchFrame(normalizedState), options);
   }
 
   const instruction = document.instructions[normalizedState.pointer.instructionIndex];
@@ -202,7 +222,7 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
     };
   }
 
-  return stepInstruction(document, normalizedState, instruction, advanceInstruction(document, normalizedState));
+  return stepInstruction(document, normalizedState, instruction, advanceInstruction(document, normalizedState), options);
 }
 
 function stepInstruction(
@@ -210,6 +230,7 @@ function stepInstruction(
   state: RuntimeState,
   instruction: TzrInstruction,
   nextState: RuntimeState,
+  options: RuntimeStepOptions,
 ): RuntimeStepResult {
   switch (instruction.type) {
     case "SceneInstruction":
@@ -233,9 +254,9 @@ function stepInstruction(
         event: { type: "dialogue", speaker: instruction.speaker, lines: instruction.lines },
       };
     case "CommandInstruction":
-      return stepCommandInstruction(document, state, nextState, instruction.name, instruction.args, instruction.jumpTarget?.label);
+      return stepCommandInstruction(document, state, nextState, instruction, options);
     case "IfInstruction":
-      return stepIfInstruction(document, state, nextState, instruction);
+      return stepIfInstruction(document, state, nextState, instruction, options);
     case "MacroInstruction":
       return {
         state: nextState,
@@ -322,10 +343,10 @@ function stepCommandInstruction(
   document: CompiledTzrDocument,
   state: RuntimeState,
   nextState: RuntimeState,
-  name: string,
-  args: readonly TzrArgument[],
-  jumpLabel: string | undefined,
+  instruction: CommandInstruction,
+  options: RuntimeStepOptions,
 ): RuntimeStepResult {
+  const { name, args } = instruction;
   if (name === "waitClick") {
     return {
       state: {
@@ -373,6 +394,7 @@ function stepCommandInstruction(
   }
 
   if (name === "jump") {
+    const jumpLabel = instruction.jumpTarget?.label;
     if (jumpLabel === undefined) {
       return unsupportedCommand(nextState);
     }
@@ -459,6 +481,13 @@ function stepCommandInstruction(
     };
   }
 
+  if (!isCoreCommandName(name)) {
+    const handler = options.commandHandlers?.[name];
+    if (handler !== undefined) {
+      return handler(nextState, instruction);
+    }
+  }
+
   return unsupportedCommand(nextState);
 }
 
@@ -467,6 +496,7 @@ function stepIfInstruction(
   state: RuntimeState,
   nextState: RuntimeState,
   instruction: IfInstruction,
+  options: RuntimeStepOptions,
 ): RuntimeStepResult {
   const result = evaluateCondition(instruction.conditionExpression, state);
   const branch = result ? instruction.thenBranch : instruction.elseBranch;
@@ -495,7 +525,7 @@ function stepIfInstruction(
       },
     };
   }
-  const branchResult = stepInstruction(document, branchState, branchInstruction, advanceActiveBranchFrame(branchState));
+  const branchResult = stepInstruction(document, branchState, branchInstruction, advanceActiveBranchFrame(branchState), options);
 
   return {
     state: branchResult.state,

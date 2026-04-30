@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CompiledTzrDocument } from "../src/index.js";
+import type { CompiledTzrDocument, RuntimePluginCommandHandler } from "../src/index.js";
 import {
   clearClickWait,
   clearWait,
@@ -245,6 +245,105 @@ describe("stepRuntime", () => {
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
     expect(result.state.isStopped).toBe(false);
+  });
+
+  it("dispatches non-core CommandInstruction to a registered plugin handler", () => {
+    const document = compileScript('@bg("school")\n');
+    let called = 0;
+    const handler: RuntimePluginCommandHandler = (state, instruction) => {
+      called += 1;
+      expect(instruction.name).toBe("bg");
+      return {
+        state: {
+          ...state,
+          variables: {
+            ...state.variables,
+            background: "school",
+          },
+        },
+        event: { type: "pluginCommand", name: instruction.name },
+      };
+    };
+
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      commandHandlers: { bg: handler },
+    });
+
+    expect(called).toBe(1);
+    expect(result.event).toEqual({ type: "pluginCommand", name: "bg" });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(result.state.variables).toEqual({ background: "school" });
+  });
+
+  it("uses the plugin handler state and event as the RuntimeStepResult", () => {
+    const document = compileScript('@shake(target="screen")\n');
+    const initial = createInitialRuntimeState(document);
+    const returnedState = {
+      ...initial,
+      pointer: {
+        filePath: "scenario/main.tzr",
+        instructionIndex: 1,
+      },
+      flags: { shook: true },
+    };
+
+    const result = stepRuntime(document, initial, {
+      commandHandlers: {
+        shake: () => ({
+          state: returnedState,
+          event: { type: "pluginCommand", name: "shake" },
+        }),
+      },
+    });
+
+    expect(result).toEqual({
+      state: returnedState,
+      event: { type: "pluginCommand", name: "shake" },
+    });
+  });
+
+  it("keeps Core command handling ahead of plugin handlers", () => {
+    const document = compileScript("@waitClick()\n");
+    let called = false;
+
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      commandHandlers: {
+        waitClick: () => {
+          called = true;
+          return {
+            state: createInitialRuntimeState(document),
+            event: { type: "pluginCommand", name: "waitClick" },
+          };
+        },
+      },
+    });
+
+    expect(called).toBe(false);
+    expect(result.event).toEqual({ type: "waitClick" });
+    expect(result.state.isWaitingForClick).toBe(true);
+  });
+
+  it("does not mutate RuntimeState when dispatching plugin handlers", () => {
+    const document = compileScript('@bg("school")\n');
+    const initial = createInitialRuntimeState(document);
+    const before = JSON.stringify(initial);
+
+    stepRuntime(document, initial, {
+      commandHandlers: {
+        bg: (state, instruction) => ({
+          state: {
+            ...state,
+            variables: {
+              ...state.variables,
+              background: "school",
+            },
+          },
+          event: { type: "pluginCommand", name: instruction.name },
+        }),
+      },
+    });
+
+    expect(JSON.stringify(initial)).toBe(before);
   });
 
   it("executes @jump by moving to the target label instructionIndex", () => {
