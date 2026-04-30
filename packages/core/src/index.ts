@@ -28,8 +28,8 @@ export type {
   TzrValue,
   VariableComparisonCondition,
 } from "./ast.js";
-export type { CompileResult } from "./compiler.js";
-export { compileTzr } from "./compiler.js";
+export type { CompileOptions, CompileResult, PluginCommandDefinition, PluginCommandMap } from "./compiler.js";
+export { compileTzr, definePluginCommand } from "./compiler.js";
 export { evaluateCondition } from "./condition.js";
 export type { CoreCommandDefinition, CoreCommandName } from "./commands.js";
 export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands.js";

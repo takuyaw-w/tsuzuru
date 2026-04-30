@@ -6,6 +6,7 @@ import {
   compileTzr,
   createInitialRuntimeState,
   createRuntimeSnapshot,
+  definePluginCommand,
   getRuntimeBlockReason,
   isRuntimeBlocked,
   parseTzr,
@@ -28,7 +29,12 @@ The classroom was quiet.
       throw new Error("expected parser success");
     }
 
-    const compiled = compileTzr(parsed.document);
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: definePluginCommand("bg"),
+        shake: definePluginCommand("shake"),
+      },
+    });
 
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) {
@@ -62,7 +68,12 @@ describe("stepRuntime", () => {
       throw new Error("expected parser success");
     }
 
-    const compiled = compileTzr(parsed.document);
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: definePluginCommand("bg"),
+        shake: definePluginCommand("shake"),
+      },
+    });
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) {
       throw new Error("expected compiler success");

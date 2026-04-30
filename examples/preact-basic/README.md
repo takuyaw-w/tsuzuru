@@ -13,7 +13,7 @@ Runtime control is intentionally small:
 - transient events such as scene, label, state, jump, if, and pluginCommand advance through `autoStepTransientEvents: true`
 - `RuntimeView` receives `runtime.visibleEvent`, so auto-stepped transient events are not shown in the normal UI
 - `choice` calls `runtime.choose` from the clicked item index
-- `@bg(...)` is handled by a minimal plugin command handler
+- `@bg(...)` is registered during compilation and handled by a minimal plugin command handler at runtime
 - `Save`, `Load`, and `Clear Save` persist runtime save data in `localStorage`
 
 Save data uses the fixed `localStorage` key `tsuzuru:examples:preact-basic:snapshot`. The stored value is `RuntimeSaveData`, which contains the state-only runtime snapshot and the current `RuntimeEvent` so the visible screen can be restored after loading. The example checks parsed data with `isRuntimeSaveData` before restoring it. It is example-only data for demonstrating `useRuntime` save/load, and compatibility is not guaranteed yet.

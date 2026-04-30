@@ -21,6 +21,17 @@ export type CompileResult =
 
 export interface CompileOptions {
   readonly macros?: MacroMap;
+  readonly pluginCommands?: PluginCommandMap;
+}
+
+export interface PluginCommandDefinition {
+  readonly name: string;
+}
+
+export type PluginCommandMap = Readonly<Record<string, PluginCommandDefinition>>;
+
+export function definePluginCommand(name: string): PluginCommandDefinition {
+  return { name };
 }
 
 export function compileTzr(document: TzrDocument, options: CompileOptions = {}): CompileResult {
@@ -149,6 +160,7 @@ class TzrCompiler {
   private validateCompiledInstructions(instructions: readonly TzrInstruction[]): void {
     for (const instruction of instructions) {
       if (instruction.type === "CommandInstruction") {
+        this.validateCommandRegistration(instruction);
         this.validateCoreCommandArguments(instruction);
       }
       if (instruction.type === "IfInstruction") {
@@ -157,6 +169,17 @@ class TzrCompiler {
           this.validateCompiledInstructions(instruction.elseBranch);
         }
       }
+    }
+  }
+
+  private validateCommandRegistration(command: CommandInstruction): void {
+    if (isCoreCommandName(command.name)) {
+      return;
+    }
+
+    const pluginCommand = this.options.pluginCommands?.[command.name];
+    if (pluginCommand === undefined) {
+      this.addError(command.loc.start, `Unknown command "@${command.name}".`);
     }
   }
 

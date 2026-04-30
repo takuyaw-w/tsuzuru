@@ -2,6 +2,7 @@ import { render } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import {
   compileTzr,
+  definePluginCommand,
   parseTzr,
   type CompiledTzrDocument,
   type RuntimePluginCommandHandler,
@@ -27,6 +28,10 @@ const commandHandlers: Record<string, RuntimePluginCommandHandler> = {
       event: { type: "pluginCommand", name: `bg:${value}` },
     };
   },
+};
+
+const pluginCommands = {
+  bg: definePluginCommand("bg"),
 };
 
 const SNAPSHOT_STORAGE_KEY = "tsuzuru:examples:preact-basic:snapshot";
@@ -145,7 +150,7 @@ function compileScenario(source: string): DocumentResult {
     return { ok: false, message: formatDiagnostics(parsed.errors) };
   }
 
-  const compiled = compileTzr(parsed.document);
+  const compiled = compileTzr(parsed.document, { pluginCommands });
   if (!compiled.ok) {
     return { ok: false, message: formatDiagnostics(compiled.errors) };
   }

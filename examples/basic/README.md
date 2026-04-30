@@ -11,7 +11,7 @@ The sample demonstrates:
 - `waitClick` and `page` handling with `clearClickWait`
 - `@wait(ms)` handling with `clearWait`
 - choice handling with `resolveChoice`
-- a small plugin command handler for `@bg(...)`
+- compile-time registration and a small runtime plugin command handler for `@bg(...)`
 
 ## Files
 

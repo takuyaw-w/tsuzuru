@@ -200,6 +200,18 @@ Choices produce a blocked `pendingChoice` state and are resolved separately by `
 
 ## Plugin Command Dispatch
 
+Plugin commands must be registered at compile time. Core commands are always available, but non-core commands such as `@bg(...)` or `@show(...)` are compile-time errors unless they are listed in `compileTzr` options:
+
+```ts
+const compiled = compileTzr(parsed.document, {
+  pluginCommands: {
+    bg: { name: "bg" }
+  }
+});
+```
+
+For v0.1, plugin command definitions only register the command name. Argument schema validation can be added to these definitions later. Runtime handlers should use the same command names as the compile-time registry.
+
 `stepRuntime` accepts optional command handlers:
 
 ```ts

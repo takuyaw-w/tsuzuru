@@ -951,6 +951,131 @@ We meet again.
     ]);
   });
 
+  it("reports unknown non-core commands", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@bg("school")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Unknown command "@bg".',
+        sourceLine: '@bg("school")',
+      },
+    ]);
+  });
+
+  it("accepts registered plugin commands", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@bg("school")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "bg" },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("accepts core commands without plugin command registration", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@wait(500)
+@page()
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(compileTzr(parsed.document).ok).toBe(true);
+  });
+
+  it("reports unknown non-core commands inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@bg("school")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: 'Unknown command "@bg".',
+        sourceLine: '@bg("school")',
+      },
+    ]);
+  });
+
+  it("accepts registered plugin commands inside @if branches", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@if(flag("met_haruka"))
+@bg("school")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: { name: "bg" },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
   it("expands registered macros and removes MacroInstruction from compiled instructions", () => {
     const parsed = parseTzr(
       `#scene("prologue")
@@ -965,6 +1090,9 @@ $enter("haruka", "smile", "center")
     }
 
     const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: { name: "show" },
+      },
       macros: {
         enter(call) {
           return [
@@ -988,6 +1116,69 @@ $enter("haruka", "smile", "center")
       { type: "CommandInstruction", name: "show" },
     ]);
     expect(compiled.document.instructions.some((instruction) => instruction.type === "MacroInstruction")).toBe(false);
+  });
+
+  it("validates plugin commands returned by macros against the registry", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$enter("haruka")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      macros: {
+        enter(call) {
+          return [{ type: "CommandInstruction", name: "show", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Unknown command "@show".',
+        sourceLine: '$enter("haruka")',
+      },
+    ]);
+  });
+
+  it("accepts registered plugin commands returned by macros", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$enter("haruka")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: { name: "show" },
+      },
+      macros: {
+        enter(call) {
+          return [{ type: "CommandInstruction", name: "show", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
   });
 
   it("reports unknown macros", () => {
@@ -1038,6 +1229,10 @@ $exit("haruka")
     }
 
     const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: { name: "show" },
+        hide: { name: "hide" },
+      },
       macros: {
         enter(call) {
           return [{ type: "CommandInstruction", name: "show", args: call.args, loc: call.loc }];

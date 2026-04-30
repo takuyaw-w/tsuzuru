@@ -5,6 +5,7 @@ import {
   clearWait,
   compileTzr,
   createInitialRuntimeState,
+  definePluginCommand,
   getRuntimeBlockReason,
   parseTzr,
   resolveChoice,
@@ -23,7 +24,11 @@ if (!parsed.ok) {
   console.error(parsed.errors);
   process.exitCode = 1;
 } else {
-  const compiled = compileTzr(parsed.document);
+  const compiled = compileTzr(parsed.document, {
+    pluginCommands: {
+      bg: definePluginCommand("bg"),
+    },
+  });
   if (!compiled.ok) {
     console.error(compiled.errors);
     process.exitCode = 1;
