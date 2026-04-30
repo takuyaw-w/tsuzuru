@@ -153,6 +153,92 @@ describe("stepRuntime", () => {
     expect(result.state.isStopped).toBe(false);
   });
 
+  it("executes @set with string, number, and boolean values", () => {
+    const document = compileScript('@set(name="route", value="haruka")\n@set(name="score", value=10)\n@set(name="cleared", value=true)\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+    const third = stepRuntime(document, second.state);
+
+    expect(first.event).toEqual({ type: "state", command: "set", name: "route", value: "haruka" });
+    expect(second.event).toEqual({ type: "state", command: "set", name: "score", value: 10 });
+    expect(third.event).toEqual({ type: "state", command: "set", name: "cleared", value: true });
+    expect(third.state.variables).toEqual({
+      route: "haruka",
+      score: 10,
+      cleared: true,
+    });
+    expect(third.state.pointer.instructionIndex).toBe(3);
+  });
+
+  it("executes @inc using 0 for undefined variables", () => {
+    const document = compileScript('@inc(name="affection", by=2)\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "state", command: "inc", name: "affection", value: 2 });
+    expect(result.state.variables).toEqual({ affection: 2 });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+  });
+
+  it("executes @inc using an existing number variable", () => {
+    const document = compileScript('@inc(name="affection", by=2)\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      variables: { affection: 3 },
+    };
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({ type: "state", command: "inc", name: "affection", value: 5 });
+    expect(result.state.variables).toEqual({ affection: 5 });
+  });
+
+  it("executes @dec using 0 for undefined variables", () => {
+    const document = compileScript('@dec(name="affection", by=2)\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(result.event).toEqual({ type: "state", command: "dec", name: "affection", value: -2 });
+    expect(result.state.variables).toEqual({ affection: -2 });
+    expect(result.state.pointer.instructionIndex).toBe(1);
+  });
+
+  it("executes @dec using an existing number variable", () => {
+    const document = compileScript('@dec(name="affection", by=2)\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      variables: { affection: 3 },
+    };
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({ type: "state", command: "dec", name: "affection", value: 1 });
+    expect(result.state.variables).toEqual({ affection: 1 });
+  });
+
+  it("executes @flag and @unflag", () => {
+    const document = compileScript('@flag("met_haruka")\n@unflag("met_haruka")\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+
+    expect(first.event).toEqual({ type: "state", command: "flag", name: "met_haruka", value: true });
+    expect(first.state.flags).toEqual({ met_haruka: true });
+    expect(first.state.pointer.instructionIndex).toBe(1);
+    expect(second.event).toEqual({ type: "state", command: "unflag", name: "met_haruka", value: false });
+    expect(second.state.flags).toEqual({ met_haruka: false });
+    expect(second.state.pointer.instructionIndex).toBe(2);
+  });
+
+  it("does not mutate state when executing state commands", () => {
+    const document = compileScript('@set(name="route", value="haruka")\n');
+    const initial = {
+      ...createInitialRuntimeState(document),
+      variables: { existing: 1 },
+      flags: { met_haruka: true },
+    };
+    const before = JSON.stringify(initial);
+
+    stepRuntime(document, initial);
+
+    expect(JSON.stringify(initial)).toBe(before);
+  });
+
   it("returns unsupported for IfInstruction", () => {
     const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n');
     const result = stepRuntime(document, createInitialRuntimeState(document));

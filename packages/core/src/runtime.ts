@@ -1,4 +1,4 @@
-import type { TextLine } from "./ast.js";
+import type { TextLine, TzrArgument, TzrValue } from "./ast.js";
 import type { CompiledTzrDocument } from "./ir.js";
 
 export interface RuntimePointer {
@@ -28,6 +28,7 @@ export type RuntimeEvent =
   | WaitClickRuntimeEvent
   | PageRuntimeEvent
   | StopRuntimeEvent
+  | StateRuntimeEvent
   | UnsupportedRuntimeEvent
   | EndRuntimeEvent;
 
@@ -62,6 +63,15 @@ export interface PageRuntimeEvent {
 
 export interface StopRuntimeEvent {
   readonly type: "stop";
+}
+
+export type StateCommandName = "set" | "inc" | "dec" | "flag" | "unflag";
+
+export interface StateRuntimeEvent {
+  readonly type: "state";
+  readonly command: StateCommandName;
+  readonly name: string;
+  readonly value: RuntimeValue;
 }
 
 export interface UnsupportedRuntimeEvent {
@@ -127,7 +137,7 @@ export function stepRuntime(document: CompiledTzrDocument, state: RuntimeState):
         event: { type: "dialogue", speaker: instruction.speaker, lines: instruction.lines },
       };
     case "CommandInstruction":
-      return stepCommandInstruction(document, state, instruction.name);
+      return stepCommandInstruction(document, state, instruction.name, instruction.args);
     case "MacroInstruction":
     case "ChoiceInstruction":
     case "IfInstruction":
@@ -142,6 +152,7 @@ function stepCommandInstruction(
   document: CompiledTzrDocument,
   state: RuntimeState,
   name: string,
+  args: readonly TzrArgument[],
 ): RuntimeStepResult {
   const nextState = advanceInstruction(document, state);
 
@@ -175,8 +186,69 @@ function stepCommandInstruction(
     };
   }
 
+  if (name === "set") {
+    const variableName = getNamedString(args, "name");
+    const value = getNamedRuntimeValue(args, "value");
+    if (variableName === undefined || value === undefined) {
+      return unsupportedCommand(nextState);
+    }
+    return {
+      state: {
+        ...nextState,
+        variables: {
+          ...nextState.variables,
+          [variableName]: value,
+        },
+      },
+      event: { type: "state", command: "set", name: variableName, value },
+    };
+  }
+
+  if (name === "inc" || name === "dec") {
+    const variableName = getNamedString(args, "name");
+    const by = getNamedNumber(args, "by");
+    if (variableName === undefined || by === undefined) {
+      return unsupportedCommand(nextState);
+    }
+    const current = nextState.variables[variableName];
+    const currentNumber = typeof current === "number" ? current : 0;
+    const value = name === "inc" ? currentNumber + by : currentNumber - by;
+    return {
+      state: {
+        ...nextState,
+        variables: {
+          ...nextState.variables,
+          [variableName]: value,
+        },
+      },
+      event: { type: "state", command: name, name: variableName, value },
+    };
+  }
+
+  if (name === "flag" || name === "unflag") {
+    const flagName = getPositionalString(args, 0);
+    if (flagName === undefined) {
+      return unsupportedCommand(nextState);
+    }
+    const value = name === "flag";
+    return {
+      state: {
+        ...nextState,
+        flags: {
+          ...nextState.flags,
+          [flagName]: value,
+        },
+      },
+      event: { type: "state", command: name, name: flagName, value },
+    };
+  }
+
+  return unsupportedCommand(nextState);
+}
+
+function unsupportedCommand(state: RuntimeState): RuntimeStepResult {
   return {
-    state: nextState,
+    state,
     event: { type: "unsupported", instructionType: "CommandInstruction" },
   };
 }
@@ -190,4 +262,51 @@ function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState):
       instructionIndex,
     },
   };
+}
+
+function getNamedArgument(args: readonly TzrArgument[], name: string): TzrArgument | undefined {
+  return args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
+}
+
+function getNamedString(args: readonly TzrArgument[], name: string): string | undefined {
+  const argument = getNamedArgument(args, name);
+  if (argument?.type !== "NamedArgument" || argument.value.type !== "StringValue") {
+    return undefined;
+  }
+  return argument.value.value;
+}
+
+function getNamedNumber(args: readonly TzrArgument[], name: string): number | undefined {
+  const argument = getNamedArgument(args, name);
+  if (argument?.type !== "NamedArgument" || argument.value.type !== "NumberValue") {
+    return undefined;
+  }
+  return argument.value.value;
+}
+
+function getNamedRuntimeValue(args: readonly TzrArgument[], name: string): RuntimeValue | undefined {
+  const argument = getNamedArgument(args, name);
+  if (argument?.type !== "NamedArgument") {
+    return undefined;
+  }
+  return valueToRuntimeValue(argument.value);
+}
+
+function getPositionalString(args: readonly TzrArgument[], index: number): string | undefined {
+  const argument = args[index];
+  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue") {
+    return undefined;
+  }
+  return argument.value.value;
+}
+
+function valueToRuntimeValue(value: TzrValue): RuntimeValue | undefined {
+  switch (value.type) {
+    case "StringValue":
+    case "NumberValue":
+    case "BooleanValue":
+      return value.value;
+    case "IdentifierValue":
+      return undefined;
+  }
 }

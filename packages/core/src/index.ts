@@ -65,6 +65,8 @@ export type {
   RuntimeValue,
   RuntimeVariables,
   SceneRuntimeEvent,
+  StateCommandName,
+  StateRuntimeEvent,
   StopRuntimeEvent,
   UnsupportedRuntimeEvent,
   WaitClickRuntimeEvent,
