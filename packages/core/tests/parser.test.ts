@@ -119,4 +119,124 @@ $enter("haruka", "smile", "center")
       },
     ]);
   });
+
+  it("parses @if, @else, and @endif blocks with raw conditions", () => {
+    const result = parseTzr(
+      `@if(var("haruka_affection") >= 1)
+:: Haruka
+At least you apologized.
+@else
+:: Haruka
+You never change.
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(result.document.body).toHaveLength(1);
+    expect(result.document.body[0]).toMatchObject({
+      type: "IfBlock",
+      condition: 'var("haruka_affection") >= 1',
+      thenBranch: [
+        {
+          type: "SpeakerBlock",
+          speaker: "Haruka",
+          lines: [{ text: "At least you apologized." }],
+        },
+      ],
+      elseBranch: [
+        {
+          type: "SpeakerBlock",
+          speaker: "Haruka",
+          lines: [{ text: "You never change." }],
+        },
+      ],
+    });
+  });
+
+  it("parses nested @if blocks", () => {
+    const result = parseTzr(
+      `@if(flag("met_haruka"))
+@if(var("affection") >= 3)
+@jump("#haruka_route")
+@endif
+@else
+@jump("#common_route")
+@endif
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(result.document.body[0]).toMatchObject({
+      type: "IfBlock",
+      condition: 'flag("met_haruka")',
+      thenBranch: [
+        {
+          type: "IfBlock",
+          condition: 'var("affection") >= 3',
+          thenBranch: [{ type: "CommandStatement", name: "jump" }],
+        },
+      ],
+      elseBranch: [{ type: "CommandStatement", name: "jump" }],
+    });
+  });
+
+  it("returns a diagnostic when @endif is missing", () => {
+    const result = parseTzr(
+      `@if(flag("met_haruka"))
+:: Haruka
+We meet again.
+`,
+      { filePath: "scenario/broken.tzr" },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "@if block must be closed with @endif.",
+        sourceLine: '@if(flag("met_haruka"))',
+      },
+    ]);
+  });
+
+  it("returns a diagnostic when @else appears without @if", () => {
+    const result = parseTzr(
+      `@else
+Narration.
+`,
+      { filePath: "scenario/broken.tzr" },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "@else must appear inside an @if block.",
+        sourceLine: "@else",
+      },
+    ]);
+  });
 });

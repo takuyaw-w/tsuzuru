@@ -2,6 +2,7 @@ import type {
   ChoiceBlock,
   ChoiceItem,
   CommandStatement,
+  IfBlock,
   JumpTarget,
   LabelDeclaration,
   MacroStatement,
@@ -26,6 +27,8 @@ export type ParseResult =
 export interface ParseOptions {
   readonly filePath?: string;
 }
+
+type BlockStop = "@else" | "@endif";
 
 interface SourceLine {
   readonly text: string;
@@ -57,24 +60,7 @@ class TzrParser {
   }
 
   public parse(): ParseResult {
-    const body: TzrStatement[] = [];
-
-    while (!this.isAtEnd()) {
-      const current = this.current();
-      if (current === undefined) {
-        break;
-      }
-
-      if (current.text.trim() === "") {
-        this.cursor += 1;
-        continue;
-      }
-
-      const statement = this.parseStatement();
-      if (statement !== undefined) {
-        body.push(statement);
-      }
-    }
+    const body = this.parseBlock([]);
 
     if (this.errors.length > 0) {
       return { ok: false, errors: this.errors };
@@ -90,6 +76,34 @@ class TzrParser {
       },
       errors: [],
     };
+  }
+
+  private parseBlock(stops: readonly BlockStop[]): TzrStatement[] {
+    const body: TzrStatement[] = [];
+
+    while (!this.isAtEnd()) {
+      const current = this.current();
+      if (current === undefined) {
+        break;
+      }
+
+      if (current.text.trim() === "") {
+        this.cursor += 1;
+        continue;
+      }
+
+      const stop = this.currentBlockStop();
+      if (stop !== undefined && stops.includes(stop)) {
+        break;
+      }
+
+      const statement = this.parseStatement();
+      if (statement !== undefined) {
+        body.push(statement);
+      }
+    }
+
+    return body;
   }
 
   private parseStatement(): TzrStatement | undefined {
@@ -108,6 +122,19 @@ class TzrParser {
     if (trimmed.startsWith("::")) {
       return this.parseSpeakerBlock();
     }
+    if (trimmed.startsWith("@if(")) {
+      return this.parseIfBlock();
+    }
+    if (trimmed === "@else" || trimmed.startsWith("@else ")) {
+      this.addError(line, line.text.indexOf("@else") + 1, "@else must appear inside an @if block.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (trimmed === "@endif" || trimmed.startsWith("@endif ")) {
+      this.addError(line, line.text.indexOf("@endif") + 1, "@endif must appear inside an @if block.");
+      this.cursor += 1;
+      return undefined;
+    }
     if (trimmed.startsWith("@")) {
       return this.parseCommand();
     }
@@ -124,6 +151,52 @@ class TzrParser {
     }
 
     return this.parseNarrationBlock();
+  }
+
+  private parseIfBlock(): IfBlock | undefined {
+    const header = this.currentRequired();
+    const headerLoc = this.lineRange(header);
+    const condition = this.parseIfCondition(header);
+    this.cursor += 1;
+
+    const thenBranch = this.parseBlock(["@else", "@endif"]);
+    let elseBranch: readonly TzrStatement[] | undefined;
+    let end = this.lastStatementEnd(thenBranch) ?? headerLoc.end;
+
+    const stop = this.currentBlockStop();
+    if (stop === "@else") {
+      const elseLine = this.currentRequired();
+      this.cursor += 1;
+      elseBranch = this.parseBlock(["@endif"]);
+      end = this.lastStatementEnd(elseBranch) ?? this.lineRange(elseLine).end;
+    }
+
+    const endLine = this.current();
+    if (endLine === undefined || this.currentBlockStop() !== "@endif") {
+      this.addError(header, header.text.indexOf("@if") + 1, "@if block must be closed with @endif.");
+      return condition === undefined
+        ? undefined
+        : {
+            type: "IfBlock",
+            condition,
+            thenBranch,
+            ...(elseBranch === undefined ? {} : { elseBranch }),
+            loc: { start: headerLoc.start, end },
+          };
+    }
+
+    end = this.lineRange(endLine).end;
+    this.cursor += 1;
+
+    return condition === undefined
+      ? undefined
+      : {
+          type: "IfBlock",
+          condition,
+          thenBranch,
+          ...(elseBranch === undefined ? {} : { elseBranch }),
+          loc: { start: headerLoc.start, end },
+        };
   }
 
   private parseScene(): SceneDeclaration | undefined {
@@ -421,6 +494,22 @@ class TzrParser {
     return this.lines[this.cursor];
   }
 
+  private currentBlockStop(): BlockStop | undefined {
+    const line = this.current();
+    if (line === undefined) {
+      return undefined;
+    }
+
+    const trimmed = line.text.trim();
+    if (trimmed === "@else") {
+      return "@else";
+    }
+    if (trimmed === "@endif") {
+      return "@endif";
+    }
+    return undefined;
+  }
+
   private currentRequired(): SourceLine {
     const line = this.current();
     if (line === undefined) {
@@ -442,6 +531,21 @@ class TzrParser {
 
   private location(line: number, column: number): SourceLocation {
     return { filePath: this.filePath, line, column };
+  }
+
+  private parseIfCondition(line: SourceLine): string | undefined {
+    const pattern = /^\s*@if\((.*)\)\s*$/;
+    const match = pattern.exec(line.text);
+    if (match === null) {
+      this.addError(line, line.text.indexOf("@if") + 1, "@if must use @if(...) syntax.");
+      return undefined;
+    }
+
+    return match[1] ?? "";
+  }
+
+  private lastStatementEnd(statements: readonly TzrStatement[]): SourceLocation | undefined {
+    return statements.at(-1)?.loc.end;
   }
 }
 

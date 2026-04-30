@@ -4,6 +4,7 @@ export type {
   ChoiceItem,
   CommandStatement,
   IdentifierValue,
+  IfBlock,
   JumpTarget,
   LabelDeclaration,
   MacroStatement,

@@ -17,6 +17,7 @@ Supported in the current parser:
 - macro calls such as `$enter("haruka")`
 - `@jump("#label")` with normalized jump target metadata
 - choice blocks with `? Question` and `- "Text" -> #label`
+- conditional blocks with `@if(...)`, `@else`, and `@endif`
 
 Not supported yet:
 
@@ -25,7 +26,6 @@ Not supported yet:
 - plugin command validation
 - macro expansion
 - save/load
-- `@if(...)`, `@else`, `@endif`
 - cross-file jump validation
 - Vite plugin behavior
 
@@ -133,6 +133,32 @@ $enter("haruka", "smile", "center")
 ```
 
 The parser keeps macro calls in the AST. Expansion is not implemented.
+
+## Conditional Blocks
+
+Conditional blocks use `@if(...)`, optional `@else`, and `@endif`.
+
+```txt
+@if(flag("met_haruka"))
+:: Haruka
+We meet again.
+@else
+:: Haruka
+Nice to meet you.
+@endif
+```
+
+The parser stores the condition as a raw string and parses both branches into nested AST statements. Nested `@if` blocks are supported.
+
+```txt
+@if(flag("met_haruka"))
+@if(var("affection") >= 3)
+@jump("#haruka_route")
+@endif
+@endif
+```
+
+Condition evaluation is not implemented. `@else` and `@endif` must appear inside an `@if` block. Missing `@endif` is a parse error.
 
 ## Jump Targets
 

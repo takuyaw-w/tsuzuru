@@ -23,7 +23,8 @@ export type TzrStatement =
   | SpeakerBlock
   | CommandStatement
   | MacroStatement
-  | ChoiceBlock;
+  | ChoiceBlock
+  | IfBlock;
 
 export interface SceneDeclaration {
   readonly type: "SceneDeclaration";
@@ -80,6 +81,14 @@ export interface ChoiceBlock {
 export interface ChoiceItem {
   readonly text: string;
   readonly target: JumpTarget;
+  readonly loc: SourceRange;
+}
+
+export interface IfBlock {
+  readonly type: "IfBlock";
+  readonly condition: string;
+  readonly thenBranch: readonly TzrStatement[];
+  readonly elseBranch?: readonly TzrStatement[];
   readonly loc: SourceRange;
 }
 
