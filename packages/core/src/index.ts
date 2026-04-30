@@ -22,6 +22,8 @@ export type {
   TzrStatement,
   TzrValue,
 } from "./ast.js";
-export type { ParseDiagnostic } from "./diagnostic.js";
+export type { CompileResult } from "./compiler.js";
+export { compileTzr } from "./compiler.js";
+export type { Diagnostic, ParseDiagnostic } from "./diagnostic.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";

@@ -12,6 +12,7 @@ export interface SourceRange {
 export interface TzrDocument {
   readonly type: "Document";
   readonly filePath: string;
+  readonly sourceLines: readonly string[];
   readonly body: readonly TzrStatement[];
 }
 
@@ -86,6 +87,7 @@ export interface JumpTarget {
   readonly raw: string;
   readonly file?: string;
   readonly label?: string;
+  readonly loc: SourceRange;
 }
 
 export type TzrArgument = PositionalArgument | NamedArgument;

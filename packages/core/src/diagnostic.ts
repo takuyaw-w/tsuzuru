@@ -1,6 +1,6 @@
 import type { SourceLocation } from "./ast.js";
 
-export interface ParseDiagnostic {
+export interface Diagnostic {
   readonly filePath: string;
   readonly line: number;
   readonly column: number;
@@ -8,11 +8,13 @@ export interface ParseDiagnostic {
   readonly sourceLine: string;
 }
 
+export type ParseDiagnostic = Diagnostic;
+
 export function createDiagnostic(
   location: SourceLocation,
   message: string,
   sourceLine: string,
-): ParseDiagnostic {
+): Diagnostic {
   return {
     filePath: location.filePath,
     line: location.line,

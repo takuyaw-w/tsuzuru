@@ -4,7 +4,7 @@ This document defines the currently implemented `.tzr` parser surface for `@tsuz
 
 ## Scope
 
-The parser is line-oriented and produces an AST only. It does not execute scenarios, expand macros, validate command names, resolve labels, or render UI.
+The parser is line-oriented and produces an AST only. A separate compiler pass performs initial same-file structural validation. Neither layer executes scenarios, expands macros, validates plugin command names, or renders UI.
 
 Supported in the current parser:
 
@@ -41,6 +41,8 @@ parseTzr(source, { filePath: "scenario/main.tzr" });
 
 AST nodes include source ranges with `filePath`, `line`, and `column`. Lines and columns are 1-based.
 
+Jump targets also carry their own source range. Compiler diagnostics for missing labels point at the target token, not just the start of the command or choice item line.
+
 Parse errors are returned as diagnostics:
 
 ```ts
@@ -70,6 +72,8 @@ Invalid:
 ```
 
 The parser records declarations only. Duplicate labels and missing jump targets are compiler concerns.
+
+The current compiler reports duplicate scene ids and duplicate label ids in the same document.
 
 ## Narration
 
@@ -112,6 +116,8 @@ The parser accepts positional and named arguments. Supported values are:
 
 Unknown command names are not parse errors yet.
 
+The current compiler recognizes `@jump(...)` only for target validation. Other command names are preserved but not validated.
+
 ## Macro Calls
 
 Macro calls use `$name(...)` and share the same argument syntax as commands.
@@ -142,6 +148,8 @@ Jump targets are normalized into:
 
 The parser does not check whether files or labels exist.
 
+The current compiler validates same-file label targets such as `#start`. Cross-file targets such as `chapter-01.tzr#start` are accepted without existence checks.
+
 ## Choices
 
 Choices start with a question line and require at least one item.
@@ -155,6 +163,32 @@ Choices start with a question line and require at least one item.
 Choice item text must be a double-quoted string. Targets use the same normalization rules as jump targets.
 
 Malformed choice items are parse errors. Choice rendering and resolution belong to later runtime/UI layers.
+
+The current compiler validates same-file choice targets against labels in the same document.
+
+## Compiler Diagnostics
+
+The current compiler reports:
+
+- duplicate scenes
+- duplicate labels
+- missing same-file `@jump("#label")` targets
+- missing same-file choice targets
+
+Example:
+
+```txt
+scenario/main.tzr:5:1
+Unknown label "#missing".
+```
+
+Validation not implemented yet:
+
+- unknown command names
+- unknown macro names
+- command or macro schemas
+- cross-file target existence
+- conditional syntax
 
 ## Whitespace
 

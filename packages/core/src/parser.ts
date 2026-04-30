@@ -85,6 +85,7 @@ class TzrParser {
       document: {
         type: "Document",
         filePath: this.filePath,
+        sourceLines: this.lines.map((line) => line.text),
         body,
       },
       errors: [],
@@ -258,9 +259,14 @@ class TzrParser {
 
     const text = unescapeString(match[1] ?? "");
     const rawTarget = match[2] ?? "";
+    const targetStartIndex = line.text.indexOf(rawTarget, line.text.indexOf("->") + 2);
+    const targetColumn = targetStartIndex + 1;
     return {
       text,
-      target: parseJumpTarget(rawTarget),
+      target: parseJumpTarget(rawTarget, {
+        start: this.location(line.line, targetColumn),
+        end: this.location(line.line, targetColumn + rawTarget.length),
+      }),
       loc: this.lineRange(line),
     };
   }
@@ -401,7 +407,10 @@ class TzrParser {
       this.addError(line, line.text.indexOf("@jump") + 1, '@jump must receive a string target, for example @jump("#label").');
       return undefined;
     }
-    return parseJumpTarget(first.value.value);
+    return parseJumpTarget(first.value.value, {
+      start: this.location(first.value.loc.start.line, first.value.loc.start.column + 1),
+      end: this.location(first.value.loc.end.line, first.value.loc.end.column - 1),
+    });
   }
 
   private addError(line: SourceLine, column: number, message: string): void {
@@ -449,10 +458,10 @@ function isDirectiveLine(text: string): boolean {
   );
 }
 
-function parseJumpTarget(raw: string): JumpTarget {
+function parseJumpTarget(raw: string, loc: SourceRange): JumpTarget {
   const hashIndex = raw.indexOf("#");
   if (hashIndex === -1) {
-    return raw.length === 0 ? { raw } : { raw, file: raw };
+    return raw.length === 0 ? { raw, loc } : { raw, file: raw, loc };
   }
 
   const file = raw.slice(0, hashIndex);
@@ -461,6 +470,7 @@ function parseJumpTarget(raw: string): JumpTarget {
     raw,
     ...(file.length > 0 ? { file } : {}),
     ...(label.length > 0 ? { label } : {}),
+    loc,
   };
 }
 
