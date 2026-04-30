@@ -1,174 +1,35 @@
-import type { ChoiceItem, TextLine, TzrArgument, TzrValue } from "./ast.js";
+import type { ChoiceItem } from "./ast.js";
 import { isCoreCommandName } from "./commands.js";
 import { evaluateCondition } from "./condition.js";
 import type { ChoiceInstruction, CommandInstruction, CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
+import {
+  getNamedNumber,
+  getNamedRuntimeValue,
+  getNamedString,
+  getPositionalNumber,
+  getPositionalString,
+} from "./runtime-args.js";
+import {
+  advanceActiveBranchFrame,
+  getActiveBranchFrame,
+  popActiveBranchFrame,
+  popFinishedBranchFrames,
+  pushBranchFrame,
+} from "./runtime-frames.js";
+import type {
+  ChoiceRuntimeEvent,
+  RuntimeBlockReason,
+  RuntimeChoiceItem,
+  RuntimePendingChoice,
+  RuntimePendingWait,
+  RuntimeState,
+  RuntimeStepOptions,
+  RuntimeStepResult,
+  WaitRuntimeEvent,
+} from "./runtime-types.js";
 
-export interface RuntimePointer {
-  readonly filePath: string;
-  readonly instructionIndex: number;
-}
-
-export interface RuntimeBranchFrame {
-  readonly instructions: readonly TzrInstruction[];
-  readonly instructionIndex: number;
-}
-
-export type RuntimeValue = string | number | boolean;
-
-export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
-
-export type RuntimeFlags = Readonly<Record<string, boolean>>;
-
-export interface RuntimeChoiceItem {
-  readonly text: string;
-  readonly targetRaw: string;
-  readonly targetLabel?: string;
-}
-
-export interface RuntimePendingChoice {
-  readonly question: string;
-  readonly items: readonly RuntimeChoiceItem[];
-}
-
-export interface RuntimePendingWait {
-  readonly durationMs: number;
-}
-
-export interface RuntimeState {
-  readonly pointer: RuntimePointer;
-  readonly variables: RuntimeVariables;
-  readonly flags: RuntimeFlags;
-  readonly branchFrames: readonly RuntimeBranchFrame[];
-  readonly pendingChoice: RuntimePendingChoice | null;
-  readonly pendingWait: RuntimePendingWait | null;
-  readonly isStopped: boolean;
-  readonly isWaitingForClick: boolean;
-}
-
-export interface RuntimeSnapshot {
-  readonly version: 1;
-  readonly pointer: RuntimePointer;
-  readonly variables: RuntimeVariables;
-  readonly flags: RuntimeFlags;
-  readonly branchFrames: readonly RuntimeBranchFrame[];
-  readonly pendingChoice: RuntimePendingChoice | null;
-  readonly pendingWait: RuntimePendingWait | null;
-  readonly isStopped: boolean;
-  readonly isWaitingForClick: boolean;
-}
-
-export type RuntimeBlockReason = "wait" | "choice" | "click";
-
-export interface RuntimeStepOptions {
-  readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
-}
-
-export type RuntimePluginCommandHandler = (
-  state: RuntimeState,
-  instruction: CommandInstruction,
-) => RuntimeStepResult;
-
-export type RuntimeEvent =
-  | SceneRuntimeEvent
-  | LabelRuntimeEvent
-  | NarrationRuntimeEvent
-  | DialogueRuntimeEvent
-  | WaitClickRuntimeEvent
-  | PageRuntimeEvent
-  | StopRuntimeEvent
-  | StateRuntimeEvent
-  | JumpRuntimeEvent
-  | IfRuntimeEvent
-  | ChoiceRuntimeEvent
-  | WaitRuntimeEvent
-  | RuntimePluginCommandEvent
-  | UnsupportedRuntimeEvent
-  | EndRuntimeEvent;
-
-export interface SceneRuntimeEvent {
-  readonly type: "scene";
-  readonly id: string;
-}
-
-export interface LabelRuntimeEvent {
-  readonly type: "label";
-  readonly id: string;
-}
-
-export interface NarrationRuntimeEvent {
-  readonly type: "narration";
-  readonly lines: readonly TextLine[];
-}
-
-export interface DialogueRuntimeEvent {
-  readonly type: "dialogue";
-  readonly speaker: string;
-  readonly lines: readonly TextLine[];
-}
-
-export interface WaitClickRuntimeEvent {
-  readonly type: "waitClick";
-}
-
-export interface PageRuntimeEvent {
-  readonly type: "page";
-}
-
-export interface StopRuntimeEvent {
-  readonly type: "stop";
-}
-
-export type StateCommandName = "set" | "inc" | "dec" | "flag" | "unflag";
-
-export interface StateRuntimeEvent {
-  readonly type: "state";
-  readonly command: StateCommandName;
-  readonly name: string;
-  readonly value: RuntimeValue;
-}
-
-export interface JumpRuntimeEvent {
-  readonly type: "jump";
-  readonly label: string;
-  readonly instructionIndex: number;
-}
-
-export interface IfRuntimeEvent {
-  readonly type: "if";
-  readonly result: boolean;
-  readonly branch: "then" | "else" | "none";
-  readonly event?: RuntimeEvent;
-}
-
-export interface ChoiceRuntimeEvent {
-  readonly type: "choice";
-  readonly question: string;
-  readonly items: readonly RuntimeChoiceItem[];
-}
-
-export interface WaitRuntimeEvent {
-  readonly type: "wait";
-  readonly durationMs: number;
-}
-
-export interface RuntimePluginCommandEvent {
-  readonly type: "pluginCommand";
-  readonly name: string;
-}
-
-export interface UnsupportedRuntimeEvent {
-  readonly type: "unsupported";
-  readonly instructionType: string;
-}
-
-export interface EndRuntimeEvent {
-  readonly type: "end";
-}
-
-export interface RuntimeStepResult {
-  readonly state: RuntimeState;
-  readonly event: RuntimeEvent;
-}
+export type * from "./runtime-types.js";
+export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 
 export function createInitialRuntimeState(document: CompiledTzrDocument): RuntimeState {
   return {
@@ -183,51 +44,6 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     pendingWait: null,
     isStopped: false,
     isWaitingForClick: false,
-  };
-}
-
-export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
-  return {
-    version: 1,
-    pointer: { ...state.pointer },
-    variables: { ...state.variables },
-    flags: { ...state.flags },
-    branchFrames: state.branchFrames.map((frame) => ({
-      instructions: frame.instructions,
-      instructionIndex: frame.instructionIndex,
-    })),
-    pendingChoice:
-      state.pendingChoice === null
-        ? null
-        : {
-            question: state.pendingChoice.question,
-            items: state.pendingChoice.items.map((item) => ({ ...item })),
-          },
-    pendingWait: state.pendingWait === null ? null : { ...state.pendingWait },
-    isStopped: state.isStopped,
-    isWaitingForClick: state.isWaitingForClick,
-  };
-}
-
-export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
-  return {
-    pointer: { ...snapshot.pointer },
-    variables: { ...snapshot.variables },
-    flags: { ...snapshot.flags },
-    branchFrames: snapshot.branchFrames.map((frame) => ({
-      instructions: frame.instructions,
-      instructionIndex: frame.instructionIndex,
-    })),
-    pendingChoice:
-      snapshot.pendingChoice === null
-        ? null
-        : {
-            question: snapshot.pendingChoice.question,
-            items: snapshot.pendingChoice.items.map((item) => ({ ...item })),
-          },
-    pendingWait: snapshot.pendingWait === null ? null : { ...snapshot.pendingWait },
-    isStopped: snapshot.isStopped,
-    isWaitingForClick: snapshot.isWaitingForClick,
   };
 }
 
@@ -633,68 +449,6 @@ function waitEvent(pendingWait: RuntimePendingWait): WaitRuntimeEvent {
   };
 }
 
-function getActiveBranchFrame(state: RuntimeState): RuntimeBranchFrame | undefined {
-  return state.branchFrames[state.branchFrames.length - 1];
-}
-
-function popFinishedBranchFrames(state: RuntimeState): RuntimeState {
-  let branchFrames = state.branchFrames;
-  while (branchFrames.length > 0) {
-    const activeFrame = branchFrames[branchFrames.length - 1];
-    if (activeFrame === undefined || activeFrame.instructionIndex < activeFrame.instructions.length) {
-      break;
-    }
-    branchFrames = branchFrames.slice(0, -1);
-  }
-
-  if (branchFrames === state.branchFrames) {
-    return state;
-  }
-
-  return {
-    ...state,
-    branchFrames,
-  };
-}
-
-function popActiveBranchFrame(state: RuntimeState): RuntimeState {
-  return {
-    ...state,
-    branchFrames: state.branchFrames.slice(0, -1),
-  };
-}
-
-function pushBranchFrame(state: RuntimeState, instructions: readonly TzrInstruction[]): RuntimeState {
-  return {
-    ...state,
-    branchFrames: [
-      ...state.branchFrames,
-      {
-        instructions,
-        instructionIndex: 0,
-      },
-    ],
-  };
-}
-
-function advanceActiveBranchFrame(state: RuntimeState): RuntimeState {
-  const activeFrame = getActiveBranchFrame(state);
-  if (activeFrame === undefined) {
-    return state;
-  }
-
-  return {
-    ...state,
-    branchFrames: [
-      ...state.branchFrames.slice(0, -1),
-      {
-        ...activeFrame,
-        instructionIndex: activeFrame.instructionIndex + 1,
-      },
-    ],
-  };
-}
-
 function unsupportedCommand(state: RuntimeState): RuntimeStepResult {
   return unsupportedInstruction(state, "CommandInstruction");
 }
@@ -715,59 +469,4 @@ function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState):
       instructionIndex,
     },
   };
-}
-
-function getNamedArgument(args: readonly TzrArgument[], name: string): TzrArgument | undefined {
-  return args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
-}
-
-function getNamedString(args: readonly TzrArgument[], name: string): string | undefined {
-  const argument = getNamedArgument(args, name);
-  if (argument?.type !== "NamedArgument" || argument.value.type !== "StringValue") {
-    return undefined;
-  }
-  return argument.value.value;
-}
-
-function getNamedNumber(args: readonly TzrArgument[], name: string): number | undefined {
-  const argument = getNamedArgument(args, name);
-  if (argument?.type !== "NamedArgument" || argument.value.type !== "NumberValue") {
-    return undefined;
-  }
-  return argument.value.value;
-}
-
-function getPositionalNumber(args: readonly TzrArgument[], index: number): number | undefined {
-  const argument = args[index];
-  if (argument?.type !== "PositionalArgument" || argument.value.type !== "NumberValue") {
-    return undefined;
-  }
-  return argument.value.value;
-}
-
-function getNamedRuntimeValue(args: readonly TzrArgument[], name: string): RuntimeValue | undefined {
-  const argument = getNamedArgument(args, name);
-  if (argument?.type !== "NamedArgument") {
-    return undefined;
-  }
-  return valueToRuntimeValue(argument.value);
-}
-
-function getPositionalString(args: readonly TzrArgument[], index: number): string | undefined {
-  const argument = args[index];
-  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue") {
-    return undefined;
-  }
-  return argument.value.value;
-}
-
-function valueToRuntimeValue(value: TzrValue): RuntimeValue | undefined {
-  switch (value.type) {
-    case "StringValue":
-    case "NumberValue":
-    case "BooleanValue":
-      return value.value;
-    case "IdentifierValue":
-      return undefined;
-  }
 }
