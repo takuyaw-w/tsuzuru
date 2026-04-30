@@ -1,0 +1,37 @@
+# Basic Runtime Example
+
+This example runs a small `.tzr` scenario with `@tsuzuru/core` only. It does not use Preact, Vite, asset loading, browser storage, or real rendering.
+
+The sample demonstrates:
+
+- `parseTzr`
+- `compileTzr`
+- `createInitialRuntimeState`
+- `stepRuntime`
+- `waitClick` and `page` handling with `clearClickWait`
+- `@wait(ms)` handling with `clearWait`
+- choice handling with `resolveChoice`
+- a small plugin command handler for `@bg(...)`
+
+## Files
+
+- `scenario/main.tzr`: the scenario script
+- `src/run.ts`: the TypeScript runtime driver
+
+## Run
+
+From the repository root:
+
+```sh
+pnpm --filter @tsuzuru/example-basic start
+```
+
+The script builds `@tsuzuru/core`, compiles this example, and runs `dist/run.js` with Node.
+
+For type checking only:
+
+```sh
+pnpm --filter @tsuzuru/example-basic typecheck
+```
+
+The CLI driver clears waits immediately and always chooses item `0`. A real host or UI layer would decide when to clear waits and which choice item to resolve.
