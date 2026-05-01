@@ -132,8 +132,8 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] examples で runtime plugin handler 実装
 - [x] preact example で save/load
 - [x] preact example で visibleEvent 使用
-- [ ] clean checkout から `examples/basic` が動くことを確認
-- [ ] clean checkout から `examples/preact-basic` が動くことを確認
+- [x] clean checkout から `examples/basic` が動くことを確認
+- [x] clean checkout から `examples/preact-basic` が動くことを確認
 - [ ] `examples/preact-basic/scenario/main.tzr` を v0.1 機能確認用に整える
   - [ ] narration
   - [ ] dialogue
