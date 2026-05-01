@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { isValidElement, type ComponentChildren, type VNode } from "preact";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { h, isValidElement, render, type ComponentChildren, type VNode } from "preact";
+import { act } from "preact/test-utils";
 import {
   compileTzr,
   createInitialRuntimeState,
@@ -19,6 +20,9 @@ import {
   isTransientRuntimeEvent,
   restoreRuntimeSnapshotForView,
   RuntimeView,
+  useRuntime,
+  type UseRuntimeOptions,
+  type UseRuntimeResult,
 } from "../src/index.js";
 
 const snapshot: RuntimeSnapshot = {
@@ -59,6 +63,163 @@ function expectVNode(value: ComponentChildren): VNode {
   }
 
   return value;
+}
+
+interface MinimalElement {
+  readonly nodeType: 1;
+  readonly namespaceURI: string;
+  readonly localName: string;
+  readonly attributes: readonly [];
+  readonly style: Record<string, string>;
+  parentNode: MinimalElement | null;
+  childNodes: MinimalNode[];
+  readonly firstChild: MinimalNode | null;
+  readonly nextSibling: MinimalNode | null;
+  appendChild(node: MinimalNode): MinimalNode;
+  insertBefore(node: MinimalNode, before: MinimalNode | null): MinimalNode;
+  removeChild(node: MinimalNode): MinimalNode;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
+  addEventListener(name: string, listener: EventListener): void;
+  removeEventListener(name: string, listener: EventListener): void;
+}
+
+interface MinimalText {
+  readonly nodeType: 3;
+  data: string;
+  parentNode: MinimalElement | null;
+  readonly nextSibling: MinimalNode | null;
+}
+
+type MinimalNode = MinimalElement | MinimalText;
+
+function createMinimalElement(localName: string, namespaceURI = "http://www.w3.org/1999/xhtml"): MinimalElement {
+  const element: MinimalElement = {
+    nodeType: 1,
+    namespaceURI,
+    localName,
+    attributes: [],
+    style: {},
+    parentNode: null,
+    childNodes: [],
+    get firstChild() {
+      return this.childNodes[0] ?? null;
+    },
+    get nextSibling() {
+      return nextSiblingOf(this);
+    },
+    appendChild(node) {
+      node.parentNode = this;
+      this.childNodes.push(node);
+      return node;
+    },
+    insertBefore(node, before) {
+      node.parentNode = this;
+      const index = before === null ? -1 : this.childNodes.indexOf(before);
+      if (index === -1) {
+        this.childNodes.push(node);
+      } else {
+        this.childNodes.splice(index, 0, node);
+      }
+      return node;
+    },
+    removeChild(node) {
+      this.childNodes = this.childNodes.filter((child) => child !== node);
+      node.parentNode = null;
+      return node;
+    },
+    setAttribute() {
+      return undefined;
+    },
+    removeAttribute() {
+      return undefined;
+    },
+    addEventListener() {
+      return undefined;
+    },
+    removeEventListener() {
+      return undefined;
+    },
+  };
+  return element;
+}
+
+function createMinimalText(data: string): MinimalText {
+  const text: MinimalText = {
+    nodeType: 3,
+    data,
+    parentNode: null,
+    get nextSibling() {
+      return nextSiblingOf(this);
+    },
+  };
+  return text;
+}
+
+function nextSiblingOf(node: MinimalNode): MinimalNode | null {
+  const siblings = node.parentNode?.childNodes;
+  if (siblings === undefined) {
+    return null;
+  }
+  const index = siblings.indexOf(node);
+  return index === -1 ? null : siblings[index + 1] ?? null;
+}
+
+interface MinimalDocument {
+  readonly documentElement: MinimalElement;
+  createElementNS(namespaceURI: string, localName: string): MinimalElement;
+  createTextNode(data: string): MinimalText;
+}
+
+function createMinimalDocument(): MinimalDocument {
+  return {
+    documentElement: createMinimalElement("html"),
+    createElementNS: (namespaceURI, localName) => createMinimalElement(localName, namespaceURI),
+    createTextNode: createMinimalText,
+  };
+}
+
+interface RuntimeHarnessProps {
+  readonly document: CompiledTzrDocument;
+  readonly options?: UseRuntimeOptions;
+  readonly onRender: (runtime: UseRuntimeResult) => void;
+}
+
+function RuntimeHarness({ document, options, onRender }: RuntimeHarnessProps): null {
+  const runtime = useRuntime(document, options);
+  onRender(runtime);
+  return null;
+}
+
+function installMinimalDom(): void {
+  const minimalDocument = createMinimalDocument();
+  Object.assign(globalThis, {
+    document: minimalDocument,
+    window: {
+      setTimeout: globalThis.setTimeout,
+      clearTimeout: globalThis.clearTimeout,
+    },
+  });
+}
+
+function uninstallMinimalDom(): void {
+  Reflect.deleteProperty(globalThis, "document");
+  Reflect.deleteProperty(globalThis, "window");
+}
+
+async function flushTimersAndUpdates(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await vi.runOnlyPendingTimersAsync();
+    await Promise.resolve();
+  });
+}
+
+async function flushUpdates(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
 }
 
 describe("isAutoSteppableRuntimeEvent", () => {
@@ -302,6 +463,161 @@ describe("getAutoClearWaitDuration", () => {
     };
 
     expect(getAutoClearWaitDuration({ type: "wait", durationMs: 500 }, state, false)).toBeNull();
+  });
+});
+
+describe("useRuntime", () => {
+  const roots: MinimalElement[] = [];
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    installMinimalDom();
+  });
+
+  afterEach(() => {
+    for (const root of roots.splice(0)) {
+      act(() => {
+        render(null, root as unknown as Element);
+      });
+    }
+    uninstallMinimalDom();
+    vi.useRealTimers();
+  });
+
+  async function mountRuntime(
+    document: CompiledTzrDocument,
+    options: UseRuntimeOptions,
+  ): Promise<() => UseRuntimeResult> {
+    let currentRuntime: UseRuntimeResult | null = null;
+    const root = createMinimalElement("div");
+    roots.push(root);
+
+    await act(async () => {
+      render(
+        h(RuntimeHarness, {
+          document,
+          options,
+          onRender: (runtime) => {
+            currentRuntime = runtime;
+          },
+        }),
+        root as unknown as Element,
+      );
+    });
+    await flushTimersAndUpdates();
+
+    return () => {
+      if (currentRuntime === null) {
+        throw new Error("runtime harness did not render");
+      }
+      return currentRuntime;
+    };
+  }
+
+  it("stops auto-step at narration and dialogue events", async () => {
+    const document = compileScript(`#scene("prologue")
+The classroom was quiet.
+:: Haruka
+You came.
+`);
+    const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
+
+    await act(async () => {
+      runtime().step();
+    });
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "The classroom was quiet." }],
+    });
+    expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
+
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({ type: "narration" });
+
+    await act(async () => {
+      runtime().step();
+    });
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({
+      type: "dialogue",
+      speaker: "Haruka",
+      lines: [{ text: "You came." }],
+    });
+    expect(runtime().visibleEvent).toMatchObject({ type: "dialogue" });
+
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({ type: "dialogue" });
+  });
+
+  it("stops auto-step at choice events", async () => {
+    const document = compileScript(`#scene("prologue")
+? What do you do?
+- "Stay" -> #stay
+#label("stay")
+`);
+    const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
+
+    await act(async () => {
+      runtime().step();
+    });
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toEqual({
+      type: "choice",
+      question: "What do you do?",
+      items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+    });
+    expect(runtime().visibleEvent).toEqual(runtime().event);
+    expect(runtime().blockReason).toBe("choice");
+
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({ type: "choice" });
+    expect(runtime().blockReason).toBe("choice");
+  });
+
+  it("stops auto-step when autoStepMaxSteps is reached", async () => {
+    const document = compileScript('#label("loop")\n@jump("#loop")\n');
+    const runtime = await mountRuntime(document, {
+      autoStepTransientEvents: true,
+      autoStepMaxSteps: 2,
+    });
+
+    await act(async () => {
+      runtime().step();
+    });
+    for (let index = 0; index < 5; index += 1) {
+      await flushTimersAndUpdates();
+    }
+
+    expect(runtime().autoStepError).toBe("Auto-step stopped after 2 consecutive runtime events.");
+    expect(runtime().isBlocked).toBe(false);
+    expect(runtime().state.isStopped).toBe(false);
+  });
+
+  it("does not expose transient events as visibleEvent", async () => {
+    const document = compileScript(`#scene("prologue")
+The classroom was quiet.
+`);
+    const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
+
+    await act(async () => {
+      runtime().step();
+    });
+    await flushUpdates();
+
+    expect(runtime().event).toEqual({ type: "scene", id: "prologue" });
+    expect(runtime().visibleEvent).toBeNull();
+
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({ type: "narration" });
+    expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
   });
 });
 

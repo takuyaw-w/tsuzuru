@@ -110,11 +110,11 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] transient event flicker 抑制
 - [x] click-to-advance for narration/dialogue
 - [x] save/load API
-- [ ] `useRuntime` の focused test を追加
-  - [ ] auto-step が narration/dialogue で止まる
-  - [ ] auto-step が choice で止まる
-  - [ ] autoStepMaxSteps が loop を止める
-  - [ ] visibleEvent が transient event を表示しない
+- [x] `useRuntime` の focused test を追加
+  - [x] auto-step が narration/dialogue で止まる
+  - [x] auto-step が choice で止まる
+  - [x] autoStepMaxSteps が loop を止める
+  - [x] visibleEvent が transient event を表示しない
 - [ ] `RuntimeView` の責務を再確認
   - [ ] convenience component に留める
   - [ ] full game UI framework にしない
