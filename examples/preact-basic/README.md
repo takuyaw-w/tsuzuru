@@ -4,6 +4,8 @@ This example combines `@tsuzuru/core` and `@tsuzuru/preact` in a minimal Vite + 
 
 It parses and compiles `scenario/main.tzr` on startup, passes the compiled document to `useRuntime`, and renders each `RuntimeEvent` with `RuntimeView`.
 
+The scenario is intentionally small, but it exercises v0.1 features: narration, dialogue, a choice, same-file jumps, flags, variables, `@if` branches, `@wait`, `@waitClick`, `@page`, and the example `@bg(...)` plugin command. The line before the page break is a convenient point to try Save and Load.
+
 Runtime control is intentionally small:
 
 - narration and dialogue advance when the message area is clicked

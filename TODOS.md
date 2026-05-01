@@ -134,17 +134,17 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] preact example で visibleEvent 使用
 - [x] clean checkout から `examples/basic` が動くことを確認
 - [x] clean checkout から `examples/preact-basic` が動くことを確認
-- [ ] `examples/preact-basic/scenario/main.tzr` を v0.1 機能確認用に整える
-  - [ ] narration
-  - [ ] dialogue
-  - [ ] choice
-  - [ ] jump
-  - [ ] if
-  - [ ] flag
-  - [ ] variable
-  - [ ] wait
-  - [ ] plugin command
-  - [ ] save/load 確認しやすい流れ
+- [x] `examples/preact-basic/scenario/main.tzr` を v0.1 機能確認用に整える
+  - [x] narration
+  - [x] dialogue
+  - [x] choice
+  - [x] jump
+  - [x] if
+  - [x] flag
+  - [x] variable
+  - [x] wait
+  - [x] plugin command
+  - [x] save/load 確認しやすい流れ
 
 ---
 

@@ -19,14 +19,39 @@ I made it, so it's fine.
 - "Make a joke" -> #joke
 
 #label("apologize")
+
+:: Yu
+Sorry. I'll leave earlier next time.
+
+@flag("apologized")
 @inc(name="haruka_affection", by=1)
 @jump("#after_choice")
 
 #label("joke")
+
+:: Yu
+This was a perfectly calculated arrival.
+
+@unflag("apologized")
 @dec(name="haruka_affection", by=1)
 @jump("#after_choice")
 
 #label("after_choice")
+
+This is a good moment to try Save and Load before continuing.
+
 @page()
 
-The conversation moved on.
+@if(flag("apologized"))
+:: Haruka
+At least you apologized.
+@else
+:: Haruka
+You never change.
+@endif
+
+@if(var("haruka_affection") >= 1)
+The walk home felt a little lighter.
+@else
+The walk home stayed awkwardly quiet.
+@endif
