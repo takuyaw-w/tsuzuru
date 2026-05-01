@@ -62,14 +62,14 @@ describe("std-audio BGM commands", () => {
 
   it("stops BGM with @stopBgm", () => {
     const result = runStdAudioScript(`@startBgm("main_theme")
-@stopBgm
+@stopBgm()
 `);
 
     expect(getStdAudioState(result.state).bgm).toBeNull();
   });
 
   it("does not warn when @stopBgm runs without active BGM", () => {
-    const result = runStdAudioScript("@stopBgm\n");
+    const result = runStdAudioScript("@stopBgm()\n");
 
     expect(getStdAudioState(result.state)).toEqual({
       bgm: null,

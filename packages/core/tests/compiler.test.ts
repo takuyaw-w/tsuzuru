@@ -1221,8 +1221,8 @@ We meet again.
     expect(compiled.ok).toBe(true);
   });
 
-  it("accepts bare registered plugin commands with no-argument schemas", () => {
-    const parsed = parseTzr("@stopBgm\n", { filePath: "scenario/main.tzr" });
+  it("accepts registered plugin commands with no-argument schemas and explicit parentheses", () => {
+    const parsed = parseTzr("@stopBgm()\n", { filePath: "scenario/main.tzr" });
 
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
