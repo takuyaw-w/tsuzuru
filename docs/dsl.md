@@ -155,6 +155,8 @@ $enter("haruka", "smile", "center")
 
 The parser keeps macro calls in the AST. The compiler expands registered macros and removes macro instructions from the compiled IR.
 
+See `docs/macro-api.md` for the TypeScript registration API, expansion rules, and v0.1 limitations.
+
 Macros may return presentation-oriented command instructions, but the compiler rejects macro expansion results that create structural or narrative control-flow instructions:
 
 - `SceneInstruction`
@@ -163,6 +165,8 @@ Macros may return presentation-oriented command instructions, but the compiler r
 - `ChoiceInstruction`
 - `MacroInstruction`
 - `@jump` command instructions
+
+Macro argument schema validation is not implemented in v0.1 and is deferred to post-v0.1.
 
 ## Conditional Blocks
 
@@ -267,7 +271,7 @@ Unknown label "#missing".
 
 Validation not implemented yet:
 
-- macro argument schemas
+- macro argument schema validation (deferred to post-v0.1)
 - cross-file target existence
 
 ## Whitespace

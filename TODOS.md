@@ -39,9 +39,9 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] plugin command schema 定義自体の validation を追加
   - [x] named schema の duplicate argument name を検出
   - [x] positional schema で optional の後に required が来る場合を検出
-- [ ] macro argument schema validation を v0.1 に入れるか決める
+- [x] macro argument schema validation を v0.1 に入れるか決める
   - [ ] 入れる場合: 実装する
-  - [ ] 入れない場合: post-v0.1 として docs に明記する
+  - [x] 入れない場合: post-v0.1 として docs に明記する
 - [ ] cross-file jump existence validation を v0.1 に入れるか決める
   - [ ] 入れない場合: post-v0.1 として docs に明記する
 
@@ -152,7 +152,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] `docs/dsl.md`
 - [x] `docs/runtime.md`
 - [x] `docs/plugin-api.md`
-- [ ] `docs/macro-api.md` を作成または更新
+- [x] `docs/macro-api.md` を作成または更新
 - [ ] `docs/architecture.md` を作成または更新
 - [ ] root `README.md` に quickstart を追加
 - [ ] examples の実行手順を整理
@@ -193,6 +193,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ## 10. post-v0.1 に回す候補
 
+- [ ] macro argument schema validation
 - [ ] cross-file jump existence validation
 - [ ] backlog
 - [ ] auto mode
