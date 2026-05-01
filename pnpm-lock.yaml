@@ -44,6 +44,28 @@ importers:
         specifier: ^8.0.10
         version: 8.0.10
 
+  examples/preact-std-visual:
+    dependencies:
+      '@tsuzuru/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@tsuzuru/plugin-std-visual':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-visual
+      '@tsuzuru/preact':
+        specifier: workspace:*
+        version: link:../../packages/preact
+      preact:
+        specifier: ^10.0.0
+        version: 10.29.1
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10
+
   packages/core: {}
 
   packages/plugin-std-visual:
