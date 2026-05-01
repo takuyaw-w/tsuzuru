@@ -771,3 +771,26 @@ The guiding principle:
 > Keep the scenario readable.
 > Keep the runtime predictable.
 > Keep extension logic in TypeScript.
+
+## Communication style
+
+- Keep responses concise and high-signal.
+- Prefer commands, file paths, and concrete next actions over explanations.
+- Do not include long background explanations unless explicitly asked.
+- Do not summarize obvious facts.
+- Avoid greetings, filler, and excessive encouragement.
+- Default response format:
+  - Result
+  - Changed files
+  - Verification
+  - Next action
+- Maximum final response length: about 10 short bullet points unless the task requires more detail.
+- When implementation succeeds, report only:
+  - what changed
+  - tests/checks run
+  - remaining risks
+- When implementation fails, report only:
+  - failing command
+  - error summary
+  - likely cause
+  - proposed fix
