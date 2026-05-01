@@ -75,6 +75,7 @@ class TzrCompiler {
   private readonly errors: Diagnostic[] = [];
   private readonly labels = new Map<string, LabelDeclaration>();
   private readonly scenes = new Map<string, SceneDeclaration>();
+  private readonly invalidPluginCommandNames = new Set<string>();
 
   public constructor(
     private readonly document: TzrDocument,
@@ -105,6 +106,71 @@ class TzrCompiler {
           this.documentStartLocation(),
           `Plugin command registry key "${key}" does not match definition name "${definition.name}".`,
         );
+        this.invalidPluginCommandNames.add(key);
+        continue;
+      }
+
+      this.validatePluginCommandSchemaDefinition(definition);
+    }
+  }
+
+  private validatePluginCommandSchemaDefinition(definition: PluginCommandDefinition): void {
+    const schema = definition.args;
+    if (schema === undefined) {
+      return;
+    }
+
+    switch (schema.kind) {
+      case "none":
+        return;
+      case "named":
+        this.validatePluginNamedSchemaDefinition(definition.name, schema.arguments);
+        return;
+      case "positional":
+        this.validatePluginPositionalSchemaDefinition(definition.name, schema.arguments);
+        return;
+    }
+  }
+
+  private validatePluginNamedSchemaDefinition(
+    commandName: string,
+    definitions: readonly PluginCommandNamedArgumentDefinition[],
+  ): void {
+    const seen = new Set<string>();
+
+    for (const definition of definitions) {
+      if (seen.has(definition.name)) {
+        this.invalidPluginCommandNames.add(commandName);
+        this.addError(
+          this.documentStartLocation(),
+          `Plugin command "@${commandName}" has duplicate argument definition "${definition.name}".`,
+        );
+        continue;
+      }
+
+      seen.add(definition.name);
+    }
+  }
+
+  private validatePluginPositionalSchemaDefinition(
+    commandName: string,
+    definitions: readonly PluginCommandPositionalArgumentDefinition[],
+  ): void {
+    let hasOptionalArgument = false;
+
+    for (const definition of definitions) {
+      if (definition.optional === true) {
+        hasOptionalArgument = true;
+        continue;
+      }
+
+      if (hasOptionalArgument) {
+        this.invalidPluginCommandNames.add(commandName);
+        this.addError(
+          this.documentStartLocation(),
+          `Plugin command "@${commandName}" has required positional argument after optional argument.`,
+        );
+        return;
       }
     }
   }
@@ -234,7 +300,7 @@ class TzrCompiler {
 
   private hasRegisteredPluginCommand(name: string): boolean {
     const pluginCommand = this.options.pluginCommands?.[name];
-    return pluginCommand !== undefined && pluginCommand.name === name;
+    return pluginCommand !== undefined && pluginCommand.name === name && !this.invalidPluginCommandNames.has(name);
   }
 
   private validateCoreCommandArguments(command: CommandInstruction): void {
@@ -275,7 +341,12 @@ class TzrCompiler {
     }
 
     const definition = this.options.pluginCommands?.[command.name];
-    if (definition === undefined || definition.name !== command.name || definition.args === undefined) {
+    if (
+      definition === undefined ||
+      definition.name !== command.name ||
+      this.invalidPluginCommandNames.has(command.name) ||
+      definition.args === undefined
+    ) {
       return;
     }
 

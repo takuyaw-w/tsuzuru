@@ -1250,6 +1250,202 @@ We meet again.
     ]);
   });
 
+  it("reports plugin command named schemas with duplicate argument definitions", () => {
+    const parsed = parseTzr("@wait(500)\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "named",
+          arguments: [
+            { name: "character", type: "string" },
+            { name: "character", type: "string", optional: true },
+          ],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command "@show" has duplicate argument definition "character".',
+        sourceLine: "@wait(500)",
+      },
+    ]);
+  });
+
+  it("reports plugin command positional schemas with required arguments after optional arguments", () => {
+    const parsed = parseTzr("@wait(500)\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        transition: definePluginCommand("transition", {
+          kind: "positional",
+          arguments: [
+            { type: "string", optional: true },
+            { type: "number" },
+          ],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command "@transition" has required positional argument after optional argument.',
+        sourceLine: "@wait(500)",
+      },
+    ]);
+  });
+
+  it("does not treat plugin commands with invalid named schemas as registered commands", () => {
+    const parsed = parseTzr('@show(character="haruka")\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "named",
+          arguments: [
+            { name: "character", type: "string" },
+            { name: "character", type: "string", optional: true },
+          ],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command "@show" has duplicate argument definition "character".',
+        sourceLine: '@show(character="haruka")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Unknown command "@show".',
+        sourceLine: '@show(character="haruka")',
+      },
+    ]);
+  });
+
+  it("does not treat plugin commands with invalid positional schemas as registered commands", () => {
+    const parsed = parseTzr('@transition("fade", 300)\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        transition: definePluginCommand("transition", {
+          kind: "positional",
+          arguments: [
+            { type: "string", optional: true },
+            { type: "number" },
+          ],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command "@transition" has required positional argument after optional argument.',
+        sourceLine: '@transition("fade", 300)',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Unknown command "@transition".',
+        sourceLine: '@transition("fade", 300)',
+      },
+    ]);
+  });
+
+  it("keeps core command validation independent from invalid plugin command schemas", () => {
+    const parsed = parseTzr('@wait("500")\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "named",
+          arguments: [
+            { name: "character", type: "string" },
+            { name: "character", type: "string", optional: true },
+          ],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: 'Plugin command "@show" has duplicate argument definition "character".',
+        sourceLine: '@wait("500")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 7,
+        message: "@wait expects a number argument.",
+        sourceLine: '@wait("500")',
+      },
+    ]);
+  });
+
   it("accepts plugin command registry entries whose key matches the definition name", () => {
     const parsed = parseTzr('@bg("school")\n', { filePath: "scenario/main.tzr" });
 
