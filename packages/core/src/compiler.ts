@@ -26,12 +26,44 @@ export interface CompileOptions {
 
 export interface PluginCommandDefinition {
   readonly name: string;
+  readonly args?: PluginCommandArgumentSchema;
 }
 
 export type PluginCommandMap = Readonly<Record<string, PluginCommandDefinition>>;
 
-export function definePluginCommand(name: string): PluginCommandDefinition {
-  return { name };
+export type PluginCommandValueType = "string" | "number" | "boolean" | "identifier";
+
+export interface PluginCommandArgumentDefinition {
+  readonly type: PluginCommandValueType | readonly PluginCommandValueType[];
+  readonly optional?: boolean;
+}
+
+export interface PluginCommandPositionalArgumentDefinition extends PluginCommandArgumentDefinition {
+  readonly name?: string;
+}
+
+export interface PluginCommandNamedArgumentDefinition extends PluginCommandArgumentDefinition {
+  readonly name: string;
+}
+
+export type PluginCommandArgumentSchema =
+  | {
+      readonly kind: "none";
+    }
+  | {
+      readonly kind: "positional";
+      readonly arguments: readonly PluginCommandPositionalArgumentDefinition[];
+    }
+  | {
+      readonly kind: "named";
+      readonly arguments: readonly PluginCommandNamedArgumentDefinition[];
+    };
+
+export function definePluginCommand(
+  name: string,
+  args?: PluginCommandArgumentSchema,
+): PluginCommandDefinition {
+  return args === undefined ? { name } : { name, args };
 }
 
 export function compileTzr(document: TzrDocument, options: CompileOptions = {}): CompileResult {
@@ -179,6 +211,7 @@ class TzrCompiler {
       if (instruction.type === "CommandInstruction") {
         this.validateCommandRegistration(instruction);
         this.validateCoreCommandArguments(instruction);
+        this.validatePluginCommandArguments(instruction);
       }
       if (instruction.type === "IfInstruction") {
         this.validateCompiledInstructions(instruction.thenBranch);
@@ -233,6 +266,115 @@ class TzrCompiler {
       case "unflag":
         this.validateSinglePositionalArgument(command, name, "StringValue", "string");
         return;
+    }
+  }
+
+  private validatePluginCommandArguments(command: CommandInstruction): void {
+    if (isCoreCommandName(command.name)) {
+      return;
+    }
+
+    const definition = this.options.pluginCommands?.[command.name];
+    if (definition === undefined || definition.name !== command.name || definition.args === undefined) {
+      return;
+    }
+
+    switch (definition.args.kind) {
+      case "none":
+        this.validatePluginNoArguments(command);
+        return;
+      case "positional":
+        this.validatePluginPositionalArguments(command, definition.args.arguments);
+        return;
+      case "named":
+        this.validatePluginNamedArguments(command, definition.args.arguments);
+        return;
+    }
+  }
+
+  private validatePluginNoArguments(command: CommandInstruction): void {
+    if (command.args.length > 0) {
+      this.addError(command.loc.start, `@${command.name} expects no arguments.`);
+    }
+  }
+
+  private validatePluginPositionalArguments(
+    command: CommandInstruction,
+    definitions: readonly PluginCommandPositionalArgumentDefinition[],
+  ): void {
+    for (const argument of command.args) {
+      if (argument.type !== "PositionalArgument") {
+        this.addError(argument.loc.start, `@${command.name} expects only positional arguments.`);
+      }
+    }
+
+    for (const [index, definition] of definitions.entries()) {
+      const argument = command.args[index];
+      if (argument === undefined) {
+        if (definition.optional !== true) {
+          this.addError(command.loc.start, `@${command.name} requires positional argument ${index + 1}.`);
+        }
+        continue;
+      }
+
+      if (argument.type !== "PositionalArgument") {
+        continue;
+      }
+
+      this.validatePluginValueType(command.name, argument.value, definition.type, `positional argument ${index + 1}`);
+    }
+
+    if (command.args.length > definitions.length) {
+      for (const argument of command.args.slice(definitions.length)) {
+        this.addError(argument.loc.start, `@${command.name} does not allow extra positional arguments.`);
+      }
+    }
+  }
+
+  private validatePluginNamedArguments(
+    command: CommandInstruction,
+    definitions: readonly PluginCommandNamedArgumentDefinition[],
+  ): void {
+    const definitionByName = new Map(definitions.map((definition) => [definition.name, definition]));
+    const seen = new Set<string>();
+
+    for (const argument of command.args) {
+      if (argument.type !== "NamedArgument") {
+        this.addError(argument.loc.start, `@${command.name} expects only named arguments.`);
+        continue;
+      }
+
+      const definition = definitionByName.get(argument.name);
+      if (definition === undefined) {
+        this.addError(argument.loc.start, `@${command.name} does not allow argument "${argument.name}".`);
+        continue;
+      }
+
+      if (seen.has(argument.name)) {
+        this.addError(argument.loc.start, `@${command.name} has duplicate argument "${argument.name}".`);
+        continue;
+      }
+
+      seen.add(argument.name);
+      this.validatePluginValueType(command.name, argument.value, definition.type, `argument "${argument.name}"`);
+    }
+
+    for (const definition of definitions) {
+      if (definition.optional !== true && !seen.has(definition.name)) {
+        this.addError(command.loc.start, `@${command.name} requires a named "${definition.name}" argument.`);
+      }
+    }
+  }
+
+  private validatePluginValueType(
+    commandName: string,
+    value: TzrValue,
+    expected: PluginCommandValueType | readonly PluginCommandValueType[],
+    argumentLabel: string,
+  ): void {
+    const allowedTypes = Array.isArray(expected) ? expected : [expected];
+    if (!allowedTypes.includes(toPluginValueType(value))) {
+      this.addError(value.loc.start, `@${commandName} ${argumentLabel} must be ${formatPluginValueTypes(allowedTypes)}.`);
     }
   }
 
@@ -557,4 +699,30 @@ function countHashes(value: string): number {
     }
   }
   return count;
+}
+
+function toPluginValueType(value: TzrValue): PluginCommandValueType {
+  switch (value.type) {
+    case "StringValue":
+      return "string";
+    case "NumberValue":
+      return "number";
+    case "BooleanValue":
+      return "boolean";
+    case "IdentifierValue":
+      return "identifier";
+  }
+}
+
+function formatPluginValueTypes(types: readonly PluginCommandValueType[]): string {
+  if (types.length === 1) {
+    return types[0] ?? "value";
+  }
+
+  if (types.length === 2) {
+    return `${types[0] ?? "value"} or ${types[1] ?? "value"}`;
+  }
+
+  const last = types.at(-1) ?? "value";
+  return `${types.slice(0, -1).join(", ")}, or ${last}`;
 }

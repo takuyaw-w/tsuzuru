@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileTzr, parseTzr } from "../src/index.js";
+import { compileTzr, definePluginCommand, parseTzr } from "../src/index.js";
 
 describe("compileTzr", () => {
   it("accepts same-file jump and choice targets that resolve to labels", () => {
@@ -1003,6 +1003,253 @@ We meet again.
     expect(compiled.ok).toBe(true);
   });
 
+  it("accepts registered plugin commands with valid positional argument schemas", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@bg("school")
+@transition("fade", 300)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: definePluginCommand("bg", {
+          kind: "positional",
+          arguments: [{ type: "string" }],
+        }),
+        transition: definePluginCommand("transition", {
+          kind: "positional",
+          arguments: [{ type: "string" }, { type: "number", optional: true }],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("reports invalid registered plugin command positional arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@bg()
+@bg(123)
+@bg("school", "extra")
+@bg(name="school")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        bg: definePluginCommand("bg", {
+          kind: "positional",
+          arguments: [{ type: "string" }],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: "@bg requires positional argument 1.",
+        sourceLine: "@bg()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 5,
+        message: "@bg positional argument 1 must be string.",
+        sourceLine: "@bg(123)",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 15,
+        message: "@bg does not allow extra positional arguments.",
+        sourceLine: '@bg("school", "extra")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 5,
+        message: "@bg expects only positional arguments.",
+        sourceLine: '@bg(name="school")',
+      },
+    ]);
+  });
+
+  it("accepts registered plugin commands with valid named argument schemas", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@show(character="haruka", pose="smile", at=center)
+@hide(character="haruka")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "named",
+          arguments: [
+            { name: "character", type: "string" },
+            { name: "pose", type: "string", optional: true },
+            { name: "at", type: ["string", "identifier"], optional: true },
+          ],
+        }),
+        hide: definePluginCommand("hide", {
+          kind: "named",
+          arguments: [{ name: "character", type: "string" }],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("reports invalid registered plugin command named arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@show()
+@show(character=haruka)
+@show(character="haruka", extra=true)
+@show(character="haruka", character="yu")
+@show("haruka")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "named",
+          arguments: [{ name: "character", type: "string" }],
+        }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: '@show requires a named "character" argument.',
+        sourceLine: "@show()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 17,
+        message: '@show argument "character" must be string.',
+        sourceLine: "@show(character=haruka)",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 27,
+        message: '@show does not allow argument "extra".',
+        sourceLine: '@show(character="haruka", extra=true)',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 27,
+        message: '@show has duplicate argument "character".',
+        sourceLine: '@show(character="haruka", character="yu")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 7,
+        message: "@show expects only named arguments.",
+        sourceLine: '@show("haruka")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 1,
+        message: '@show requires a named "character" argument.',
+        sourceLine: '@show("haruka")',
+      },
+    ]);
+  });
+
+  it("accepts registered plugin commands with no-argument schemas", () => {
+    const parsed = parseTzr("@flash()\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        flash: definePluginCommand("flash", { kind: "none" }),
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+  });
+
+  it("reports registered plugin commands with invalid no-argument schemas", () => {
+    const parsed = parseTzr('@flash("white")\n', { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        flash: definePluginCommand("flash", { kind: "none" }),
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 1,
+        column: 1,
+        message: "@flash expects no arguments.",
+        sourceLine: '@flash("white")',
+      },
+    ]);
+  });
+
   it("accepts plugin command registry entries whose key matches the definition name", () => {
     const parsed = parseTzr('@bg("school")\n', { filePath: "scenario/main.tzr" });
 
@@ -1307,6 +1554,48 @@ $enter("haruka")
     });
 
     expect(compiled.ok).toBe(true);
+  });
+
+  it("validates registered plugin command schemas for macro expansion results", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+$enter(123)
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        show: definePluginCommand("show", {
+          kind: "positional",
+          arguments: [{ type: "string" }],
+        }),
+      },
+      macros: {
+        enter(call) {
+          return [{ type: "CommandInstruction", name: "show", args: call.args, loc: call.loc }];
+        },
+      },
+    });
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 8,
+        message: "@show positional argument 1 must be string.",
+        sourceLine: "$enter(123)",
+      },
+    ]);
   });
 
   it("reports unknown macros", () => {
