@@ -169,10 +169,10 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
   - [ ] 作る場合: Vite + Preact template を生成
   - [ ] 作る場合: sample `.tzr` を含める
   - [x] 作らない場合: manual setup を README に明記
-- [ ] `@tsuzuru/vite` を v0.1 に入れるか決める
+- [x] `@tsuzuru/vite` を v0.1 に入れるか決める
   - [ ] 入れる場合: package skeleton を作成
   - [ ] 入れる場合: `.tzr` import 方針を決める
-  - [ ] 入れない場合: Vite `?raw` 利用を docs に明記
+  - [x] 入れない場合: Vite `?raw` 利用を docs に明記
 
 ---
 

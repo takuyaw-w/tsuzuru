@@ -2,7 +2,7 @@
 
 This example combines `@tsuzuru/core` and `@tsuzuru/preact` in a minimal Vite + Preact app.
 
-It parses and compiles `scenario/main.tzr` on startup, passes the compiled document to `useRuntime`, and renders each `RuntimeEvent` with `RuntimeView`.
+It imports `scenario/main.tzr` with Vite's `?raw` suffix, parses and compiles the source on startup, passes the compiled document to `useRuntime`, and renders each `RuntimeEvent` with `RuntimeView`. v0.1 does not include `@tsuzuru/vite`.
 
 The scenario is intentionally small, but it exercises v0.1 features: narration, dialogue, a choice, same-file jumps, flags, variables, `@if` branches, `@wait`, `@waitClick`, `@page`, and the example `@bg(...)` plugin command. The line before the page break is a convenient point to try Save and Load.
 

@@ -341,6 +341,8 @@ Possible package:
 @tsuzuru/vite
 ```
 
+This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`.
+
 Potential scope:
 
 - import `.tzr` files

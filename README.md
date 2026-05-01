@@ -131,7 +131,7 @@ pnpm --filter @tsuzuru/example-preact-basic dev
 
 `examples/basic` は Node 上で `@tsuzuru/core` の parse / compile / runtime 実行を確認します。`examples/preact-basic` は Vite + Preact で `useRuntime`、`RuntimeView`、choice、wait、plugin command、localStorage save/load を確認します。
 
-新規プロジェクトを作る場合は、v0.1 では `examples/preact-basic` の構成を参考に手動で Vite + Preact project を作り、`@tsuzuru/core` と `@tsuzuru/preact` を組み込んでください。`npm create tsuzuru` は post-v0.1 候補です。
+新規プロジェクトを作る場合は、v0.1 では `examples/preact-basic` の構成を参考に手動で Vite + Preact project を作り、`@tsuzuru/core` と `@tsuzuru/preact` を組み込んでください。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。`npm create tsuzuru` と `@tsuzuru/vite` は post-v0.1 候補です。
 
 ## DSL の例
 
@@ -361,6 +361,7 @@ v0.1 では、以下を目標にします。
 - arbitrary JavaScript / TypeScript inside `.tzr`
 - scenario-local macro definitions
 - `create-tsuzuru`
+- `@tsuzuru/vite`
 - cross-file jump existence validation
 - macro argument schema validation
 - save data scenario identity / version / migration

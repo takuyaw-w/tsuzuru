@@ -638,6 +638,7 @@ Do not include these unless explicitly re-scoped:
 - arbitrary JavaScript in `.tzr`
 - arbitrary TypeScript in `.tzr`
 - `create-tsuzuru`
+- `@tsuzuru/vite`
 - Live2D
 - Pixi integration
 - advanced animation editor

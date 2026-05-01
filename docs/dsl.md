@@ -35,6 +35,8 @@ Not supported in v0.1:
 - Vite plugin behavior
 - `create-tsuzuru`
 
+In Vite projects, load `.tzr` files as raw text with `?raw` or by another host-owned file loading path, then pass the source string to `parseTzr`. `@tsuzuru/vite` is deferred to post-v0.1.
+
 ## Files
 
 Scenario files use the `.tzr` extension. The parser accepts a `filePath` option and includes it in AST source locations and parse diagnostics.
