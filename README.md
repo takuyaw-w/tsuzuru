@@ -113,6 +113,8 @@ Preact 向け adapter です。
 - choice selection
 - save/load adapter utilities
 
+`RuntimeView` は最小表示用の convenience component に留め、full game UI framework にはしません。
+
 シナリオ実行の本質的なロジックは `@tsuzuru/core` に置きます。
 
 ## DSL の例

@@ -115,9 +115,9 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
   - [x] auto-step が choice で止まる
   - [x] autoStepMaxSteps が loop を止める
   - [x] visibleEvent が transient event を表示しない
-- [ ] `RuntimeView` の責務を再確認
-  - [ ] convenience component に留める
-  - [ ] full game UI framework にしない
+- [x] `RuntimeView` の責務を再確認
+  - [x] convenience component に留める
+  - [x] full game UI framework にしない
 - [ ] waitClick / page をボタン継続にするか、画面クリック継続にするか決める
 
 ---
