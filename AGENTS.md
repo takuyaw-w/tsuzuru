@@ -794,3 +794,18 @@ The guiding principle:
   - error summary
   - likely cause
   - proposed fix
+
+# Token usage policy
+
+Use `rtk` for noisy command outputs when possible.
+
+Prefer:
+
+- `rtk git status`
+- `rtk git diff`
+- `rtk pnpm typecheck`
+- `rtk pnpm test`
+- `rtk pnpm build`
+
+Do not paste full logs unless necessary.
+If compressed output is insufficient, inspect the raw output or rerun a narrower command.
