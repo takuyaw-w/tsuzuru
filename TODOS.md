@@ -3,7 +3,7 @@
 Codex は作業前に必ず `AGENTS.md` を読むこと。
 `AGENTS.md` の設計方針、アーキテクチャ境界、Testing Policy、Documentation Requirements を優先すること。
 
-## v0.1 完了ライン
+## 1. v0.1 完了ライン
 
 Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
@@ -18,7 +18,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 1. Core DSL / Compiler
+## 2. Core DSL / Compiler
 
 - [x] parser 実装
 - [x] compiler 実装
@@ -47,7 +47,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 2. Runtime
+## 3. Runtime
 
 - [x] `stepRuntime` 実装
 - [x] narration / dialogue runtime event
@@ -76,7 +76,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 3. Save / Load
+## 4. Save / Load
 
 - [x] `RuntimeSnapshot`
 - [x] `createRuntimeSnapshot`
@@ -99,7 +99,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 4. Preact Adapter
+## 5. Preact Adapter
 
 - [x] `RuntimeView`
 - [x] `useRuntime`
@@ -123,7 +123,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 5. Examples
+## 6. Examples
 
 - [x] `examples/basic`
 - [x] `examples/preact-basic`
@@ -147,7 +147,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 6. Docs
+## 7. Docs
 
 - [x] `docs/dsl.md`
 - [x] `docs/runtime.md`
@@ -161,7 +161,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 7. Project Creation / Distribution
+## 8. Project Creation / Distribution
 
 - [ ] v0.1 で `create-tsuzuru` を作るか決める
   - [ ] 作る場合: package skeleton を作成
@@ -175,11 +175,11 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 8. Quality Gates
+## 9. Quality Gates
 
 - [ ] `pnpm install` が通る
-- [ ] `pnpm typecheck` が通る
-- [ ] `pnpm test` が通る
+- [x] `pnpm typecheck` が通る
+- [x] `pnpm test` が通る
 - [ ] `pnpm --filter @tsuzuru/core build` が通る
 - [ ] `pnpm --filter @tsuzuru/preact build` が通る
 - [ ] `pnpm --filter @tsuzuru/example-preact-basic build` が通る
@@ -191,7 +191,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## 9. post-v0.1 に回す候補
+## 10. post-v0.1 に回す候補
 
 - [ ] cross-file jump existence validation
 - [ ] backlog
@@ -210,7 +210,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ---
 
-## Codex 作業ルール
+## 11. Codex 作業ルール
 
 Codex は各作業で以下を守ること。
 
