@@ -178,17 +178,17 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ## 9. Quality Gates
 
-- [ ] `pnpm install` が通る
+- [x] `pnpm install` が通る
 - [x] `pnpm typecheck` が通る
 - [x] `pnpm test` が通る
-- [ ] `pnpm --filter @tsuzuru/core build` が通る
-- [ ] `pnpm --filter @tsuzuru/preact build` が通る
-- [ ] `pnpm --filter @tsuzuru/example-preact-basic build` が通る
+- [x] `pnpm --filter @tsuzuru/core build` が通る
+- [x] `pnpm --filter @tsuzuru/preact build` が通る
+- [x] `pnpm --filter @tsuzuru/example-preact-basic build` が通る
 - [ ] `pnpm --filter @tsuzuru/example-preact-basic dev` でブラウザ確認できる
-- [ ] public exports を確認する
-- [ ] 不要な export がないか確認する
-- [ ] `any` が public API に漏れていないか確認する
-- [ ] package names / directory structure が `AGENTS.md` と矛盾しないか確認する
+- [x] public exports を確認する
+- [x] 不要な export がないか確認する
+- [x] `any` が public API に漏れていないか確認する
+- [x] package names / directory structure が `AGENTS.md` と矛盾しないか確認する
 
 ---
 
