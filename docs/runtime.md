@@ -19,6 +19,8 @@ const result = stepRuntime(compiledDocument, state);
 
 The runtime reads `document.instructions`, `document.labels`, and `document.filePath`. Cross-file runtime jumps are not implemented.
 
+For v0.1, compile-time jump validation is limited to target shape and same-file label existence within one `CompiledTzrDocument`. Cross-file target existence validation is deferred to post-v0.1 and belongs with a project graph, file resolver, or Vite/project loading layer rather than the single-document runtime.
+
 ## RuntimeState
 
 `RuntimeState` is immutable by convention. Runtime functions return a new state when state changes.
@@ -195,6 +197,8 @@ For v0.1, branch frames are included directly in snapshots.
 - false without `elseBranch`: advance to the next top-level instruction
 
 `@jump("#label")` resolves against `CompiledTzrDocument.labels`. It moves `pointer.instructionIndex` to the label's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
+
+Cross-file jump targets may be parsed and compiled, but the current runtime does not load another document or resolve labels outside the current compiled document.
 
 Choices produce a blocked `pendingChoice` state and are resolved separately by `resolveChoice`.
 

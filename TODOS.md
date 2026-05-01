@@ -42,8 +42,8 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] macro argument schema validation を v0.1 に入れるか決める
   - [ ] 入れる場合: 実装する
   - [x] 入れない場合: post-v0.1 として docs に明記する
-- [ ] cross-file jump existence validation を v0.1 に入れるか決める
-  - [ ] 入れない場合: post-v0.1 として docs に明記する
+- [x] cross-file jump existence validation を v0.1 に入れるか決める
+  - [x] 入れない場合: post-v0.1 として docs に明記する
 
 ---
 

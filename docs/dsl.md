@@ -29,9 +29,9 @@ Implemented outside the parser:
 - optional plugin command argument schema validation during compilation
 - runtime snapshot and Preact save-data helpers
 
-Not supported yet:
+Not supported in v0.1:
 
-- cross-file jump existence validation
+- cross-file jump target existence validation, deferred to post-v0.1
 - Vite plugin behavior
 - `create-tsuzuru`
 
@@ -228,6 +228,7 @@ Invalid target forms include:
 - multiple `#` separators
 
 Cross-file targets such as `chapter-01.tzr#start` are accepted without existence checks.
+For v0.1, the compiler validates same-file target existence only. Cross-file target existence validation is deferred to post-v0.1 because it requires a project graph, file resolver, and integration with the eventual Vite or project loading layer.
 
 ## Choices
 
@@ -269,10 +270,10 @@ scenario/main.tzr:5:1
 Unknown label "#missing".
 ```
 
-Validation not implemented yet:
+Validation deferred to post-v0.1:
 
 - macro argument schema validation (deferred to post-v0.1)
-- cross-file target existence
+- cross-file target existence validation
 
 ## Whitespace
 

@@ -30,6 +30,7 @@ Tsuzuru は現在 v0.1 開発中です。
 
 - `create-tsuzuru`
 - `@tsuzuru/vite`
+- cross-file jump existence validation
 - GUI editor
 - TyranoScript / KAG / Ren'Py 互換
 - Live2D
@@ -321,6 +322,7 @@ v0.1 では、以下を目標にします。
 - Ren'Py compatibility
 - arbitrary JavaScript / TypeScript inside `.tzr`
 - scenario-local macro definitions
+- cross-file jump existence validation
 - Live2D
 - Pixi integration
 - backlog
