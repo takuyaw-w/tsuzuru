@@ -200,17 +200,41 @@ Choices produce a blocked `pendingChoice` state and are resolved separately by `
 
 ## Plugin Command Dispatch
 
-Plugin commands must be registered at compile time. Core commands are always available, but non-core commands such as `@bg(...)` or `@show(...)` are compile-time errors unless they are listed in `compileTzr` options:
+Plugin commands must be registered at compile time. Core commands are always available, but non-core commands such as `@bg(...)` or `@show(...)` are compile-time errors unless they are listed in `compileTzr` options.
+
+Plugin command definitions may include argument schemas. The compiler validates:
+
+- plugin command registration
+- registry key and definition name consistency
+- plugin command schema definitions
+- plugin command arguments when a schema is registered
+
+Example:
 
 ```ts
+import { compileTzr, definePluginCommand } from "@tsuzuru/core";
+
 const compiled = compileTzr(parsed.document, {
   pluginCommands: {
-    bg: { name: "bg" }
-  }
+    bg: definePluginCommand("bg", {
+      kind: "positional",
+      arguments: [{ type: "string" }],
+    }),
+    show: definePluginCommand("show", {
+      kind: "named",
+      arguments: [
+        { name: "character", type: "string" },
+        { name: "pose", type: "string", optional: true },
+        { name: "at", type: ["string", "identifier"], optional: true },
+      ],
+    }),
+  },
 });
 ```
 
-The registry key must match the definition name. For example, `bg: { name: "bg" }` is valid, but `bg: { name: "show" }` is a compile-time error. For v0.1, plugin command definitions only register the command name. Argument schema validation can be added to these definitions later. Runtime handlers should use the same command names as the compile-time registry.
+The registry key must match the definition name. For example, `bg: definePluginCommand("bg", ...)` is valid, but registering `bg` with a definition named `show` is a compile-time error.
+
+Runtime handlers should use the same command names as the compile-time registry. Runtime dispatch assumes plugin commands have already passed compiler validation.
 
 `stepRuntime` accepts optional command handlers:
 
