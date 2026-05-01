@@ -392,8 +392,26 @@ class TzrParser {
 
   private parseCall(line: SourceLine, sigil: "@" | "$"): CallParts | undefined {
     const startIndex = line.text.indexOf(sigil);
+    const bareCommandPattern = /^\s*@([A-Za-z_][A-Za-z0-9_]*)\s*$/;
     const pattern = sigil === "@" ? /^\s*@([A-Za-z_][A-Za-z0-9_]*)\((.*)\)\s*$/ : /^\s*\$([A-Za-z_][A-Za-z0-9_]*)\((.*)\)\s*$/;
     const match = pattern.exec(line.text);
+    if (match === null && sigil === "@") {
+      const bareCommandMatch = bareCommandPattern.exec(line.text);
+      if (bareCommandMatch !== null) {
+        const name = bareCommandMatch[1];
+        if (name === undefined) {
+          this.addError(line, startIndex + 1, "Call name is required.");
+          return undefined;
+        }
+
+        return {
+          name,
+          args: [],
+          loc: this.lineRange(line),
+        };
+      }
+    }
+
     if (match === null) {
       this.addError(line, startIndex + 1, `${sigil} call must use ${sigil}name(...) syntax.`);
       return undefined;

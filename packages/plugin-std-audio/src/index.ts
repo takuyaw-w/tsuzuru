@@ -1,4 +1,11 @@
-import type { RuntimePluginDefinition, RuntimeState } from "@tsuzuru/core";
+import {
+  definePluginCommand,
+  type CommandInstruction,
+  type PluginCommandMap,
+  type RuntimePluginCommandHandler,
+  type RuntimePluginDefinition,
+  type RuntimeState,
+} from "@tsuzuru/core";
 
 const STD_AUDIO_PLUGIN_NAME = "stdAudio";
 declare const STD_AUDIO_SE_EVENT_BRAND: unique symbol;
@@ -28,10 +35,25 @@ export interface StdAudioState {
   readonly nextVoiceSequence: number;
 }
 
+export const stdAudioPluginCommands = {
+  startBgm: definePluginCommand("startBgm", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  stopBgm: definePluginCommand("stopBgm", { kind: "none" }),
+} satisfies PluginCommandMap;
+
 export function createStdAudioPlugin(): RuntimePluginDefinition<StdAudioState> {
   return {
     name: STD_AUDIO_PLUGIN_NAME,
     createInitialState: createInitialStdAudioState,
+  };
+}
+
+export function createStdAudioCommandHandlers(): Readonly<Record<string, RuntimePluginCommandHandler>> {
+  return {
+    startBgm: handleStartBgm,
+    stopBgm: handleStopBgm,
   };
 }
 
@@ -44,6 +66,32 @@ export function getStdAudioState(runtimeState: RuntimeState): StdAudioState {
   return state;
 }
 
+function handleStartBgm(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
+  const assetId = getRequiredPositionalString(instruction, 0);
+  const current = getStdAudioState(state);
+
+  return {
+    state: withStdAudioState(state, {
+      ...current,
+      bgm: { assetId },
+    }),
+    event: { type: "pluginCommand", name: instruction.name },
+  };
+}
+
+function handleStopBgm(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
+  assertNoArguments(instruction);
+  const current = getStdAudioState(state);
+
+  return {
+    state: withStdAudioState(state, {
+      ...current,
+      bgm: null,
+    }),
+    event: { type: "pluginCommand", name: instruction.name },
+  };
+}
+
 function createInitialStdAudioState(): StdAudioState {
   return {
     bgm: null,
@@ -52,6 +100,30 @@ function createInitialStdAudioState(): StdAudioState {
     nextSeSequence: 1,
     nextVoiceSequence: 1,
   };
+}
+
+function withStdAudioState(state: RuntimeState, stdAudio: StdAudioState): RuntimeState {
+  return {
+    ...state,
+    plugins: {
+      ...state.plugins,
+      [STD_AUDIO_PLUGIN_NAME]: stdAudio,
+    },
+  };
+}
+
+function getRequiredPositionalString(instruction: CommandInstruction, index: number): string {
+  const argument = instruction.args[index];
+  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue" || argument.value.value.length === 0) {
+    throw new Error(`Invalid @${instruction.name} runtime arguments. Compile with stdAudioPluginCommands first.`);
+  }
+  return argument.value.value;
+}
+
+function assertNoArguments(instruction: CommandInstruction): void {
+  if (instruction.args.length > 0) {
+    throw new Error(`Invalid @${instruction.name} runtime arguments. Compile with stdAudioPluginCommands first.`);
+  }
 }
 
 function isStdAudioState(value: unknown): value is StdAudioState {
