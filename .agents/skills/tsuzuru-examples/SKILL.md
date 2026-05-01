@@ -1,3 +1,8 @@
+---
+name: tsuzuru-examples
+description: Use when creating, updating, verifying, or debugging Tsuzuru examples, especially examples/basic and examples/preact-basic.
+---
+
 # Tsuzuru Examples Skill
 
 ## Purpose

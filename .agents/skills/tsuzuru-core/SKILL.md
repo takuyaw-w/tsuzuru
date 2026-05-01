@@ -1,3 +1,8 @@
+---
+name: tsuzuru-core
+description: Use when working on @tsuzuru/core parser, compiler, IR, runtime, diagnostics, macro expansion, plugin command validation, and save/load primitives.
+---
+
 # Tsuzuru Core Skill
 
 ## Purpose

@@ -1,3 +1,8 @@
+---
+name: tsuzuru-preact
+description: Use when working on @tsuzuru/preact hooks, RuntimeView, visible events, auto-step behavior, click-to-advance, choices, and save/load adapter utilities.
+---
+
 # Tsuzuru Preact Skill
 
 ## Purpose

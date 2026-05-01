@@ -1,3 +1,8 @@
+---
+name: tsuzuru-docs
+description: Use when updating README, docs, architecture notes, example READMEs, limitations, quickstart, and documentation consistency.
+---
+
 # Tsuzuru Docs Skill
 
 ## Purpose

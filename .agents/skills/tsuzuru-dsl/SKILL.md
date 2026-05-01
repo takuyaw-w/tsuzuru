@@ -1,3 +1,8 @@
+---
+name: tsuzuru-dsl
+description: Use when designing or modifying .tzr DSL syntax, parser behavior, compiler validation, command syntax, macro syntax, choices, jumps, and conditions.
+---
+
 # Tsuzuru DSL Skill
 
 ## Purpose

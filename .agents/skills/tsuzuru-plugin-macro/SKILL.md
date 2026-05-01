@@ -1,3 +1,8 @@
+---
+name: tsuzuru-plugin-macro
+description: Use when working on plugin commands, plugin command validation, plugin schemas, macro registration, macro expansion, and macro safety rules.
+---
+
 # Tsuzuru Plugin / Macro Skill
 
 ## Purpose

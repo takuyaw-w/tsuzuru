@@ -1,3 +1,8 @@
+---
+name: tsuzuru-release-readiness
+description: Use when checking Tsuzuru v0.1 readiness, quality gates, package builds, public exports, README/docs accuracy, examples, and TODO completion.
+---
+
 # Tsuzuru Release Readiness Skill
 
 ## Purpose

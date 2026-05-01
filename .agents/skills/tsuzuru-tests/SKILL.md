@@ -1,3 +1,8 @@
+---
+name: tsuzuru-tests
+description: Use when adding, updating, reviewing, or debugging tests for parser, compiler, runtime, Preact adapter, save/load, examples, and quality gates.
+---
+
 # Tsuzuru Tests Skill
 
 ## Purpose

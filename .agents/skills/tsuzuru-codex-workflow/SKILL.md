@@ -1,3 +1,8 @@
+---
+name: tsuzuru-codex-workflow
+description: Use for every Codex task in the Tsuzuru repository to enforce read order, scope control, TODO handling, checks, and concise final reporting.
+---
+
 # Tsuzuru Codex Workflow Skill
 
 ## Purpose
