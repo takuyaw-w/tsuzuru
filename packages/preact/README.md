@@ -1,8 +1,8 @@
 # @tsuzuru/preact
 
-Minimal Preact components for displaying `@tsuzuru/core` runtime events.
+Minimal Preact helpers for displaying and operating `@tsuzuru/core` runtime events.
 
-This package is intentionally small. It does not manage runtime state, load assets, provide save/load UI, or integrate with Vite. Hosts are expected to call `stepRuntime` from `@tsuzuru/core` and pass the latest `RuntimeEvent` into `RuntimeView`.
+This package is intentionally small. It provides `useRuntime` as a Preact runtime adapter and `RuntimeView` as a convenience renderer. It does not load assets, provide save/load UI, or integrate with Vite. Hosts that do not use `useRuntime` can call `stepRuntime` from `@tsuzuru/core` directly and pass the latest `RuntimeEvent` into `RuntimeView`.
 
 ## RuntimeView
 
