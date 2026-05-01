@@ -69,10 +69,10 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
   - [x] error result にする
   - [x] throw しない
   - [x] 現状維持しない
-- [ ] runtime plugin handler missing 時の挙動を決める
-  - [ ] unsupported event にするか
-  - [ ] runtime error にするか
-  - [ ] 現状維持するか
+- [x] runtime plugin handler missing 時の挙動を決める
+  - [x] unsupported event にする
+  - [x] runtime error にしない
+  - [x] 現状維持する
 
 ---
 

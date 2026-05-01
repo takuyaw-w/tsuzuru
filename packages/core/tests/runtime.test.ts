@@ -438,7 +438,7 @@ Let's go.
     expect(JSON.stringify(waited.state)).toBe(beforeClear);
   });
 
-  it("returns unsupported for unimplemented CommandInstruction", () => {
+  it("returns unsupported when a registered plugin command has no runtime handler", () => {
     const document = compileScript('@bg("school")\n');
     const result = stepRuntime(document, createInitialRuntimeState(document));
 
@@ -448,6 +448,24 @@ Let's go.
     });
     expect(result.state.pointer.instructionIndex).toBe(1);
     expect(result.state.isStopped).toBe(false);
+  });
+
+  it("returns unsupported when command handlers do not include the plugin command name", () => {
+    const document = compileScript('@bg("school")\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      commandHandlers: {
+        shake: (state, instruction) => ({
+          state,
+          event: { type: "pluginCommand", name: instruction.name },
+        }),
+      },
+    });
+
+    expect(result.event).toEqual({
+      type: "unsupported",
+      instructionType: "CommandInstruction",
+    });
+    expect(result.state.pointer.instructionIndex).toBe(1);
   });
 
   it("dispatches non-core CommandInstruction to a registered plugin handler", () => {

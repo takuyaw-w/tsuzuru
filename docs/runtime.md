@@ -260,7 +260,7 @@ stepRuntime(document, state, {
 
 Only non-core `CommandInstruction` names are dispatched to plugin handlers. Core commands always use the core runtime implementation first.
 
-If no handler exists, the runtime returns:
+If a compiled plugin command has no matching runtime handler, the runtime returns an `unsupported` event rather than a runtime error:
 
 ```ts
 { type: "unsupported", instructionType: "CommandInstruction" }
