@@ -1,0 +1,27 @@
+#scene("std_visual")
+
+@bg("classroom")
+@show("alice_smile", position="left")
+
+The classroom background is visible, and Alice is standing on the left.
+
+:: Alice
+The std-visual plugin only stores visual state.
+
+@show("bob_normal", position="right")
+
+:: Bob
+The example app maps asset IDs to SVG files and renders them.
+
+@hide("alice_smile")
+
+Alice is hidden now. Bob remains on the right.
+
+@show("alice_smile", position="center")
+
+:: Alice
+Now I am back in the center.
+
+@show("bob_normal", position="center")
+
+Both sprites can share the same position without crashing.

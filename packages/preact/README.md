@@ -74,6 +74,24 @@ export function App({ document }: AppProps) {
 
 The hook returns `state`, `event`, `visibleEvent`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `createSaveData`, `restoreSaveData`, `blockReason`, `isBlocked`, and `autoStepError`. `event` is the latest runtime event. `visibleEvent` is the latest event intended for UI rendering. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
 
+`useRuntime(document)` still works without options. When using runtime plugins, pass plugin definitions through `plugins` and pass matching runtime command handlers through `commandHandlers`. `plugins` receives plugin factory return values such as `createStdVisualPlugin()`. For std-visual commands like `@bg`, `@show`, and `@hide`, also pass `createStdVisualCommandHandlers()`. Hosts that want runtime warnings can pass `onDiagnostic`.
+
+```tsx
+import { useRuntime } from "@tsuzuru/preact";
+import {
+  createStdVisualCommandHandlers,
+  createStdVisualPlugin,
+} from "@tsuzuru/plugin-std-visual";
+
+const runtime = useRuntime(document, {
+  plugins: [createStdVisualPlugin()],
+  commandHandlers: createStdVisualCommandHandlers(),
+  onDiagnostic: (diagnostic) => {
+    console.warn(diagnostic);
+  },
+});
+```
+
 `autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `label`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
 
 Host applications that want to avoid flicker from auto-stepped transient events should pass `visibleEvent` to `RuntimeView`. Passing `event` directly is still useful for debug views because `RuntimeView` can render status output for scene, label, state, jump, if, and pluginCommand events.

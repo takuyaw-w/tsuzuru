@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 420" role="img" aria-label="Placeholder Bob sprite">
+  <ellipse cx="110" cy="394" rx="76" ry="18" fill="#2f3a4a" opacity="0.18"/>
+  <path d="M64 178h92l24 208H40z" fill="#4f83c4"/>
+  <path d="M84 188h52l10 198H74z" fill="#d9e2ec"/>
+  <circle cx="110" cy="96" r="56" fill="#d8a47f"/>
+  <path d="M54 82c12-44 40-64 78-58 32 6 52 30 42 72-38-24-78-24-120-14z" fill="#273444"/>
+  <rect x="62" y="86" width="44" height="20" rx="8" fill="none" stroke="#243b53" stroke-width="5"/>
+  <rect x="114" y="86" width="44" height="20" rx="8" fill="none" stroke="#243b53" stroke-width="5"/>
+  <path d="M106 96h8" stroke="#243b53" stroke-width="5"/>
+  <path d="M90 128h40" stroke="#7b3f32" stroke-width="6" stroke-linecap="round"/>
+  <path d="M64 184 28 286" stroke="#d8a47f" stroke-width="24" stroke-linecap="round"/>
+  <path d="M156 184 192 286" stroke="#d8a47f" stroke-width="24" stroke-linecap="round"/>
+  <text x="110" y="404" fill="#243b53" font-family="sans-serif" font-size="18" text-anchor="middle">bob_normal</text>
+</svg>

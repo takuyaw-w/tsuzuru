@@ -50,6 +50,7 @@ The classroom was quiet.
       },
       variables: {},
       flags: {},
+      plugins: {},
       branchFrames: [],
       pendingChoice: null,
       pendingWait: null,
@@ -57,6 +58,31 @@ The classroom was quiet.
       isWaitingForClick: false,
     });
     expect(JSON.parse(JSON.stringify(state))).toEqual(state);
+  });
+
+  it("initializes registered runtime plugin state", () => {
+    const parsed = parseTzr("#scene(\"prologue\")\n", { filePath: "scenario/main.tzr" });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+
+    const state = createInitialRuntimeState(compiled.document, {
+      plugins: [
+        {
+          name: "example",
+          createInitialState: () => ({ value: 1 }),
+        },
+      ],
+    });
+
+    expect(state.plugins).toEqual({ example: { value: 1 } });
   });
 });
 

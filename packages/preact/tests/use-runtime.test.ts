@@ -8,6 +8,7 @@ import {
   stepRuntime,
   type CompiledTzrDocument,
   type RuntimeEvent,
+  type RuntimePluginDefinition,
   type RuntimeSnapshot,
 } from "@tsuzuru/core";
 import {
@@ -33,6 +34,7 @@ const snapshot: RuntimeSnapshot = {
   },
   variables: {},
   flags: {},
+  plugins: {},
   branchFrames: [],
   pendingChoice: null,
   pendingWait: null,
@@ -618,6 +620,17 @@ The classroom was quiet.
 
     expect(runtime().event).toMatchObject({ type: "narration" });
     expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
+  });
+
+  it("initializes registered runtime plugin state", async () => {
+    const document = compileScript("The classroom was quiet.\n");
+    const plugin: RuntimePluginDefinition<{ readonly ready: true }> = {
+      name: "testPlugin",
+      createInitialState: () => ({ ready: true }),
+    };
+    const runtime = await mountRuntime(document, { plugins: [plugin] });
+
+    expect(runtime().state.plugins.testPlugin).toEqual({ ready: true });
   });
 });
 

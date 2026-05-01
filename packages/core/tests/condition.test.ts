@@ -14,6 +14,7 @@ const baseState: RuntimeState = {
   },
   variables: {},
   flags: {},
+  plugins: {},
   branchFrames: [],
   pendingChoice: null,
   pendingWait: null,

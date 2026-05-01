@@ -153,7 +153,11 @@ export function stepCommandInstruction(
   if (!isCoreCommandName(name)) {
     const handler = options.commandHandlers?.[name];
     if (handler !== undefined) {
-      return handler(nextState, instruction);
+      return handler(nextState, instruction, {
+        warn: (code, message) => {
+          options.onDiagnostic?.({ severity: "warning", code, message });
+        },
+      });
     }
   }
 

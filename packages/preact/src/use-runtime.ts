@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import {
   clearClickWait,
   clearWait,
@@ -12,6 +12,7 @@ import {
   type CompiledTzrDocument,
   type RuntimeBlockReason,
   type RuntimeEvent,
+  type RuntimeInitialStateOptions,
   type RuntimeSnapshot,
   type RuntimeState,
   type RuntimeStepOptions,
@@ -23,7 +24,9 @@ import {
 } from "./runtime-save.js";
 
 export interface UseRuntimeOptions {
+  readonly plugins?: RuntimeInitialStateOptions["plugins"];
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
+  readonly onDiagnostic?: RuntimeStepOptions["onDiagnostic"];
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
   readonly autoStepMaxSteps?: number;
@@ -47,19 +50,25 @@ export interface UseRuntimeResult {
 }
 
 export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOptions = {}): UseRuntimeResult {
-  const [state, setState] = useState<RuntimeState>(() => createInitialRuntimeState(document));
+  const pluginsRef = useRef(options.plugins);
+  pluginsRef.current = options.plugins;
+  const [state, setState] = useState<RuntimeState>(() => createInitialState(document, options.plugins));
   const [event, setEvent] = useState<RuntimeEvent | null>(null);
   const [visibleEvent, setVisibleEvent] = useState<RuntimeEvent | null>(null);
   const autoClearWait = options.autoClearWait ?? true;
   const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
   const autoStepMaxSteps = options.autoStepMaxSteps ?? 1000;
   const commandHandlers = options.commandHandlers;
+  const onDiagnostic = options.onDiagnostic;
   const [autoStepCount, setAutoStepCount] = useState(0);
   const [autoStepError, setAutoStepError] = useState<string | null>(null);
 
   const stepOptions = useMemo<RuntimeStepOptions>(
-    () => (commandHandlers === undefined ? {} : { commandHandlers }),
-    [commandHandlers],
+    () => ({
+      ...(commandHandlers === undefined ? {} : { commandHandlers }),
+      ...(onDiagnostic === undefined ? {} : { onDiagnostic }),
+    }),
+    [commandHandlers, onDiagnostic],
   );
 
   const stepFrom = useCallback(
@@ -140,13 +149,13 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
   );
 
   const reset = useCallback(() => {
-    const initialState = createInitialRuntimeState(document);
+    const initialState = createInitialState(document, pluginsRef.current);
     setState(initialState);
     setEvent(null);
     setVisibleEvent(null);
     setAutoStepCount(0);
     setAutoStepError(null);
-  }, [document]);
+  }, [document, pluginsRef]);
 
   const createSnapshot = useCallback(() => createRuntimeSnapshot(state), [state]);
 
@@ -316,6 +325,13 @@ export function getAutoClearWaitDuration(
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled runtime event: ${JSON.stringify(value)}`);
+}
+
+function createInitialState(
+  document: CompiledTzrDocument,
+  plugins: RuntimeInitialStateOptions["plugins"],
+): RuntimeState {
+  return createInitialRuntimeState(document, plugins === undefined ? {} : { plugins });
 }
 
 /**

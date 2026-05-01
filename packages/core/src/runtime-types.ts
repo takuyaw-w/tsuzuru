@@ -17,6 +17,17 @@ export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
 export type RuntimeFlags = Readonly<Record<string, boolean>>;
 
+export type RuntimePluginStates = Readonly<Record<string, unknown>>;
+
+export interface RuntimePluginDefinition<TState = unknown> {
+  readonly name: string;
+  readonly createInitialState: () => TState;
+}
+
+export interface RuntimeInitialStateOptions {
+  readonly plugins?: readonly RuntimePluginDefinition[];
+}
+
 export interface RuntimeChoiceItem {
   readonly text: string;
   readonly targetRaw: string;
@@ -36,6 +47,7 @@ export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
+  readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
   readonly pendingWait: RuntimePendingWait | null;
@@ -48,6 +60,7 @@ export interface RuntimeSnapshot {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
+  readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
   readonly pendingWait: RuntimePendingWait | null;
@@ -59,12 +72,28 @@ export type RuntimeBlockReason = "wait" | "choice" | "click";
 
 export interface RuntimeStepOptions {
   readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
+  readonly onDiagnostic?: RuntimeDiagnosticReporter;
 }
 
 export type RuntimePluginCommandHandler = (
   state: RuntimeState,
   instruction: CommandInstruction,
+  context: RuntimePluginCommandContext,
 ) => RuntimeStepResult;
+
+export type RuntimeDiagnosticSeverity = "warning";
+
+export interface RuntimeDiagnostic {
+  readonly severity: RuntimeDiagnosticSeverity;
+  readonly code: string;
+  readonly message: string;
+}
+
+export type RuntimeDiagnosticReporter = (diagnostic: RuntimeDiagnostic) => void;
+
+export interface RuntimePluginCommandContext {
+  readonly warn: (code: string, message: string) => void;
+}
 
 export type RuntimeEvent =
   | SceneRuntimeEvent
