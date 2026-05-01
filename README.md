@@ -331,6 +331,7 @@ v0.1 では、以下を目標にします。
 - gallery
 - achievements
 - cloud save
+- save data compatibility guarantees across scenario/runtime changes
 
 ## Codex / Agent 運用
 

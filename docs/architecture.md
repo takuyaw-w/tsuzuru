@@ -425,7 +425,7 @@ examples
   -> manual save/load flow
 ```
 
-For v0.1, save data compatibility may be limited if scenario documents change after saving.
+For v0.1, save data does not include scenario identity, scenario version, or migration metadata. Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
 
 ## Plugin Commands
 

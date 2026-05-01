@@ -306,6 +306,8 @@ The tradeoffs are:
 - save data can become larger because branch instructions are embedded
 - compatibility is weak if the scenario document changes after the snapshot is created
 
-A future snapshot format may store a branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `CompiledTzrDocument`.
+`RuntimeSaveData` does not include scenario identity, scenario version, or migration metadata in v0.1. Save data compatibility is not guaranteed if the scenario document, compiled instruction order, runtime model, or event shape changes after saving.
+
+A future snapshot format may store a scenario identity, scenario version, migration version, branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `CompiledTzrDocument`.
 
 Migration, compatibility handling, compression, and encryption are outside the current runtime API. Snapshots also do not write to storage. LocalStorage, IndexedDB, and save slot management are host/UI layer responsibilities.

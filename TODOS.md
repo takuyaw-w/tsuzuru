@@ -93,9 +93,8 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] wait 中 save/load test を追加
 - [x] waitClick/page 中 save/load test を追加
 - [x] narration/dialogue 表示中 save/load test を追加
-- [ ] save data に scenario identity / version が必要か決める
-  - [ ] 入れる場合: 実装する
-  - [ ] 入れない場合: v0.1 では互換性保証なしと docs に明記する
+- [x] save data に scenario identity / version が必要か決める
+  - [x] 入れない場合: v0.1 では互換性保証なしと docs に明記する
 
 ---
 
@@ -195,6 +194,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 - [ ] macro argument schema validation
 - [ ] cross-file jump existence validation
+- [ ] save data scenario identity / version / migration
 - [ ] backlog
 - [ ] auto mode
 - [ ] skip mode
