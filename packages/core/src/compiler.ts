@@ -36,6 +36,8 @@ export type PluginCommandValueType = "string" | "number" | "boolean" | "identifi
 export interface PluginCommandArgumentDefinition {
   readonly type: PluginCommandValueType | readonly PluginCommandValueType[];
   readonly optional?: boolean;
+  readonly nonEmpty?: boolean;
+  readonly values?: readonly string[];
 }
 
 export interface PluginCommandPositionalArgumentDefinition extends PluginCommandArgumentDefinition {
@@ -53,6 +55,11 @@ export type PluginCommandArgumentSchema =
   | {
       readonly kind: "positional";
       readonly arguments: readonly PluginCommandPositionalArgumentDefinition[];
+    }
+  | {
+      readonly kind: "mixed";
+      readonly positional: readonly PluginCommandPositionalArgumentDefinition[];
+      readonly named: readonly PluginCommandNamedArgumentDefinition[];
     }
   | {
       readonly kind: "named";
@@ -128,6 +135,10 @@ class TzrCompiler {
         return;
       case "positional":
         this.validatePluginPositionalSchemaDefinition(definition.name, schema.arguments);
+        return;
+      case "mixed":
+        this.validatePluginPositionalSchemaDefinition(definition.name, schema.positional);
+        this.validatePluginNamedSchemaDefinition(definition.name, schema.named);
         return;
     }
   }
@@ -360,6 +371,9 @@ class TzrCompiler {
       case "named":
         this.validatePluginNamedArguments(command, definition.args.arguments);
         return;
+      case "mixed":
+        this.validatePluginMixedArguments(command, definition.args.positional, definition.args.named);
+        return;
     }
   }
 
@@ -392,7 +406,7 @@ class TzrCompiler {
         continue;
       }
 
-      this.validatePluginValueType(command.name, argument.value, definition.type, `positional argument ${index + 1}`);
+      this.validatePluginValueType(command.name, argument.value, definition, `positional argument ${index + 1}`);
     }
 
     if (command.args.length > definitions.length) {
@@ -427,7 +441,7 @@ class TzrCompiler {
       }
 
       seen.add(argument.name);
-      this.validatePluginValueType(command.name, argument.value, definition.type, `argument "${argument.name}"`);
+      this.validatePluginValueType(command.name, argument.value, definition, `argument "${argument.name}"`);
     }
 
     for (const definition of definitions) {
@@ -437,15 +451,82 @@ class TzrCompiler {
     }
   }
 
+  private validatePluginMixedArguments(
+    command: CommandInstruction,
+    positionalDefinitions: readonly PluginCommandPositionalArgumentDefinition[],
+    namedDefinitions: readonly PluginCommandNamedArgumentDefinition[],
+  ): void {
+    const positionalArguments = command.args.filter((argument) => argument.type === "PositionalArgument");
+    const namedArguments = command.args.filter((argument) => argument.type === "NamedArgument");
+
+    for (const [index, definition] of positionalDefinitions.entries()) {
+      const argument = positionalArguments[index];
+      if (argument === undefined) {
+        if (definition.optional !== true) {
+          this.addError(command.loc.start, `@${command.name} requires positional argument ${index + 1}.`);
+        }
+        continue;
+      }
+
+      this.validatePluginValueType(command.name, argument.value, definition, `positional argument ${index + 1}`);
+    }
+
+    if (positionalArguments.length > positionalDefinitions.length) {
+      for (const argument of positionalArguments.slice(positionalDefinitions.length)) {
+        this.addError(argument.loc.start, `@${command.name} does not allow extra positional arguments.`);
+      }
+    }
+
+    const definitionByName = new Map(namedDefinitions.map((definition) => [definition.name, definition]));
+    const seen = new Set<string>();
+
+    for (const argument of namedArguments) {
+      const definition = definitionByName.get(argument.name);
+      if (definition === undefined) {
+        this.addError(argument.loc.start, `@${command.name} does not allow argument "${argument.name}".`);
+        continue;
+      }
+
+      if (seen.has(argument.name)) {
+        this.addError(argument.loc.start, `@${command.name} has duplicate argument "${argument.name}".`);
+        continue;
+      }
+
+      seen.add(argument.name);
+      this.validatePluginValueType(command.name, argument.value, definition, `argument "${argument.name}"`);
+    }
+
+    for (const definition of namedDefinitions) {
+      if (definition.optional !== true && !seen.has(definition.name)) {
+        this.addError(command.loc.start, `@${command.name} requires a named "${definition.name}" argument.`);
+      }
+    }
+  }
+
   private validatePluginValueType(
     commandName: string,
     value: TzrValue,
-    expected: PluginCommandValueType | readonly PluginCommandValueType[],
+    expected: PluginCommandValueType | readonly PluginCommandValueType[] | PluginCommandArgumentDefinition,
     argumentLabel: string,
   ): void {
-    const allowedTypes = Array.isArray(expected) ? expected : [expected];
+    const expectedTypes = isPluginCommandArgumentDefinition(expected) ? expected.type : expected;
+    const allowedTypes = Array.isArray(expectedTypes) ? expectedTypes : [expectedTypes];
     if (!allowedTypes.includes(toPluginValueType(value))) {
       this.addError(value.loc.start, `@${commandName} ${argumentLabel} must be ${formatPluginValueTypes(allowedTypes)}.`);
+      return;
+    }
+
+    if (!isPluginCommandArgumentDefinition(expected) || value.type !== "StringValue") {
+      return;
+    }
+
+    if (expected.nonEmpty === true && value.value.length === 0) {
+      this.addError(value.loc.start, `@${commandName} ${argumentLabel} must be a non-empty string.`);
+      return;
+    }
+
+    if (expected.values !== undefined && !expected.values.includes(value.value)) {
+      this.addError(value.loc.start, `@${commandName} ${argumentLabel} must be one of ${formatStringValues(expected.values)}.`);
     }
   }
 
@@ -785,6 +866,10 @@ function toPluginValueType(value: TzrValue): PluginCommandValueType {
   }
 }
 
+function isPluginCommandArgumentDefinition(value: unknown): value is PluginCommandArgumentDefinition {
+  return typeof value === "object" && value !== null && "type" in value;
+}
+
 function formatPluginValueTypes(types: readonly PluginCommandValueType[]): string {
   if (types.length === 1) {
     return types[0] ?? "value";
@@ -796,4 +881,21 @@ function formatPluginValueTypes(types: readonly PluginCommandValueType[]): strin
 
   const last = types.at(-1) ?? "value";
   return `${types.slice(0, -1).join(", ")}, or ${last}`;
+}
+
+function formatStringValues(values: readonly string[]): string {
+  if (values.length === 0) {
+    return "no values";
+  }
+
+  if (values.length === 1) {
+    return `"${values[0] ?? ""}"`;
+  }
+
+  if (values.length === 2) {
+    return `"${values[0] ?? ""}" or "${values[1] ?? ""}"`;
+  }
+
+  const last = values.at(-1) ?? "";
+  return `${values.slice(0, -1).map((value) => `"${value}"`).join(", ")}, or "${last}"`;
 }

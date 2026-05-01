@@ -72,12 +72,28 @@ export type RuntimeBlockReason = "wait" | "choice" | "click";
 
 export interface RuntimeStepOptions {
   readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
+  readonly onDiagnostic?: RuntimeDiagnosticReporter;
 }
 
 export type RuntimePluginCommandHandler = (
   state: RuntimeState,
   instruction: CommandInstruction,
+  context: RuntimePluginCommandContext,
 ) => RuntimeStepResult;
+
+export type RuntimeDiagnosticSeverity = "warning";
+
+export interface RuntimeDiagnostic {
+  readonly severity: RuntimeDiagnosticSeverity;
+  readonly code: string;
+  readonly message: string;
+}
+
+export type RuntimeDiagnosticReporter = (diagnostic: RuntimeDiagnostic) => void;
+
+export interface RuntimePluginCommandContext {
+  readonly warn: (code: string, message: string) => void;
+}
 
 export type RuntimeEvent =
   | SceneRuntimeEvent
