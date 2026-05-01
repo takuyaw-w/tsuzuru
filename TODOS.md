@@ -88,11 +88,11 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] `isRuntimeSaveData`
 - [x] visibleEvent を保存対象にする
 - [x] choice / wait / waitClick の復元方針
-- [ ] snapshot round-trip test を追加
-- [ ] choice 中 save/load test を追加
-- [ ] wait 中 save/load test を追加
-- [ ] waitClick/page 中 save/load test を追加
-- [ ] narration/dialogue 表示中 save/load test を追加
+- [x] snapshot round-trip test を追加
+- [x] choice 中 save/load test を追加
+- [x] wait 中 save/load test を追加
+- [x] waitClick/page 中 save/load test を追加
+- [x] narration/dialogue 表示中 save/load test を追加
 - [ ] save data に scenario identity / version が必要か決める
   - [ ] 入れる場合: 実装する
   - [ ] 入れない場合: v0.1 では互換性保証なしと docs に明記する

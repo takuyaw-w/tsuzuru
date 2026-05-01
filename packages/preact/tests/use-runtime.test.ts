@@ -320,6 +320,43 @@ describe("RuntimeSaveData", () => {
     expect("event" in saveData.snapshot).toBe(false);
   });
 
+  it("saves a narration visible event alongside the runtime snapshot", () => {
+    const document = compileScript("The classroom was quiet.\n");
+    const narration = stepRuntime(document, createInitialRuntimeState(document));
+    const saveData = createRuntimeSaveData(
+      {
+        ...snapshot,
+        pointer: narration.state.pointer,
+      },
+      narration.event,
+    );
+
+    expect(saveData.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "The classroom was quiet." }],
+    });
+    expect(isRuntimeSaveData(saveData)).toBe(true);
+  });
+
+  it("saves a dialogue visible event alongside the runtime snapshot", () => {
+    const document = compileScript(":: Haruka\nYou came.\n");
+    const dialogue = stepRuntime(document, createInitialRuntimeState(document));
+    const saveData = createRuntimeSaveData(
+      {
+        ...snapshot,
+        pointer: dialogue.state.pointer,
+      },
+      dialogue.event,
+    );
+
+    expect(saveData.event).toMatchObject({
+      type: "dialogue",
+      speaker: "Haruka",
+      lines: [{ text: "You came." }],
+    });
+    expect(isRuntimeSaveData(saveData)).toBe(true);
+  });
+
   it("accepts valid save data with null event", () => {
     expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, null))).toBe(true);
   });

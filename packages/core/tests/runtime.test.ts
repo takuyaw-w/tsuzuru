@@ -1092,6 +1092,20 @@ Let's go.
     expect(restored).toEqual(state);
   });
 
+  it("round-trips a runtime snapshot through JSON serialization", () => {
+    const document = compileScript('@set(name="route", value="haruka")\n@flag("met_haruka")\n@wait(500)\n');
+    const first = stepRuntime(document, createInitialRuntimeState(document));
+    const second = stepRuntime(document, first.state);
+    const waited = stepRuntime(document, second.state);
+    const snapshot = createRuntimeSnapshot(waited.state);
+
+    const roundTripped = JSON.parse(JSON.stringify(snapshot));
+    const restored = restoreRuntimeState(roundTripped);
+
+    expect(restored).toEqual(waited.state);
+    expect(createRuntimeSnapshot(restored)).toEqual(snapshot);
+  });
+
   it("preserves variables and flags in snapshots", () => {
     const document = compileScript('@set(name="route", value="haruka")\n@flag("met_haruka")\n');
     const first = stepRuntime(document, createInitialRuntimeState(document));
@@ -1124,6 +1138,22 @@ Let's go.
     expect(restored.pendingChoice).toEqual(choice.state.pendingChoice);
   });
 
+  it("continues choice resolution after restoring a pending choice snapshot", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+    const restored = restoreRuntimeState(createRuntimeSnapshot(choice.state));
+
+    const resolved = resolveChoice(document, restored, 0);
+    const label = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "jump",
+      label: "stay",
+      instructionIndex: 1,
+    });
+    expect(label.event).toEqual({ type: "label", id: "stay" });
+  });
+
   it("preserves pendingWait in snapshots", () => {
     const document = compileScript("@wait(500)\n");
     const wait = stepRuntime(document, createInitialRuntimeState(document));
@@ -1133,6 +1163,17 @@ Let's go.
     expect(restored.pendingWait).toEqual({ durationMs: 500 });
   });
 
+  it("continues after restoring a pending wait snapshot", () => {
+    const document = compileScript("@wait(500)\n#label(\"after_wait\")\n");
+    const wait = stepRuntime(document, createInitialRuntimeState(document));
+    const restored = restoreRuntimeState(createRuntimeSnapshot(wait.state));
+
+    const label = stepRuntime(document, clearWait(restored));
+
+    expect(restored.pendingWait).toEqual({ durationMs: 500 });
+    expect(label.event).toEqual({ type: "label", id: "after_wait" });
+  });
+
   it("preserves isWaitingForClick in snapshots", () => {
     const document = compileScript("@waitClick()\n");
     const waitClick = stepRuntime(document, createInitialRuntimeState(document));
@@ -1140,6 +1181,29 @@ Let's go.
     const restored = restoreRuntimeState(createRuntimeSnapshot(waitClick.state));
 
     expect(restored.isWaitingForClick).toBe(true);
+  });
+
+  it("continues after restoring a waitClick snapshot", () => {
+    const document = compileScript("@waitClick()\n#label(\"after_click\")\n");
+    const waitClick = stepRuntime(document, createInitialRuntimeState(document));
+    const restored = restoreRuntimeState(createRuntimeSnapshot(waitClick.state));
+
+    const label = stepRuntime(document, clearClickWait(restored));
+
+    expect(restored.isWaitingForClick).toBe(true);
+    expect(label.event).toEqual({ type: "label", id: "after_click" });
+  });
+
+  it("continues after restoring a page snapshot", () => {
+    const document = compileScript("@page()\n#label(\"after_page\")\n");
+    const page = stepRuntime(document, createInitialRuntimeState(document));
+    const restored = restoreRuntimeState(createRuntimeSnapshot(page.state));
+
+    const label = stepRuntime(document, clearClickWait(restored));
+
+    expect(page.event).toEqual({ type: "page" });
+    expect(restored.isWaitingForClick).toBe(true);
+    expect(label.event).toEqual({ type: "label", id: "after_page" });
   });
 
   it("preserves branchFrames in snapshots", () => {
