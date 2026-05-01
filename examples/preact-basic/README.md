@@ -8,7 +8,7 @@ Runtime control is intentionally small:
 
 - narration and dialogue advance when the message area is clicked
 - `Debug Step` remains available for runtime inspection
-- `waitClick` and `page` continue through `runtime.continueClick`
+- `waitClick` and `page` continue through `runtime.continueClick` from the continue button, not message-area clicks
 - `wait` is handled by `useRuntime` with `autoClearWait: true`
 - transient events such as scene, label, state, jump, if, and pluginCommand advance through `autoStepTransientEvents: true`
 - `RuntimeView` receives `runtime.visibleEvent`, so auto-stepped transient events are not shown in the normal UI

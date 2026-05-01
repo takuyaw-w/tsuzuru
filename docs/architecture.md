@@ -542,6 +542,8 @@ CompiledTzrDocument
 
 `RuntimeView` should remain a convenience component, not a full visual novel UI framework.
 
+For v0.1, narration and dialogue may advance from message-area clicks, while `waitClick` and `page` continue through explicit continue-button wiring.
+
 Advanced UI features should be implemented separately or by userland components.
 
 ## Example App Flow

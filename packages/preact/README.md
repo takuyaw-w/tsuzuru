@@ -30,7 +30,7 @@ export function App({ event, onChoice, onContinue, onAdvance }: AppProps) {
 }
 ```
 
-`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, label, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button. Narration and dialogue can call `onAdvance()` when their display area is clicked and `canAdvance` is true. `RuntimeView` is a UI-layer convenience component; host applications decide whether advancing is currently allowed by passing or withholding callbacks.
+`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, label, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button. In v0.1, `waitClick` and `page` do not advance from message-area clicks. Narration and dialogue can call `onAdvance()` when their display area is clicked and `canAdvance` is true. `RuntimeView` is a UI-layer convenience component; host applications decide whether advancing is currently allowed by passing or withholding callbacks.
 
 `RuntimeView` is intentionally not a full game UI framework. It does not own layout systems, themes, menus, save slots, backlog, skip/auto mode UI, asset loading, audio controls, config screens, or other game shell features. Those belong in host applications, userland components, or future separate packages.
 

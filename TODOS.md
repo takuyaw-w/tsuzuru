@@ -118,7 +118,9 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] `RuntimeView` の責務を再確認
   - [x] convenience component に留める
   - [x] full game UI framework にしない
-- [ ] waitClick / page をボタン継続にするか、画面クリック継続にするか決める
+- [x] waitClick / page をボタン継続にするか、画面クリック継続にするか決める
+  - [x] v0.1 では continue button で継続する
+  - [x] message area click 継続は実装しない
 
 ---
 
