@@ -184,7 +184,7 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] `pnpm --filter @tsuzuru/core build` が通る
 - [x] `pnpm --filter @tsuzuru/preact build` が通る
 - [x] `pnpm --filter @tsuzuru/example-preact-basic build` が通る
-- [ ] `pnpm --filter @tsuzuru/example-preact-basic dev` でブラウザ確認できる
+- [x] `pnpm --filter @tsuzuru/example-preact-basic dev` でブラウザ確認できる
 - [x] public exports を確認する
 - [x] 不要な export がないか確認する
 - [x] `any` が public API に漏れていないか確認する
