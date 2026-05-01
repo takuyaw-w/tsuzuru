@@ -82,6 +82,196 @@ describe("stepRuntime", () => {
     return compiled.document;
   }
 
+  describe("complete runtime flow regression", () => {
+    it("runs scene -> narration -> dialogue -> choice -> jump", () => {
+      const document = compileScript(`#scene("prologue")
+The classroom was quiet.
+
+:: Haruka
+You're late.
+
+? What do you do?
+- "Apologize" -> #apologize
+
+#label("apologize")
+:: Yu
+Sorry.
+`);
+      const scene = stepRuntime(document, createInitialRuntimeState(document));
+      const narration = stepRuntime(document, scene.state);
+      const dialogue = stepRuntime(document, narration.state);
+      const choice = stepRuntime(document, dialogue.state);
+      const jump = resolveChoice(document, choice.state, 0);
+      const label = stepRuntime(document, jump.state);
+      const afterJump = stepRuntime(document, label.state);
+
+      expect(scene.event).toEqual({ type: "scene", id: "prologue" });
+      expect(narration.event).toMatchObject({
+        type: "narration",
+        lines: [{ text: "The classroom was quiet." }],
+      });
+      expect(dialogue.event).toMatchObject({
+        type: "dialogue",
+        speaker: "Haruka",
+        lines: [{ text: "You're late." }],
+      });
+      expect(choice.event).toEqual({
+        type: "choice",
+        question: "What do you do?",
+        items: [{ text: "Apologize", targetRaw: "#apologize", targetLabel: "apologize" }],
+      });
+      expect(jump.event).toEqual({
+        type: "jump",
+        label: "apologize",
+        instructionIndex: 4,
+      });
+      expect(label.event).toEqual({ type: "label", id: "apologize" });
+      expect(afterJump.event).toMatchObject({
+        type: "dialogue",
+        speaker: "Yu",
+        lines: [{ text: "Sorry." }],
+      });
+    });
+
+    it("runs an if true branch and returns to top-level flow", () => {
+      const document = compileScript(`@if(flag("met_haruka"))
+:: Haruka
+We meet again.
+@else
+:: Haruka
+Nice to meet you.
+@endif
+@stop()
+`);
+      const initial = {
+        ...createInitialRuntimeState(document),
+        flags: { met_haruka: true },
+      };
+      const branch = stepRuntime(document, initial);
+      const stop = stepRuntime(document, branch.state);
+
+      expect(branch.event).toEqual({
+        type: "if",
+        result: true,
+        branch: "then",
+        event: {
+          type: "dialogue",
+          speaker: "Haruka",
+          lines: [{ text: "We meet again.", loc: expect.any(Object) }],
+        },
+      });
+      expect(stop.event).toEqual({ type: "stop" });
+      expect(stop.state.isStopped).toBe(true);
+    });
+
+    it("runs an if false branch and returns to top-level flow", () => {
+      const document = compileScript(`@if(flag("met_haruka"))
+:: Haruka
+We meet again.
+@else
+:: Haruka
+Nice to meet you.
+@endif
+@stop()
+`);
+      const branch = stepRuntime(document, createInitialRuntimeState(document));
+      const stop = stepRuntime(document, branch.state);
+
+      expect(branch.event).toEqual({
+        type: "if",
+        result: false,
+        branch: "else",
+        event: {
+          type: "dialogue",
+          speaker: "Haruka",
+          lines: [{ text: "Nice to meet you.", loc: expect.any(Object) }],
+        },
+      });
+      expect(stop.event).toEqual({ type: "stop" });
+      expect(stop.state.isStopped).toBe(true);
+    });
+
+    it("branches using flags and variables across runtime state commands", () => {
+      const document = compileScript(`@flag("met_haruka")
+@set(name="affection", value=2)
+@if(flag("met_haruka"))
+@inc(name="affection", by=1)
+@endif
+@if(var("affection") >= 3)
+@jump("#haruka_route")
+@else
+@jump("#common_route")
+@endif
+#label("common_route")
+@stop()
+#label("haruka_route")
+:: Haruka
+Let's go.
+`);
+      const initial = createInitialRuntimeState(document);
+      const flag = stepRuntime(document, initial);
+      const set = stepRuntime(document, flag.state);
+      const flagBranch = stepRuntime(document, set.state);
+      const variableBranch = stepRuntime(document, flagBranch.state);
+      const label = stepRuntime(document, variableBranch.state);
+      const dialogue = stepRuntime(document, label.state);
+
+      expect(flag.event).toEqual({ type: "state", command: "flag", name: "met_haruka", value: true });
+      expect(set.event).toEqual({ type: "state", command: "set", name: "affection", value: 2 });
+      expect(flagBranch.event).toEqual({
+        type: "if",
+        result: true,
+        branch: "then",
+        event: { type: "state", command: "inc", name: "affection", value: 3 },
+      });
+      expect(variableBranch.event).toEqual({
+        type: "if",
+        result: true,
+        branch: "then",
+        event: {
+          type: "jump",
+          label: "haruka_route",
+          instructionIndex: 6,
+        },
+      });
+      expect(variableBranch.state.variables).toEqual({ affection: 3 });
+      expect(label.event).toEqual({ type: "label", id: "haruka_route" });
+      expect(dialogue.event).toMatchObject({
+        type: "dialogue",
+        speaker: "Haruka",
+        lines: [{ text: "Let's go." }],
+      });
+    });
+
+    it("runs wait, waitClick, page, and stop with explicit unblock calls", () => {
+      const document = compileScript(`@wait(100)
+@waitClick()
+@page()
+@stop()
+`);
+      const wait = stepRuntime(document, createInitialRuntimeState(document));
+      const repeatedWait = stepRuntime(document, wait.state);
+      const waitClick = stepRuntime(document, clearWait(wait.state));
+      const repeatedClick = stepRuntime(document, waitClick.state);
+      const page = stepRuntime(document, clearClickWait(waitClick.state));
+      const repeatedPageClick = stepRuntime(document, page.state);
+      const stop = stepRuntime(document, clearClickWait(page.state));
+
+      expect(wait.event).toEqual({ type: "wait", durationMs: 100 });
+      expect(getRuntimeBlockReason(wait.state)).toBe("wait");
+      expect(repeatedWait.state).toBe(wait.state);
+      expect(waitClick.event).toEqual({ type: "waitClick" });
+      expect(getRuntimeBlockReason(waitClick.state)).toBe("click");
+      expect(repeatedClick.state).toBe(waitClick.state);
+      expect(page.event).toEqual({ type: "page" });
+      expect(getRuntimeBlockReason(page.state)).toBe("click");
+      expect(repeatedPageClick.event).toEqual({ type: "waitClick" });
+      expect(repeatedPageClick.state).toBe(page.state);
+      expect(stop.event).toEqual({ type: "stop" });
+      expect(stop.state.isStopped).toBe(true);
+    });
+  });
+
   it("steps SceneInstruction and advances instructionIndex", () => {
     const document = compileScript('#scene("prologue")\n');
     const initial = createInitialRuntimeState(document);

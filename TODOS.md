@@ -59,12 +59,12 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] wait / waitClick / page / stop
 - [x] plugin command dispatch
 - [x] snapshot 作成・復元
-- [ ] complete runtime flow の regression test を追加
-  - [ ] scene -> narration -> dialogue -> choice -> jump
-  - [ ] if true branch
-  - [ ] if false branch
-  - [ ] flag / variable による分岐
-  - [ ] wait / waitClick / page / stop
+- [x] complete runtime flow の regression test を追加
+  - [x] scene -> narration -> dialogue -> choice -> jump
+  - [x] if true branch
+  - [x] if false branch
+  - [x] flag / variable による分岐
+  - [x] wait / waitClick / page / stop
 - [ ] `resolveChoice` の invalid index 挙動を決める
   - [ ] error result にするか
   - [ ] throw するか
