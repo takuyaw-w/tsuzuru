@@ -26,6 +26,7 @@ They should clarify:
 | 0001 | `.tzr` is not JavaScript | Accepted |
 | 0002 | Core and Preact Boundary | Accepted |
 | 0003 | Macro vs Plugin | Accepted |
+| 0004 | Standard Visual Plugin | Accepted |
 
 ## Reading Order
 
