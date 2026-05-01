@@ -65,10 +65,10 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
   - [x] if false branch
   - [x] flag / variable による分岐
   - [x] wait / waitClick / page / stop
-- [ ] `resolveChoice` の invalid index 挙動を決める
-  - [ ] error result にするか
-  - [ ] throw するか
-  - [ ] 現状維持するか
+- [x] `resolveChoice` の invalid index 挙動を決める
+  - [x] error result にする
+  - [x] throw しない
+  - [x] 現状維持しない
 - [ ] runtime plugin handler missing 時の挙動を決める
   - [ ] unsupported event にするか
   - [ ] runtime error にするか

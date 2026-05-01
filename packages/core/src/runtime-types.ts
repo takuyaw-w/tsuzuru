@@ -81,6 +81,7 @@ export type RuntimeEvent =
   | WaitRuntimeEvent
   | RuntimePluginCommandEvent
   | UnsupportedRuntimeEvent
+  | RuntimeErrorEvent
   | EndRuntimeEvent;
 
 export interface SceneRuntimeEvent {
@@ -157,6 +158,14 @@ export interface RuntimePluginCommandEvent {
 export interface UnsupportedRuntimeEvent {
   readonly type: "unsupported";
   readonly instructionType: string;
+}
+
+export type RuntimeErrorCode = "choice_not_pending" | "choice_index_out_of_range";
+
+export interface RuntimeErrorEvent {
+  readonly type: "error";
+  readonly code: RuntimeErrorCode;
+  readonly message: string;
 }
 
 export interface EndRuntimeEvent {

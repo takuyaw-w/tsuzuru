@@ -977,16 +977,48 @@ Let's go.
     expect(result.state.pendingChoice).toBeNull();
   });
 
-  it("returns unsupported when resolving without a pending choice or with an invalid index", () => {
+  it("returns an error result when resolving without a pending choice", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const initial = createInitialRuntimeState(document);
+
+    expect(resolveChoice(document, initial, 0).event).toEqual({
+      type: "error",
+      code: "choice_not_pending",
+      message: "Cannot resolve a choice because no choice is pending.",
+    });
+  });
+
+  it("returns an error result when resolving a pending choice with an invalid index", () => {
     const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
     const initial = createInitialRuntimeState(document);
     const choice = stepRuntime(document, initial);
+    const result = resolveChoice(document, choice.state, 1);
 
-    expect(resolveChoice(document, initial, 0).event).toEqual({
-      type: "unsupported",
-      instructionType: "ChoiceInstruction",
+    expect(result.event).toEqual({
+      type: "error",
+      code: "choice_index_out_of_range",
+      message: "Choice index 1 is out of range for 1 choice item(s).",
     });
-    expect(resolveChoice(document, choice.state, 1).event).toEqual({
+    expect(result.state).toBe(choice.state);
+    expect(result.state.pendingChoice).toEqual(choice.state.pendingChoice);
+  });
+
+  it("returns an error result for negative choice indexes", () => {
+    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(resolveChoice(document, choice.state, -1).event).toEqual({
+      type: "error",
+      code: "choice_index_out_of_range",
+      message: "Choice index -1 is out of range for 1 choice item(s).",
+    });
+  });
+
+  it("returns unsupported when resolving a pending choice without a same-file target label", () => {
+    const document = compileScript('? Choose\n- "Next file" -> chapter-02.tzr\n');
+    const choice = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(resolveChoice(document, choice.state, 0).event).toEqual({
       type: "unsupported",
       instructionType: "ChoiceInstruction",
     });

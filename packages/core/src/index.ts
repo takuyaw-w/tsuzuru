@@ -73,6 +73,8 @@ export type {
   RuntimeBranchFrame,
   RuntimeBlockReason,
   RuntimeChoiceItem,
+  RuntimeErrorCode,
+  RuntimeErrorEvent,
   RuntimeEvent,
   RuntimeFlags,
   RuntimePendingChoice,

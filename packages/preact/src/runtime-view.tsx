@@ -77,6 +77,8 @@ export function RuntimeView({
       return <RuntimeStatusMessage label={`Plugin command: ${event.name}`} />;
     case "unsupported":
       return <RuntimeStatusMessage label={`Unsupported instruction: ${event.instructionType}`} />;
+    case "error":
+      return <RuntimeStatusMessage label={event.message} />;
     case "end":
       return <RuntimeStatusMessage label="End" />;
     case "stop":

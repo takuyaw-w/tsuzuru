@@ -121,6 +121,12 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
         }
 
         const resolved = resolveChoice(document, currentState, itemIndex);
+        if (resolved.event.type === "error") {
+          setEvent(resolved.event);
+          setVisibleEvent(resolved.event);
+          return resolved.state;
+        }
+
         const result = stepRuntime(document, resolved.state, stepOptions);
         setEvent(result.event);
         const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
@@ -258,6 +264,7 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
     case "stop":
     case "end":
     case "unsupported":
+    case "error":
       return false;
     default:
       return assertNever(event);
@@ -279,6 +286,7 @@ export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | n
     case "stop":
     case "end":
     case "unsupported":
+    case "error":
       return event;
     case "if":
       return event.event === undefined ? null : getRenderableRuntimeEvent(event.event);

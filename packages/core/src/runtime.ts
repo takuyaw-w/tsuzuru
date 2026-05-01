@@ -7,7 +7,7 @@ import {
   popActiveBranchFrame,
   popFinishedBranchFrames,
 } from "./runtime-frames.js";
-import type { RuntimeBlockReason, RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
+import type { RuntimeBlockReason, RuntimeErrorCode, RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
 
 export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
@@ -126,7 +126,19 @@ export function resolveChoice(
   state: RuntimeState,
   itemIndex: number,
 ): RuntimeStepResult {
-  const item = state.pendingChoice?.items[itemIndex];
+  if (state.pendingChoice === null) {
+    return runtimeError(state, "choice_not_pending", "Cannot resolve a choice because no choice is pending.");
+  }
+
+  const item = state.pendingChoice.items[itemIndex];
+  if (item === undefined) {
+    return runtimeError(
+      state,
+      "choice_index_out_of_range",
+      `Choice index ${itemIndex} is out of range for ${state.pendingChoice.items.length} choice item(s).`,
+    );
+  }
+
   if (item?.targetLabel === undefined) {
     return unsupportedInstruction(state, "ChoiceInstruction");
   }
@@ -151,6 +163,13 @@ export function resolveChoice(
       label: item.targetLabel,
       instructionIndex: target.statementIndex,
     },
+  };
+}
+
+function runtimeError(state: RuntimeState, code: RuntimeErrorCode, message: string): RuntimeStepResult {
+  return {
+    state,
+    event: { type: "error", code, message },
   };
 }
 

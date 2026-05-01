@@ -86,6 +86,7 @@ Current `RuntimeEvent` variants:
 - `wait`: emitted for `@wait(ms)` and repeated while timed wait is pending
 - `pluginCommand`: emitted by plugin command handlers
 - `unsupported`: emitted for unsupported instruction or command handling
+- `error`: emitted for runtime operation errors such as invalid choice resolution
 - `end`: emitted when the pointer is past the end of top-level instructions
 
 ## Text Flow Commands
@@ -141,6 +142,8 @@ A `ChoiceInstruction` advances the top-level pointer and sets `pendingChoice`.
 While `pendingChoice` is set, `stepRuntime` repeats the same choice event and does not advance.
 
 Choices are resolved only with `resolveChoice(document, state, itemIndex)`. For same-file label targets, this moves the pointer to the target label, clears `pendingChoice`, clears branch frames, and emits `jump`.
+
+If no choice is pending or `itemIndex` is outside the pending choice items, `resolveChoice` returns an `error` event and the original state. It does not throw and does not silently ignore the invalid index.
 
 Cross-file choice targets are not handled by the runtime yet.
 

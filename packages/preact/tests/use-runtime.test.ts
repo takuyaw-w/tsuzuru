@@ -91,6 +91,7 @@ describe("isAutoSteppableRuntimeEvent", () => {
       { type: "stop" },
       { type: "end" },
       { type: "unsupported", instructionType: "MacroInstruction" },
+      { type: "error", code: "choice_index_out_of_range", message: "Choice index 1 is out of range." },
     ];
 
     for (const event of events) {
@@ -192,6 +193,7 @@ describe("isRenderableRuntimeEvent", () => {
       { type: "stop" },
       { type: "end" },
       { type: "unsupported", instructionType: "MacroInstruction" },
+      { type: "error", code: "choice_index_out_of_range", message: "Choice index 1 is out of range." },
     ];
 
     for (const event of events) {
