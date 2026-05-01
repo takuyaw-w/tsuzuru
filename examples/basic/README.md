@@ -28,6 +28,12 @@ pnpm --filter @tsuzuru/example-basic start
 
 The script builds `@tsuzuru/core`, compiles this example, and runs `dist/run.js` with Node.
 
+For build verification only:
+
+```sh
+pnpm --filter @tsuzuru/example-basic build
+```
+
 Expected output includes:
 
 ```txt

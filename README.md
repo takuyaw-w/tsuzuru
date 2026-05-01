@@ -31,6 +31,8 @@ Tsuzuru は現在 v0.1 開発中です。
 - `create-tsuzuru`
 - `@tsuzuru/vite`
 - cross-file jump existence validation
+- macro argument schema validation
+- save data migration / compatibility metadata
 - GUI editor
 - TyranoScript / KAG / Ren'Py 互換
 - Live2D
@@ -116,6 +118,18 @@ Preact 向け adapter です。
 `RuntimeView` は最小表示用の convenience component に留め、full game UI framework にはしません。
 
 シナリオ実行の本質的なロジックは `@tsuzuru/core` に置きます。
+
+## Quickstart
+
+現時点では `create-tsuzuru` は未実装です。clean checkout から現在の実装を試すには、リポジトリルートで以下を実行します。
+
+```sh
+pnpm install
+pnpm --filter @tsuzuru/example-basic start
+pnpm --filter @tsuzuru/example-preact-basic dev
+```
+
+`examples/basic` は Node 上で `@tsuzuru/core` の parse / compile / runtime 実行を確認します。`examples/preact-basic` は Vite + Preact で `useRuntime`、`RuntimeView`、choice、wait、plugin command、localStorage save/load を確認します。
 
 ## DSL の例
 
@@ -214,6 +228,26 @@ pnpm --filter @tsuzuru/core build
 pnpm --filter @tsuzuru/preact test
 pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/preact build
+```
+
+### Basic Example
+
+実行:
+
+```sh
+pnpm --filter @tsuzuru/example-basic start
+```
+
+ビルド:
+
+```sh
+pnpm --filter @tsuzuru/example-basic build
+```
+
+型チェック:
+
+```sh
+pnpm --filter @tsuzuru/example-basic typecheck
 ```
 
 ### Preact Example
@@ -325,6 +359,8 @@ v0.1 では、以下を目標にします。
 - arbitrary JavaScript / TypeScript inside `.tzr`
 - scenario-local macro definitions
 - cross-file jump existence validation
+- macro argument schema validation
+- save data scenario identity / version / migration
 - Live2D
 - Pixi integration
 - backlog
@@ -334,6 +370,8 @@ v0.1 では、以下を目標にします。
 - achievements
 - cloud save
 - save data compatibility guarantees across scenario/runtime changes
+
+v0.1 の save/load は example での確認用です。`RuntimeSaveData` は scenario identity、scenario version、migration metadata を含まず、scenario や runtime/event shape が変わった後の互換性は保証しません。
 
 ## Codex / Agent 運用
 

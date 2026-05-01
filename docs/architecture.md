@@ -377,6 +377,7 @@ page
 stop
 pluginCommand
 unsupported
+error
 end
 ```
 
@@ -715,6 +716,8 @@ pnpm --filter @tsuzuru/preact build
 Example checks:
 
 ```sh
+pnpm --filter @tsuzuru/example-basic build
+pnpm --filter @tsuzuru/example-basic start
 pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic typecheck
 ```

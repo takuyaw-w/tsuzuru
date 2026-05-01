@@ -154,11 +154,11 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - [x] `docs/runtime.md`
 - [x] `docs/plugin-api.md`
 - [x] `docs/macro-api.md` を作成または更新
-- [ ] `docs/architecture.md` を作成または更新
-- [ ] root `README.md` に quickstart を追加
-- [ ] examples の実行手順を整理
-- [ ] v0.1 limitations を明記
-- [ ] docs と現実装の差分を確認
+- [x] `docs/architecture.md` を作成または更新
+- [x] root `README.md` に quickstart を追加
+- [x] examples の実行手順を整理
+- [x] v0.1 limitations を明記
+- [x] docs と現実装の差分を確認
 
 ---
 
