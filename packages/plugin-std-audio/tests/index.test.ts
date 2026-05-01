@@ -81,6 +81,22 @@ describe("std-audio BGM commands", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it("does not affect SE or voice state when BGM commands run", () => {
+    const result = runStdAudioScript(`@se("click")
+@voice("alice_001")
+@startBgm("main_theme")
+@stopBgm()
+`);
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: null,
+      seEvents: [{ assetId: "click", sequence: 1 }],
+      voiceEvents: [{ assetId: "alice_001", sequence: 1 }],
+      nextSeSequence: 2,
+      nextVoiceSequence: 2,
+    });
+  });
+
   it("rejects empty BGM asset ids", () => {
     const compiled = compileStdAudioScript('@startBgm("")\n');
 
@@ -114,6 +130,144 @@ describe("std-audio BGM commands", () => {
       "@startBgm expects only positional arguments.",
       "@startBgm does not allow extra positional arguments.",
     ]);
+  });
+});
+
+describe("std-audio SE commands", () => {
+  it("appends an SE event and increments nextSeSequence", () => {
+    const result = runStdAudioScript('@se("click")\n');
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: null,
+      seEvents: [{ assetId: "click", sequence: 1 }],
+      voiceEvents: [],
+      nextSeSequence: 2,
+      nextVoiceSequence: 1,
+    });
+  });
+
+  it("appends multiple SE events with increasing sequences", () => {
+    const result = runStdAudioScript(`@se("click")
+@se("click")
+@se("confirm")
+`);
+
+    expect(getStdAudioState(result.state).seEvents).toEqual([
+      { assetId: "click", sequence: 1 },
+      { assetId: "click", sequence: 2 },
+      { assetId: "confirm", sequence: 3 },
+    ]);
+    expect(getStdAudioState(result.state).nextSeSequence).toBe(4);
+  });
+
+  it("does not affect BGM or voice state when @se runs", () => {
+    const result = runStdAudioScript(`@startBgm("main_theme")
+@voice("alice_001")
+@se("click")
+`);
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: { assetId: "main_theme" },
+      seEvents: [{ assetId: "click", sequence: 1 }],
+      voiceEvents: [{ assetId: "alice_001", sequence: 1 }],
+      nextSeSequence: 2,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("rejects invalid @se arguments", () => {
+    const compiled = compileStdAudioScript(`@se("")
+@se("click", volume=0.8)
+`);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors.map((error) => error.message)).toEqual([
+      "@se positional argument 1 must be a non-empty string.",
+      "@se expects only positional arguments.",
+      "@se does not allow extra positional arguments.",
+    ]);
+  });
+
+  it("rejects bare @se syntax", () => {
+    const parsed = parseTzr("@se\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) {
+      throw new Error("expected parser failure");
+    }
+    expect(parsed.errors.map((error) => error.message)).toEqual(["@ call must use @name(...) syntax."]);
+  });
+});
+
+describe("std-audio voice commands", () => {
+  it("appends a voice event and increments nextVoiceSequence", () => {
+    const result = runStdAudioScript('@voice("alice_001")\n');
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: null,
+      seEvents: [],
+      voiceEvents: [{ assetId: "alice_001", sequence: 1 }],
+      nextSeSequence: 1,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("appends multiple voice events with increasing sequences", () => {
+    const result = runStdAudioScript(`@voice("alice_001")
+@voice("alice_001")
+@voice("alice_002")
+`);
+
+    expect(getStdAudioState(result.state).voiceEvents).toEqual([
+      { assetId: "alice_001", sequence: 1 },
+      { assetId: "alice_001", sequence: 2 },
+      { assetId: "alice_002", sequence: 3 },
+    ]);
+    expect(getStdAudioState(result.state).nextVoiceSequence).toBe(4);
+  });
+
+  it("does not affect BGM or SE state when @voice runs", () => {
+    const result = runStdAudioScript(`@startBgm("main_theme")
+@se("click")
+@voice("alice_001")
+`);
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: { assetId: "main_theme" },
+      seEvents: [{ assetId: "click", sequence: 1 }],
+      voiceEvents: [{ assetId: "alice_001", sequence: 1 }],
+      nextSeSequence: 2,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("rejects invalid @voice arguments", () => {
+    const compiled = compileStdAudioScript(`@voice("")
+@voice("alice_001", volume=0.8)
+`);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors.map((error) => error.message)).toEqual([
+      "@voice positional argument 1 must be a non-empty string.",
+      "@voice expects only positional arguments.",
+      "@voice does not allow extra positional arguments.",
+    ]);
+  });
+
+  it("rejects bare @voice syntax", () => {
+    const parsed = parseTzr("@voice\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) {
+      throw new Error("expected parser failure");
+    }
+    expect(parsed.errors.map((error) => error.message)).toEqual(["@ call must use @name(...) syntax."]);
   });
 });
 

@@ -41,6 +41,14 @@ export const stdAudioPluginCommands = {
     arguments: [{ type: "string", nonEmpty: true }],
   }),
   stopBgm: definePluginCommand("stopBgm", { kind: "none" }),
+  se: definePluginCommand("se", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  voice: definePluginCommand("voice", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
 } satisfies PluginCommandMap;
 
 export function createStdAudioPlugin(): RuntimePluginDefinition<StdAudioState> {
@@ -54,6 +62,8 @@ export function createStdAudioCommandHandlers(): Readonly<Record<string, Runtime
   return {
     startBgm: handleStartBgm,
     stopBgm: handleStopBgm,
+    se: handleSe,
+    voice: handleVoice,
   };
 }
 
@@ -92,6 +102,34 @@ function handleStopBgm(state: RuntimeState, instruction: CommandInstruction): Re
   };
 }
 
+function handleSe(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
+  const assetId = getRequiredPositionalString(instruction, 0);
+  const current = getStdAudioState(state);
+
+  return {
+    state: withStdAudioState(state, {
+      ...current,
+      seEvents: [...current.seEvents, createStdAudioSeEvent(assetId, current.nextSeSequence)],
+      nextSeSequence: current.nextSeSequence + 1,
+    }),
+    event: { type: "pluginCommand", name: instruction.name },
+  };
+}
+
+function handleVoice(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
+  const assetId = getRequiredPositionalString(instruction, 0);
+  const current = getStdAudioState(state);
+
+  return {
+    state: withStdAudioState(state, {
+      ...current,
+      voiceEvents: [...current.voiceEvents, createStdAudioVoiceEvent(assetId, current.nextVoiceSequence)],
+      nextVoiceSequence: current.nextVoiceSequence + 1,
+    }),
+    event: { type: "pluginCommand", name: instruction.name },
+  };
+}
+
 function createInitialStdAudioState(): StdAudioState {
   return {
     bgm: null,
@@ -100,6 +138,14 @@ function createInitialStdAudioState(): StdAudioState {
     nextSeSequence: 1,
     nextVoiceSequence: 1,
   };
+}
+
+function createStdAudioSeEvent(assetId: string, sequence: number): StdAudioSeEvent {
+  return { assetId, sequence } as StdAudioSeEvent;
+}
+
+function createStdAudioVoiceEvent(assetId: string, sequence: number): StdAudioVoiceEvent {
+  return { assetId, sequence } as StdAudioVoiceEvent;
 }
 
 function withStdAudioState(state: RuntimeState, stdAudio: StdAudioState): RuntimeState {
