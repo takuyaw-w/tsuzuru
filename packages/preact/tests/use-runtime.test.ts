@@ -33,6 +33,7 @@ const snapshot: RuntimeSnapshot = {
   },
   variables: {},
   flags: {},
+  plugins: {},
   branchFrames: [],
   pendingChoice: null,
   pendingWait: null,

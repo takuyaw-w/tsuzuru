@@ -1,0 +1,23 @@
+{
+  "name": "@tsuzuru/plugin-std-visual",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -6,6 +6,7 @@ export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
     pointer: { ...state.pointer },
     variables: { ...state.variables },
     flags: { ...state.flags },
+    plugins: clonePluginStates(state.plugins),
     branchFrames: state.branchFrames.map((frame) => ({
       instructions: frame.instructions,
       instructionIndex: frame.instructionIndex,
@@ -28,6 +29,7 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
     pointer: { ...snapshot.pointer },
     variables: { ...snapshot.variables },
     flags: { ...snapshot.flags },
+    plugins: clonePluginStates(snapshot.plugins ?? {}),
     branchFrames: snapshot.branchFrames.map((frame) => ({
       instructions: frame.instructions,
       instructionIndex: frame.instructionIndex,
@@ -43,4 +45,8 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
     isStopped: snapshot.isStopped,
     isWaitingForClick: snapshot.isWaitingForClick,
   };
+}
+
+function clonePluginStates(plugins: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
+  return JSON.parse(JSON.stringify(plugins)) as Readonly<Record<string, unknown>>;
 }

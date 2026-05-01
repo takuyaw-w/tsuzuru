@@ -7,12 +7,23 @@ import {
   popActiveBranchFrame,
   popFinishedBranchFrames,
 } from "./runtime-frames.js";
-import type { RuntimeBlockReason, RuntimeErrorCode, RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
+import type {
+  RuntimeBlockReason,
+  RuntimeErrorCode,
+  RuntimeInitialStateOptions,
+  RuntimePluginStates,
+  RuntimeState,
+  RuntimeStepOptions,
+  RuntimeStepResult,
+} from "./runtime-types.js";
 
 export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 
-export function createInitialRuntimeState(document: CompiledTzrDocument): RuntimeState {
+export function createInitialRuntimeState(
+  document: CompiledTzrDocument,
+  options: RuntimeInitialStateOptions = {},
+): RuntimeState {
   return {
     pointer: {
       filePath: document.filePath,
@@ -20,12 +31,22 @@ export function createInitialRuntimeState(document: CompiledTzrDocument): Runtim
     },
     variables: {},
     flags: {},
+    plugins: createInitialPluginStates(options),
     branchFrames: [],
     pendingChoice: null,
     pendingWait: null,
     isStopped: false,
     isWaitingForClick: false,
   };
+}
+
+function createInitialPluginStates(options: RuntimeInitialStateOptions): RuntimePluginStates {
+  const plugins = options.plugins ?? [];
+  const states: Record<string, unknown> = {};
+  for (const plugin of plugins) {
+    states[plugin.name] = plugin.createInitialState();
+  }
+  return states;
 }
 
 export function stepRuntime(

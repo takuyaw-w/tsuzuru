@@ -17,6 +17,17 @@ export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
 export type RuntimeFlags = Readonly<Record<string, boolean>>;
 
+export type RuntimePluginStates = Readonly<Record<string, unknown>>;
+
+export interface RuntimePluginDefinition<TState = unknown> {
+  readonly name: string;
+  readonly createInitialState: () => TState;
+}
+
+export interface RuntimeInitialStateOptions {
+  readonly plugins?: readonly RuntimePluginDefinition[];
+}
+
 export interface RuntimeChoiceItem {
   readonly text: string;
   readonly targetRaw: string;
@@ -36,6 +47,7 @@ export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
+  readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
   readonly pendingWait: RuntimePendingWait | null;
@@ -48,6 +60,7 @@ export interface RuntimeSnapshot {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
   readonly flags: RuntimeFlags;
+  readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
   readonly pendingWait: RuntimePendingWait | null;
