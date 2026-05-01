@@ -1221,6 +1221,33 @@ We meet again.
     expect(compiled.ok).toBe(true);
   });
 
+  it("accepts bare registered plugin commands with no-argument schemas", () => {
+    const parsed = parseTzr("@stopBgm\n", { filePath: "scenario/main.tzr" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      pluginCommands: {
+        stopBgm: definePluginCommand("stopBgm", { kind: "none" }),
+      },
+    });
+
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+    expect(compiled.document.instructions).toMatchObject([
+      {
+        type: "CommandInstruction",
+        name: "stopBgm",
+        args: [],
+      },
+    ]);
+  });
+
   it("reports registered plugin commands with invalid no-argument schemas", () => {
     const parsed = parseTzr('@flash("white")\n', { filePath: "scenario/main.tzr" });
 

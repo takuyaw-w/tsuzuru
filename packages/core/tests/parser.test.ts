@@ -89,6 +89,82 @@ $enter("haruka", "smile", "center")
     });
   });
 
+  it("parses bare commands as zero-argument command statements", () => {
+    const result = parseTzr("@stopBgm\n", {
+      filePath: "scenario/main.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(result.document.body[0]).toMatchObject({
+      type: "CommandStatement",
+      name: "stopBgm",
+      args: [],
+    });
+  });
+
+  it("parses bare commands with surrounding whitespace", () => {
+    const result = parseTzr("  @stopBgm  \n", {
+      filePath: "scenario/main.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+
+    expect(result.document.body[0]).toMatchObject({
+      type: "CommandStatement",
+      name: "stopBgm",
+      args: [],
+    });
+  });
+
+  it("does not allow bare macro calls", () => {
+    const result = parseTzr("$someMacro\n", {
+      filePath: "scenario/broken.tzr",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "$ call must use $name(...) syntax.",
+        sourceLine: "$someMacro",
+      },
+    ]);
+  });
+
+  it("returns a diagnostic for malformed bare commands", () => {
+    const result = parseTzr("@stopBgm extra\n", {
+      filePath: "scenario/broken.tzr",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "@ call must use @name(...) syntax.",
+        sourceLine: "@stopBgm extra",
+      },
+    ]);
+  });
+
   it("returns file path, line, and column diagnostics for malformed syntax", () => {
     const result = parseTzr(
       `#scene(prologue)
