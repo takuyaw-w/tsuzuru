@@ -6,11 +6,11 @@ Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノ�
 
 ## 現在のステータス
 
-Tsuzuru は現在 v0.1 開発中です。
+Tsuzuru は v0.1 scope complete / stabilization complete の状態です。
 
-現時点では、完成済みの製品ではなく、コア設計と最小機能を固めている段階です。
+v0.1 で予定していたコア設計、最小機能、examples、README / docs、quality gates は完了確認済みです。ただし、production ready な完成製品ではなく、v0.1 範囲を固定した初期実装です。
 
-実装済み・整備中の主な要素:
+実装済みの主な要素:
 
 - `.tzr` パーサー
 - compiler

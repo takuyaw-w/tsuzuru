@@ -33,7 +33,7 @@ Keep extension logic in TypeScript.
 
 v0.1 is complete when a small visual novel can be written in `.tzr`, compiled by `@tsuzuru/core`, rendered by `@tsuzuru/preact`, and verified through examples.
 
-v0.1 should prove the architecture, not compete with mature visual novel engines.
+This v0.1 scope has been completed and stabilization checks have passed. This marks the planned v0.1 scope as complete, but does not mean Tsuzuru is production ready or comparable to mature visual novel engines.
 
 ## v0.1 Scope
 
@@ -434,6 +434,8 @@ v0.1 readiness requires:
 - docs match implementation
 - limitations are explicit
 - TODOs reflect actual status
+
+As of the v0.1 final readiness review, these release-readiness checks have been completed for the planned v0.1 scope. Deferred post-v0.1 items remain intentionally unimplemented unless explicitly re-scoped.
 
 ## Roadmap Maintenance
 

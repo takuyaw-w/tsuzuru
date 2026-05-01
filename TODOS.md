@@ -16,6 +16,8 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 - examples が clean checkout から動く
 - 最低限の README / docs が現実装と一致している
 
+v0.1 scope は完了確認済み。post-v0.1 候補は未実装のまま残す。
+
 ---
 
 ## 2. Core DSL / Compiler
