@@ -121,7 +121,7 @@ Preact 向け adapter です。
 
 ## Quickstart
 
-現時点では `create-tsuzuru` は未実装です。clean checkout から現在の実装を試すには、リポジトリルートで以下を実行します。
+v0.1 では `create-tsuzuru` は作りません。project creation path は manual setup と既存 examples です。clean checkout から現在の実装を試すには、リポジトリルートで以下を実行します。
 
 ```sh
 pnpm install
@@ -130,6 +130,8 @@ pnpm --filter @tsuzuru/example-preact-basic dev
 ```
 
 `examples/basic` は Node 上で `@tsuzuru/core` の parse / compile / runtime 実行を確認します。`examples/preact-basic` は Vite + Preact で `useRuntime`、`RuntimeView`、choice、wait、plugin command、localStorage save/load を確認します。
+
+新規プロジェクトを作る場合は、v0.1 では `examples/preact-basic` の構成を参考に手動で Vite + Preact project を作り、`@tsuzuru/core` と `@tsuzuru/preact` を組み込んでください。`npm create tsuzuru` は post-v0.1 候補です。
 
 ## DSL の例
 
@@ -358,6 +360,7 @@ v0.1 では、以下を目標にします。
 - Ren'Py compatibility
 - arbitrary JavaScript / TypeScript inside `.tzr`
 - scenario-local macro definitions
+- `create-tsuzuru`
 - cross-file jump existence validation
 - macro argument schema validation
 - save data scenario identity / version / migration

@@ -164,11 +164,11 @@ Tsuzuru v0.1 は、以下ができれば完了とみなす。
 
 ## 8. Project Creation / Distribution
 
-- [ ] v0.1 で `create-tsuzuru` を作るか決める
+- [x] v0.1 で `create-tsuzuru` を作るか決める
   - [ ] 作る場合: package skeleton を作成
   - [ ] 作る場合: Vite + Preact template を生成
   - [ ] 作る場合: sample `.tzr` を含める
-  - [ ] 作らない場合: manual setup を README に明記
+  - [x] 作らない場合: manual setup を README に明記
 - [ ] `@tsuzuru/vite` を v0.1 に入れるか決める
   - [ ] 入れる場合: package skeleton を作成
   - [ ] 入れる場合: `.tzr` import 方針を決める

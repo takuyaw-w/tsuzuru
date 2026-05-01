@@ -331,6 +331,8 @@ Potential scope:
 
 This is not part of v0.1 unless explicitly re-scoped.
 
+For v0.1, project creation is manual. Users should follow the root README quickstart or copy the `examples/preact-basic` structure when creating a Vite + Preact project.
+
 ## Vite Integration
 
 Possible package:

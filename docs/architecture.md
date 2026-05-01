@@ -623,6 +623,7 @@ v0.1 should focus on:
 - Preact adapter
 - basic save/load
 - executable examples
+- manual setup using the examples as references
 - accurate docs
 
 ## Explicit Non-Goals for v0.1
@@ -636,6 +637,7 @@ Do not include these unless explicitly re-scoped:
 - Ren'Py compatibility
 - arbitrary JavaScript in `.tzr`
 - arbitrary TypeScript in `.tzr`
+- `create-tsuzuru`
 - Live2D
 - Pixi integration
 - advanced animation editor
