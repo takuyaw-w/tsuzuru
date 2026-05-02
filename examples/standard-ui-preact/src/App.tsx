@@ -21,7 +21,6 @@ import {
   GameViewport,
   RuntimeMessageLayer,
   ScreenHost,
-  type ActiveScreen,
 } from "@tsuzuru/standard-ui-preact";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
@@ -50,7 +49,6 @@ interface RuntimeAppProps {
 
 function RuntimeApp({ document }: RuntimeAppProps) {
   const [diagnostics, setDiagnostics] = useState<readonly RuntimeDiagnostic[]>([]);
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen | null>(null);
   const plugins = useMemo(() => [createStdVisualPlugin(), createStdAudioPlugin()], []);
   const commandHandlers = useMemo(
     () => ({
@@ -82,12 +80,11 @@ function RuntimeApp({ document }: RuntimeAppProps) {
 
   const reset = () => {
     setDiagnostics([]);
-    setActiveScreen(null);
     runtime.reset();
   };
 
   const openNotebook = () => {
-    setActiveScreen({ id: "notebook", params: { title: "Notebook" } });
+    runtime.openScreen("notebook");
   };
 
   return (
@@ -113,7 +110,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
               />
             )}
           </div>
-          <ScreenHost activeScreen={activeScreen} screens={screens} onClose={() => setActiveScreen(null)} />
+          <ScreenHost activeScreen={runtime.state.screen.active} screens={screens} onClose={runtime.closeScreen} />
         </GameShell>
       </GameViewport>
       <div className="app__controls">

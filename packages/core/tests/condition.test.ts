@@ -18,6 +18,10 @@ const baseState: RuntimeState = {
   branchFrames: [],
   pendingChoice: null,
   pendingWait: null,
+  screen: {
+    active: null,
+    waitingForClose: false,
+  },
   isStopped: false,
   isWaitingForClick: false,
 };

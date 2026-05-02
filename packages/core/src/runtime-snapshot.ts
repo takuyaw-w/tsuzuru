@@ -42,6 +42,10 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
             items: snapshot.pendingChoice.items.map((item) => ({ ...item })),
           },
     pendingWait: snapshot.pendingWait === null ? null : { ...snapshot.pendingWait },
+    screen: {
+      active: null,
+      waitingForClose: false,
+    },
     isStopped: snapshot.isStopped,
     isWaitingForClick: snapshot.isWaitingForClick,
   };

@@ -327,6 +327,13 @@ class TzrCompiler {
       case "wait":
         this.validateSinglePositionalArgument(command, name, "NumberValue", "number");
         return;
+      case "openScreen":
+        this.validateSinglePositionalArgument(command, name, "StringValue", "string", { nonEmpty: true });
+        return;
+      case "closeScreen":
+      case "waitScreenClose":
+        this.validateNoArguments(command, name);
+        return;
       case "waitClick":
       case "page":
       case "stop":
@@ -535,6 +542,7 @@ class TzrCompiler {
     name: CoreCommandName,
     expectedType: TzrValue["type"],
     expectedLabel: "number" | "string",
+    options: { readonly nonEmpty?: boolean } = {},
   ): void {
     if (command.args.length !== 1) {
       this.addError(command.loc.start, `@${name} expects exactly 1 positional ${expectedLabel} argument.`);
@@ -549,6 +557,11 @@ class TzrCompiler {
 
     if (argument.value.type !== expectedType) {
       this.addError(argument.value.loc.start, `@${name} expects a ${expectedLabel} argument.`);
+      return;
+    }
+
+    if (options.nonEmpty === true && argument.value.type === "StringValue" && argument.value.value.length === 0) {
+      this.addError(argument.value.loc.start, `@${name} expects a non-empty ${expectedLabel} argument.`);
     }
   }
 

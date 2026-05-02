@@ -510,6 +510,9 @@ We meet again.
 @waitClick()
 @page()
 @stop()
+@openScreen("notebook")
+@closeScreen()
+@waitScreenClose()
 #label("known")
 `,
       { filePath: "scenario/main.tzr" },
@@ -521,6 +524,68 @@ We meet again.
     }
 
     expect(compileTzr(parsed.document).ok).toBe(true);
+  });
+
+  it("reports invalid screen core command arguments", () => {
+    const parsed = parseTzr(
+      `#scene("prologue")
+@openScreen("")
+@openScreen("notebook", "extra")
+@openScreen(screenId="notebook")
+@closeScreen("id")
+@waitScreenClose("id")
+`,
+      { filePath: "scenario/main.tzr" },
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document);
+
+    expect(compiled.ok).toBe(false);
+    if (compiled.ok) {
+      throw new Error("expected compiler failure");
+    }
+    expect(compiled.errors).toEqual([
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 13,
+        message: "@openScreen expects a non-empty string argument.",
+        sourceLine: '@openScreen("")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 3,
+        column: 1,
+        message: "@openScreen expects exactly 1 positional string argument.",
+        sourceLine: '@openScreen("notebook", "extra")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 4,
+        column: 1,
+        message: "@openScreen expects exactly 1 positional string argument.",
+        sourceLine: '@openScreen(screenId="notebook")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 5,
+        column: 1,
+        message: "@closeScreen expects no arguments.",
+        sourceLine: '@closeScreen("id")',
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 6,
+        column: 1,
+        message: "@waitScreenClose expects no arguments.",
+        sourceLine: '@waitScreenClose("id")',
+      },
+    ]);
   });
 
   it("reports invalid @jump arguments", () => {

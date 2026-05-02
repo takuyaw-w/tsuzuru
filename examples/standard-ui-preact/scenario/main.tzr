@@ -24,6 +24,8 @@ The package stays focused on standard UI components.
 ? What should Alice do next?
 - "Greet Bob" -> #greet_bob
 - "Check the room" -> #check_room
+- "Wait for notebook close" -> #screen_wait_route
+- "Notebook tutorial" -> #screen_tutorial_route
 
 #label("greet_bob")
 
@@ -36,6 +38,32 @@ Good afternoon, Bob.
 
 The room has no bundled images yet, so missing assets are shown as fallback boxes.
 
+@jump("#after_choice")
+
+#label("screen_wait_route")
+
+:: System
+手帳を確認してください。
+
+@openScreen("notebook")
+@waitScreenClose()
+
+:: System
+確認できましたね。
+
+@jump("#after_choice")
+
+#label("screen_tutorial_route")
+
+:: System
+手帳を開いたまま説明します。
+
+@openScreen("notebook")
+
+:: System
+証拠が集まると、ここに追記されます。
+
+@closeScreen()
 @jump("#after_choice")
 
 #label("after_choice")

@@ -16,9 +16,11 @@ import type {
   RuntimeStepOptions,
   RuntimeStepResult,
 } from "./runtime-types.js";
+import { closeScreen as closeRuntimeScreen } from "./runtime-screen.js";
 
 export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
+export { closeScreen, openScreen } from "./runtime-screen.js";
 
 export function createInitialRuntimeState(
   document: CompiledTzrDocument,
@@ -35,6 +37,10 @@ export function createInitialRuntimeState(
     branchFrames: [],
     pendingChoice: null,
     pendingWait: null,
+    screen: {
+      active: null,
+      waitingForClose: false,
+    },
     isStopped: false,
     isWaitingForClick: false,
   };
@@ -54,28 +60,37 @@ export function stepRuntime(
   state: RuntimeState,
   options: RuntimeStepOptions = {},
 ): RuntimeStepResult {
-  if (state.pendingWait !== null) {
+  const screenNormalizedState = normalizeScreenCloseWait(state);
+
+  if (screenNormalizedState.screen.waitingForClose) {
     return {
-      state,
-      event: waitEvent(state.pendingWait),
+      state: screenNormalizedState,
+      event: { type: "screen", action: "waitClose" },
     };
   }
 
-  if (state.pendingChoice !== null) {
+  if (screenNormalizedState.pendingWait !== null) {
     return {
-      state,
-      event: choiceEvent(state.pendingChoice),
+      state: screenNormalizedState,
+      event: waitEvent(screenNormalizedState.pendingWait),
     };
   }
 
-  if (state.isWaitingForClick) {
+  if (screenNormalizedState.pendingChoice !== null) {
     return {
-      state,
+      state: screenNormalizedState,
+      event: choiceEvent(screenNormalizedState.pendingChoice),
+    };
+  }
+
+  if (screenNormalizedState.isWaitingForClick) {
+    return {
+      state: screenNormalizedState,
       event: { type: "waitClick" },
     };
   }
 
-  const normalizedState = popFinishedBranchFrames(state);
+  const normalizedState = popFinishedBranchFrames(screenNormalizedState);
   const activeFrame = getActiveBranchFrame(normalizedState);
   if (activeFrame !== undefined) {
     const instruction = activeFrame.instructions[activeFrame.instructionIndex];
@@ -221,6 +236,9 @@ export function isRuntimeBlocked(state: RuntimeState): boolean {
 }
 
 export function getRuntimeBlockReason(state: RuntimeState): RuntimeBlockReason | null {
+  if (state.screen.active !== null && state.screen.waitingForClose) {
+    return "screenClose";
+  }
   if (state.pendingWait !== null) {
     return "wait";
   }
@@ -231,6 +249,14 @@ export function getRuntimeBlockReason(state: RuntimeState): RuntimeBlockReason |
     return "click";
   }
   return null;
+}
+
+function normalizeScreenCloseWait(state: RuntimeState): RuntimeState {
+  if (state.screen.active !== null || !state.screen.waitingForClose) {
+    return state;
+  }
+
+  return closeRuntimeScreen(state);
 }
 
 function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState): RuntimeState {

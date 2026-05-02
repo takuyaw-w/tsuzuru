@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
   clearClickWait,
   clearWait,
+  closeScreen as closeRuntimeScreen,
   createInitialRuntimeState,
   createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
+  openScreen as openRuntimeScreen,
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
@@ -39,6 +41,8 @@ export interface UseRuntimeResult {
   readonly step: () => void;
   readonly continueClick: () => void;
   readonly choose: (itemIndex: number) => void;
+  readonly openScreen: (screenId: string) => void;
+  readonly closeScreen: () => void;
   readonly reset: () => void;
   readonly createSnapshot: () => RuntimeSnapshot;
   readonly restoreSnapshot: (snapshot: RuntimeSnapshot) => void;
@@ -148,6 +152,20 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     [document, stepOptions],
   );
 
+  const openScreen = useCallback((screenId: string) => {
+    setAutoStepCount(0);
+    setAutoStepError(null);
+    setState((currentState) => openRuntimeScreen(currentState, screenId));
+    setEvent({ type: "screen", action: "open", screenId });
+  }, []);
+
+  const closeScreen = useCallback(() => {
+    setAutoStepCount(0);
+    setAutoStepError(null);
+    setState((currentState) => closeRuntimeScreen(currentState));
+    setEvent({ type: "screen", action: "close" });
+  }, []);
+
   const reset = useCallback(() => {
     const initialState = createInitialState(document, pluginsRef.current);
     setState(initialState);
@@ -240,6 +258,8 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
     step,
     continueClick,
     choose,
+    openScreen,
+    closeScreen,
     reset,
     createSnapshot,
     restoreSnapshot,
@@ -257,6 +277,7 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
     case "label":
     case "state":
     case "jump":
+    case "screen":
       return true;
     case "if":
       return event.event === undefined || isAutoSteppableRuntimeEvent(event.event);
@@ -304,6 +325,7 @@ export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | n
     case "state":
     case "jump":
     case "pluginCommand":
+    case "screen":
       return null;
     default:
       return assertNever(event);

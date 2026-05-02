@@ -7,6 +7,7 @@ import {
   getPositionalNumber,
   getPositionalString,
 } from "./runtime-args.js";
+import { closeScreen, openScreen } from "./runtime-screen.js";
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
 
 export function stepCommandInstruction(
@@ -59,6 +60,45 @@ export function stepCommandInstruction(
         isStopped: true,
       },
       event: { type: "stop" },
+    };
+  }
+
+  if (name === "openScreen") {
+    const screenId = getPositionalString(args, 0);
+    if (screenId === undefined) {
+      return unsupportedCommand(nextState);
+    }
+
+    return {
+      state: openScreen(nextState, screenId),
+      event: { type: "screen", action: "open", screenId },
+    };
+  }
+
+  if (name === "closeScreen") {
+    return {
+      state: closeScreen(nextState),
+      event: { type: "screen", action: "close" },
+    };
+  }
+
+  if (name === "waitScreenClose") {
+    if (nextState.screen.active === null) {
+      return {
+        state: nextState,
+        event: { type: "screen", action: "waitClose" },
+      };
+    }
+
+    return {
+      state: {
+        ...nextState,
+        screen: {
+          active: nextState.screen.active,
+          waitingForClose: true,
+        },
+      },
+      event: { type: "screen", action: "waitClose" },
     };
   }
 

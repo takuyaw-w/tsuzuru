@@ -231,6 +231,9 @@ describe("isAutoSteppableRuntimeEvent", () => {
       { type: "label", id: "start" },
       { type: "state", command: "flag", name: "met", value: true },
       { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "screen", action: "open", screenId: "notebook" },
+      { type: "screen", action: "close" },
+      { type: "screen", action: "waitClose" },
       { type: "pluginCommand", name: "bg" },
     ];
 
@@ -371,6 +374,9 @@ describe("isRenderableRuntimeEvent", () => {
       { type: "label", id: "start" },
       { type: "state", command: "flag", name: "met", value: true },
       { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "screen", action: "open", screenId: "notebook" },
+      { type: "screen", action: "close" },
+      { type: "screen", action: "waitClose" },
       { type: "pluginCommand", name: "bg" },
     ];
 
@@ -442,6 +448,10 @@ describe("getAutoClearWaitDuration", () => {
     const blockedState = {
       ...snapshot,
       pendingWait: { durationMs: 500 },
+      screen: {
+        active: null,
+        waitingForClose: false,
+      },
     };
     const events: readonly RuntimeEvent[] = [
       { type: "waitClick" },
@@ -462,6 +472,10 @@ describe("getAutoClearWaitDuration", () => {
     const state = {
       ...snapshot,
       pendingWait: { durationMs: 500 },
+      screen: {
+        active: null,
+        waitingForClose: false,
+      },
     };
 
     expect(getAutoClearWaitDuration({ type: "wait", durationMs: 500 }, state, false)).toBeNull();
@@ -631,6 +645,28 @@ The classroom was quiet.
     const runtime = await mountRuntime(document, { plugins: [plugin] });
 
     expect(runtime().state.plugins.testPlugin).toEqual({ ready: true });
+  });
+
+  it("exposes openScreen and closeScreen without exposing waitScreenClose", async () => {
+    const document = compileScript("@page()\n");
+    const runtime = await mountRuntime(document, {});
+
+    await act(async () => {
+      runtime().openScreen("notebook");
+    });
+    await flushUpdates();
+
+    expect(runtime().state.screen).toEqual({ active: { id: "notebook" }, waitingForClose: false });
+    expect(runtime().event).toEqual({ type: "screen", action: "open", screenId: "notebook" });
+
+    await act(async () => {
+      runtime().closeScreen();
+    });
+    await flushUpdates();
+
+    expect(runtime().state.screen).toEqual({ active: null, waitingForClose: false });
+    expect(runtime().event).toEqual({ type: "screen", action: "close" });
+    expect("waitScreenClose" in runtime()).toBe(false);
   });
 });
 

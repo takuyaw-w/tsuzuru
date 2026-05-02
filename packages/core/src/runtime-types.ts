@@ -43,6 +43,15 @@ export interface RuntimePendingWait {
   readonly durationMs: number;
 }
 
+export interface RuntimeActiveScreen {
+  readonly id: string;
+}
+
+export interface RuntimeScreenState {
+  readonly active: RuntimeActiveScreen | null;
+  readonly waitingForClose: boolean;
+}
+
 export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
@@ -51,6 +60,7 @@ export interface RuntimeState {
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
   readonly pendingWait: RuntimePendingWait | null;
+  readonly screen: RuntimeScreenState;
   readonly isStopped: boolean;
   readonly isWaitingForClick: boolean;
 }
@@ -68,7 +78,7 @@ export interface RuntimeSnapshot {
   readonly isWaitingForClick: boolean;
 }
 
-export type RuntimeBlockReason = "wait" | "choice" | "click";
+export type RuntimeBlockReason = "wait" | "choice" | "click" | "screenClose";
 
 export interface RuntimeStepOptions {
   readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
@@ -108,6 +118,7 @@ export type RuntimeEvent =
   | IfRuntimeEvent
   | ChoiceRuntimeEvent
   | WaitRuntimeEvent
+  | ScreenRuntimeEvent
   | RuntimePluginCommandEvent
   | UnsupportedRuntimeEvent
   | RuntimeErrorEvent
@@ -177,6 +188,12 @@ export interface ChoiceRuntimeEvent {
 export interface WaitRuntimeEvent {
   readonly type: "wait";
   readonly durationMs: number;
+}
+
+export interface ScreenRuntimeEvent {
+  readonly type: "screen";
+  readonly action: "open" | "close" | "waitClose";
+  readonly screenId?: string;
 }
 
 export interface RuntimePluginCommandEvent {

@@ -9,6 +9,9 @@ describe("core command registry", () => {
       "page",
       "stop",
       "wait",
+      "openScreen",
+      "closeScreen",
+      "waitScreenClose",
       "set",
       "inc",
       "dec",
@@ -24,6 +27,9 @@ describe("core command registry", () => {
       { name: "page", category: "text" },
       { name: "stop", category: "flow" },
       { name: "wait", category: "flow" },
+      { name: "openScreen", category: "flow" },
+      { name: "closeScreen", category: "flow" },
+      { name: "waitScreenClose", category: "flow" },
       { name: "set", category: "state" },
       { name: "inc", category: "state" },
       { name: "dec", category: "state" },
@@ -35,6 +41,7 @@ describe("core command registry", () => {
   it("checks whether a command name is core-owned", () => {
     expect(isCoreCommandName("jump")).toBe(true);
     expect(isCoreCommandName("waitClick")).toBe(true);
+    expect(isCoreCommandName("openScreen")).toBe(true);
     expect(isCoreCommandName("bg")).toBe(false);
     expect(isCoreCommandName("enter")).toBe(false);
   });

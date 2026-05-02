@@ -20,8 +20,8 @@ export function NotebookScreen({ params, onClose }: ScreenComponentProps): Compo
       <div className="notebook-screen__body">
         <p>Custom screens are app-local Preact components registered with ScreenHost.</p>
         <ul>
-          <li>Open and close state lives in the app.</li>
-          <li>Scenario DSL and runtime state are unchanged.</li>
+          <li>Open and close state is connected to Tsuzuru runtime state.</li>
+          <li>Scenario DSL can open, close, and wait for this screen.</li>
           <li>Screen content can use normal TypeScript and Preact.</li>
         </ul>
       </div>

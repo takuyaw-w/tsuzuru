@@ -9,6 +9,8 @@ import {
   definePluginCommand,
   getRuntimeBlockReason,
   isRuntimeBlocked,
+  closeScreen,
+  openScreen,
   parseTzr,
   resolveChoice,
   restoreRuntimeState,
@@ -54,6 +56,10 @@ The classroom was quiet.
       branchFrames: [],
       pendingChoice: null,
       pendingWait: null,
+      screen: {
+        active: null,
+        waitingForClose: false,
+      },
       isStopped: false,
       isWaitingForClick: false,
     });
@@ -421,6 +427,118 @@ Let's go.
     expect(result.event).toEqual({ type: "wait", durationMs: 500 });
     expect(result.state.pointer.instructionIndex).toBe(1);
     expect(result.state.pendingWait).toEqual({ durationMs: 500 });
+  });
+
+  it("handles @openScreen by setting active screen without blocking", () => {
+    const document = compileScript('@openScreen("notebook")\n:: System\nOpen.\n');
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+    const next = stepRuntime(document, result.state);
+
+    expect(result.event).toEqual({ type: "screen", action: "open", screenId: "notebook" });
+    expect(result.state.screen).toEqual({ active: { id: "notebook" }, waitingForClose: false });
+    expect(getRuntimeBlockReason(result.state)).toBeNull();
+    expect(next.event).toMatchObject({ type: "dialogue", speaker: "System" });
+  });
+
+  it("openScreen overwrites active screen and preserves waitingForClose", () => {
+    const document = compileScript('@openScreen("notebook")\n');
+    const state = {
+      ...createInitialRuntimeState(document),
+      screen: {
+        active: { id: "map" },
+        waitingForClose: true,
+      },
+    };
+    const result = openScreen(state, "notebook");
+
+    expect(result.screen).toEqual({ active: { id: "notebook" }, waitingForClose: true });
+  });
+
+  it("handles @closeScreen and closes the active screen", () => {
+    const document = compileScript("@closeScreen()\n");
+    const state = {
+      ...createInitialRuntimeState(document),
+      screen: {
+        active: { id: "notebook" },
+        waitingForClose: false,
+      },
+    };
+    const result = stepRuntime(document, state);
+
+    expect(result.event).toEqual({ type: "screen", action: "close" });
+    expect(result.state.screen).toEqual({ active: null, waitingForClose: false });
+  });
+
+  it("@closeScreen is a no-op when no screen is active", () => {
+    const document = compileScript("@closeScreen()\n");
+    const initial = createInitialRuntimeState(document);
+    const result = stepRuntime(document, initial);
+
+    expect(result.event).toEqual({ type: "screen", action: "close" });
+    expect(result.state.screen).toEqual(initial.screen);
+  });
+
+  it("handles @waitScreenClose only when a screen is active", () => {
+    const document = compileScript("@waitScreenClose()\n");
+    const inactive = stepRuntime(document, createInitialRuntimeState(document));
+    const active = stepRuntime(document, {
+      ...createInitialRuntimeState(document),
+      screen: {
+        active: { id: "notebook" },
+        waitingForClose: false,
+      },
+    });
+
+    expect(inactive.event).toEqual({ type: "screen", action: "waitClose" });
+    expect(inactive.state.screen.waitingForClose).toBe(false);
+    expect(active.event).toEqual({ type: "screen", action: "waitClose" });
+    expect(active.state.screen.waitingForClose).toBe(true);
+  });
+
+  it("stops while waiting for screen close with highest-priority block reason", () => {
+    const document = compileScript("@page()\n");
+    const state = {
+      ...createInitialRuntimeState(document),
+      pendingWait: { durationMs: 100 },
+      pendingChoice: { question: "Question?", items: [] },
+      isWaitingForClick: true,
+      screen: {
+        active: { id: "notebook" },
+        waitingForClose: true,
+      },
+    };
+    const result = stepRuntime(document, state);
+
+    expect(getRuntimeBlockReason(state)).toBe("screenClose");
+    expect(result.event).toEqual({ type: "screen", action: "waitClose" });
+    expect(result.state).toBe(state);
+  });
+
+  it("clears screen close waiting when active screen is already null", () => {
+    const document = compileScript("@wait(100)\n");
+    const state = {
+      ...createInitialRuntimeState(document),
+      screen: {
+        active: null,
+        waitingForClose: true,
+      },
+    };
+    const result = stepRuntime(document, state);
+
+    expect(getRuntimeBlockReason(state)).toBeNull();
+    expect(result.event).toEqual({ type: "wait", durationMs: 100 });
+    expect(result.state.screen).toEqual({ active: null, waitingForClose: false });
+  });
+
+  it("screen helpers open screens and clear waitingForClose when closing", () => {
+    const document = compileScript("@page()\n");
+    const initial = createInitialRuntimeState(document);
+    const opened = openScreen(initial, "notebook");
+    const waiting = { ...opened, screen: { active: opened.screen.active, waitingForClose: true } };
+    const closed = closeScreen(waiting);
+
+    expect(opened.screen).toEqual({ active: { id: "notebook" }, waitingForClose: false });
+    expect(closed.screen).toEqual({ active: null, waitingForClose: false });
   });
 
   it("does not advance while pendingWait is set", () => {
@@ -1187,6 +1305,23 @@ Let's go.
     const restored = restoreRuntimeState(createRuntimeSnapshot(wait.state));
 
     expect(restored.pendingWait).toEqual({ durationMs: 500 });
+  });
+
+  it("clears transient screen state in snapshots and restore", () => {
+    const document = compileScript('@openScreen("notebook")\n');
+    const opened = stepRuntime(document, createInitialRuntimeState(document));
+    const waiting = {
+      ...opened.state,
+      screen: {
+        active: opened.state.screen.active,
+        waitingForClose: true,
+      },
+    };
+    const snapshot = createRuntimeSnapshot(waiting);
+    const restored = restoreRuntimeState(snapshot);
+
+    expect("screen" in snapshot).toBe(false);
+    expect(restored.screen).toEqual({ active: null, waitingForClose: false });
   });
 
   it("continues after restoring a pending wait snapshot", () => {
