@@ -3,11 +3,13 @@ import { isValidElement, type ComponentChildren, type ComponentProps, type VNode
 import { describe, expect, it, vi } from "vitest";
 import {
   ChoiceLayer,
+  GameViewport,
   GameShell,
   MessageWindow,
   RuntimeMessageLayer,
   StatusLayer,
   type ChoiceLayerProps,
+  type GameViewportProps,
   type MessageWindowProps,
   type StatusLayerProps,
 } from "../src/index.js";
@@ -15,7 +17,7 @@ import {
 type DivProps = ComponentProps<"div">;
 type DivClickHandler = NonNullable<DivProps["onClick"]>;
 type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
-type TestNodeProps = Pick<DivProps, "children" | "className" | "onClick" | "onKeyDown" | "role" | "tabIndex">;
+type TestNodeProps = Pick<DivProps, "children" | "className" | "onClick" | "onKeyDown" | "role" | "style" | "tabIndex">;
 
 const loc = {
   start: { filePath: "scenario/main.tzr", line: 1, column: 1 },
@@ -78,6 +80,36 @@ describe("GameShell", () => {
 
     expect(node.props.className).toBe("tzr-game-shell custom-shell");
     expect(getNodeText(node)).toBe("story");
+  });
+});
+
+describe("GameViewport", () => {
+  it("renders children in the viewport inner layer", () => {
+    const node = expectVNode<GameViewportProps>(GameViewport({ children: "story", className: "custom-viewport" }));
+    const inner = findByClass(node, "tzr-game-viewport__inner");
+
+    expect(node.props.className).toBe("tzr-game-viewport custom-viewport");
+    expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9" });
+    expect(inner).toHaveLength(1);
+    expect(getNodeText(inner[0])).toBe("story");
+  });
+
+  it("resolves aspectRatio and numeric maxWidth", () => {
+    const node = expectVNode<GameViewportProps>(GameViewport({ children: "story", aspectRatio: "4:3", maxWidth: 960 }));
+
+    expect(node.props.style).toMatchObject({ aspectRatio: "4 / 3", maxWidth: "960px" });
+  });
+
+  it("passes string maxWidth through and gives calculated styles priority", () => {
+    const node = expectVNode<GameViewportProps>(
+      GameViewport({
+        children: "story",
+        maxWidth: "80vw",
+        style: { aspectRatio: "1 / 1", maxWidth: "100%" },
+      }),
+    );
+
+    expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9", maxWidth: "80vw" });
   });
 });
 

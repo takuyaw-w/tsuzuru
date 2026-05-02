@@ -1,3 +1,6 @@
+export type { GameViewportAspectRatio, GameViewportProps } from "./game-viewport.js";
+export { GameViewport } from "./game-viewport.js";
+
 export type { GameShellProps } from "./GameShell.js";
 export { GameShell } from "./GameShell.js";
 

@@ -38,9 +38,7 @@ button {
 }
 
 .app__shell {
-  max-width: 960px;
-  min-height: 540px;
-  margin: 0 auto;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: #20242c;
 }

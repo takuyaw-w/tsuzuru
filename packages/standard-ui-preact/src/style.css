@@ -10,10 +10,22 @@
 .tzr-game-shell {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
   overflow: hidden;
   color: var(--tzr-standard-ui-text-color);
   font-family: var(--tzr-standard-ui-font-family);
+}
+
+.tzr-game-viewport {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.tzr-game-viewport__inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
 .tzr-message-window {

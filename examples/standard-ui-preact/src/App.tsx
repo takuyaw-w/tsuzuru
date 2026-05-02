@@ -16,7 +16,7 @@ import {
   stdVisualPluginCommands,
 } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/preact";
-import { GameShell, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
+import { GameShell, GameViewport, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
 import { VisualLayer } from "./VisualLayer.js";
@@ -83,23 +83,25 @@ function RuntimeApp({ document }: RuntimeAppProps) {
         <h1>Tsuzuru standard-ui-preact</h1>
         <p>Standard message UI with example-local visual and audio layers.</p>
       </header>
-      <GameShell className="app__shell">
-        <VisualLayer runtimeState={runtime.state} />
-        <AudioLayer runtimeState={runtime.state} />
-        <div className="app__message-layer">
-          {runtime.visibleEvent === null ? (
-            <p className="app__placeholder">Press Debug Step to start.</p>
-          ) : (
-            <RuntimeMessageLayer
-              event={runtime.visibleEvent}
-              onChoice={runtime.choose}
-              onContinue={runtime.continueClick}
-              onAdvance={advanceText}
-              canAdvance={canAdvanceText}
-            />
-          )}
-        </div>
-      </GameShell>
+      <GameViewport aspectRatio="16:9" maxWidth={960}>
+        <GameShell className="app__shell">
+          <VisualLayer runtimeState={runtime.state} />
+          <AudioLayer runtimeState={runtime.state} />
+          <div className="app__message-layer">
+            {runtime.visibleEvent === null ? (
+              <p className="app__placeholder">Press Debug Step to start.</p>
+            ) : (
+              <RuntimeMessageLayer
+                event={runtime.visibleEvent}
+                onChoice={runtime.choose}
+                onContinue={runtime.continueClick}
+                onAdvance={advanceText}
+                canAdvance={canAdvanceText}
+              />
+            )}
+          </div>
+        </GameShell>
+      </GameViewport>
       <div className="app__controls">
         <button
           type="button"
