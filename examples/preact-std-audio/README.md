@@ -23,9 +23,9 @@ examples/preact-std-audio/public/assets/audio/voice/alice_002.mp3
 次の `.gitkeep` は、空ディレクトリを repository に保持するための placeholder です。
 
 ```txt
-public/assets/audio/bgm/.gitkeep
-public/assets/audio/se/.gitkeep
-public/assets/audio/voice/.gitkeep
+examples/preact-std-audio/public/assets/audio/bgm/.gitkeep
+examples/preact-std-audio/public/assets/audio/se/.gitkeep
+examples/preact-std-audio/public/assets/audio/voice/.gitkeep
 ```
 
 `assetId` と path の対応は `src/assets.ts` にあります。
@@ -36,7 +36,7 @@ public/assets/audio/voice/.gitkeep
 
 シナリオは `scenario/main.tzr` です。
 
-`@stopBgm()` は parentheses 必須です。bare form の `@stopBgm` は使いません。
+`@stopBgm()` は parentheses 必須です。parentheses を省略した形式は使いません。
 
 ## Run
 
