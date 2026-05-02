@@ -165,16 +165,26 @@ describe("ScreenHost", () => {
         onClose: vi.fn(),
       }),
     );
+    const surface = findByClass(node, "tzr-screen-host__surface")[0];
+    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(surface?.props.children);
+    const renderedFallback = expectVNode(
+      (fallbackNode.type as (props: typeof fallbackNode.props) => ComponentChildren)(fallbackNode.props),
+    );
 
-    expect(findByClass(node, "tzr-screen-host__fallback")).toHaveLength(1);
-    expect(getNodeText(node)).toContain("Unknown screen");
-    expect(getNodeText(node)).toContain("missing");
+    expect(findByClass(renderedFallback, "tzr-screen-host__fallback")).toHaveLength(1);
+    expect(getNodeText(renderedFallback)).toContain("Unknown screen");
+    expect(getNodeText(renderedFallback)).toContain("missing");
   });
 
   it("calls onClose from the fallback button", () => {
     const onClose = vi.fn();
     const node = expectVNode(ScreenHost({ activeScreen: { id: "missing" }, screens: {}, onClose }));
-    const button = findByClass(node, "tzr-screen-host__fallback-button")[0];
+    const surface = findByClass(node, "tzr-screen-host__surface")[0];
+    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(surface?.props.children);
+    const renderedFallback = expectVNode(
+      (fallbackNode.type as (props: typeof fallbackNode.props) => ComponentChildren)(fallbackNode.props),
+    );
+    const button = findByClass(renderedFallback, "tzr-screen-host__fallback-button")[0];
 
     button?.props.onClick?.();
 

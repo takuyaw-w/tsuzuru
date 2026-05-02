@@ -34,7 +34,7 @@ export function ScreenHost({ activeScreen, screens, onClose, className }: Screen
       <div className="tzr-screen-host__backdrop" />
       <div className="tzr-screen-host__surface">
         {Screen === undefined ? (
-          FallbackScreen({ screenId: activeScreen.id, onClose })
+          <FallbackScreen screenId={activeScreen.id} onClose={onClose} />
         ) : (
           <Screen params={activeScreen.params} onClose={onClose} />
         )}
