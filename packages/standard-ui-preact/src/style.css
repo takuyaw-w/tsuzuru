@@ -17,13 +17,14 @@
 }
 
 .tzr-game-viewport {
+  position: relative;
   width: 100%;
   margin-inline: auto;
 }
 
 .tzr-game-viewport__inner {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
 }
 
