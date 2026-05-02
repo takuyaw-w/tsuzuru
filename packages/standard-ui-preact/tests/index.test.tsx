@@ -89,7 +89,7 @@ describe("GameViewport", () => {
     const inner = findByClass(node, "tzr-game-viewport__inner");
 
     expect(node.props.className).toBe("tzr-game-viewport custom-viewport");
-    expect(node.props.style).toMatchObject({ aspectRatio: "16:9" });
+    expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9" });
     expect(inner).toHaveLength(1);
     expect(getNodeText(inner[0])).toBe("story");
   });
@@ -97,7 +97,7 @@ describe("GameViewport", () => {
   it("resolves aspectRatio and numeric maxWidth", () => {
     const node = expectVNode<GameViewportProps>(GameViewport({ children: "story", aspectRatio: "4:3", maxWidth: 960 }));
 
-    expect(node.props.style).toMatchObject({ aspectRatio: "4:3", maxWidth: "960px" });
+    expect(node.props.style).toMatchObject({ aspectRatio: "4 / 3", maxWidth: "960px" });
   });
 
   it("passes string maxWidth through and gives calculated styles priority", () => {
@@ -109,7 +109,7 @@ describe("GameViewport", () => {
       }),
     );
 
-    expect(node.props.style).toMatchObject({ aspectRatio: "16:9", maxWidth: "80vw" });
+    expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9", maxWidth: "80vw" });
   });
 });
 

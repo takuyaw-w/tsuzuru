@@ -18,6 +18,7 @@ export function GameViewport({
   style,
   children,
 }: GameViewportProps): ComponentChildren {
+  const resolvedAspectRatio = resolveAspectRatio(aspectRatio);
   const resolvedMaxWidth = typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth;
 
   return (
@@ -25,11 +26,20 @@ export function GameViewport({
       className={joinClassNames("tzr-game-viewport", className)}
       style={{
         ...style,
-        aspectRatio,
+        aspectRatio: resolvedAspectRatio,
         maxWidth: resolvedMaxWidth,
       }}
     >
       <div className="tzr-game-viewport__inner">{children}</div>
     </div>
   );
+}
+
+function resolveAspectRatio(aspectRatio: GameViewportAspectRatio): string {
+  switch (aspectRatio) {
+    case "16:9":
+      return "16 / 9";
+    case "4:3":
+      return "4 / 3";
+  }
 }
