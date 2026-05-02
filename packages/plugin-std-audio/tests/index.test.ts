@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { compileTzr, createInitialRuntimeState, parseTzr, stepRuntime } from "@tsuzuru/core";
+import {
+  compileTzr,
+  createInitialRuntimeState,
+  createRuntimeSnapshot,
+  parseTzr,
+  restoreRuntimeState,
+  stepRuntime,
+} from "@tsuzuru/core";
 import {
   createStdAudioCommandHandlers,
   createStdAudioPlugin,
   getStdAudioState,
+  prepareStdAudioStateForSnapshot,
   stdAudioPluginCommands,
 } from "../src/index.js";
 
@@ -268,6 +276,91 @@ describe("std-audio voice commands", () => {
       throw new Error("expected parser failure");
     }
     expect(parsed.errors.map((error) => error.message)).toEqual(["@ call must use @name(...) syntax."]);
+  });
+});
+
+describe("prepareStdAudioStateForSnapshot", () => {
+  it("clears SE and voice events while preserving BGM and sequence counters", () => {
+    const result = runStdAudioScript(`@startBgm("main_theme")
+@se("click")
+@se("confirm")
+@voice("alice_001")
+`);
+
+    const saveReadyState = prepareStdAudioStateForSnapshot(result.state);
+
+    expect(getStdAudioState(saveReadyState)).toEqual({
+      bgm: { assetId: "main_theme" },
+      seEvents: [],
+      voiceEvents: [],
+      nextSeSequence: 3,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("does not mutate the original runtime state", () => {
+    const result = runStdAudioScript(`@startBgm("main_theme")
+@se("click")
+@se("confirm")
+@voice("alice_001")
+`);
+
+    prepareStdAudioStateForSnapshot(result.state);
+
+    expect(getStdAudioState(result.state)).toEqual({
+      bgm: { assetId: "main_theme" },
+      seEvents: [
+        { assetId: "click", sequence: 1 },
+        { assetId: "confirm", sequence: 2 },
+      ],
+      voiceEvents: [{ assetId: "alice_001", sequence: 1 }],
+      nextSeSequence: 3,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("preserves null BGM while clearing one-shot events", () => {
+    const result = runStdAudioScript(`@se("click")
+@voice("alice_001")
+`);
+
+    const saveReadyState = prepareStdAudioStateForSnapshot(result.state);
+
+    expect(getStdAudioState(saveReadyState)).toEqual({
+      bgm: null,
+      seEvents: [],
+      voiceEvents: [],
+      nextSeSequence: 2,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("round-trips through createRuntimeSnapshot and restoreRuntimeState", () => {
+    const result = runStdAudioScript(`@startBgm("main_theme")
+@se("click")
+@se("confirm")
+@voice("alice_001")
+`);
+
+    const saveReadyState = prepareStdAudioStateForSnapshot(result.state);
+    const snapshot = createRuntimeSnapshot(saveReadyState);
+    const restored = restoreRuntimeState(snapshot);
+
+    expect(getStdAudioState(restored)).toEqual({
+      bgm: { assetId: "main_theme" },
+      seEvents: [],
+      voiceEvents: [],
+      nextSeSequence: 3,
+      nextVoiceSequence: 2,
+    });
+  });
+
+  it("throws when stdAudio state is not initialized", () => {
+    const state = createInitialRuntimeState(createDocument());
+
+    expect(() => prepareStdAudioStateForSnapshot(state)).toThrow(
+      "runtimeState.plugins.stdAudio is not initialized. Register createStdAudioPlugin().",
+    );
   });
 });
 

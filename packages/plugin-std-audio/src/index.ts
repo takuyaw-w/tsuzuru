@@ -76,6 +76,18 @@ export function getStdAudioState(runtimeState: RuntimeState): StdAudioState {
   return state;
 }
 
+export function prepareStdAudioStateForSnapshot(runtimeState: RuntimeState): RuntimeState {
+  const current = getStdAudioState(runtimeState);
+
+  return withStdAudioState(runtimeState, {
+    bgm: current.bgm,
+    seEvents: [],
+    voiceEvents: [],
+    nextSeSequence: current.nextSeSequence,
+    nextVoiceSequence: current.nextVoiceSequence,
+  });
+}
+
 function handleStartBgm(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
   const assetId = getRequiredPositionalString(instruction, 0);
   const current = getStdAudioState(state);
