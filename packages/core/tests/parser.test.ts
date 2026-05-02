@@ -89,6 +89,69 @@ $enter("haruka", "smile", "center")
     });
   });
 
+  it("returns a diagnostic for bare commands", () => {
+    const result = parseTzr("@stopBgm\n", {
+      filePath: "scenario/broken.tzr",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "@ call must use @name(...) syntax.",
+        sourceLine: "@stopBgm",
+      },
+    ]);
+  });
+
+  it("does not allow bare macro calls", () => {
+    const result = parseTzr("$someMacro\n", {
+      filePath: "scenario/broken.tzr",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "$ call must use $name(...) syntax.",
+        sourceLine: "$someMacro",
+      },
+    ]);
+  });
+
+  it("returns a diagnostic for malformed bare commands", () => {
+    const result = parseTzr("@stopBgm extra\n", {
+      filePath: "scenario/broken.tzr",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error("expected parser failure");
+    }
+
+    expect(result.errors).toEqual([
+      {
+        filePath: "scenario/broken.tzr",
+        line: 1,
+        column: 1,
+        message: "@ call must use @name(...) syntax.",
+        sourceLine: "@stopBgm extra",
+      },
+    ]);
+  });
+
   it("returns file path, line, and column diagnostics for malformed syntax", () => {
     const result = parseTzr(
       `#scene(prologue)

@@ -1,0 +1,21 @@
+{
+  "name": "@tsuzuru/example-preact-std-audio",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-audio build && vite build",
+    "dev": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-audio build && vite",
+    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-audio build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:*",
+    "@tsuzuru/plugin-std-audio": "workspace:*",
+    "@tsuzuru/preact": "workspace:*",
+    "preact": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.0.10"
+  }
+}

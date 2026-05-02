@@ -1,0 +1,247 @@
+:root {
+  color: #1f2933;
+  background: #f6f7f9;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  box-sizing: border-box;
+  width: min(920px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.app h1 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.app--error {
+  color: #9f1d1d;
+  white-space: pre-wrap;
+}
+
+.stage-panel {
+  overflow: hidden;
+  border: 1px solid #d5d9df;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.message-panel {
+  min-height: 132px;
+  padding: 18px 20px;
+  background: #ffffff;
+}
+
+.tzr-runtime-view {
+  margin: 0;
+}
+
+.tzr-runtime-view p {
+  margin: 0 0 12px;
+}
+
+.tzr-runtime-view__speaker,
+.tzr-runtime-view__question {
+  font-weight: 700;
+}
+
+.tzr-runtime-view--advanceable {
+  cursor: pointer;
+}
+
+.tzr-runtime-view__advance-hint {
+  margin-top: 18px;
+  color: #7b8794;
+  font-size: 13px;
+  text-align: right;
+}
+
+.tzr-runtime-view__choices {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.tzr-runtime-view__choices button,
+.tzr-runtime-view--control button,
+.controls button {
+  padding: 8px 12px;
+  border: 1px solid #9aa4b2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2933;
+  cursor: pointer;
+}
+
+.audio-layer {
+  border-top: 1px solid #d5d9df;
+  background: #fbfcfd;
+}
+
+.audio-layer__header {
+  padding: 16px 20px 0;
+}
+
+.audio-layer h2,
+.audio-layer h3 {
+  margin: 0;
+}
+
+.audio-layer h2 {
+  font-size: 16px;
+}
+
+.audio-layer h3 {
+  font-size: 14px;
+}
+
+.audio-layer__header p {
+  margin: 8px 0 0;
+  color: #52606d;
+  font-size: 14px;
+}
+
+.audio-layer__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.audio-layer__panel {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d5d9df;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.audio-layer__definition {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.audio-layer__definition dt {
+  color: #52606d;
+}
+
+.audio-layer__definition dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.audio-layer__empty {
+  margin: 12px 0 0;
+  color: #7b8794;
+  font-size: 14px;
+}
+
+.audio-layer__events {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.audio-layer__events li {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #e2e6ea;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.audio-layer__sequence {
+  color: #52606d;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-layer__badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e7f6ec;
+  color: #276749;
+  font-size: 12px;
+}
+
+.audio-layer__badge--pending {
+  background: #fff4d6;
+  color: #8a5a00;
+}
+
+.audio-layer__path {
+  grid-column: 1 / -1;
+  color: #7b8794;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.audio-layer__notices {
+  padding: 0 20px 18px;
+}
+
+.audio-layer__notices ul {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: #52606d;
+  font-size: 14px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.runtime-error,
+.runtime-diagnostics {
+  margin: 12px 0 0;
+  color: #9f1d1d;
+  font-size: 14px;
+}
+
+.runtime-diagnostics {
+  padding-left: 20px;
+}
+
+.placeholder {
+  margin: 0;
+  color: #52606d;
+}
+
+@media (max-width: 720px) {
+  .audio-layer__grid {
+    grid-template-columns: 1fr;
+  }
+}
