@@ -1,0 +1,115 @@
+:root {
+  --tzr-standard-ui-font-family: system-ui, sans-serif;
+  --tzr-standard-ui-text-color: #fff;
+  --tzr-standard-ui-muted-text-color: rgba(255, 255, 255, 0.72);
+  --tzr-standard-ui-window-bg: rgba(0, 0, 0, 0.72);
+  --tzr-standard-ui-window-border: rgba(255, 255, 255, 0.32);
+  --tzr-standard-ui-accent-color: #fff;
+}
+
+.tzr-game-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--tzr-standard-ui-text-color);
+  font-family: var(--tzr-standard-ui-font-family);
+}
+
+.tzr-message-window {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  left: 24px;
+  box-sizing: border-box;
+  min-height: 132px;
+  padding: 18px 20px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: var(--tzr-standard-ui-window-bg);
+}
+
+.tzr-message-window--advanceable {
+  cursor: pointer;
+}
+
+.tzr-message-window__speaker {
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.tzr-message-window__lines {
+  display: grid;
+  gap: 6px;
+}
+
+.tzr-message-window__line {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.tzr-message-window__advance-hint {
+  margin-top: 12px;
+  color: var(--tzr-standard-ui-muted-text-color);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.tzr-choice-layer {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  left: 24px;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: var(--tzr-standard-ui-window-bg);
+}
+
+.tzr-choice-layer__question {
+  margin-bottom: 14px;
+  font-weight: 700;
+}
+
+.tzr-choice-layer__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tzr-choice-layer__button,
+.tzr-status-layer__button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tzr-standard-ui-text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tzr-choice-layer__button:hover,
+.tzr-status-layer__button:hover {
+  border-color: var(--tzr-standard-ui-accent-color);
+}
+
+.tzr-status-layer {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  left: 24px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: var(--tzr-standard-ui-window-bg);
+}
+
+.tzr-status-layer__label {
+  margin-bottom: 10px;
+}
+
+.tzr-status-layer__label:last-child {
+  margin-bottom: 0;
+}

@@ -88,6 +88,34 @@ importers:
         specifier: ^8.0.10
         version: 8.0.10
 
+  examples/standard-ui-preact:
+    dependencies:
+      '@tsuzuru/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@tsuzuru/plugin-std-audio':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-audio
+      '@tsuzuru/plugin-std-visual':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-visual
+      '@tsuzuru/preact':
+        specifier: workspace:*
+        version: link:../../packages/preact
+      '@tsuzuru/standard-ui-preact':
+        specifier: workspace:*
+        version: link:../../packages/standard-ui-preact
+      preact:
+        specifier: ^10.0.0
+        version: 10.29.1
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10
+
   packages/core: {}
 
   packages/plugin-std-audio:
@@ -122,6 +150,22 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/standard-ui-preact:
+    dependencies:
+      '@tsuzuru/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      preact:
+        specifier: ^10.0.0
+        version: 10.29.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.7
+        version: 4.1.5(vite@8.0.10)
 
 packages:
 
