@@ -7,10 +7,13 @@ import {
   GameShell,
   MessageWindow,
   RuntimeMessageLayer,
+  ScreenHost,
   StatusLayer,
   type ChoiceLayerProps,
   type GameViewportProps,
   type MessageWindowProps,
+  type ScreenComponentProps,
+  type ScreenHostProps,
   type StatusLayerProps,
 } from "../src/index.js";
 
@@ -110,6 +113,85 @@ describe("GameViewport", () => {
     );
 
     expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9", maxWidth: "80vw" });
+  });
+});
+
+describe("ScreenHost", () => {
+  it("returns null when activeScreen is null", () => {
+    expect(ScreenHost({ activeScreen: null, screens: {}, onClose: vi.fn() })).toBeNull();
+  });
+
+  it("renders a registered screen", () => {
+    const NotebookScreen = (props: ScreenComponentProps): ComponentChildren => (
+      <div className="test-screen">{String((props.params as { title?: string } | undefined)?.title ?? "Untitled")}</div>
+    );
+    const node = expectVNode<ScreenHostProps>(
+      ScreenHost({
+        activeScreen: { id: "notebook", params: { title: "Notebook" } },
+        screens: { notebook: NotebookScreen },
+        onClose: vi.fn(),
+      }),
+    );
+    const surface = findByClass(node, "tzr-screen-host__surface")[0];
+    const screenNode = expectVNode<ScreenComponentProps>(surface?.props.children);
+
+    expect(node.props.className).toBe("tzr-screen-host");
+    expect(screenNode.type).toBe(NotebookScreen);
+  });
+
+  it("passes params and onClose to the screen component", () => {
+    const onClose = vi.fn();
+    const params = { page: 2 };
+    const NotebookScreen = (_props: ScreenComponentProps): ComponentChildren => <div />;
+    const node = expectVNode(
+      ScreenHost({
+        activeScreen: { id: "notebook", params },
+        screens: { notebook: NotebookScreen },
+        onClose,
+      }),
+    );
+    const surface = findByClass(node, "tzr-screen-host__surface")[0];
+    const screenNode = expectVNode<ScreenComponentProps>(surface?.props.children);
+
+    expect(screenNode.props.params).toBe(params);
+    expect(screenNode.props.onClose).toBe(onClose);
+  });
+
+  it("renders fallback UI for unknown screen id", () => {
+    const node = expectVNode(
+      ScreenHost({
+        activeScreen: { id: "missing" },
+        screens: {},
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(findByClass(node, "tzr-screen-host__fallback")).toHaveLength(1);
+    expect(getNodeText(node)).toContain("Unknown screen");
+    expect(getNodeText(node)).toContain("missing");
+  });
+
+  it("calls onClose from the fallback button", () => {
+    const onClose = vi.fn();
+    const node = expectVNode(ScreenHost({ activeScreen: { id: "missing" }, screens: {}, onClose }));
+    const button = findByClass(node, "tzr-screen-host__fallback-button")[0];
+
+    button?.props.onClick?.();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies className to the outer wrapper", () => {
+    const node = expectVNode(
+      ScreenHost({
+        activeScreen: { id: "missing" },
+        screens: {},
+        onClose: vi.fn(),
+        className: "custom-screen-host",
+      }),
+    );
+
+    expect(node.props.className).toBe("tzr-screen-host custom-screen-host");
   });
 });
 

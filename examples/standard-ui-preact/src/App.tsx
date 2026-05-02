@@ -16,9 +16,16 @@ import {
   stdVisualPluginCommands,
 } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/preact";
-import { GameShell, GameViewport, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
+import {
+  GameShell,
+  GameViewport,
+  RuntimeMessageLayer,
+  ScreenHost,
+  type ActiveScreen,
+} from "@tsuzuru/standard-ui-preact";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
+import { screens } from "./screens.js";
 import { VisualLayer } from "./VisualLayer.js";
 
 type DocumentResult =
@@ -43,6 +50,7 @@ interface RuntimeAppProps {
 
 function RuntimeApp({ document }: RuntimeAppProps) {
   const [diagnostics, setDiagnostics] = useState<readonly RuntimeDiagnostic[]>([]);
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen | null>(null);
   const plugins = useMemo(() => [createStdVisualPlugin(), createStdAudioPlugin()], []);
   const commandHandlers = useMemo(
     () => ({
@@ -74,7 +82,12 @@ function RuntimeApp({ document }: RuntimeAppProps) {
 
   const reset = () => {
     setDiagnostics([]);
+    setActiveScreen(null);
     runtime.reset();
+  };
+
+  const openNotebook = () => {
+    setActiveScreen({ id: "notebook", params: { title: "Notebook" } });
   };
 
   return (
@@ -100,6 +113,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
               />
             )}
           </div>
+          <ScreenHost activeScreen={activeScreen} screens={screens} onClose={() => setActiveScreen(null)} />
         </GameShell>
       </GameViewport>
       <div className="app__controls">
@@ -112,6 +126,9 @@ function RuntimeApp({ document }: RuntimeAppProps) {
         </button>
         <button type="button" onClick={reset}>
           Reset
+        </button>
+        <button type="button" onClick={openNotebook}>
+          Open Notebook
         </button>
       </div>
       {runtime.autoStepError === null ? null : <p className="app__runtime-error">{runtime.autoStepError}</p>}

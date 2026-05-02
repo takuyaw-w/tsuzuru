@@ -125,3 +125,58 @@
 .tzr-status-layer__label:last-child {
   margin-bottom: 0;
 }
+
+.tzr-screen-host {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+}
+
+.tzr-screen-host__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.tzr-screen-host__surface {
+  position: relative;
+  box-sizing: border-box;
+  width: min(640px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: var(--tzr-standard-ui-window-bg);
+  color: var(--tzr-standard-ui-text-color);
+}
+
+.tzr-screen-host__fallback {
+  padding: 20px;
+}
+
+.tzr-screen-host__fallback-title {
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.tzr-screen-host__fallback-message {
+  margin: 0 0 16px;
+  color: var(--tzr-standard-ui-muted-text-color);
+  line-height: 1.6;
+}
+
+.tzr-screen-host__fallback-button {
+  padding: 10px 12px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tzr-standard-ui-text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tzr-screen-host__fallback-button:hover {
+  border-color: var(--tzr-standard-ui-accent-color);
+}
