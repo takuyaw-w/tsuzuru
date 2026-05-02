@@ -15,3 +15,6 @@ export { StatusLayer } from "./StatusLayer.js";
 
 export type { RuntimeMessageLayerProps } from "./RuntimeMessageLayer.js";
 export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
+
+export type { ActiveScreen, ScreenComponent, ScreenComponentProps, ScreenHostProps, ScreenRegistry } from "./screen-host.js";
+export { ScreenHost } from "./screen-host.js";
