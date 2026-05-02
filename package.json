@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "pnpm --filter @tsuzuru/core test && pnpm --filter @tsuzuru/preact test && pnpm --filter @tsuzuru/plugin-std-visual test && pnpm --filter @tsuzuru/plugin-std-audio test",
-    "typecheck": "pnpm --filter @tsuzuru/core typecheck && pnpm --filter @tsuzuru/preact typecheck && pnpm --filter @tsuzuru/plugin-std-visual typecheck && pnpm --filter @tsuzuru/plugin-std-audio typecheck"
+    "test": "pnpm --filter @tsuzuru/core test && pnpm --filter @tsuzuru/preact test && pnpm --filter @tsuzuru/plugin-std-visual test && pnpm --filter @tsuzuru/plugin-std-audio test && pnpm --filter @tsuzuru/standard-ui-preact test",
+    "typecheck": "pnpm --filter @tsuzuru/core typecheck && pnpm --filter @tsuzuru/preact typecheck && pnpm --filter @tsuzuru/plugin-std-visual typecheck && pnpm --filter @tsuzuru/plugin-std-audio typecheck && pnpm --filter @tsuzuru/standard-ui-preact typecheck"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

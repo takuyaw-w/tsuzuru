@@ -1,0 +1,31 @@
+{
+  "name": "@tsuzuru/standard-ui-preact",
+  "version": "0.4.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json && node scripts/copy-css.mjs",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
+  },
+  "devDependencies": {
+    "preact": "^10.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.7"
+  }
+}
