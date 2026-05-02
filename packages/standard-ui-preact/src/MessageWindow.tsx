@@ -1,5 +1,9 @@
-import type { ComponentChildren, JSX } from "preact";
+import type { ComponentChildren, ComponentProps } from "preact";
 import { joinClassNames } from "./class-name.js";
+
+type DivProps = ComponentProps<"div">;
+type AdvanceableDivProps = Pick<DivProps, "onClick" | "onKeyDown" | "role" | "tabIndex">;
+type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
 
 export interface MessageWindowProps {
   readonly speaker?: string;
@@ -25,12 +29,24 @@ export function MessageWindow({
     isAdvanceable ? "tzr-message-window--advanceable" : undefined,
     className,
   );
-  const clickProps: Pick<JSX.HTMLAttributes<HTMLDivElement>, "onClick" | "role" | "tabIndex"> = isAdvanceable
-    ? { onClick: onAdvance, role: "button", tabIndex: 0 }
-    : {};
+  let advanceProps: AdvanceableDivProps = {};
+  if (canAdvance && onAdvance !== undefined) {
+    const advance = onAdvance;
+    const handleKeyDown: DivKeyDownHandler = (event) => {
+      if (event.key === "Enter") {
+        advance();
+        return;
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        advance();
+      }
+    };
+    advanceProps = { onClick: advance, onKeyDown: handleKeyDown, role: "button", tabIndex: 0 };
+  }
 
   return (
-    <div className={windowClassName} {...clickProps}>
+    <div className={windowClassName} {...advanceProps}>
       {speaker !== undefined ? <div className="tzr-message-window__speaker">{speaker}</div> : null}
       <div className="tzr-message-window__lines">
         {lines.map((line, index) => (

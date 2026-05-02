@@ -1,5 +1,5 @@
 import type { RuntimeEvent } from "@tsuzuru/core";
-import { isValidElement, type ComponentChildren, type VNode } from "preact";
+import { isValidElement, type ComponentChildren, type ComponentProps, type VNode } from "preact";
 import { describe, expect, it, vi } from "vitest";
 import {
   ChoiceLayer,
@@ -12,13 +12,10 @@ import {
   type StatusLayerProps,
 } from "../src/index.js";
 
-interface TestNodeProps {
-  readonly children?: ComponentChildren;
-  readonly className?: string;
-  readonly onClick?: () => void;
-  readonly role?: string;
-  readonly tabIndex?: number;
-}
+type DivProps = ComponentProps<"div">;
+type DivClickHandler = NonNullable<DivProps["onClick"]>;
+type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
+type TestNodeProps = Pick<DivProps, "children" | "className" | "onClick" | "onKeyDown" | "role" | "tabIndex">;
 
 const loc = {
   start: { filePath: "scenario/main.tzr", line: 1, column: 1 },
@@ -61,8 +58,18 @@ function findByClass(value: ComponentChildren, className: string): readonly VNod
   }
 
   const vnode = value as VNode<TestNodeProps>;
-  const matches = vnode.props.className?.split(" ").includes(className) === true ? [vnode] : [];
+  const matches = String(vnode.props.className ?? "").split(" ").includes(className) ? [vnode] : [];
   return [...matches, ...findByClass(vnode.props.children, className)];
+}
+
+function createDivClickEvent(): Parameters<DivClickHandler>[0] {
+  return {} as unknown as Parameters<DivClickHandler>[0];
+}
+
+function createDivKeyDownEvent(key: string) {
+  const preventDefault = vi.fn();
+  const event = { key, preventDefault } as unknown as Parameters<DivKeyDownHandler>[0];
+  return { event, preventDefault };
 }
 
 describe("GameShell", () => {
@@ -95,22 +102,54 @@ describe("MessageWindow", () => {
     const onAdvance = vi.fn();
     const node = expectVNode(MessageWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
 
-    node.props.onClick?.();
+    node.props.onClick?.(createDivClickEvent());
 
     expect(onAdvance).toHaveBeenCalledTimes(1);
     expect(node.props.className).toContain("tzr-message-window--advanceable");
     expect(getNodeText(node)).toContain("Click to continue");
   });
 
+  it("calls onAdvance with Enter when advanceable", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(MessageWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
+    const { event, preventDefault } = createDivKeyDownEvent("Enter");
+
+    node.props.onKeyDown?.(event);
+
+    expect(onAdvance).toHaveBeenCalledTimes(1);
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("calls onAdvance with Space when advanceable", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(MessageWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
+    const { event, preventDefault } = createDivKeyDownEvent(" ");
+
+    node.props.onKeyDown?.(event);
+
+    expect(onAdvance).toHaveBeenCalledTimes(1);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+  });
+
   it("does not call onAdvance when canAdvance=false", () => {
     const onAdvance = vi.fn();
     const node = expectVNode(MessageWindow({ lines: ["Wait."], onAdvance, canAdvance: false }));
 
-    node.props.onClick?.();
+    node.props.onClick?.(createDivClickEvent());
 
     expect(onAdvance).not.toHaveBeenCalled();
     expect(node.props.onClick).toBeUndefined();
+    expect(node.props.onKeyDown).toBeUndefined();
+    expect(node.props.role).toBeUndefined();
+    expect(node.props.tabIndex).toBeUndefined();
     expect(getNodeText(node)).not.toContain("Click to continue");
+  });
+
+  it("does not expose onKeyDown when canAdvance=false", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(MessageWindow({ lines: ["Wait."], onAdvance, canAdvance: false }));
+
+    expect(node.props.onKeyDown).toBeUndefined();
   });
 });
 
