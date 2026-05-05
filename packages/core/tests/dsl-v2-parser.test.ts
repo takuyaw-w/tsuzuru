@@ -215,6 +215,181 @@ scene commonRoute:
     ]);
   });
 
+  it("parses a normal text line", () => {
+    const result = parseTzrV2("scene start:\n  mio:\n    You're late.\n", { filePath: "scenario/v2.tzr" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", lines: [{ type: "TextLine", text: "You're late." }] }],
+    });
+  });
+
+  it("parses a blank line as click wait with page kept", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    You're late.
+
+    I waited thirty minutes.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          lines: [
+            { type: "TextLine", text: "You're late." },
+            { type: "TextClickWait" },
+            { type: "TextLine", text: "I waited thirty minutes." },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("parses page break lines", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    You're late.
+    ---
+    I waited thirty minutes.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          lines: [
+            { type: "TextLine", text: "You're late." },
+            { type: "TextPageBreak" },
+            { type: "TextLine", text: "I waited thirty minutes." },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("accepts a trailing page break", () => {
+    const result = parseTzrV2("scene start:\n  mio:\n    You're late.\n    ---\n", {
+      filePath: "scenario/v2.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", lines: [{ type: "TextLine" }, { type: "TextPageBreak" }] }],
+    });
+  });
+
+  it("parses escaped page break and line comment markers as literal text", () => {
+    const result = parseTzrV2("scene start:\n  mio:\n    \\---\n    \\// not a comment\n", {
+      filePath: "scenario/v2.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          lines: [
+            { type: "TextLine", text: "---" },
+            { type: "TextLine", text: "// not a comment" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("parses text block punctuation escapes as literal text", () => {
+    const result = parseTzrV2("scene start:\n  mio:\n    \\{wait ms=500\\} \\| \\\\\n", {
+      filePath: "scenario/v2.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", lines: [{ type: "TextLine", text: "{wait ms=500} | \\" }] }],
+    });
+  });
+
+  it("strips unescaped line comments inside text block lines", () => {
+    const result = parseTzrV2("scene start:\n  mio:\n    Visible text // hidden comment\n    // full line comment\n", {
+      filePath: "scenario/v2.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", lines: [{ type: "TextLine", text: "Visible text" }] }],
+    });
+  });
+
+  it("preserves multiple text block items in order", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    First.
+
+    Second.
+    ---
+    Third.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          lines: [
+            { type: "TextLine", text: "First." },
+            { type: "TextClickWait" },
+            { type: "TextLine", text: "Second." },
+            { type: "TextPageBreak" },
+            { type: "TextLine", text: "Third." },
+          ],
+        },
+      ],
+    });
+  });
+
   it("rejects unknown top-level declaration names that share known prefixes", () => {
     expect(expectParseFailure('titlex "Rain Station"\n')).toContain("Expected a DSL v2 top-level declaration.");
     expect(expectParseFailure('characterx mio name="Mio"\n')).toContain("Expected a DSL v2 top-level declaration.");
@@ -294,6 +469,24 @@ scene commonRoute:
     expect(expectParseFailure("scene start:\n  narration:\n      Too deep.\n")).toContain(
       "Text block lines must be indented 4 spaces.",
     );
+  });
+
+  it("rejects page break outside a text block", () => {
+    expect(expectParseFailure("scene start:\n  ---\n")).toContain("`---` is only valid inside a text block.");
+  });
+
+  it("rejects page break at the wrong indentation level", () => {
+    expect(expectParseFailure("scene start:\n  narration:\n      ---\n")).toContain(
+      "`---` must be indented at the text block level.",
+    );
+  });
+
+  it("rejects invalid text block escapes", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    \\x\n")).toContain("Invalid text block escape \\x.");
+  });
+
+  it("rejects incomplete text block escapes", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    trailing \\\n")).toContain("Incomplete text block escape.");
   });
 
   it("rejects an unterminated block comment", () => {

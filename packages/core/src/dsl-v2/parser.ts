@@ -11,6 +11,7 @@ import type {
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2TextBlockItem,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
@@ -20,6 +21,7 @@ interface SourceLine {
   readonly original: string;
   readonly code: string;
   readonly line: number;
+  readonly hasComment: boolean;
 }
 
 interface CommentScanResult {
@@ -256,6 +258,11 @@ class TzrV2Parser {
     if (source.startsWith("end")) {
       return this.parseEndStatement(line, source, statementColumn);
     }
+    if (source === "---") {
+      this.addError(line, statementColumn, "`---` is only valid inside a text block.");
+      this.cursor += 1;
+      return undefined;
+    }
     if (/^\S+:$/.test(source)) {
       return this.parseShorthandDialogueStatement(line, source, statementColumn);
     }
@@ -375,14 +382,35 @@ class TzrV2Parser {
     };
   }
 
-  private collectTextBlock(header: SourceLine, headerIndentLevel: number): readonly TzrV2TextLine[] {
-    const lines: TzrV2TextLine[] = [];
+  private collectTextBlock(header: SourceLine, headerIndentLevel: number): readonly TzrV2TextBlockItem[] {
+    const items: TzrV2TextBlockItem[] = [];
     const expectedIndent = (headerIndentLevel + 1) * 2;
 
     while (!this.isAtEnd()) {
       const line = this.currentRequired();
       if (this.isIgnorable(line)) {
-        break;
+        if (line.hasComment) {
+          this.cursor += 1;
+          continue;
+        }
+
+        const nextTextLine = this.findNextTextBlockLine(this.cursor + 1, headerIndentLevel);
+        if (nextTextLine === undefined) {
+          break;
+        }
+
+        if (items.length === 0) {
+          this.addError(line, 1, "Text block must not start with a blank line.");
+          this.cursor += 1;
+          continue;
+        }
+
+        items.push({
+          type: "TextClickWait",
+          loc: this.lineRange(line),
+        });
+        this.cursor += 1;
+        continue;
       }
 
       const indent = this.validateIndent(line);
@@ -390,27 +418,101 @@ class TzrV2Parser {
         break;
       }
       if (indent !== expectedIndent) {
-        this.addError(line, 1, `Text block lines must be indented ${expectedIndent} spaces.`);
+        if (line.code.trim() === "---") {
+          this.addError(line, 1, "`---` must be indented at the text block level.");
+        } else {
+          this.addError(line, 1, `Text block lines must be indented ${expectedIndent} spaces.`);
+        }
         this.cursor += 1;
         continue;
       }
 
-      lines.push({
-        type: "TextLine",
-        text: line.code.slice(expectedIndent).trimEnd(),
-        loc: {
-          start: this.location(line.line, expectedIndent + 1),
-          end: this.location(line.line, line.code.length + 1),
-        },
-      });
+      const rawText = line.code.slice(expectedIndent).trimEnd();
+      const loc = {
+        start: this.location(line.line, expectedIndent + 1),
+        end: this.location(line.line, line.code.length + 1),
+      };
+      if (rawText === "---") {
+        items.push({
+          type: "TextPageBreak",
+          loc,
+        });
+        this.cursor += 1;
+        continue;
+      }
+
+      const text = this.parseTextBlockText(line, rawText, expectedIndent + 1);
+      if (text !== undefined) {
+        items.push({
+          type: "TextLine",
+          text,
+          loc,
+        });
+      }
       this.cursor += 1;
     }
 
-    if (lines.length === 0) {
+    if (items.length === 0) {
       this.addError(header, firstContentColumn(header), "Text block must include at least one indented text line.");
     }
 
-    return lines;
+    return items;
+  }
+
+  private findNextTextBlockLine(startCursor: number, headerIndentLevel: number): SourceLine | undefined {
+    for (let index = startCursor; index < this.lines.length; index += 1) {
+      const line = this.lines[index];
+      if (line === undefined) {
+        return undefined;
+      }
+      if (line.code.trim() === "") {
+        continue;
+      }
+      const indent = countIndent(line.original);
+      return indent > headerIndentLevel * 2 ? line : undefined;
+    }
+    return undefined;
+  }
+
+  private parseTextBlockText(line: SourceLine, source: string, sourceColumn: number): string | undefined {
+    let text = "";
+
+    for (let index = 0; index < source.length; index += 1) {
+      const char = source[index] ?? "";
+      if (char !== "\\") {
+        text += char;
+        continue;
+      }
+
+      const next = source[index + 1];
+      if (next === undefined) {
+        this.addError(line, sourceColumn + index, "Incomplete text block escape.");
+        return undefined;
+      }
+
+      if (next === "/" && source[index + 2] === "/") {
+        text += "//";
+        index += 2;
+        continue;
+      }
+
+      if (next === "-" && source[index + 2] === "-" && source[index + 3] === "-") {
+        text += "---";
+        index += 3;
+        continue;
+      }
+
+      if (next === "{" || next === "}" || next === "|" || next === "\\") {
+        text += next;
+        index += 1;
+        continue;
+      }
+
+      this.addError(line, sourceColumn + index, `Invalid text block escape \\${next}.`);
+      return undefined;
+    }
+
+    return text;
   }
 
   private parseStringLiteral(line: SourceLine, source: string, column: number): string | undefined {
@@ -547,6 +649,7 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
     let code = "";
     let inString = false;
     let escaped = false;
+    let hasComment = false;
     let cursor = 0;
     const lineNumber = index + 1;
 
@@ -555,6 +658,7 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
       const next = original[cursor + 1];
 
       if (inBlockComment) {
+        hasComment = true;
         if (char === "/" && next === "*") {
           errors.push(
             createDiagnostic(
@@ -600,12 +704,19 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
       }
 
       if (!inString && char === "/" && next === "/") {
+        if (original[cursor - 1] === "\\") {
+          code += char;
+          cursor += 1;
+          continue;
+        }
+        hasComment = true;
         code += " ".repeat(original.length - cursor);
         break;
       }
 
       if (!inString && char === "/" && next === "*") {
         inBlockComment = true;
+        hasComment = true;
         blockCommentStart = { filePath, line: lineNumber, column: cursor + 1 };
         code += "  ";
         cursor += 2;
@@ -616,7 +727,7 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
       cursor += 1;
     }
 
-    lines.push({ original, code, line: lineNumber });
+    lines.push({ original, code, line: lineNumber, hasComment });
   }
 
   if (inBlockComment && blockCommentStart !== undefined) {
@@ -630,4 +741,15 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
 function firstContentColumn(line: SourceLine): number {
   const match = /\S/.exec(line.code);
   return match === null ? 1 : match.index + 1;
+}
+
+function countIndent(text: string): number {
+  let indent = 0;
+  for (const char of text) {
+    if (char !== " ") {
+      break;
+    }
+    indent += 1;
+  }
+  return indent;
 }

@@ -9,7 +9,10 @@ export type {
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2TextBlockItem,
+  TzrV2TextClickWait,
   TzrV2TextLine,
+  TzrV2TextPageBreak,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
 } from "./ast.js";

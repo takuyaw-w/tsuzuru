@@ -50,14 +50,14 @@ export type TzrV2SceneStatement =
 
 export interface TzrV2NarrationStatement {
   readonly type: "NarrationStatement";
-  readonly lines: readonly TzrV2TextLine[];
+  readonly lines: readonly TzrV2TextBlockItem[];
   readonly loc: SourceRange;
 }
 
 export interface TzrV2DialogueStatement {
   readonly type: "DialogueStatement";
   readonly speaker: string;
-  readonly lines: readonly TzrV2TextLine[];
+  readonly lines: readonly TzrV2TextBlockItem[];
   readonly explicit: boolean;
   readonly loc: SourceRange;
 }
@@ -73,8 +73,20 @@ export interface TzrV2EndStatement {
   readonly loc: SourceRange;
 }
 
+export type TzrV2TextBlockItem = TzrV2TextLine | TzrV2TextClickWait | TzrV2TextPageBreak;
+
 export interface TzrV2TextLine {
   readonly type: "TextLine";
   readonly text: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextClickWait {
+  readonly type: "TextClickWait";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextPageBreak {
+  readonly type: "TextPageBreak";
   readonly loc: SourceRange;
 }
