@@ -2,7 +2,9 @@ import type { SourceLocation, SourceRange } from "../ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
 import type {
   TzrV2AddStatement,
+  TzrV2ArgumentValue,
   TzrV2BooleanValue,
+  TzrV2CallStatement,
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
@@ -12,6 +14,7 @@ import type {
   TzrV2ElifBranch,
   TzrV2EndStatement,
   TzrV2IfStatement,
+  TzrV2IdentifierValue,
   TzrV2InlineAssetId,
   TzrV2InlineDelaySpan,
   TzrV2InlineNode,
@@ -21,6 +24,7 @@ import type {
   TzrV2InlineVoiceEvent,
   TzrV2InlineWaitEvent,
   TzrV2JumpStatement,
+  TzrV2NamedArgument,
   TzrV2NarrationStatement,
   TzrV2NullValue,
   TzrV2NumberValue,
@@ -39,6 +43,7 @@ import type {
   TzrV2TopLevelDeclaration,
   TzrV2ValueExpression,
   TzrV2VariableReferenceValue,
+  TzrV2WaitStatement,
 } from "./ast.js";
 import { parseTzrV2ConditionExpression } from "./condition-parser.js";
 
@@ -81,6 +86,7 @@ interface ParsedConditionBranchHeader {
 }
 
 type StateStatementKeyword = "set" | "add";
+type CallWaitStatementKeyword = "call" | "wait";
 
 interface InlineRawAttribute {
   readonly key: string;
@@ -344,6 +350,12 @@ class TzrV2Parser {
     }
     if (source === "add" || source.startsWith("add ")) {
       return this.parseAddStatement(line, source, statementColumn);
+    }
+    if (source === "call" || source.startsWith("call ")) {
+      return this.parseCallStatement(line, source, statementColumn);
+    }
+    if (source === "wait" || source.startsWith("wait ")) {
+      return this.parseWaitStatement(line, source, statementColumn);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -1127,6 +1139,367 @@ class TzrV2Parser {
     return {
       type: "NumberValue",
       value: Number(source),
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseCallStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2CallStatement | undefined {
+    const parsed = this.parseCallWaitStatementParts(line, source, "call", statementColumn);
+    this.cursor += 1;
+    if (parsed === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "CallStatement",
+      name: parsed.name,
+      args: parsed.args,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseWaitStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2WaitStatement | undefined {
+    const parsed = this.parseCallWaitStatementParts(line, source, "wait", statementColumn);
+    this.cursor += 1;
+    if (parsed === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "WaitStatement",
+      name: parsed.name,
+      args: parsed.args,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseCallWaitStatementParts(
+    line: SourceLine,
+    source: string,
+    keyword: CallWaitStatementKeyword,
+    statementColumn: number,
+  ): { readonly name: string; readonly args: readonly TzrV2NamedArgument[] } | undefined {
+    const rest = source.slice(keyword.length).trim();
+    if (rest.length === 0) {
+      this.addError(line, statementColumn, `${keyword} name is required.`);
+      return undefined;
+    }
+
+    const restColumn = statementColumn + source.indexOf(rest);
+    const openParenIndex = rest.indexOf("(");
+    if (openParenIndex === -1) {
+      this.addError(line, restColumn, `${keyword} statement must include parentheses.`);
+      return undefined;
+    }
+
+    const nameSource = rest.slice(0, openParenIndex).trim();
+    if (nameSource.length === 0) {
+      this.addError(line, restColumn, `${keyword} name is required.`);
+      return undefined;
+    }
+
+    const nameColumn = restColumn + rest.indexOf(nameSource);
+    const nameParts = nameSource.split(".");
+    if (!isValidTzrV2DottedIdentifier(nameSource)) {
+      this.addError(line, nameColumn, `Invalid ${keyword} name dotted identifier.`);
+      return undefined;
+    }
+    if (nameParts.length < 2) {
+      this.addError(line, nameColumn, `${keyword} name must be namespaced.`);
+      return undefined;
+    }
+
+    const closeParenIndex = this.findCallWaitClosingParenthesis(rest, openParenIndex);
+    if (closeParenIndex === undefined) {
+      this.addError(line, restColumn + openParenIndex, `${keyword} statement is missing closing parenthesis.`);
+      return undefined;
+    }
+
+    const trailing = rest.slice(closeParenIndex + 1);
+    if (trailing.trim().length > 0) {
+      this.addError(line, restColumn + closeParenIndex + 1 + trailing.search(/\S/), `${keyword} statement must not have extra trailing tokens.`);
+      return undefined;
+    }
+
+    const argsSource = rest.slice(openParenIndex + 1, closeParenIndex);
+    const args = this.parseNamedArguments(line, argsSource, restColumn + openParenIndex + 1, keyword);
+    if (args === undefined) {
+      return undefined;
+    }
+
+    return {
+      name: nameSource,
+      args,
+    };
+  }
+
+  private findCallWaitClosingParenthesis(source: string, openParenIndex: number): number | undefined {
+    let inString = false;
+    let escaped = false;
+    for (let index = openParenIndex + 1; index < source.length; index += 1) {
+      const char = source[index] ?? "";
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = inString;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString && char === ")") {
+        return index;
+      }
+    }
+    return undefined;
+  }
+
+  private parseNamedArguments(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): readonly TzrV2NamedArgument[] | undefined {
+    if (source.trim().length === 0) {
+      return [];
+    }
+
+    const parts = this.splitArgumentList(line, source, sourceColumn, keyword);
+    if (parts === undefined) {
+      return undefined;
+    }
+
+    const args: TzrV2NamedArgument[] = [];
+    const seen = new Set<string>();
+    for (const part of parts) {
+      const argument = this.parseNamedArgument(line, part.source, part.column, keyword);
+      if (argument === undefined) {
+        return undefined;
+      }
+      if (seen.has(argument.name)) {
+        this.addError(line, part.column, `Duplicate ${keyword} argument "${argument.name}".`);
+        return undefined;
+      }
+      seen.add(argument.name);
+      args.push(argument);
+    }
+
+    return args;
+  }
+
+  private splitArgumentList(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): readonly { readonly source: string; readonly column: number }[] | undefined {
+    const parts: { readonly source: string; readonly column: number }[] = [];
+    let inString = false;
+    let escaped = false;
+    let partStart = 0;
+
+    for (let index = 0; index < source.length; index += 1) {
+      const char = source[index] ?? "";
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = inString;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString || char !== ",") {
+        continue;
+      }
+
+      const part = source.slice(partStart, index);
+      const trimmed = part.trim();
+      if (trimmed.length === 0) {
+        this.addError(line, sourceColumn + partStart, `Malformed ${keyword} argument list.`);
+        return undefined;
+      }
+      parts.push({
+        source: trimmed,
+        column: sourceColumn + partStart + part.indexOf(trimmed),
+      });
+      partStart = index + 1;
+    }
+
+    const lastPart = source.slice(partStart);
+    const trimmed = lastPart.trim();
+    if (trimmed.length === 0) {
+      this.addError(line, sourceColumn + partStart, `Malformed ${keyword} argument list.`);
+      return undefined;
+    }
+    parts.push({
+      source: trimmed,
+      column: sourceColumn + partStart + lastPart.indexOf(trimmed),
+    });
+    return parts;
+  }
+
+  private parseNamedArgument(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): TzrV2NamedArgument | undefined {
+    const equalsIndex = source.indexOf("=");
+    if (equalsIndex === -1) {
+      this.addError(line, sourceColumn, "Positional arguments are not supported.");
+      return undefined;
+    }
+
+    const name = source.slice(0, equalsIndex).trim();
+    if (name.length === 0) {
+      this.addError(line, sourceColumn, "Invalid argument name.");
+      return undefined;
+    }
+    const nameColumn = sourceColumn + source.indexOf(name);
+    if (!isValidTzrV2Identifier(name)) {
+      this.addError(line, nameColumn, "Invalid argument name.");
+      return undefined;
+    }
+
+    const valueRest = source.slice(equalsIndex + 1);
+    const valueOffset = valueRest.search(/\S/);
+    if (valueOffset === -1) {
+      this.addError(line, sourceColumn + equalsIndex + 1, `${keyword} argument value is required.`);
+      return undefined;
+    }
+
+    const valueSource = valueRest.slice(valueOffset).trimEnd();
+    const valueColumn = sourceColumn + equalsIndex + 1 + valueOffset;
+    const value = this.parseArgumentValue(line, valueSource, valueColumn, keyword);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "NamedArgument",
+      name,
+      value,
+      loc: {
+        start: this.location(line.line, nameColumn),
+        end: this.location(line.line, value.loc.end.column),
+      },
+    };
+  }
+
+  private parseArgumentValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): TzrV2ArgumentValue | undefined {
+    const loc = {
+      start: this.location(line.line, sourceColumn),
+      end: this.location(line.line, sourceColumn + source.length),
+    };
+
+    if (source.startsWith("'") || source.startsWith("`") || source.startsWith('"')) {
+      return this.parseArgumentStringValue(line, source, sourceColumn, keyword);
+    }
+    if (source.startsWith("$")) {
+      return this.parseArgumentVariableReferenceValue(line, source, sourceColumn, keyword);
+    }
+    if (NUMBER_LITERAL_PATTERN.test(source)) {
+      return { type: "NumberValue", value: Number(source), loc } satisfies TzrV2NumberValue;
+    }
+    if (source === "true" || source === "false") {
+      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrV2BooleanValue;
+    }
+    if (source === "null") {
+      return { type: "NullValue", value: null, loc } satisfies TzrV2NullValue;
+    }
+    if (isValidTzrV2DottedIdentifier(source)) {
+      return { type: "IdentifierValue", value: source, loc } satisfies TzrV2IdentifierValue;
+    }
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), `Invalid ${keyword} argument value.`);
+      return undefined;
+    }
+
+    this.addError(line, sourceColumn, `Invalid ${keyword} argument value.`);
+    return undefined;
+  }
+
+  private parseArgumentStringValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): TzrV2StringValue | undefined {
+    const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
+    if (literalEnd !== undefined) {
+      const trailing = source.slice(literalEnd + 1);
+      if (trailing.trim().length > 0) {
+        this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `Invalid ${keyword} argument value.`);
+        return undefined;
+      }
+    }
+
+    const value = this.parseStringLiteral(line, source, sourceColumn);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StringValue",
+      value,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseArgumentVariableReferenceValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: CallWaitStatementKeyword,
+  ): TzrV2VariableReferenceValue | undefined {
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), `Invalid ${keyword} argument variable reference.`);
+      return undefined;
+    }
+
+    const path = source.slice(1);
+    const parts = path.split(".");
+    if (!isValidTzrV2DottedIdentifier(path) || parts.length < 2) {
+      this.addError(line, sourceColumn, `Invalid ${keyword} argument variable reference.`);
+      return undefined;
+    }
+
+    const root = parts[0];
+    if (root !== "scenario" && root !== "system") {
+      this.addError(line, sourceColumn, `Invalid ${keyword} argument variable reference root "${root}".`);
+      return undefined;
+    }
+
+    return {
+      type: "VariableReferenceValue",
+      path,
+      root,
       loc: {
         start: this.location(line.line, sourceColumn),
         end: this.location(line.line, sourceColumn + source.length),

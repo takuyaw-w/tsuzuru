@@ -1,6 +1,8 @@
 export type {
   TzrV2AddStatement,
+  TzrV2ArgumentValue,
   TzrV2BooleanValue,
+  TzrV2CallStatement,
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
@@ -20,6 +22,7 @@ export type {
   TzrV2ElifBranch,
   TzrV2EndStatement,
   TzrV2IfStatement,
+  TzrV2IdentifierValue,
   TzrV2InlineAssetId,
   TzrV2InlineDelaySpan,
   TzrV2InlineIdentifierAssetId,
@@ -36,6 +39,7 @@ export type {
   TzrV2InlineVoiceEvent,
   TzrV2InlineWaitEvent,
   TzrV2JumpStatement,
+  TzrV2NamedArgument,
   TzrV2NarrationStatement,
   TzrV2NullValue,
   TzrV2NumberValue,
@@ -60,6 +64,7 @@ export type {
   TzrV2TopLevelDeclaration,
   TzrV2ValueExpression,
   TzrV2VariableReferenceValue,
+  TzrV2WaitStatement,
 } from "./ast.js";
 export { parseTzrV2ConditionExpression } from "./condition-parser.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";

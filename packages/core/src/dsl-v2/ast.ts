@@ -53,6 +53,8 @@ export type TzrV2SceneStatement =
   | TzrV2IfStatement
   | TzrV2SetStatement
   | TzrV2AddStatement
+  | TzrV2CallStatement
+  | TzrV2WaitStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -160,6 +162,41 @@ export interface TzrV2VariableReferenceValue {
   readonly type: "VariableReferenceValue";
   readonly path: string;
   readonly root: "scenario" | "system";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2CallStatement {
+  readonly type: "CallStatement";
+  readonly name: string;
+  readonly args: readonly TzrV2NamedArgument[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2WaitStatement {
+  readonly type: "WaitStatement";
+  readonly name: string;
+  readonly args: readonly TzrV2NamedArgument[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2NamedArgument {
+  readonly type: "NamedArgument";
+  readonly name: string;
+  readonly value: TzrV2ArgumentValue;
+  readonly loc: SourceRange;
+}
+
+export type TzrV2ArgumentValue =
+  | TzrV2StringValue
+  | TzrV2NumberValue
+  | TzrV2BooleanValue
+  | TzrV2NullValue
+  | TzrV2IdentifierValue
+  | TzrV2VariableReferenceValue;
+
+export interface TzrV2IdentifierValue {
+  readonly type: "IdentifierValue";
+  readonly value: string;
   readonly loc: SourceRange;
 }
 
