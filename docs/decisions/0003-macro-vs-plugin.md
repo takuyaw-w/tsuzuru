@@ -4,6 +4,11 @@
 
 Accepted
 
+> Current implementation note: the public macro API and legacy macro expansion
+> path were removed during DSL v2 cleanup. This ADR is retained as historical
+> rationale for the plugin/macro boundary and should be revisited if macro
+> support is reintroduced.
+
 ## Context
 
 Tsuzuru has two extension mechanisms:

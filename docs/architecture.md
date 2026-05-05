@@ -46,8 +46,7 @@ packages/
   preact/
 
 examples/
-  basic/
-  preact-basic/
+  dsl-v2-basic/
 ```
 
 Expected future package candidates:
@@ -75,8 +74,7 @@ Responsibilities:
 - IR generation
 - core command definitions
 - command validation
-- macro expansion
-- plugin command registration and validation
+- plugin command metadata and runtime dispatch
 - jump target validation
 - condition evaluation
 - runtime state

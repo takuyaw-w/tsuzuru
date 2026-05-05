@@ -21,6 +21,10 @@ They should clarify:
 
 ## Current Decisions
 
+ADR 0003 records the historical macro/plugin boundary. The public macro API was
+removed during DSL v2 cleanup; use it as rationale only unless macro support is
+reintroduced.
+
 | ID | Title | Status |
 |---|---|---|
 | 0001 | `.tzr` is not JavaScript | Accepted |

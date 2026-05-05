@@ -97,6 +97,9 @@ old example packages as current behavior.
 ## Remaining PR-Ready Tasks
 
 - Decide DSL v2 plugin command validation policy.
+- Decide public API naming before release planning: keep `parseTzrV2` /
+  `compileTzrV2`, or rename the current DSL path back to `parseTzr` /
+  `compileTzr` in a separate breaking API task.
 - Decide whether `RuntimeDocument.labels` should be removed or made optional.
 - Decide whether `RuntimeState.flags` and `inc` / `dec` / `flag` / `unflag`
   remain long-term runtime primitives.
