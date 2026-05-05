@@ -5,6 +5,10 @@ import type {
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2EndStatement,
+  TzrV2InlineDelaySpan,
+  TzrV2InlineNode,
+  TzrV2InlineTextAttribute,
+  TzrV2InlineTextSpan,
   TzrV2JumpStatement,
   TzrV2NarrationStatement,
   TzrV2ParseOptions,
@@ -34,6 +38,25 @@ interface CommentScanResult {
 interface ParsedTextBlock {
   readonly meta?: TzrV2TextBlockMeta;
   readonly lines: readonly TzrV2TextBlockItem[];
+}
+
+interface ParsedInlineContent {
+  readonly nodes: readonly TzrV2InlineNode[];
+  readonly text: string;
+  readonly nextIndex: number;
+}
+
+interface ParsedInlineMarkup {
+  readonly node: TzrV2InlineTextSpan | TzrV2InlineDelaySpan;
+  readonly nextIndex: number;
+}
+
+interface InlineRawAttribute {
+  readonly key: string;
+  readonly value: string;
+  readonly keyColumn: number;
+  readonly valueColumn: number;
+  readonly loc: SourceRange;
 }
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -477,11 +500,12 @@ class TzrV2Parser {
         continue;
       }
 
-      const text = this.parseTextBlockText(line, rawText, expectedIndent + 1);
-      if (text !== undefined) {
+      const parsedText = this.parseTextBlockText(line, rawText, expectedIndent + 1);
+      if (parsedText !== undefined) {
         items.push({
           type: "TextLine",
-          text,
+          text: parsedText.text,
+          inline: parsedText.nodes,
           loc,
         });
       }
@@ -645,45 +669,362 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseTextBlockText(line: SourceLine, source: string, sourceColumn: number): string | undefined {
-    let text = "";
+  private parseTextBlockText(line: SourceLine, source: string, sourceColumn: number): ParsedInlineContent | undefined {
+    return this.parseInlineContent(line, source, sourceColumn, 0, false);
+  }
 
-    for (let index = 0; index < source.length; index += 1) {
+  private parseInlineContent(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    startIndex: number,
+    stopOnClosingBrace: boolean,
+  ): ParsedInlineContent | undefined {
+    const nodes: TzrV2InlineNode[] = [];
+    let text = "";
+    let textStartIndex: number | undefined;
+
+    const flushText = (endIndex: number): void => {
+      if (text.length === 0 || textStartIndex === undefined) {
+        text = "";
+        textStartIndex = undefined;
+        return;
+      }
+      nodes.push({
+        type: "InlineText",
+        text,
+        loc: {
+          start: this.location(line.line, sourceColumn + textStartIndex),
+          end: this.location(line.line, sourceColumn + endIndex),
+        },
+      });
+      text = "";
+      textStartIndex = undefined;
+    };
+
+    const appendText = (value: string, index: number): void => {
+      if (textStartIndex === undefined) {
+        textStartIndex = index;
+      }
+      text += value;
+    };
+
+    let index = startIndex;
+    while (index < source.length) {
       const char = source[index] ?? "";
-      if (char !== "\\") {
-        text += char;
-        continue;
+      if (stopOnClosingBrace && char === "}") {
+        flushText(index);
+        return {
+          nodes,
+          text: nodes.map((node) => node.text).join(""),
+          nextIndex: index + 1,
+        };
       }
 
-      const next = source[index + 1];
-      if (next === undefined) {
-        this.addError(line, sourceColumn + index, "Incomplete text block escape.");
+      if (!stopOnClosingBrace && char === "}") {
+        this.addError(line, sourceColumn + index, "Unescaped `}` is not valid in text.");
         return undefined;
       }
 
-      if (next === "/" && source[index + 2] === "/") {
-        text += "//";
-        index += 2;
+      if (char === "{") {
+        flushText(index);
+        const markup = this.parseInlineMarkup(line, source, sourceColumn, index);
+        if (markup === undefined) {
+          return undefined;
+        }
+        nodes.push(markup.node);
+        index = markup.nextIndex;
         continue;
       }
 
-      if (next === "-" && source[index + 2] === "-" && source[index + 3] === "-") {
-        text += "---";
-        index += 3;
+      if (char === "\\") {
+        const escape = this.parseTextEscape(line, source, sourceColumn, index);
+        if (escape === undefined) {
+          return undefined;
+        }
+        appendText(escape.text, index);
+        index = escape.nextIndex;
         continue;
       }
 
-      if (next === "{" || next === "}" || next === "|" || next === "\\") {
-        text += next;
-        index += 1;
-        continue;
-      }
+      appendText(char, index);
+      index += 1;
+    }
 
-      this.addError(line, sourceColumn + index, `Invalid text block escape \\${next}.`);
+    if (stopOnClosingBrace) {
+      this.addError(line, sourceColumn + startIndex - 1, "Inline markup must be closed with `}`.");
       return undefined;
     }
 
-    return text;
+    flushText(source.length);
+    return {
+      nodes,
+      text: nodes.map((node) => node.text).join(""),
+      nextIndex: source.length,
+    };
+  }
+
+  private parseInlineMarkup(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    startIndex: number,
+  ): ParsedInlineMarkup | undefined {
+    const nameStart = startIndex + 1;
+    let nameEnd = nameStart;
+    while (nameEnd < source.length) {
+      const char = source[nameEnd];
+      if (char === undefined || /\s|\||\}/.test(char)) {
+        break;
+      }
+      nameEnd += 1;
+    }
+
+    const name = source.slice(nameStart, nameEnd);
+    if (name.length === 0) {
+      this.addError(line, sourceColumn + startIndex, "Malformed inline markup.");
+      return undefined;
+    }
+    if (name === "wait" || name === "se" || name === "voice") {
+      this.addError(line, sourceColumn + startIndex, `Unsupported inline markup "${name}".`);
+      return undefined;
+    }
+    if (name !== "text" && name !== "delay") {
+      this.addError(line, sourceColumn + startIndex, `Unknown inline markup "${name}".`);
+      return undefined;
+    }
+
+    let pipeIndex: number | undefined;
+    for (let index = nameEnd; index < source.length; index += 1) {
+      const char = source[index];
+      if (char === "\\") {
+        index += 1;
+        continue;
+      }
+      if (char === "|") {
+        pipeIndex = index;
+        break;
+      }
+      if (char === "}") {
+        this.addError(line, sourceColumn + index, "Inline markup must include `|`.");
+        return undefined;
+      }
+    }
+
+    if (pipeIndex === undefined) {
+      this.addError(line, sourceColumn + startIndex, "Inline markup must be closed with `}`.");
+      return undefined;
+    }
+
+    const attributesSource = source.slice(nameEnd, pipeIndex).trim();
+    const children = this.parseInlineContent(line, source, sourceColumn, pipeIndex + 1, true);
+    if (children === undefined) {
+      return undefined;
+    }
+    if (children.text.length === 0) {
+      this.addError(line, sourceColumn + pipeIndex + 1, "Inline markup text must not be empty.");
+      return undefined;
+    }
+
+    const loc = {
+      start: this.location(line.line, sourceColumn + startIndex),
+      end: this.location(line.line, sourceColumn + children.nextIndex),
+    };
+
+    if (name === "text") {
+      const attributes = this.parseInlineTextAttributes(line, attributesSource, sourceColumn + nameEnd);
+      if (attributes === undefined) {
+        return undefined;
+      }
+      return {
+        node: {
+          type: "InlineTextSpan",
+          attributes,
+          children: children.nodes,
+          text: children.text,
+          loc,
+        },
+        nextIndex: children.nextIndex,
+      };
+    }
+
+    const ms = this.parseInlineDelayAttributes(line, attributesSource, sourceColumn + nameEnd);
+    if (ms === undefined) {
+      return undefined;
+    }
+    return {
+      node: {
+        type: "InlineDelaySpan",
+        ms,
+        children: children.nodes,
+        text: children.text,
+        loc,
+      },
+      nextIndex: children.nextIndex,
+    };
+  }
+
+  private parseInlineTextAttributes(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): readonly TzrV2InlineTextAttribute[] | undefined {
+    if (source.trim().length === 0) {
+      this.addError(line, sourceColumn, "{text} requires at least one attribute.");
+      return undefined;
+    }
+
+    const attributes = this.parseInlineRawAttributes(line, source, sourceColumn);
+    if (attributes === undefined) {
+      return undefined;
+    }
+
+    const parsed: TzrV2InlineTextAttribute[] = [];
+    const seen = new Set<string>();
+    for (const attribute of attributes) {
+      if (!["color", "bold", "italic", "size"].includes(attribute.key)) {
+        this.addError(line, attribute.keyColumn, `Unknown {text} attribute "${attribute.key}".`);
+        return undefined;
+      }
+      if (seen.has(attribute.key)) {
+        this.addError(line, attribute.keyColumn, `Duplicate {text} attribute "${attribute.key}".`);
+        return undefined;
+      }
+      seen.add(attribute.key);
+
+      if (attribute.key === "color") {
+        if (!COLOR_PATTERN.test(attribute.value)) {
+          this.addError(line, attribute.valueColumn, "Invalid {text} color value.");
+          return undefined;
+        }
+        parsed.push({ type: "InlineTextColorAttribute", name: "color", value: attribute.value, loc: attribute.loc });
+        continue;
+      }
+
+      if (attribute.key === "bold" || attribute.key === "italic") {
+        if (attribute.value !== "true" && attribute.value !== "false") {
+          this.addError(line, attribute.valueColumn, `Invalid {text} ${attribute.key} value.`);
+          return undefined;
+        }
+        parsed.push({
+          type: "InlineTextBooleanAttribute",
+          name: attribute.key,
+          value: attribute.value === "true",
+          loc: attribute.loc,
+        });
+        continue;
+      }
+
+      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 1) {
+        this.addError(line, attribute.valueColumn, "Invalid {text} size value.");
+        return undefined;
+      }
+      parsed.push({ type: "InlineTextSizeAttribute", name: "size", value: Number(attribute.value), loc: attribute.loc });
+    }
+
+    return parsed;
+  }
+
+  private parseInlineDelayAttributes(line: SourceLine, source: string, sourceColumn: number): number | undefined {
+    const attributes = this.parseInlineRawAttributes(line, source, sourceColumn);
+    if (attributes === undefined) {
+      return undefined;
+    }
+
+    let ms: number | undefined;
+    for (const attribute of attributes) {
+      if (attribute.key !== "ms") {
+        this.addError(line, attribute.keyColumn, `Unknown {delay} attribute "${attribute.key}".`);
+        return undefined;
+      }
+      if (ms !== undefined) {
+        this.addError(line, attribute.keyColumn, 'Duplicate {delay} attribute "ms".');
+        return undefined;
+      }
+      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 0) {
+        this.addError(line, attribute.valueColumn, "Invalid {delay} ms value.");
+        return undefined;
+      }
+      ms = Number(attribute.value);
+    }
+
+    if (ms === undefined) {
+      this.addError(line, sourceColumn, "{delay} requires ms.");
+      return undefined;
+    }
+
+    return ms;
+  }
+
+  private parseInlineRawAttributes(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): readonly InlineRawAttribute[] | undefined {
+    const trimmed = source.trim();
+    if (trimmed.length === 0) {
+      return [];
+    }
+
+    const attributes: InlineRawAttribute[] = [];
+    const parts = trimmed.split(/\s+/);
+    let searchStart = 0;
+    for (const part of parts) {
+      const partOffset = source.indexOf(part, searchStart);
+      searchStart = partOffset + part.length;
+      const equalsIndex = part.indexOf("=");
+      if (equalsIndex === -1) {
+        this.addError(line, sourceColumn + partOffset, "Inline markup attributes must use key=value syntax.");
+        return undefined;
+      }
+
+      const key = part.slice(0, equalsIndex);
+      const value = part.slice(equalsIndex + 1);
+      if (key.length === 0 || value.length === 0) {
+        this.addError(line, sourceColumn + partOffset, "Inline markup attributes must use key=value syntax.");
+        return undefined;
+      }
+      attributes.push({
+        key,
+        value,
+        keyColumn: sourceColumn + partOffset,
+        valueColumn: sourceColumn + partOffset + equalsIndex + 1,
+        loc: {
+          start: this.location(line.line, sourceColumn + partOffset),
+          end: this.location(line.line, sourceColumn + partOffset + part.length),
+        },
+      });
+    }
+
+    return attributes;
+  }
+
+  private parseTextEscape(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    index: number,
+  ): { readonly text: string; readonly nextIndex: number } | undefined {
+    const next = source[index + 1];
+    if (next === undefined) {
+      this.addError(line, sourceColumn + index, "Incomplete text block escape.");
+      return undefined;
+    }
+
+    if (next === "/" && source[index + 2] === "/") {
+      return { text: "//", nextIndex: index + 3 };
+    }
+
+    if (next === "-" && source[index + 2] === "-" && source[index + 3] === "-") {
+      return { text: "---", nextIndex: index + 4 };
+    }
+
+    if (next === "{" || next === "}" || next === "|" || next === "\\") {
+      return { text: next, nextIndex: index + 2 };
+    }
+
+    this.addError(line, sourceColumn + index, `Invalid text block escape \\${next}.`);
+    return undefined;
   }
 
   private parseStringLiteral(line: SourceLine, source: string, column: number): string | undefined {

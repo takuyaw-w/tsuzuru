@@ -80,6 +80,7 @@ export type TzrV2TextBlockItem = TzrV2TextLine | TzrV2TextClickWait | TzrV2TextP
 export interface TzrV2TextLine {
   readonly type: "TextLine";
   readonly text: string;
+  readonly inline: readonly TzrV2InlineNode[];
   readonly loc: SourceRange;
 }
 
@@ -131,5 +132,55 @@ export interface TzrV2TextBlockMoodMetaAttribute {
   readonly name: "mood";
   readonly value: string;
   readonly valueKind: "identifier" | "string";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2InlineNode = TzrV2InlineText | TzrV2InlineTextSpan | TzrV2InlineDelaySpan;
+
+export interface TzrV2InlineText {
+  readonly type: "InlineText";
+  readonly text: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineTextSpan {
+  readonly type: "InlineTextSpan";
+  readonly attributes: readonly TzrV2InlineTextAttribute[];
+  readonly children: readonly TzrV2InlineNode[];
+  readonly text: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineDelaySpan {
+  readonly type: "InlineDelaySpan";
+  readonly ms: number;
+  readonly children: readonly TzrV2InlineNode[];
+  readonly text: string;
+  readonly loc: SourceRange;
+}
+
+export type TzrV2InlineTextAttribute =
+  | TzrV2InlineTextColorAttribute
+  | TzrV2InlineTextBooleanAttribute
+  | TzrV2InlineTextSizeAttribute;
+
+export interface TzrV2InlineTextColorAttribute {
+  readonly type: "InlineTextColorAttribute";
+  readonly name: "color";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineTextBooleanAttribute {
+  readonly type: "InlineTextBooleanAttribute";
+  readonly name: "bold" | "italic";
+  readonly value: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineTextSizeAttribute {
+  readonly type: "InlineTextSizeAttribute";
+  readonly name: "size";
+  readonly value: number;
   readonly loc: SourceRange;
 }
