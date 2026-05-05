@@ -135,7 +135,13 @@ export interface TzrV2TextBlockMoodMetaAttribute {
   readonly loc: SourceRange;
 }
 
-export type TzrV2InlineNode = TzrV2InlineText | TzrV2InlineTextSpan | TzrV2InlineDelaySpan;
+export type TzrV2InlineNode =
+  | TzrV2InlineText
+  | TzrV2InlineTextSpan
+  | TzrV2InlineDelaySpan
+  | TzrV2InlineWaitEvent
+  | TzrV2InlineSeEvent
+  | TzrV2InlineVoiceEvent;
 
 export interface TzrV2InlineText {
   readonly type: "InlineText";
@@ -156,6 +162,50 @@ export interface TzrV2InlineDelaySpan {
   readonly ms: number;
   readonly children: readonly TzrV2InlineNode[];
   readonly text: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineWaitEvent {
+  readonly type: "InlineWaitEvent";
+  readonly ms: number;
+  readonly text: "";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineSeEvent {
+  readonly type: "InlineSeEvent";
+  readonly assetId: TzrV2InlineAssetId;
+  readonly text: "";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineVoiceEvent {
+  readonly type: "InlineVoiceEvent";
+  readonly assetId: TzrV2InlineAssetId;
+  readonly text: "";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2InlineAssetId =
+  | TzrV2InlineIdentifierAssetId
+  | TzrV2InlineStringAssetId
+  | TzrV2InlineVariableAssetId;
+
+export interface TzrV2InlineIdentifierAssetId {
+  readonly type: "InlineIdentifierAssetId";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineStringAssetId {
+  readonly type: "InlineStringAssetId";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2InlineVariableAssetId {
+  readonly type: "InlineVariableAssetId";
+  readonly path: string;
   readonly loc: SourceRange;
 }
 

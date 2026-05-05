@@ -103,6 +103,60 @@ describe("parseTzrV2 inline markup", () => {
     });
   });
 
+  it("parses wait events", () => {
+    expect(parseSingleTextLine("……えっと、{wait ms=500}ありがとう。")).toMatchObject({
+      text: "……えっと、ありがとう。",
+      inline: [
+        { type: "InlineText", text: "……えっと、" },
+        { type: "InlineWaitEvent", ms: 500, text: "" },
+        { type: "InlineText", text: "ありがとう。" },
+      ],
+    });
+    expect(parseSingleTextLine("{wait ms=0}即時")).toMatchObject({
+      text: "即時",
+      inline: [
+        { type: "InlineWaitEvent", ms: 0, text: "" },
+        { type: "InlineText", text: "即時" },
+      ],
+    });
+  });
+
+  it("parses se events", () => {
+    expect(parseSingleTextLine("{se assetId=doorOpen}開いた。")).toMatchObject({
+      text: "開いた。",
+      inline: [
+        { type: "InlineSeEvent", text: "", assetId: { type: "InlineIdentifierAssetId", value: "doorOpen" } },
+        { type: "InlineText", text: "開いた。" },
+      ],
+    });
+    expect(parseSingleTextLine("{se assetId=door.open}")).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineSeEvent", assetId: { type: "InlineIdentifierAssetId", value: "door.open" } }],
+    });
+    expect(parseSingleTextLine('{se assetId="door-open"}')).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineSeEvent", assetId: { type: "InlineStringAssetId", value: "door-open" } }],
+    });
+  });
+
+  it("parses voice events", () => {
+    expect(parseSingleTextLine("{voice assetId=mio_001}遅いよ。")).toMatchObject({
+      text: "遅いよ。",
+      inline: [
+        { type: "InlineVoiceEvent", text: "", assetId: { type: "InlineIdentifierAssetId", value: "mio_001" } },
+        { type: "InlineText", text: "遅いよ。" },
+      ],
+    });
+    expect(parseSingleTextLine("{voice assetId=mio.normal_001}")).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineVoiceEvent", assetId: { type: "InlineIdentifierAssetId", value: "mio.normal_001" } }],
+    });
+    expect(parseSingleTextLine("{voice assetId=$scenario.currentVoice}")).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineVoiceEvent", assetId: { type: "InlineVariableAssetId", path: "scenario.currentVoice" } }],
+    });
+  });
+
   it("parses text before and after inline markup", () => {
     const line = parseSingleTextLine("A {text bold=true|bold} B");
 
@@ -112,6 +166,23 @@ describe("parseTzrV2 inline markup", () => {
         { type: "InlineText", text: "A " },
         { type: "InlineTextSpan", text: "bold" },
         { type: "InlineText", text: " B" },
+      ],
+    });
+  });
+
+  it("parses text before and after inline event markup", () => {
+    const line = parseSingleTextLine("A {wait ms=500}B {se assetId=doorOpen}C {voice assetId=mio_001}D");
+
+    expect(line).toMatchObject({
+      text: "A B C D",
+      inline: [
+        { type: "InlineText", text: "A " },
+        { type: "InlineWaitEvent", ms: 500 },
+        { type: "InlineText", text: "B " },
+        { type: "InlineSeEvent", assetId: { value: "doorOpen" } },
+        { type: "InlineText", text: "C " },
+        { type: "InlineVoiceEvent", assetId: { value: "mio_001" } },
+        { type: "InlineText", text: "D" },
       ],
     });
   });
@@ -154,6 +225,46 @@ describe("parseTzrV2 inline markup", () => {
     });
   });
 
+  it("allows inline events inside text and delay ranges", () => {
+    expect(parseSingleTextLine("{text bold=true|A {wait ms=500}B}")).toMatchObject({
+      text: "A B",
+      inline: [
+        {
+          type: "InlineTextSpan",
+          text: "A B",
+          children: [
+            { type: "InlineText", text: "A " },
+            { type: "InlineWaitEvent", ms: 500 },
+            { type: "InlineText", text: "B" },
+          ],
+        },
+      ],
+    });
+    expect(parseSingleTextLine("{delay ms=20|A {voice assetId=mio_001}B}")).toMatchObject({
+      text: "A B",
+      inline: [
+        {
+          type: "InlineDelaySpan",
+          text: "A B",
+          children: [
+            { type: "InlineText", text: "A " },
+            { type: "InlineVoiceEvent", assetId: { value: "mio_001" } },
+            { type: "InlineText", text: "B" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("keeps escaped inline event markup as literal text", () => {
+    const line = parseSingleTextLine("\\{wait ms=500\\}");
+
+    expect(line).toMatchObject({
+      text: "{wait ms=500}",
+      inline: [{ type: "InlineText", text: "{wait ms=500}" }],
+    });
+  });
+
   it("keeps text block escapes in normal text", () => {
     const line = parseSingleTextLine("\\{ \\} \\| \\\\");
 
@@ -188,11 +299,8 @@ describe("parseTzrV2 inline markup", () => {
     expect(expectInlineFailure("{text color=#fff|}")).toContain("Inline markup text must not be empty.");
   });
 
-  it("rejects unknown and unsupported inline markup names", () => {
+  it("rejects unknown inline markup names", () => {
     expect(expectInlineFailure("{ruby text=foo|bar}")).toContain('Unknown inline markup "ruby".');
-    expect(expectInlineFailure("{wait ms=500}")).toContain('Unsupported inline markup "wait".');
-    expect(expectInlineFailure("{se assetId=doorOpen}")).toContain('Unsupported inline markup "se".');
-    expect(expectInlineFailure("{voice assetId=mio_001}")).toContain('Unsupported inline markup "voice".');
   });
 
   it("rejects invalid text span attributes", () => {
@@ -211,6 +319,43 @@ describe("parseTzrV2 inline markup", () => {
     expect(expectInlineFailure("{delay foo=1|速い}")).toContain('Unknown {delay} attribute "foo".');
     expect(expectInlineFailure("{delay ms=-1|速い}")).toContain("Invalid {delay} ms value.");
     expect(expectInlineFailure('{delay ms="20"|速い}')).toContain("Invalid {delay} ms value.");
+  });
+
+  it("rejects invalid wait event attributes", () => {
+    expect(expectInlineFailure("{wait}")).toContain("{wait} requires ms.");
+    expect(expectInlineFailure("{wait ms=-1}")).toContain("Invalid {wait} ms value.");
+    expect(expectInlineFailure('{wait ms="500"}')).toContain("Invalid {wait} ms value.");
+    expect(expectInlineFailure("{wait foo=500}")).toContain('Unknown {wait} attribute "foo".');
+    expect(expectInlineFailure("{wait ms=500 extra=1}")).toContain('Unknown {wait} attribute "extra".');
+    expect(expectInlineFailure("{wait ms=500|text}")).toContain("{wait} does not support text ranges.");
+  });
+
+  it("rejects invalid se event attributes", () => {
+    expect(expectInlineFailure("{se}")).toContain("{se} requires assetId.");
+    expect(expectInlineFailure("{se assetId=}")).toContain("{se} assetId must not be empty.");
+    expect(expectInlineFailure("{se id=doorOpen}")).toContain('Unknown {se} attribute "id".');
+    expect(expectInlineFailure('{se assetId=""}')).toContain("{se} assetId must not be empty.");
+    expect(expectInlineFailure("{se assetId=doorOpen volume=80}")).toContain('Unknown {se} attribute "volume".');
+    expect(expectInlineFailure("{se assetId=door-open.part}")).toContain("Invalid {se} assetId value.");
+    expect(expectInlineFailure("{se assetId=$}")).toContain("Invalid {se} variable assetId.");
+    expect(expectInlineFailure("{se assetId=$scenario.}")).toContain("Invalid {se} variable assetId.");
+    expect(expectInlineFailure("{se assetId=$scenario..voice}")).toContain("Invalid {se} variable assetId.");
+    expect(expectInlineFailure("{se assetId=doorOpen|text}")).toContain("{se} does not support text ranges.");
+  });
+
+  it("rejects invalid voice event attributes", () => {
+    expect(expectInlineFailure("{voice}")).toContain("{voice} requires assetId.");
+    expect(expectInlineFailure("{voice assetId=}")).toContain("{voice} assetId must not be empty.");
+    expect(expectInlineFailure("{voice id=mio_001}")).toContain('Unknown {voice} attribute "id".');
+    expect(expectInlineFailure('{voice assetId=""}')).toContain("{voice} assetId must not be empty.");
+    expect(expectInlineFailure("{voice assetId=mio_001 volume=80}")).toContain(
+      'Unknown {voice} attribute "volume".',
+    );
+    expect(expectInlineFailure("{voice assetId=door-open.part}")).toContain("Invalid {voice} assetId value.");
+    expect(expectInlineFailure("{voice assetId=$}")).toContain("Invalid {voice} variable assetId.");
+    expect(expectInlineFailure("{voice assetId=mio_001|text}")).toContain(
+      "{voice} does not support text ranges.",
+    );
   });
 
   it("rejects invalid escapes", () => {

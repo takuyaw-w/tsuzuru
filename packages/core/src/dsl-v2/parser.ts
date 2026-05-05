@@ -5,10 +5,14 @@ import type {
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2EndStatement,
+  TzrV2InlineAssetId,
   TzrV2InlineDelaySpan,
   TzrV2InlineNode,
+  TzrV2InlineSeEvent,
   TzrV2InlineTextAttribute,
   TzrV2InlineTextSpan,
+  TzrV2InlineVoiceEvent,
+  TzrV2InlineWaitEvent,
   TzrV2JumpStatement,
   TzrV2NarrationStatement,
   TzrV2ParseOptions,
@@ -47,7 +51,7 @@ interface ParsedInlineContent {
 }
 
 interface ParsedInlineMarkup {
-  readonly node: TzrV2InlineTextSpan | TzrV2InlineDelaySpan;
+  readonly node: TzrV2InlineTextSpan | TzrV2InlineDelaySpan | TzrV2InlineWaitEvent | TzrV2InlineSeEvent | TzrV2InlineVoiceEvent;
   readonly nextIndex: number;
 }
 
@@ -786,8 +790,7 @@ class TzrV2Parser {
       return undefined;
     }
     if (name === "wait" || name === "se" || name === "voice") {
-      this.addError(line, sourceColumn + startIndex, `Unsupported inline markup "${name}".`);
-      return undefined;
+      return this.parseInlineEventMarkup(line, source, sourceColumn, startIndex, name, nameEnd);
     }
     if (name !== "text" && name !== "delay") {
       this.addError(line, sourceColumn + startIndex, `Unknown inline markup "${name}".`);
@@ -861,6 +864,74 @@ class TzrV2Parser {
         loc,
       },
       nextIndex: children.nextIndex,
+    };
+  }
+
+  private parseInlineEventMarkup(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    startIndex: number,
+    name: "wait" | "se" | "voice",
+    nameEnd: number,
+  ): ParsedInlineMarkup | undefined {
+    let closingIndex: number | undefined;
+    for (let index = nameEnd; index < source.length; index += 1) {
+      const char = source[index];
+      if (char === "\\") {
+        index += 1;
+        continue;
+      }
+      if (char === "|") {
+        this.addError(line, sourceColumn + index, `{${name}} does not support text ranges.`);
+        return undefined;
+      }
+      if (char === "}") {
+        closingIndex = index;
+        break;
+      }
+    }
+
+    if (closingIndex === undefined) {
+      this.addError(line, sourceColumn + startIndex, "Inline event markup must be closed with `}`.");
+      return undefined;
+    }
+
+    const attributesSource = source.slice(nameEnd, closingIndex).trim();
+    const attributesColumn = sourceColumn + nameEnd;
+    const loc = {
+      start: this.location(line.line, sourceColumn + startIndex),
+      end: this.location(line.line, sourceColumn + closingIndex + 1),
+    };
+
+    if (name === "wait") {
+      const ms = this.parseInlineWaitAttributes(line, attributesSource, attributesColumn);
+      if (ms === undefined) {
+        return undefined;
+      }
+      return {
+        node: {
+          type: "InlineWaitEvent",
+          ms,
+          text: "",
+          loc,
+        },
+        nextIndex: closingIndex + 1,
+      };
+    }
+
+    const assetId = this.parseInlineAssetIdAttributes(line, name, attributesSource, attributesColumn);
+    if (assetId === undefined) {
+      return undefined;
+    }
+    return {
+      node: {
+        type: name === "se" ? "InlineSeEvent" : "InlineVoiceEvent",
+        assetId,
+        text: "",
+        loc,
+      },
+      nextIndex: closingIndex + 1,
     };
   }
 
@@ -956,6 +1027,109 @@ class TzrV2Parser {
     return ms;
   }
 
+  private parseInlineWaitAttributes(line: SourceLine, source: string, sourceColumn: number): number | undefined {
+    const attributes = this.parseInlineRawAttributes(line, source, sourceColumn);
+    if (attributes === undefined) {
+      return undefined;
+    }
+
+    let ms: number | undefined;
+    for (const attribute of attributes) {
+      if (attribute.key !== "ms") {
+        this.addError(line, attribute.keyColumn, `Unknown {wait} attribute "${attribute.key}".`);
+        return undefined;
+      }
+      if (ms !== undefined) {
+        this.addError(line, attribute.keyColumn, 'Duplicate {wait} attribute "ms".');
+        return undefined;
+      }
+      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 0) {
+        this.addError(line, attribute.valueColumn, "Invalid {wait} ms value.");
+        return undefined;
+      }
+      ms = Number(attribute.value);
+    }
+
+    if (ms === undefined) {
+      this.addError(line, sourceColumn, "{wait} requires ms.");
+      return undefined;
+    }
+
+    return ms;
+  }
+
+  private parseInlineAssetIdAttributes(
+    line: SourceLine,
+    name: "se" | "voice",
+    source: string,
+    sourceColumn: number,
+  ): TzrV2InlineAssetId | undefined {
+    const attributes = this.parseInlineRawAttributes(line, source, sourceColumn);
+    if (attributes === undefined) {
+      return undefined;
+    }
+
+    let assetIdAttribute: InlineRawAttribute | undefined;
+    for (const attribute of attributes) {
+      if (attribute.key !== "assetId") {
+        this.addError(line, attribute.keyColumn, `Unknown {${name}} attribute "${attribute.key}".`);
+        return undefined;
+      }
+      if (assetIdAttribute !== undefined) {
+        this.addError(line, attribute.keyColumn, `Duplicate {${name}} attribute "assetId".`);
+        return undefined;
+      }
+      assetIdAttribute = attribute;
+    }
+
+    if (assetIdAttribute === undefined) {
+      this.addError(line, sourceColumn, `{${name}} requires assetId.`);
+      return undefined;
+    }
+
+    return this.parseInlineAssetIdValue(line, name, assetIdAttribute);
+  }
+
+  private parseInlineAssetIdValue(
+    line: SourceLine,
+    name: "se" | "voice",
+    attribute: InlineRawAttribute,
+  ): TzrV2InlineAssetId | undefined {
+    const value = attribute.value;
+    if (value.length === 0) {
+      this.addError(line, attribute.valueColumn, `{${name}} assetId must not be empty.`);
+      return undefined;
+    }
+    if (value.startsWith('"')) {
+      const parsed = this.parseStringLiteral(line, value, attribute.valueColumn);
+      if (parsed === undefined) {
+        this.addError(line, attribute.valueColumn, `Invalid {${name}} assetId value.`);
+        return undefined;
+      }
+      if (parsed.length === 0) {
+        this.addError(line, attribute.valueColumn, `{${name}} assetId must not be empty.`);
+        return undefined;
+      }
+      return { type: "InlineStringAssetId", value: parsed, loc: attribute.loc };
+    }
+
+    if (value.startsWith("$")) {
+      const path = value.slice(1);
+      if (!isValidTzrV2DottedIdentifier(path)) {
+        this.addError(line, attribute.valueColumn, `Invalid {${name}} variable assetId.`);
+        return undefined;
+      }
+      return { type: "InlineVariableAssetId", path, loc: attribute.loc };
+    }
+
+    if (!isValidTzrV2DottedIdentifier(value)) {
+      this.addError(line, attribute.valueColumn, `Invalid {${name}} assetId value.`);
+      return undefined;
+    }
+
+    return { type: "InlineIdentifierAssetId", value, loc: attribute.loc };
+  }
+
   private parseInlineRawAttributes(
     line: SourceLine,
     source: string,
@@ -980,7 +1154,7 @@ class TzrV2Parser {
 
       const key = part.slice(0, equalsIndex);
       const value = part.slice(equalsIndex + 1);
-      if (key.length === 0 || value.length === 0) {
+      if (key.length === 0) {
         this.addError(line, sourceColumn + partOffset, "Inline markup attributes must use key=value syntax.");
         return undefined;
       }
