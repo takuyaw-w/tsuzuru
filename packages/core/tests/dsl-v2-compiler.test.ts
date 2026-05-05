@@ -59,6 +59,84 @@ scene ending:
     });
   });
 
+  it("compiles scene and plain narration into SceneInstruction and NarrationInstruction", () => {
+    const document = compileSource(`scene start:
+  narration:
+    Rain blurred the platform edge.
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "NarrationInstruction", lines: [{ text: "Rain blurred the platform edge." }] },
+    ]);
+  });
+
+  it("compiles scene and plain dialogue into SceneInstruction and DialogueInstruction", () => {
+    const document = compileSource(`character mio name="Mio"
+scene start:
+  mio:
+    You're late.
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "DialogueInstruction", speaker: "mio", lines: [{ text: "You're late." }] },
+    ]);
+  });
+
+  it("compiles multiple scenes with bodies in source order", () => {
+    const document = compileSource(`character mio name="Mio"
+scene start:
+  narration:
+    First.
+  end
+scene later:
+  mio:
+    Later.
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "NarrationInstruction", lines: [{ text: "First." }] },
+      { type: "CommandInstruction", name: "stop", args: [] },
+      { type: "SceneInstruction", id: "later" },
+      { type: "DialogueInstruction", speaker: "mio", lines: [{ text: "Later." }] },
+    ]);
+    expect(document.scenes).toMatchObject({
+      start: { statementIndex: 0 },
+      later: { statementIndex: 3 },
+    });
+  });
+
+  it("compiles end into a stop command instruction", () => {
+    const document = compileSource(`scene start:
+  end
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "stop", args: [] },
+    ]);
+  });
+
+  it("preserves text line locations for compiled plain text", () => {
+    const document = compileSource(`scene start:
+  narration:
+    Rain blurred the platform edge.
+`);
+
+    const instruction = document.instructions[1];
+    expect(instruction).toMatchObject({ type: "NarrationInstruction" });
+    if (instruction?.type !== "NarrationInstruction") {
+      throw new Error("expected narration instruction");
+    }
+    expect(instruction.lines[0]?.loc.start).toEqual({
+      filePath: "scenario/v2.tzr",
+      line: 3,
+      column: 5,
+    });
+  });
+
   it("extracts title metadata", () => {
     const document = compileSource(`title "Rain Station"
 scene start:
@@ -99,41 +177,33 @@ character mio name="Mio"
 `);
 
     expect(document.metadata.characters).toHaveProperty("mio");
-    expect(document.instructions).toMatchObject([{ type: "SceneInstruction", id: "start" }]);
+    expect(document.instructions[0]).toMatchObject({ type: "SceneInstruction", id: "start" });
+    expect(document.instructions[1]).toMatchObject({ type: "DialogueInstruction", speaker: "mio" });
   });
 
-  it("allows jump to a scene declared later", () => {
-    const document = compileSource(`scene start:
+  it("rejects scene-target jump until runtime support exists", () => {
+    expect(expectCompileFailure(`scene start:
   jump later
 scene later:
-`);
-
-    expect(document.scenes).toMatchObject({
-      start: { statementIndex: 0 },
-      later: { statementIndex: 1 },
-    });
+`)).toContain("Scene-target jump runtime support is not implemented yet.");
   });
 
-  it("validates nested dialogue speaker in if branch", () => {
-    const document = compileSource(`character mio name="Mio"
+  it("rejects unsupported if statements after preserving nested validation", () => {
+    expect(expectCompileFailure(`character mio name="Mio"
 scene start:
   if scenario.hasNotebook:
     mio:
       Hello.
-`);
-
-    expect(document.metadata.characters).toHaveProperty("mio");
+`)).toContain('DSL v2 statement "IfStatement" is not compile-supported yet.');
   });
 
-  it("validates nested jump target in choice item body", () => {
-    const document = compileSource(`scene start:
+  it("rejects unsupported choice statements after preserving nested validation", () => {
+    expect(expectCompileFailure(`scene start:
   choice "Choose":
     "Go":
       jump later
 scene later:
-`);
-
-    expect(document.scenes).toHaveProperty("later");
+`)).toContain('DSL v2 statement "ChoiceStatement" is not compile-supported yet.');
   });
 
   it("rejects duplicate title declarations", () => {
@@ -205,5 +275,91 @@ scene start:
     expect(expectCompileFailure('title "Rain Station"\n')).toContain(
       "DSL v2 document must include at least one scene.",
     );
+  });
+
+  it("rejects narration with text click wait", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    First.
+
+    Second.
+`)).toContain("Text click wait is not compile-supported yet.");
+  });
+
+  it("rejects narration with text page break", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    First.
+    ---
+    Second.
+`)).toContain("Text page break is not compile-supported yet.");
+  });
+
+  it("rejects narration with text block metadata", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    :meta
+      delay=70
+    Rain blurred the platform edge.
+`)).toContain("Text block metadata is not compile-supported yet.");
+  });
+
+  it("rejects narration with rich inline text", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    {text bold=true|Bold}
+`)).toContain("Rich inline text is not compile-supported yet.");
+  });
+
+  it("rejects narration with inline delay", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    {delay ms=20|Fast}
+`)).toContain("Inline delay is not compile-supported yet.");
+  });
+
+  it("rejects narration with inline wait", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    A {wait ms=500}B
+`)).toContain("Inline wait is not compile-supported yet.");
+  });
+
+  it("rejects narration with inline se", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    {se assetId=doorOpen}Door.
+`)).toContain("Inline se is not compile-supported yet.");
+  });
+
+  it("rejects narration with inline voice", () => {
+    expect(expectCompileFailure(`scene start:
+  narration:
+    {voice assetId=mio_001}Line.
+`)).toContain("Inline voice is not compile-supported yet.");
+  });
+
+  it("rejects unsupported state, call, wait, visual, audio, and system statements", () => {
+    const cases = [
+      { source: 'set scenario.route = "mio"', statement: "SetStatement" },
+      { source: "add scenario.score += 1", statement: "AddStatement" },
+      { source: "call screen.open(id=notebook)", statement: "CallStatement" },
+      { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
+      { source: "bg classroom", statement: "BgStatement" },
+      { source: "show mio.normal at center", statement: "ShowStatement" },
+      { source: "hide mio.normal", statement: "HideStatement" },
+      { source: "clear sprites", statement: "ClearVisualStatement" },
+      { source: "bgm daily", statement: "BgmStatement" },
+      { source: "stopBgm", statement: "StopBgmStatement" },
+      { source: "se doorOpen", statement: "SeStatement" },
+      { source: "voice mio_001", statement: "VoiceStatement" },
+      { source: "system.unlockAchievement firstClear", statement: "SystemUnlockStatement" },
+    ];
+
+    for (const { source, statement } of cases) {
+      expect(expectCompileFailure(`scene start:\n  ${source}\n`)).toContain(
+        `DSL v2 statement "${statement}" is not compile-supported yet.`,
+      );
+    }
   });
 });

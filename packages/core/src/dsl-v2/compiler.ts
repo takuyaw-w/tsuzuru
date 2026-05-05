@@ -1,13 +1,24 @@
-import type { SourceLocation, SourceRange } from "../ast.js";
+import type { SourceLocation, SourceRange, TextLine } from "../ast.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostic.js";
-import type { DeclarationIndexEntry, SceneInstruction, TzrInstruction } from "../ir.js";
+import type {
+  CommandInstruction,
+  DeclarationIndexEntry,
+  DialogueInstruction,
+  NarrationInstruction,
+  SceneInstruction,
+  TzrInstruction,
+} from "../ir.js";
 import type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceStatement,
+  TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2IfStatement,
+  TzrV2NarrationStatement,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2TextBlockItem,
+  TzrV2TextLine,
   TzrV2TitleDeclaration,
 } from "./ast.js";
 
@@ -62,13 +73,15 @@ class TzrV2Compiler {
     this.validateScenePresence();
     this.validateSceneBodies();
 
+    const compiled = this.buildCompiledDocument();
+
     if (this.errors.length > 0) {
       return { ok: false, errors: this.errors };
     }
 
     return {
       ok: true,
-      document: this.buildCompiledDocument(),
+      document: compiled,
       errors: [],
     };
   }
@@ -180,7 +193,7 @@ class TzrV2Compiler {
   }
 
   private buildCompiledDocument(): CompiledTzrV2Document {
-    const instructions = this.buildSceneInstructions();
+    const instructions = this.buildInstructions();
 
     return {
       type: "CompiledTzrV2Document",
@@ -192,12 +205,159 @@ class TzrV2Compiler {
     };
   }
 
-  private buildSceneInstructions(): readonly SceneInstruction[] {
-    return Array.from(this.scenes.values(), (scene) => ({
-      type: "SceneInstruction",
-      id: scene.id,
-      loc: scene.loc,
-    }));
+  private buildInstructions(): readonly TzrInstruction[] {
+    const instructions: TzrInstruction[] = [];
+
+    for (const scene of this.scenes.values()) {
+      instructions.push({
+        type: "SceneInstruction",
+        id: scene.id,
+        loc: scene.loc,
+      } satisfies SceneInstruction);
+      instructions.push(...this.buildSceneBodyInstructions(scene.body));
+    }
+
+    return instructions;
+  }
+
+  private buildSceneBodyInstructions(statements: readonly TzrV2SceneStatement[]): readonly TzrInstruction[] {
+    const instructions: TzrInstruction[] = [];
+
+    for (const statement of statements) {
+      switch (statement.type) {
+        case "NarrationStatement":
+          instructions.push(...this.buildNarrationInstruction(statement));
+          break;
+        case "DialogueStatement":
+          instructions.push(...this.buildDialogueInstruction(statement));
+          break;
+        case "EndStatement":
+          instructions.push(this.buildStopInstruction(statement.loc));
+          break;
+        case "JumpStatement":
+          if (this.scenes.has(statement.target)) {
+            this.addError(statement.loc.start, "Scene-target jump runtime support is not implemented yet.");
+          }
+          break;
+        default:
+          this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
+          break;
+      }
+    }
+
+    return instructions;
+  }
+
+  private buildNarrationInstruction(statement: TzrV2NarrationStatement): readonly NarrationInstruction[] {
+    const lines = this.compilePlainTextBlock(statement);
+    if (lines === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        type: "NarrationInstruction",
+        lines,
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildDialogueInstruction(statement: TzrV2DialogueStatement): readonly DialogueInstruction[] {
+    const lines = this.compilePlainTextBlock(statement);
+    if (lines === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        type: "DialogueInstruction",
+        speaker: statement.speaker,
+        lines,
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildStopInstruction(loc: SourceRange): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "stop",
+      args: [],
+      loc,
+    };
+  }
+
+  private compilePlainTextBlock(statement: TzrV2NarrationStatement | TzrV2DialogueStatement): readonly TextLine[] | undefined {
+    let ok = true;
+    const lines: TextLine[] = [];
+
+    if (statement.meta !== undefined) {
+      this.addError(statement.meta.loc.start, "Text block metadata is not compile-supported yet.");
+      ok = false;
+    }
+
+    for (const item of statement.lines) {
+      const line = this.compilePlainTextBlockItem(item);
+      if (line === undefined) {
+        ok = false;
+        continue;
+      }
+      lines.push(line);
+    }
+
+    return ok ? lines : undefined;
+  }
+
+  private compilePlainTextBlockItem(item: TzrV2TextBlockItem): TextLine | undefined {
+    switch (item.type) {
+      case "TextLine":
+        return this.compilePlainTextLine(item);
+      case "TextClickWait":
+        this.addError(item.loc.start, "Text click wait is not compile-supported yet.");
+        return undefined;
+      case "TextPageBreak":
+        this.addError(item.loc.start, "Text page break is not compile-supported yet.");
+        return undefined;
+    }
+  }
+
+  private compilePlainTextLine(line: TzrV2TextLine): TextLine | undefined {
+    let ok = true;
+
+    for (const node of line.inline) {
+      switch (node.type) {
+        case "InlineText":
+          break;
+        case "InlineTextSpan":
+          this.addError(node.loc.start, "Rich inline text is not compile-supported yet.");
+          ok = false;
+          break;
+        case "InlineDelaySpan":
+          this.addError(node.loc.start, "Inline delay is not compile-supported yet.");
+          ok = false;
+          break;
+        case "InlineWaitEvent":
+          this.addError(node.loc.start, "Inline wait is not compile-supported yet.");
+          ok = false;
+          break;
+        case "InlineSeEvent":
+          this.addError(node.loc.start, "Inline se is not compile-supported yet.");
+          ok = false;
+          break;
+        case "InlineVoiceEvent":
+          this.addError(node.loc.start, "Inline voice is not compile-supported yet.");
+          ok = false;
+          break;
+      }
+    }
+
+    return ok
+      ? {
+          text: line.text,
+          loc: line.loc,
+        }
+      : undefined;
   }
 
   private buildMetadata(): TzrV2DocumentMetadata {
