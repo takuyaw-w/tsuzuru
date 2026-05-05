@@ -90,5 +90,14 @@ export type {
   TzrV2SystemUnlockStatement,
   TzrV2SystemUnlockStringId,
 } from "./ast.js";
+export type {
+  CompiledTzrV2Document,
+  TzrV2CompiledCharacter,
+  TzrV2CompiledSceneMetadata,
+  TzrV2CompileOptions,
+  TzrV2CompileResult,
+  TzrV2DocumentMetadata,
+} from "./compiler.js";
 export { parseTzrV2ConditionExpression } from "./condition-parser.js";
+export { compileTzrV2 } from "./compiler.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";

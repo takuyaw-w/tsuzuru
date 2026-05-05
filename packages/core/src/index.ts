@@ -62,6 +62,7 @@ export { expandMacro } from "./macro.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";
 export type {
+  CompiledTzrV2Document,
   TzrV2AddStatement,
   TzrV2ArgumentValue,
   TzrV2AudioAssetRef,
@@ -72,9 +73,13 @@ export type {
   TzrV2BooleanValue,
   TzrV2CallStatement,
   TzrV2CharacterDeclaration,
+  TzrV2CompiledCharacter,
+  TzrV2CompiledSceneMetadata,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
   TzrV2ClearVisualStatement,
+  TzrV2CompileOptions,
+  TzrV2CompileResult,
   TzrV2ConditionBinaryExpression,
   TzrV2ConditionBooleanLiteral,
   TzrV2ConditionComparisonExpression,
@@ -88,6 +93,7 @@ export type {
   TzrV2ConditionUnaryExpression,
   TzrV2DialogueStatement,
   TzrV2Document,
+  TzrV2DocumentMetadata,
   TzrV2ElifBranch,
   TzrV2EndStatement,
   TzrV2IfStatement,
@@ -154,6 +160,7 @@ export type {
   TzrV2SystemUnlockStringId,
 } from "./dsl-v2/index.js";
 export {
+  compileTzrV2,
   isValidTzrV2DottedIdentifier,
   isValidTzrV2Identifier,
   parseTzrV2,
