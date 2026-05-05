@@ -62,6 +62,17 @@ export { expandMacro } from "./macro.js";
 export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";
 export type {
+  TzrV2CharacterDeclaration,
+  TzrV2Document,
+  TzrV2ParseOptions,
+  TzrV2ParseResult,
+  TzrV2SceneBodyLine,
+  TzrV2SceneDeclaration,
+  TzrV2TitleDeclaration,
+  TzrV2TopLevelDeclaration,
+} from "./dsl-v2/index.js";
+export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./dsl-v2/index.js";
+export type {
   ChoiceRuntimeEvent,
   DialogueRuntimeEvent,
   EndRuntimeEvent,
