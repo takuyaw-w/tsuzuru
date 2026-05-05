@@ -915,6 +915,156 @@ scene leave:
     });
   });
 
+  it("dispatches compiled DSL v2 bgm through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  bgm daily_theme
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const bgm = stepRuntime(document, scene.state, {
+      commandHandlers: { startBgm: capturePluginCommand(seen) },
+    });
+
+    expect(bgm.event).toEqual({ type: "pluginCommand", name: "startBgm" });
+    expect(seen[0]).toMatchObject({
+      name: "startBgm",
+      args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "daily_theme" } }],
+    });
+  });
+
+  it("dispatches compiled DSL v2 stopBgm through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  stopBgm
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const stopBgm = stepRuntime(document, scene.state, {
+      commandHandlers: { stopBgm: capturePluginCommand(seen) },
+    });
+
+    expect(stopBgm.event).toEqual({ type: "pluginCommand", name: "stopBgm" });
+    expect(seen[0]).toMatchObject({
+      name: "stopBgm",
+      args: [],
+    });
+  });
+
+  it("dispatches compiled DSL v2 se through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  se doorOpen
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const se = stepRuntime(document, scene.state, {
+      commandHandlers: { se: capturePluginCommand(seen) },
+    });
+
+    expect(se.event).toEqual({ type: "pluginCommand", name: "se" });
+    expect(seen[0]).toMatchObject({
+      name: "se",
+      args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "doorOpen" } }],
+    });
+  });
+
+  it("dispatches compiled DSL v2 voice through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  voice mio_001
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const voice = stepRuntime(document, scene.state, {
+      commandHandlers: { voice: capturePluginCommand(seen) },
+    });
+
+    expect(voice.event).toEqual({ type: "pluginCommand", name: "voice" });
+    expect(seen[0]).toMatchObject({
+      name: "voice",
+      args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "mio_001" } }],
+    });
+  });
+
+  it("dispatches DSL v2 audio commands inside selected choice bodies", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Listen":
+      bgm daily_theme
+      se doorOpen
+      voice mio_001
+      stopBgm
+`);
+    const seen: CommandInstruction[] = [];
+    const commandHandlers = {
+      startBgm: capturePluginCommand(seen),
+      se: capturePluginCommand(seen),
+      voice: capturePluginCommand(seen),
+      stopBgm: capturePluginCommand(seen),
+    };
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const bgm = stepRuntime(document, resolved.state, { commandHandlers });
+    const se = stepRuntime(document, bgm.state, { commandHandlers });
+    const voice = stepRuntime(document, se.state, { commandHandlers });
+    const stopBgm = stepRuntime(document, voice.state, { commandHandlers });
+
+    expect(bgm.event).toEqual({ type: "pluginCommand", name: "startBgm" });
+    expect(se.event).toEqual({ type: "pluginCommand", name: "se" });
+    expect(voice.event).toEqual({ type: "pluginCommand", name: "voice" });
+    expect(stopBgm.event).toEqual({ type: "pluginCommand", name: "stopBgm" });
+    expect(seen).toMatchObject([
+      {
+        name: "startBgm",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "daily_theme" } }],
+      },
+      { name: "se", args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "doorOpen" } }] },
+      { name: "voice", args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "mio_001" } }] },
+      { name: "stopBgm", args: [] },
+    ]);
+  });
+
+  it("dispatches DSL v2 audio commands inside if branches", () => {
+    const document = compileSource(`scene start:
+  set scenario.ready = true
+  if scenario.ready:
+    bgm daily_theme
+    se doorOpen
+    voice mio_001
+    stopBgm
+`);
+    const seen: CommandInstruction[] = [];
+    const commandHandlers = {
+      startBgm: capturePluginCommand(seen),
+      se: capturePluginCommand(seen),
+      voice: capturePluginCommand(seen),
+      stopBgm: capturePluginCommand(seen),
+    };
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const ready = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, ready.state, { commandHandlers });
+    const se = stepRuntime(document, branch.state, { commandHandlers });
+    const voice = stepRuntime(document, se.state, { commandHandlers });
+    const stopBgm = stepRuntime(document, voice.state, { commandHandlers });
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "pluginCommand", name: "startBgm" },
+    });
+    expect(se.event).toEqual({ type: "pluginCommand", name: "se" });
+    expect(voice.event).toEqual({ type: "pluginCommand", name: "voice" });
+    expect(stopBgm.event).toEqual({ type: "pluginCommand", name: "stopBgm" });
+    expect(seen).toMatchObject([
+      {
+        name: "startBgm",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "daily_theme" } }],
+      },
+      { name: "se", args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "doorOpen" } }] },
+      { name: "voice", args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "mio_001" } }] },
+      { name: "stopBgm", args: [] },
+    ]);
+  });
+
   it("preserves DSL v2 variables after snapshot restore", () => {
     const document = compileSource(`scene start:
   set scenario.route = "mio"

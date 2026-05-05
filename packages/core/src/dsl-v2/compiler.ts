@@ -18,6 +18,8 @@ import type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
+  TzrV2AudioAssetRef,
+  TzrV2BgmStatement,
   TzrV2BgStatement,
   TzrV2ClearVisualStatement,
   TzrV2ConditionExpression,
@@ -28,13 +30,16 @@ import type {
   TzrV2NarrationStatement,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SeStatement,
   TzrV2ShowStatement,
   TzrV2SetStatement,
   TzrV2AddStatement,
+  TzrV2StopBgmStatement,
   TzrV2TextBlockItem,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2ValueExpression,
+  TzrV2VoiceStatement,
   TzrV2VisualAssetRef,
   TzrV2VisualTransition,
 } from "./ast.js";
@@ -308,6 +313,18 @@ class TzrV2Compiler {
         case "ClearVisualStatement":
           this.rejectClearVisualStatement(statement);
           break;
+        case "BgmStatement":
+          instructions.push(this.buildBgmInstruction(statement));
+          break;
+        case "StopBgmStatement":
+          instructions.push(this.buildStopBgmInstruction(statement));
+          break;
+        case "SeStatement":
+          instructions.push(this.buildSeInstruction(statement));
+          break;
+        case "VoiceStatement":
+          instructions.push(this.buildVoiceInstruction(statement));
+          break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
           break;
@@ -493,6 +510,61 @@ class TzrV2Compiler {
   }
 
   private visualAssetRefValue(assetRef: TzrV2VisualAssetRef): string {
+    return assetRef.value;
+  }
+
+  private buildBgmInstruction(statement: TzrV2BgmStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "startBgm",
+      args: [
+        this.positionalArgument(
+          this.stringValue(this.audioAssetRefValue(statement.assetRef), statement.assetRef.loc),
+          statement.assetRef.loc,
+        ),
+      ],
+      loc: statement.loc,
+    };
+  }
+
+  private buildStopBgmInstruction(statement: TzrV2StopBgmStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "stopBgm",
+      args: [],
+      loc: statement.loc,
+    };
+  }
+
+  private buildSeInstruction(statement: TzrV2SeStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "se",
+      args: [
+        this.positionalArgument(
+          this.stringValue(this.audioAssetRefValue(statement.assetRef), statement.assetRef.loc),
+          statement.assetRef.loc,
+        ),
+      ],
+      loc: statement.loc,
+    };
+  }
+
+  private buildVoiceInstruction(statement: TzrV2VoiceStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "voice",
+      args: [
+        this.positionalArgument(
+          this.stringValue(this.audioAssetRefValue(statement.assetRef), statement.assetRef.loc),
+          statement.assetRef.loc,
+        ),
+      ],
+      loc: statement.loc,
+    };
+  }
+
+  private audioAssetRefValue(assetRef: TzrV2AudioAssetRef): string {
     return assetRef.value;
   }
 

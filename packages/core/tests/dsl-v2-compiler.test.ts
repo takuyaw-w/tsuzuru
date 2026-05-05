@@ -534,6 +534,92 @@ scene start:
     ]);
   });
 
+  it("compiles bgm identifier to CommandInstruction startBgm", () => {
+    const document = compileSource(`scene start:
+  bgm daily_theme
+`);
+    const instruction = expectCommandInstruction(document, 1, "startBgm");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "daily_theme" } },
+    ]);
+  });
+
+  it("compiles bgm dotted identifier to CommandInstruction startBgm", () => {
+    const document = compileSource(`scene start:
+  bgm music.daily_theme
+`);
+    const instruction = expectCommandInstruction(document, 1, "startBgm");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "music.daily_theme" } },
+    ]);
+  });
+
+  it("compiles bgm string to CommandInstruction startBgm", () => {
+    const document = compileSource(`scene start:
+  bgm "daily-theme"
+`);
+    const instruction = expectCommandInstruction(document, 1, "startBgm");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "daily-theme" } },
+    ]);
+  });
+
+  it("compiles stopBgm to CommandInstruction stopBgm with no args", () => {
+    const document = compileSource(`scene start:
+  stopBgm
+`);
+    const instruction = expectCommandInstruction(document, 1, "stopBgm");
+
+    expect(instruction.args).toEqual([]);
+  });
+
+  it("compiles se identifier to CommandInstruction se", () => {
+    const document = compileSource(`scene start:
+  se doorOpen
+`);
+    const instruction = expectCommandInstruction(document, 1, "se");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "doorOpen" } },
+    ]);
+  });
+
+  it("compiles se string to CommandInstruction se", () => {
+    const document = compileSource(`scene start:
+  se "door-open"
+`);
+    const instruction = expectCommandInstruction(document, 1, "se");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "door-open" } },
+    ]);
+  });
+
+  it("compiles voice identifier to CommandInstruction voice", () => {
+    const document = compileSource(`scene start:
+  voice mio_001
+`);
+    const instruction = expectCommandInstruction(document, 1, "voice");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "mio_001" } },
+    ]);
+  });
+
+  it("compiles voice string to CommandInstruction voice", () => {
+    const document = compileSource(`scene start:
+  voice "mio-001"
+`);
+    const instruction = expectCommandInstruction(document, 1, "voice");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "mio-001" } },
+    ]);
+  });
+
   it("compiles visual statements inside body choice branches", () => {
     const document = compileSource(`scene start:
   choice "Choose":
@@ -554,6 +640,52 @@ scene start:
             { type: "CommandInstruction", name: "hide" },
           ],
         },
+      ],
+    });
+  });
+
+  it("compiles audio statements inside body choice branches", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Listen":
+      bgm daily_theme
+      se doorOpen
+      voice mio_001
+      stopBgm
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      items: [
+        {
+          label: "Listen",
+          body: [
+            { type: "CommandInstruction", name: "startBgm" },
+            { type: "CommandInstruction", name: "se" },
+            { type: "CommandInstruction", name: "voice" },
+            { type: "CommandInstruction", name: "stopBgm", args: [] },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("compiles audio statements inside if branches", () => {
+    const document = compileSource(`scene start:
+  if scenario.hasNotebook:
+    bgm daily_theme
+    se doorOpen
+    voice mio_001
+    stopBgm
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [
+        { type: "CommandInstruction", name: "startBgm" },
+        { type: "CommandInstruction", name: "se" },
+        { type: "CommandInstruction", name: "voice" },
+        { type: "CommandInstruction", name: "stopBgm", args: [] },
       ],
     });
   });
@@ -891,14 +1023,10 @@ scene start:
 `)).toContain("Inline voice is not compile-supported yet.");
   });
 
-  it("rejects unsupported call, wait, audio, and system statements", () => {
+  it("rejects unsupported call, wait, and system statements", () => {
     const cases = [
       { source: "call screen.open(id=notebook)", statement: "CallStatement" },
       { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
-      { source: "bgm daily", statement: "BgmStatement" },
-      { source: "stopBgm", statement: "StopBgmStatement" },
-      { source: "se doorOpen", statement: "SeStatement" },
-      { source: "voice mio_001", statement: "VoiceStatement" },
       { source: "system.unlockAchievement firstClear", statement: "SystemUnlockStatement" },
     ];
 
