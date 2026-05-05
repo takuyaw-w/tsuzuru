@@ -262,6 +262,6 @@ Even then, prefer a constrained DSL construct over JavaScript execution.
 - `docs/dsl.md`
 - `docs/architecture.md`
 - `docs/plugin-api.md`
-- `docs/macro-api.md`
+- `docs/plans/legacy-dsl-cleanup.md`
 - `docs/runtime.md`
 - `docs/roadmap.md`

@@ -1,7 +1,8 @@
 # Tsuzuru Roadmap
 
 > Status: partially historical. Entries that mention legacy `parseTzr` /
-> `compileTzr` or old DSL syntax predate the DSL v2 cleanup. Use
+> `compileTzr`, old DSL syntax, or removed example names predate the DSL v2
+> cleanup. Use
 > [`design/design/dsl-v2.md`](design/design/dsl-v2.md) and
 > [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md) for the current
 > DSL direction.
@@ -337,7 +338,7 @@ Potential scope:
 
 This is not part of v0.1 unless explicitly re-scoped.
 
-For v0.1, project creation is manual. Users should follow the root README quickstart or copy the `examples/preact-basic` structure when creating a Vite + Preact project.
+For v0.1, project creation is manual. Users should follow the root README quickstart or use `examples/dsl-v2-basic` as the current runnable Vite + Preact reference.
 
 ## Vite Integration
 
@@ -347,7 +348,7 @@ Possible package:
 @tsuzuru/vite
 ```
 
-This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`.
+This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzrV2`, then compile it with `compileTzrV2`.
 
 Potential scope:
 
@@ -433,7 +434,7 @@ v0.1 readiness requires:
 - `pnpm typecheck` passes
 - `pnpm --filter @tsuzuru/core build` passes
 - `pnpm --filter @tsuzuru/preact build` passes
-- `pnpm --filter @tsuzuru/example-preact-basic build` passes
+- `pnpm --filter @tsuzuru/example-dsl-v2-basic build` passes
 - examples work from a clean checkout
 - public exports are reviewed
 - README quickstart is accurate

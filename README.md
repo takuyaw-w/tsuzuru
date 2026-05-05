@@ -64,7 +64,7 @@ runtime behavior、rendering、plugins、reusable logic は TypeScript に置く
 @if(calcSomething())
 ```
 
-代わりに、シナリオ側では制約された DSL を使い、拡張は TypeScript plugin / macro として実装します。
+代わりに、シナリオ側では制約された DSL を使い、拡張は TypeScript plugin と runtime handler として実装します。macro API は削除済みで、DSL v2 の current feature ではありません。
 
 ## パッケージ構成
 

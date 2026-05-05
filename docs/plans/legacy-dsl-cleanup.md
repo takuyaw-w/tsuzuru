@@ -1,431 +1,104 @@
-# Legacy DSL cleanup plan
+# Legacy DSL Cleanup Record
 
-This document first inventoried the legacy DSL surface before deleting,
-moving, or reorganizing old DSL files. It now also records the cleanup result.
+> Status: cleanup record and follow-up tracker for `feature/new-dsl`.
+> DSL v2 is the current supported DSL path. This document records what was
+> removed, what remains because it is shared, and what still needs a focused
+> follow-up before v1.0.
 
-Inventory context:
+## Current Supported DSL Surface
 
-- Branch: `feature/new-dsl`
-- Checked HEAD before this plan: `e076985ea41f1c8b37159048856db2689340ffb4`
-- Cleanup commit context: removal performed after `6d530d82b9b8edbfe6a92a34765c4307e80ca03f` on `feature/new-dsl`.
-- The old inventory below is historical context; the cleanup result is the current source of truth.
+- Public APIs: `parseTzrV2`, `compileTzrV2`
+- Parser: `packages/core/src/parser.ts`
+- Compiler: `packages/core/src/compiler.ts`
+- DSL AST: `packages/core/src/scenario-ast.ts`
+- Condition parser/evaluator: `packages/core/src/condition-parser.ts`, `packages/core/src/condition-evaluator.ts`
+- Runnable example: `examples/dsl-v2-basic`
 
-Entry-point status:
+The `packages/core/src/dsl-v2/` transition directory was removed. The DSL v2
+implementation now lives directly under `packages/core/src/`.
 
-- `README.md` now presents DSL v2 as the current supported DSL path.
-- Legacy parser/compiler/API/tests/examples have been removed.
-- Shared runtime/IR/value/plugin command infrastructure remains.
-- DSL v2 implementation files now live directly under `packages/core/src/`: `parser.ts`, `compiler.ts`, `scenario-ast.ts`, `condition-parser.ts`, and `condition-evaluator.ts`. Older references below to legacy parser/compiler files describe the removed implementations before those filenames were reused for the current DSL path.
+## Removed Legacy Surface
 
-Post-cleanup audit status after `4ed8d972bf90f6dedf741ae0217f2fa3b45e37a2`:
+The following legacy-only items were removed during the DSL v2 cleanup:
 
-- Root `@tsuzuru/core` exports no longer expose `parseTzr`, `compileTzr`, `CompiledTzrDocument`, legacy AST types, `evaluateCondition`, or macro API.
-- `parseTzrV2`, `compileTzrV2`, `CompiledTzrV2Document`, `TzrV2*` types, `RuntimeDocument`, runtime APIs, and plugin command metadata/runtime handler types remain exported.
-- `RuntimeDocument.labels` is not used by the current runtime for DSL v2 scene jumps or body choices. It remains for now because `CompiledTzrV2Document` still extends `RuntimeDocument`, existing tests/fixtures include `labels: {}`, and removing it is a public type-shape cleanup. TODO: remove or make this field optional in a focused RuntimeDocument follow-up.
-- `RuntimeState.flags` plus low-level `inc`, `dec`, `flag`, and `unflag` command handlers remain intentionally. DSL v2 authoring currently uses `set` and `add`; docs should not present flag commands as current DSL v2 syntax.
-- The legacy `compileTzr({ pluginCommands })` validation path is gone. `definePluginCommand` and std plugin command maps remain as metadata. TODO: decide the DSL v2 plugin command validation policy before arbitrary plugin-authored DSL v2 commands are supported.
-- The only runnable example package is `examples/dsl-v2-basic`. Deleted example references should remain only inside historical plans/decisions.
-- Historical references in `AGENTS.md`, `TODOS.md`, `docs/decisions/*`, old roadmap/plans, `docs/dsl.md`, and `docs/macro-api.md` are retained as project history or removed-feature reference, not as current API documentation.
+- legacy parser/compiler public APIs: `parseTzr`, `compileTzr`
+- legacy parser/compiler result and option types
+- legacy AST document/statement types
+- legacy IR instruction types such as label jumps, old choices, old if blocks,
+  and macro instructions
+- legacy condition evaluator API such as `evaluateCondition`
+- macro public API and macro expansion path
+- legacy parser/compiler/condition/macro tests
+- legacy example source packages
+- the old `packages/core/src/dsl-v2/` internal directory layout
 
-## Cleanup result
+The legacy `compileTzr({ pluginCommands })` validation path is also gone.
+`definePluginCommand` and std plugin command maps remain as metadata/runtime
+integration points. DSL v2 plugin command validation policy is still undecided.
 
-Removed legacy-only implementation:
+## Dead File Audit Result
 
-- legacy parser implementation formerly at `packages/core/src/parser.ts`; the path now contains `parseTzrV2`
-- legacy compiler implementation formerly at `packages/core/src/compiler.ts`; the path now contains `compileTzrV2`
-- `packages/core/src/condition.ts`
-- `packages/core/src/macro.ts`
-- legacy AST document/statement/condition/jump types from `packages/core/src/ast.ts`
-- legacy IR/runtime support for `LabelInstruction`, `ChoiceInstruction`, `IfInstruction`, `MacroInstruction`, label jumps, and target-label choices
-- public exports for `parseTzr`, `compileTzr`, `ParseResult`, `CompileResult`, `CompileOptions`, legacy AST types, `CompiledTzrDocument`, legacy IR types, `evaluateCondition`, and macro API
-
-Removed legacy-only tests:
-
-- `packages/core/tests/parser.test.ts`
-- `packages/core/tests/compiler.test.ts`
-- `packages/core/tests/condition.test.ts`
-
-Reworked shared tests:
-
-- `packages/core/tests/runtime.test.ts` now uses DSL v2 or manual `RuntimeDocument` fixtures.
-- `packages/preact/tests/use-runtime.test.ts` now uses DSL v2 compiled documents and body choices.
-- std visual/audio plugin tests now exercise runtime handlers with manual `CommandInstruction` fixtures.
-- standard UI tests no longer expect label-jump or `MacroInstruction` events.
-
-Removed legacy-only examples:
-
-- `examples/basic`
-- `examples/preact-basic`
-- `examples/preact-std-visual`
-- `examples/preact-std-audio`
-- `examples/standard-ui-preact`
-
-Kept current example:
-
-- `examples/dsl-v2-basic`
-
-Kept shared files/types because DSL v2/runtime still depend on them:
-
-- `packages/core/src/ast.ts`: `SourceLocation`, `SourceRange`, `TextLine`, `TzrArgument`, `TzrValue`, and shared argument/value variants.
-- `packages/core/src/ir.ts`: `RuntimeDocument`, `TzrInstruction`, `SceneInstruction`, `SceneJumpInstruction`, `NarrationInstruction`, `DialogueInstruction`, `CommandInstruction`, `BodyChoiceInstruction`, `V2IfInstruction`, and declaration index metadata.
-- `packages/core/src/runtime.ts`, `runtime-control.ts`, `runtime-commands.ts`, `runtime-types.ts`, `runtime-snapshot.ts`, `runtime-args.ts`, and `runtime-frames.ts`.
-- `packages/core/src/diagnostic.ts`, used by DSL v2 parser/compiler.
-- `packages/core/src/commands.ts`, still used by runtime command dispatch.
-- `packages/core/src/plugin-command.ts`, extracted from the legacy compiler to keep `definePluginCommand` and plugin command metadata available for std plugins.
-
-Remaining legacy-shaped elements retained intentionally:
-
-- `RuntimeDocument.labels` remains as an empty shared field because `CompiledTzrV2Document` still extends `RuntimeDocument` and existing runtime document shape includes labels.
-- `RuntimeState.flags` and runtime helper commands `inc`, `dec`, `flag`, and `unflag` remain as low-risk runtime primitives. DSL v2 does not currently parse these as supported authoring syntax.
-- Several docs are marked historical rather than fully rewritten in this cleanup.
-- Plugin command schema metadata remains, but legacy compile-time plugin command validation was removed with `compileTzr`. DSL v2 plugin validation policy is a follow-up decision.
-
-## 1. Current legacy DSL inventory
-
-### Parser
-
-| Item | Classification | Notes |
+| Item | Classification | Decision |
 |---|---|---|
-| legacy parser implementation formerly at `packages/core/src/parser.ts` | legacy-only | Implemented `parseTzr`, `ParseResult`, legacy line parser, `#scene(...)`, `#label(...)`, `:: Speaker`, `@command(...)`, `$macro(...)`, `?` choice, `@if` / `@else` / `@endif`, legacy jump target parsing. The path is now reused for `parseTzrV2`. |
-| `packages/core/src/diagnostic.ts` | shared runtime/IR | Used by both legacy parser/compiler and DSL v2 parser/compiler for diagnostics. Do not delete with legacy parser. |
-
-### AST
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/ast.ts` legacy document/statement types | shared public API | `TzrDocument`, `TzrStatement`, `SceneDeclaration`, `LabelDeclaration`, `CommandStatement`, `MacroStatement`, `ChoiceBlock`, `IfBlock`, legacy `ConditionExpression`, and `JumpTarget` are legacy-facing and exported publicly. |
-| `packages/core/src/ast.ts` shared primitives | shared runtime/IR | `SourceLocation`, `SourceRange`, `TextLine`, `TzrArgument`, and `TzrValue` are still used by shared IR, runtime events, DSL v2 AST/compiler, and command args. The file cannot be deleted wholesale without extracting these primitives first. |
-| `packages/core/src/scenario-ast.ts` imports from `./ast.js` | shared runtime/IR | DSL v2 AST currently reuses `SourceRange`; this creates a direct dependency on shared primitives in `ast.ts`. |
-
-### Compiler
-
-| Item | Classification | Notes |
-|---|---|---|
-| legacy compiler implementation formerly at `packages/core/src/compiler.ts` | legacy-only | Compiled `TzrDocument` to `CompiledTzrDocument`; validated duplicate labels/scenes, legacy jump and choice targets, core/plugin command args, macro expansion, and forbidden macro results. The path is now reused for `compileTzrV2`. |
-| `packages/core/src/compiler.ts` plugin command definitions | shared public API | `definePluginCommand`, `PluginCommandDefinition`, `PluginCommandArgumentSchema`, and related types are exported public API and used by plugin docs/tests. DSL v2 does not currently consume `CompileOptions`, so future ownership needs a decision. |
-| `packages/core/src/commands.ts` | shared runtime/IR | Defines core command names and metadata used by legacy compiler and runtime command handling. DSL v2 compiles `set`, `wait`, and related behavior into shared command instructions. |
-
-### Condition evaluator
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/condition.ts` | legacy-only | Evaluated legacy `ConditionExpression` for `IfInstruction`. Removed with the legacy runtime instruction support. DSL v2 uses `condition-parser.ts` and `condition-evaluator.ts` instead. |
-
-### Macro support
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/macro.ts` | legacy-only | Expands legacy `MacroInstruction` through `compileTzr`. DSL v2 has no macro syntax or macro AST at this point. Public exports make removal a public API decision. |
-| `MacroStatement` in `ast.ts` | legacy-only | Produced only by legacy `$macro(...)` syntax. |
-| `MacroInstruction` in `ir.ts` | unclear / needs decision | Runtime treats it as unsupported, legacy compiler removes successful macros, tests and UI packages still cover unsupported rendering. Keep until macro public API policy is decided. |
-
-### Runtime instructions still shared
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/ir.ts` | shared runtime/IR | Contains legacy and v2 IR in one union: `LabelInstruction`, `ChoiceInstruction`, `IfInstruction`, `MacroInstruction` are legacy-facing; `SceneJumpInstruction`, `BodyChoiceInstruction`, `V2IfInstruction`, `CommandInstruction`, `NarrationInstruction`, `DialogueInstruction`, and `RuntimeDocument` are shared by DSL v2/runtime. |
-| `packages/core/src/runtime.ts` | shared runtime/IR | Executes both legacy and v2 instructions. Includes legacy label jump and choice handling plus v2 scene jump, body choice, and v2 if support. |
-| `packages/core/src/runtime-control.ts` | shared runtime/IR | Contains legacy `stepIfInstruction` / `stepChoiceInstruction` and v2 `stepV2IfInstruction` / `stepBodyChoiceInstruction`. Imports both legacy and v2 condition evaluators. |
-| `packages/core/src/runtime-commands.ts` | shared runtime/IR | Handles core commands used by legacy and instructions emitted by DSL v2, including internal `__tsuzuru_v2_add`. |
-| `packages/core/src/runtime-types.ts` | shared runtime/IR | Runtime events/state are shared; `RuntimeChoiceItem` supports both target-label choices and body choices. Imports legacy `TextLine` from `ast.ts`. |
-| `packages/core/src/runtime-snapshot.ts` | shared runtime/IR | Clones shared instructions, branch frames, pending choices, and body-choice item bodies. Required by DSL v2 runtime/save behavior. |
-| `packages/core/src/runtime-args.ts` | shared runtime/IR | Reads `TzrArgument` values for runtime commands and plugin command handlers. |
-| `packages/core/src/runtime-frames.ts` | shared runtime/IR | Shared branch-frame execution for legacy `IfInstruction` and v2 `V2IfInstruction`/body choices. |
-
-### Tests
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/tests/parser.test.ts` | test-only | Legacy parser coverage for `parseTzr`, legacy commands, macros, choices, labels, and `@if`. |
-| `packages/core/tests/compiler.test.ts` | test-only | Legacy compiler coverage for `compileTzr`, plugin command validation, macro expansion, label/choice validation, and forbidden macro output. |
-| `packages/core/tests/condition.test.ts` | test-only | Legacy `evaluateCondition` coverage. |
-| `packages/core/tests/runtime.test.ts` | test-only | Mostly legacy runtime coverage, but also covers shared runtime behavior that DSL v2 relies on. Split before deleting legacy tests. |
-| `packages/core/tests/commands.test.ts` | test-only | Shared core command registry tests. |
-| `packages/preact/tests/use-runtime.test.ts` | test-only | Uses legacy `parseTzr`/`compileTzr`; also verifies shared Preact adapter behavior. Needs migration or v2 companion tests later. |
-| `packages/plugin-std-visual/tests/index.test.ts` | test-only | Uses legacy `parseTzr`/`compileTzr` to verify std visual plugin integration. |
-| `packages/plugin-std-audio/tests/index.test.ts` | test-only | Uses legacy `parseTzr`/`compileTzr` to verify std audio plugin integration. |
-| `packages/standard-ui-preact/tests/index.test.tsx` | test-only | Does not parse legacy DSL directly, but expects unsupported `MacroInstruction` display behavior. |
-
-### Examples
-
-| Item | Classification | Notes |
-|---|---|---|
-| `examples/basic` | legacy-only | Node example using `parseTzr`, `compileTzr`, `createInitialRuntimeState`, and `stepRuntime`. Migrate later or keep as legacy reference. |
-| `examples/preact-basic` | legacy-only | Vite/Preact example using legacy parser/compiler plus `useRuntime` and `RuntimeView`. |
-| `examples/preact-std-visual` | legacy-only | Uses legacy syntax and `stdVisualPluginCommands`; keep until v2 std visual path is the recommended example. |
-| `examples/preact-std-audio` | legacy-only | Uses legacy syntax and `stdAudioPluginCommands`; keep until v2 std audio path is the recommended example. |
-| `examples/standard-ui-preact` | legacy-only | Uses legacy parser/compiler with standard UI package. Migration depends on standard UI accepting v2 compiled documents. |
-| `examples/dsl-v2-basic` | shared runtime/IR | DSL v2-first runnable example using `parseTzrV2`, `compileTzrV2`, manual runtime stepping, visual/audio layers, and shared runtime state. |
-
-### Docs
-
-| Item | Classification | Notes |
-|---|---|---|
-| `README.md` | docs-only | Presents legacy `#scene` / `#label` / `@if` syntax as the main DSL. Update after plan review, not in this task. |
-| `docs/dsl.md` | docs-only | Source of truth for current legacy DSL syntax. Should become a legacy reference or be replaced by DSL v2 docs after the v2 merge decision. |
-| `docs/architecture.md` | docs-only | Uses `parseTzr`, `compileTzr`, `TzrDocument`, and legacy syntax in architecture flow. |
-| `docs/runtime.md` | docs-only | Describes legacy label jumps and `compileTzr` plugin registration, while also covering shared runtime behavior. |
-| `docs/plugin-api.md` | docs-only | Describes plugin command registration through legacy `compileTzr`. |
-| `docs/macro-api.md` | docs-only | Legacy macro API reference. Keep as legacy reference while public macro exports exist. |
-| `docs/plugins/std-visual.md` | docs-only | Shows `compileTzr` integration for std visual plugin. Needs v2-oriented update later. |
-| `docs/plugins/std-audio.md` | docs-only | Shows `compileTzr` integration for std audio plugin. Needs v2-oriented update later. |
-| `docs/roadmap.md` | docs-only | Contains legacy DSL examples and `parseTzr` loading guidance. |
-| `docs/design/design/dsl-v2.md` | docs-only | DSL v2 design draft. Keep and reconcile with implemented v2 behavior. |
-| `docs/plans/dsl-v2-compile-to-ir.md` | docs-only | Existing plan that documents legacy pipeline and v2 compile strategy. Keep as historical/implementation planning context. |
-| `docs/decisions/*.md` | docs-only | ADRs contain legacy syntax examples as design rationale. Usually keep; add context only if they are confused with current syntax docs. |
-
-### Public exports
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/index.ts` legacy parse/compile exports | shared public API | `parseTzr`, `compileTzr`, `ParseResult`, `CompileResult`, `CompileOptions`, and plugin command schema types are public. Do not remove in this branch. |
-| `packages/core/src/index.ts` legacy AST exports | shared public API | `TzrDocument`, `TzrStatement`, `MacroStatement`, `IfBlock`, `ChoiceBlock`, `JumpTarget`, and legacy value/condition types are public. |
-| `packages/core/src/index.ts` legacy/shared IR exports | shared public API | `CompiledTzrDocument`, `LabelInstruction`, `ChoiceInstruction`, `IfInstruction`, `MacroInstruction`, `CommandInstruction`, `TzrInstruction`, and runtime types are public. Some are legacy-only, some are shared. |
-| `packages/core/src/index.ts` v2 exports | shared public API | `parseTzrV2`, `compileTzrV2`, `CompiledTzrV2Document`, `TzrV2*` types, and v2 condition helpers are already public. |
-
-## 2. Current DSL v2 inventory
-
-| Item | Classification | Notes |
-|---|---|---|
-| `packages/core/src/parser.ts` | legacy-independent v2 | Exports `parseTzrV2`; parses indentation-based v2 syntax. |
-| `packages/core/src/compiler.ts` | legacy-independent v2 plus shared IR | Exports `compileTzrV2`; compiles v2 AST to shared `RuntimeDocument`/`TzrInstruction` shapes. |
-| `packages/core/src/scenario-ast.ts` | v2 AST | Exports `TzrV2Document`, `TzrV2SceneStatement`, condition/value/text/std visual/audio/system statement types. Imports shared `SourceRange`. |
-| `packages/core/src/condition-parser.ts` | v2 condition parser | Exports `parseTzrV2ConditionExpression`. |
-| `packages/core/src/condition-evaluator.ts` | v2 condition evaluator | Used by runtime-control for `V2IfInstruction` and conditional body choices. |
-| `packages/core/src/index.ts` | v2 public surface | Re-exports v2 parser/compiler/AST/condition APIs into root `index.ts`. |
-| `packages/core/tests/dsl-v2-*.test.ts` | v2 tests | Parser, compiler, runtime, conditions, choices, if, state, inline text, std visual/audio/system coverage. |
-| `examples/dsl-v2-basic` | v2 example | Runnable Vite/Preact example using `parseTzrV2`, `compileTzrV2`, manual runtime, scene/narration/dialogue/end, scene jumps, choices, conditional choices, if, set/add, std visual/audio compile output. |
-
-## 3. Shared components that must not be deleted accidentally
-
-Do not delete these as part of a legacy cleanup unless the v2 replacement is already in place:
-
-| File | Why it is shared |
-|---|---|
-| `packages/core/src/ir.ts` | Shared `RuntimeDocument`, `TzrInstruction`, narration/dialogue/command/scene/body-choice/v2-if instructions. Also still contains legacy instructions. |
-| `packages/core/src/runtime.ts` | Single runtime executor for both legacy compiled documents and v2 compiled documents. |
-| `packages/core/src/runtime-control.ts` | Shared branch and choice runtime logic; contains both legacy and v2 handlers. |
-| `packages/core/src/runtime-commands.ts` | Shared core command execution, plugin command dispatch, and DSL v2 internal add command. |
-| `packages/core/src/runtime-types.ts` | Shared runtime state, events, pending choice/wait, plugin handler APIs, snapshots. |
-| `packages/core/src/runtime-snapshot.ts` | Shared snapshot cloning for branch frames and body choices. |
-| `packages/core/src/runtime-frames.ts` | Shared branch-frame execution support. |
-| `packages/core/src/runtime-args.ts` | Shared command argument readers for core and plugin command execution. |
-| `packages/core/src/diagnostic.ts` | Shared diagnostic model for legacy and v2 parsers/compilers. |
-| `packages/core/src/commands.ts` | Shared command registry and runtime command identity. |
-| `packages/core/src/ast.ts` | Mixed: legacy AST plus shared primitives. Extract primitives before deleting legacy AST. |
-| `packages/core/src/compiler.ts` | Mixed: legacy compiler plus public plugin command definition/schema types. Decide API ownership before moving/removing. |
-| `packages/core/src/macro.ts` | Legacy-only behavior but public macro API. Removing it is a public API break. |
-| `packages/core/src/condition.ts` | Legacy-only evaluator, but required while runtime still supports `IfInstruction`. |
-
-## 4. Public API impact
-
-Legacy-facing root exports from `packages/core/src/index.ts` include:
-
-- Parser/compiler: `parseTzr`, `compileTzr`, `ParseResult`, `CompileResult`, `CompileOptions`.
-- Legacy AST: `TzrDocument`, `TzrStatement`, `SceneDeclaration`, `LabelDeclaration`, `NarrationBlock`, `SpeakerBlock`, `CommandStatement`, `MacroStatement`, `ChoiceBlock`, `IfBlock`, `ChoiceItem`, `JumpTarget`, legacy condition/value/argument types.
-- Legacy/shared compiler APIs: `definePluginCommand`, `PluginCommandDefinition`, `PluginCommandMap`, `PluginCommandArgumentSchema`, and related plugin command schema types.
-- Legacy/shared IR: `CompiledTzrDocument`, `LabelInstruction`, `ChoiceInstruction`, `IfInstruction`, `MacroInstruction`, `CommandInstruction`, `SceneInstruction`, `NarrationInstruction`, `DialogueInstruction`, `TzrInstruction`, `RuntimeDocument`.
-- Macro API: `MacroContext`, `MacroDefinition`, `MacroEntry`, `MacroExpandFunction`, `MacroMap`, `expandMacro`.
-- Legacy condition API: `evaluateCondition`.
-
-V2-facing root exports include:
-
-- Parser/compiler: `parseTzrV2`, `compileTzrV2`, `parseTzrV2ConditionExpression`.
-- V2 compiled output: `CompiledTzrV2Document`, `TzrV2CompileOptions`, `TzrV2CompileResult`, `TzrV2DocumentMetadata`, `TzrV2CompiledCharacter`, `TzrV2CompiledSceneMetadata`.
-- V2 AST/types: `TzrV2Document`, `TzrV2TopLevelDeclaration`, `TzrV2SceneDeclaration`, `TzrV2SceneStatement`, `TzrV2NarrationStatement`, `TzrV2DialogueStatement`, `TzrV2ChoiceStatement`, `TzrV2IfStatement`, `TzrV2SetStatement`, `TzrV2AddStatement`, `TzrV2BgStatement`, `TzrV2ShowStatement`, `TzrV2HideStatement`, `TzrV2BgmStatement`, `TzrV2StopBgmStatement`, `TzrV2SeStatement`, `TzrV2VoiceStatement`, condition/value/text/inline/std system types.
-- Shared v2 runtime IR: `SceneJumpInstruction`, `BodyChoiceInstruction`, `BodyChoiceInstructionItem`, `V2IfInstruction`, `V2ElifInstructionBranch`.
-
-Impact:
-
-- Removing `parseTzr` or `compileTzr` would break current examples, Preact tests, std plugin tests, docs, and any external users of the v0.1 API.
-- Moving implementation files can preserve public exports if `index.ts` keeps re-exporting the same names, but internal imports and package tests must be updated carefully.
-- Removing legacy AST exports is a public API break even if runtime keeps working.
-- `CompiledTzrDocument` and `CompiledTzrV2Document` are separate public document types. Do not collapse them until release policy is decided.
-
-## 5. Existing examples impact
-
-| Example | Current parser/compiler | Runtime integration | Classification | Suggested action |
-|---|---|---|---|---|
-| `examples/basic` | `parseTzr` / `compileTzr` | Manually wired `createInitialRuntimeState` / `stepRuntime` | migrate later | Replace or mark as legacy after v2 CLI/basic example exists. |
-| `examples/preact-basic` | `parseTzr` / `compileTzr` | `@tsuzuru/preact` `useRuntime` and `RuntimeView` | migrate later | Migrate after Preact adapter accepts v2 compiled documents in examples. |
-| `examples/preact-std-visual` | `parseTzr` / `compileTzr` | `useRuntime`, `RuntimeView`, std visual handlers | replace later | Replace with v2 visual sugar example or fold into `dsl-v2-basic`. |
-| `examples/preact-std-audio` | `parseTzr` / `compileTzr` | `useRuntime`, `RuntimeView`, std audio handlers | replace later | Replace with v2 audio sugar example or fold into `dsl-v2-basic`. |
-| `examples/standard-ui-preact` | `parseTzr` / `compileTzr` | `useRuntime` plus standard UI package | migrate later | Migrate once standard UI v2 scenario contract is decided. |
-| `examples/dsl-v2-basic` | `parseTzrV2` / `compileTzrV2` | Manually wired runtime with visual/audio layers | keep unchanged | Keep as the current v2 runnable proof. |
-
-## 6. Existing docs impact
-
-| Doc | Current state | Classification | Suggested action |
-|---|---|---|---|
-| `README.md` | Presents legacy DSL as the main user-facing syntax. | update immediately | After this plan is reviewed, add wording that legacy syntax is deprecated/legacy and DSL v2 is the recommended direction. |
-| `docs/dsl.md` | Legacy DSL source of truth. | keep as legacy reference | Rename or banner later; do not change in this task. |
-| `docs/design/design/dsl-v2.md` | DSL v2 design draft. | update after v2 merge | Reconcile draft status and implemented subset after v2 stabilization. |
-| `docs/plans/dsl-v2-compile-to-ir.md` | Historical v2 compile plan. | keep as legacy/v2 planning reference | Keep; optionally mark completed sections later. |
-| `docs/architecture.md` | Architecture uses legacy parse/compile flow. | update after v2 merge | Update pipeline diagrams and document dual parse/compile period. |
-| `docs/runtime.md` | Mixes shared runtime with legacy label-jump docs. | update after v2 merge | Add v2 scene jump/body choice notes and distinguish legacy label jumps. |
-| `docs/plugin-api.md` | Uses `compileTzr` plugin registration model. | update after v2 merge | Decide how plugin command validation should work for v2 first. |
-| `docs/macro-api.md` | Describes `$macro(...)` and legacy macro APIs. | keep as legacy reference | Keep while macro public exports remain; mark legacy/deprecated later. |
-| `docs/plugins/std-visual.md` | Shows legacy `compileTzr` integration. | update after v2 merge | Add v2 visual sugar integration path. |
-| `docs/plugins/std-audio.md` | Shows legacy `compileTzr` integration. | update after v2 merge | Add v2 audio sugar integration path. |
-| `docs/roadmap.md` | Contains legacy syntax and `parseTzr` guidance. | update after v2 merge | Align roadmap with v2-first release plan. |
-| `docs/decisions/*.md` | ADRs contain legacy syntax examples. | keep as legacy reference | Keep historical decisions; only add notes if needed to avoid confusion. |
-
-## 7. Cleanup strategy options
-
-### Option A: Keep legacy DSL fully until v1.0 and mark it deprecated
-
-Benefits:
-
-- Lowest short-term breakage risk.
-- Keeps current examples, docs, Preact tests, and plugin tests passing while DSL v2 stabilizes.
-- Allows users of v0.1 public API to migrate intentionally.
-
-Risks:
-
-- Maintains two DSL surfaces longer.
-- Docs must be clear so legacy syntax does not look like the recommended path.
-- Runtime/IR remains mixed until later cleanup.
-
-Estimated work: small for deprecation notes; medium ongoing maintenance.
-
-Recommended timing: now through `feature/new-dsl` stabilization.
-
-### Option B: Move legacy DSL into `packages/core/src/legacy/` but keep public exports
-
-Benefits:
-
-- Clarifies ownership and reduces accidental mixing.
-- Preserves public API if root exports stay the same.
-- Makes later removal easier.
-
-Risks:
-
-- Mechanical import churn across compiler/parser/tests/docs.
-- `ast.ts` and `compiler.ts` contain shared primitives/public plugin types, so extraction must happen first.
-- Easy to break public declarations if the move is rushed.
-
-Estimated work: medium.
-
-Recommended timing: after examples/docs are v2-first and after shared primitives are extracted.
-
-### Option C: Remove legacy DSL before v1.0 and make DSL v2 the only DSL
-
-Benefits:
-
-- Simplest long-term product story.
-- Removes mixed IR/runtime legacy paths sooner.
-- Avoids stabilizing a legacy syntax publicly.
-
-Risks:
-
-- Immediate public API break for `parseTzr`, `compileTzr`, legacy AST/macro types, and current examples.
-- Requires migrating Preact tests, plugin tests, standard UI tests, examples, README, and docs first.
-- May block stabilization if v2 still needs API and docs polish.
-
-Estimated work: large.
-
-Recommended timing: only at a v1.0 release gate after explicit public API policy.
-
-### Option D: Keep legacy parser/compiler as internal tests only and remove public exports later
-
-Benefits:
-
-- Lets the codebase keep regression coverage for runtime compatibility while moving users to v2.
-- Creates a staged path to remove public exports without deleting code immediately.
-- Can be paired with Option B.
-
-Risks:
-
-- Internal-only APIs can still create maintenance burden.
-- Requires a clear package export policy and docs messaging.
-- If external users already rely on legacy exports, removal still needs a release note/migration path.
-
-Estimated work: medium.
-
-Recommended timing: after README/docs/examples are v2-first and before final v1.0 API freeze.
-
-## 8. Recommended policy
-
-Recommendation:
-
-- Do not delete legacy DSL immediately.
-- Mark legacy DSL as deprecated/legacy in docs and internal comments after this plan is reviewed.
-- Keep `parseTzr` and `compileTzr` during `feature/new-dsl` stabilization.
-- Keep runtime shared components intact until v2 examples, tests, and docs no longer depend on legacy-only paths.
-- After examples and docs move to DSL v2, decide whether to remove legacy DSL or move it under `src/legacy/` before v1.0.
-- Avoid breaking public exports inside this branch until final release planning.
-
-## 9. Proposed phased cleanup plan
-
-### Phase 1: Inventory and document legacy DSL surface
-
-Status: this document.
-
-Deliverables:
-
-- Inventory legacy parser, AST, compiler, condition, macro, runtime IR, tests, examples, docs, and public exports.
-- Identify shared files that must not be deleted accidentally.
-
-### Phase 2: Add deprecation notes/comments
-
-Deliverables:
-
-- Add docs banners to `docs/dsl.md`, `docs/macro-api.md`, and relevant README sections.
-- Add small comments near `parseTzr` and `compileTzr` noting legacy status.
-- No behavior changes.
-
-### Phase 3: Move examples toward DSL v2
-
-Deliverables:
-
-- Keep `examples/dsl-v2-basic` as the v2-first runnable example.
-- Add or migrate Preact adapter examples to use `parseTzrV2` / `compileTzrV2`.
-- Decide which legacy examples remain as compatibility references.
-
-### Phase 4: Update README to present DSL v2 as recommended syntax
-
-Deliverables:
-
-- README quickstart and syntax examples should point to DSL v2.
-- Legacy syntax should be explicitly marked as legacy/deprecated if still exported.
-
-### Phase 5: Decide public API policy
-
-Options:
-
-- Keep `parseTzr` / `compileTzr` as legacy APIs.
-- Rename to `parseLegacyTzr` / `compileLegacyTzr` and keep compatibility aliases for a defined period.
-- Remove legacy exports in v1.0.
-
-Decision inputs:
-
-- External compatibility expectations.
-- Whether v1.0 should include any deprecated APIs.
-- How plugin command validation should work for DSL v2.
-
-### Phase 6: Optionally move legacy implementation under `src/legacy/`
-
-Prerequisites:
-
-- Shared primitives extracted from `ast.ts`.
-- Public plugin command definitions either extracted from `compiler.ts` or explicitly kept in legacy.
-- Tests updated without changing public exports.
-
-### Phase 7: Final removal decision before v1.0 release gate
-
-Release gate questions:
-
-- Are all recommended examples on DSL v2?
-- Does README describe DSL v2 as the main syntax?
-- Are public exports intentionally stable?
-- Are legacy docs either removed, archived, or clearly marked legacy?
-
-## 10. Concrete next task recommendation
-
-Immediate next task after this plan is reviewed:
-
-- Add legacy/deprecated comments and README/docs wording only.
-- Do not delete code yet.
-- Do not move files yet.
-- Do not rename `parseTzr` / `compileTzr` yet.
-- Do not change runtime/compiler behavior yet.
+| `docs/macro-api.md` | delete now | Removed. The public macro API no longer exists and macro support is intentionally out of scope. Historical macro rationale remains in ADR 0003. |
+| `docs/dsl.md` | rewrite/minimize | Rewritten as the current DSL v2 entry point. Legacy `#scene(...)`, `#label(...)`, `@command(...)`, and `$macro(...)` are explicitly marked historical. |
+| `docs/plans/dsl-v2-compile-to-ir.md` | keep with note | Retained as an implementation plan/history document. It already carries a historical status note. |
+| `docs/plans/legacy-dsl-cleanup.md` | keep with note | Retained as this cleanup record and follow-up tracker. |
+| Old example dist-only directories | delete now | Removed because they referenced deleted legacy examples and were not runnable source packages. |
+| `README.md` | rewrite/minimize | Kept DSL v2-first; removed wording that implied current macro support. |
+| ADRs under `docs/decisions/` | keep with note | Retained as historical decisions. Broken links to the removed macro API doc were replaced. |
+| `docs/roadmap.md` | keep with note | Retained as partially historical roadmap. It has a status note warning about legacy syntax and APIs. |
+| `docs/architecture.md` | keep with note | Retained as partially historical architecture map. A full rewrite is a larger docs task. |
+
+## Shared Components Retained
+
+These files are still used by DSL v2, runtime, tests, examples, or plugin
+integration and must not be removed as part of legacy cleanup:
+
+- `packages/core/src/ast.ts`: shared primitive source/value/text types such as
+  `SourceLocation`, `SourceRange`, `TextLine`, `TzrArgument`, and `TzrValue`
+- `packages/core/src/ir.ts`: current runtime instruction/document types
+- `packages/core/src/runtime.ts`
+- `packages/core/src/runtime-control.ts`
+- `packages/core/src/runtime-commands.ts`
+- `packages/core/src/runtime-frames.ts`
+- `packages/core/src/runtime-snapshot.ts`
+- `packages/core/src/runtime-types.ts`
+- `packages/core/src/commands.ts`
+- `packages/core/src/diagnostic.ts`
+- `packages/core/src/plugin-command.ts`
+
+## RuntimeDocument And Runtime State Follow-Ups
+
+`RuntimeDocument.labels` remains for now. Current DSL v2 scene jumps and body
+choices do not use it, and `CompiledTzrV2Document` currently emits `labels: {}`.
+Removing the field would touch public type shape and many tests/fixtures, so it
+should be handled in a focused runtime document cleanup.
+
+`RuntimeState.flags` and the low-level `inc`, `dec`, `flag`, and `unflag`
+runtime command handlers remain. DSL v2 authoring currently uses `set` and
+`add`; docs must not present flag commands as current DSL v2 syntax. These
+runtime primitives can be revisited once the v2 state model is finalized.
+
+## Residual Reference Policy
+
+Residual mentions of legacy syntax or APIs are acceptable only in:
+
+- historical ADRs
+- historical implementation plans
+- cleanup records
+- repository instructions that describe old design context
+
+Current entry points such as `README.md`, `docs/dsl.md`, current plugin docs,
+and runnable example docs should present DSL v2 as the supported path and must
+not direct users to `parseTzr`, `compileTzr`, `$macro(...)`, `#scene(...)`, or
+old example packages as current behavior.
+
+## Remaining PR-Ready Tasks
+
+- Decide DSL v2 plugin command validation policy.
+- Decide whether `RuntimeDocument.labels` should be removed or made optional.
+- Decide whether `RuntimeState.flags` and `inc` / `dec` / `flag` / `unflag`
+  remain long-term runtime primitives.
+- Rewrite `docs/architecture.md` from a DSL v2-first perspective.
+- Refresh historical roadmap wording when v0.1 release scope is finalized.

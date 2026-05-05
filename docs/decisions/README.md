@@ -44,12 +44,12 @@ When changing package boundaries, read:
 2. `../architecture.md`
 3. `../runtime.md`
 
-When changing plugin or macro behavior, read:
+When changing plugin behavior or revisiting historical macro decisions, read:
 
 1. `0003-macro-vs-plugin.md`
 2. `../plugin-api.md`
-3. `../macro-api.md`
-4. `../dsl.md`
+3. `../dsl.md`
+4. `../plans/legacy-dsl-cleanup.md`
 
 ## File Naming
 

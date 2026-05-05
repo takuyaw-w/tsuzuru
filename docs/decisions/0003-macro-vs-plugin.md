@@ -486,7 +486,7 @@ Even then, prefer explicit DSL constructs over hidden macro control flow.
 - `docs/architecture.md`
 - `docs/dsl.md`
 - `docs/plugin-api.md`
-- `docs/macro-api.md`
+- `docs/plans/legacy-dsl-cleanup.md`
 - `docs/runtime.md`
 - `docs/roadmap.md`
 - `docs/decisions/0001-dsl-is-not-js.md`
