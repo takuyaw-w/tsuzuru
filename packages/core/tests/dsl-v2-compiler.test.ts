@@ -240,13 +240,79 @@ scene start:
 `)).toContain('DSL v2 statement "IfStatement" is not compile-supported yet.');
   });
 
-  it("rejects unsupported choice statements after preserving nested validation", () => {
-    expect(expectCompileFailure(`scene start:
+  it("compiles unconditional choice into BodyChoiceInstruction", () => {
+    const document = compileSource(`scene start:
   choice "Choose":
+    "Stay" id=stay:
+      narration:
+        Stay here.
     "Go":
       jump later
 scene later:
-`)).toContain('DSL v2 statement "ChoiceStatement" is not compile-supported yet.');
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "BodyChoiceInstruction",
+        question: "Choose",
+        items: [
+          {
+            label: "Stay",
+            id: "stay",
+            body: [{ type: "NarrationInstruction", lines: [{ text: "Stay here." }] }],
+          },
+          {
+            label: "Go",
+            body: [{ type: "SceneJumpInstruction", sceneId: "later" }],
+          },
+        ],
+      },
+      { type: "SceneInstruction", id: "later" },
+    ]);
+  });
+
+  it("compiles choice item body dialogue and end statements", () => {
+    const document = compileSource(`character mio name="Mio"
+scene start:
+  choice "Choose":
+    "Talk" id=talk:
+      mio:
+        Hello.
+      end
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      question: "Choose",
+      items: [
+        {
+          label: "Talk",
+          id: "talk",
+          body: [
+            { type: "DialogueInstruction", speaker: "mio", lines: [{ text: "Hello." }] },
+            { type: "CommandInstruction", name: "stop", args: [] },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("rejects conditional choice items for now", () => {
+    expect(expectCompileFailure(`scene start:
+  choice "Choose":
+    "Locked" if scenario.unlocked:
+      jump later
+scene later:
+`)).toContain("Conditional choice items are not compile-supported yet.");
+  });
+
+  it("rejects unsupported statements inside choice item bodies", () => {
+    expect(expectCompileFailure(`scene start:
+  choice "Choose":
+    "Set route":
+      set scenario.route = "mio"
+`)).toContain('DSL v2 statement "SetStatement" is not compile-supported yet.');
   });
 
   it("rejects duplicate title declarations", () => {

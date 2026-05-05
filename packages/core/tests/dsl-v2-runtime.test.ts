@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   compileTzrV2,
+  createRuntimeSnapshot,
   createInitialRuntimeState,
   parseTzrV2,
+  resolveChoice,
+  restoreRuntimeState,
   stepRuntime,
   type CompiledTzrV2Document,
 } from "../src/index.js";
@@ -140,6 +143,177 @@ scene later:
       type: "jump",
       sceneId: "later",
       instructionIndex: 2,
+    });
+  });
+
+  it("runs DSL v2 scene to choice event", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay" id=stay:
+      narration:
+        Stay.
+    "Go":
+      narration:
+        Go.
+`);
+
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+
+    expect(choice.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [
+        { id: "stay", text: "Stay" },
+        { text: "Go" },
+      ],
+    });
+    expect(choice.state.pendingChoice).toMatchObject({
+      kind: "body",
+      question: "Choose",
+      items: [
+        { id: "stay", text: "Stay", body: [{ type: "NarrationInstruction" }] },
+        { text: "Go", body: [{ type: "NarrationInstruction" }] },
+      ],
+    });
+  });
+
+  it("resolves the first DSL v2 body choice item and executes its body", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay" id=stay:
+      narration:
+        Stay.
+    "Go" id=go:
+      narration:
+        Go.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const narration = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 0,
+      id: "stay",
+      text: "Stay",
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Stay." }],
+    });
+  });
+
+  it("resolves the second DSL v2 body choice item and executes its body", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay" id=stay:
+      narration:
+        Stay.
+    "Go" id=go:
+      narration:
+        Go.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const resolved = resolveChoice(document, choice.state, 1);
+    const narration = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 1,
+      id: "go",
+      text: "Go",
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Go." }],
+    });
+  });
+
+  it("runs a DSL v2 choice body that jumps to another scene", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Go":
+      jump later
+scene later:
+  narration:
+    Later.
+`);
+    const sceneStart = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, sceneStart.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const jump = stepRuntime(document, resolved.state);
+    const sceneLater = stepRuntime(document, jump.state);
+    const narration = stepRuntime(document, sceneLater.state);
+
+    expect(jump.event).toEqual({
+      type: "jump",
+      sceneId: "later",
+      instructionIndex: 2,
+    });
+    expect(sceneLater.event).toEqual({ type: "scene", id: "later" });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Later." }],
+    });
+  });
+
+  it("keeps a DSL v2 body choice pending until it is resolved", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay":
+      narration:
+        Stay.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const first = stepRuntime(document, scene.state);
+    const second = stepRuntime(document, first.state);
+
+    expect(second.event).toEqual(first.event);
+    expect(second.state).toBe(first.state);
+  });
+
+  it("preserves a pending DSL v2 body choice through snapshot restore", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay" id=stay:
+      narration:
+        Stay.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const restored = restoreRuntimeState(JSON.parse(JSON.stringify(createRuntimeSnapshot(choice.state))));
+    const resolved = resolveChoice(document, restored, 0);
+    const narration = stepRuntime(document, resolved.state);
+
+    expect(restored.pendingChoice).toMatchObject({
+      kind: "body",
+      question: "Choose",
+      items: [{ id: "stay", text: "Stay", body: [{ type: "NarrationInstruction" }] }],
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Stay." }],
+    });
+  });
+
+  it("does not require labels for DSL v2 body choices", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Stay":
+      narration:
+        Stay.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+
+    expect(document.labels).toEqual({});
+    expect(choice.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [{ text: "Stay" }],
     });
   });
 });

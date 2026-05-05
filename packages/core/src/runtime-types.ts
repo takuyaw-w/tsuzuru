@@ -29,14 +29,28 @@ export interface RuntimeInitialStateOptions {
 }
 
 export interface RuntimeChoiceItem {
+  readonly id?: string;
   readonly text: string;
-  readonly targetRaw: string;
+  readonly targetRaw?: string;
   readonly targetLabel?: string;
 }
 
-export interface RuntimePendingChoice {
+export type RuntimePendingChoice = RuntimePendingTargetChoice | RuntimePendingBodyChoice;
+
+export interface RuntimePendingTargetChoice {
+  readonly kind?: "target";
   readonly question: string;
   readonly items: readonly RuntimeChoiceItem[];
+}
+
+export interface RuntimePendingBodyChoice {
+  readonly kind: "body";
+  readonly question: string;
+  readonly items: readonly RuntimePendingBodyChoiceItem[];
+}
+
+export interface RuntimePendingBodyChoiceItem extends RuntimeChoiceItem {
+  readonly body: readonly TzrInstruction[];
 }
 
 export interface RuntimePendingWait {
@@ -105,6 +119,7 @@ export type RuntimeEvent =
   | StopRuntimeEvent
   | StateRuntimeEvent
   | JumpRuntimeEvent
+  | ChoiceResolveRuntimeEvent
   | IfRuntimeEvent
   | ChoiceRuntimeEvent
   | WaitRuntimeEvent
@@ -167,6 +182,13 @@ export interface SceneJumpRuntimeEvent {
   readonly type: "jump";
   readonly sceneId: string;
   readonly instructionIndex: number;
+}
+
+export interface ChoiceResolveRuntimeEvent {
+  readonly type: "choiceResolve";
+  readonly itemIndex: number;
+  readonly text: string;
+  readonly id?: string;
 }
 
 export interface IfRuntimeEvent {

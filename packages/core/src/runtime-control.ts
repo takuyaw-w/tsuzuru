@@ -1,9 +1,10 @@
 import type { ChoiceItem } from "./ast.js";
 import { evaluateCondition } from "./condition.js";
-import type { ChoiceInstruction, IfInstruction, RuntimeDocument, TzrInstruction } from "./ir.js";
+import type { BodyChoiceInstruction, BodyChoiceInstructionItem, ChoiceInstruction, IfInstruction, RuntimeDocument, TzrInstruction } from "./ir.js";
 import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {
   ChoiceRuntimeEvent,
+  RuntimePendingBodyChoiceItem,
   RuntimeChoiceItem,
   RuntimePendingChoice,
   RuntimePendingWait,
@@ -76,9 +77,25 @@ export function stepIfInstruction(
 }
 
 export function stepChoiceInstruction(state: RuntimeState, instruction: ChoiceInstruction): RuntimeStepResult {
-  const pendingChoice = {
+  const pendingChoice: RuntimePendingChoice = {
     question: instruction.question,
     items: instruction.items.map(choiceItemToRuntimeChoiceItem),
+  };
+
+  return {
+    state: {
+      ...state,
+      pendingChoice,
+    },
+    event: choiceEvent(pendingChoice),
+  };
+}
+
+export function stepBodyChoiceInstruction(state: RuntimeState, instruction: BodyChoiceInstruction): RuntimeStepResult {
+  const pendingChoice: RuntimePendingChoice = {
+    kind: "body",
+    question: instruction.question,
+    items: instruction.items.map(bodyChoiceItemToRuntimePendingChoiceItem),
   };
 
   return {
@@ -98,11 +115,28 @@ function choiceItemToRuntimeChoiceItem(item: ChoiceItem): RuntimeChoiceItem {
   };
 }
 
+function bodyChoiceItemToRuntimePendingChoiceItem(item: BodyChoiceInstructionItem): RuntimePendingBodyChoiceItem {
+  return {
+    ...(item.id === undefined ? {} : { id: item.id }),
+    text: item.label,
+    body: item.body,
+  };
+}
+
 export function choiceEvent(pendingChoice: RuntimePendingChoice): ChoiceRuntimeEvent {
   return {
     type: "choice",
     question: pendingChoice.question,
-    items: pendingChoice.items,
+    items: pendingChoice.items.map(toChoiceEventItem),
+  };
+}
+
+function toChoiceEventItem(item: RuntimeChoiceItem): RuntimeChoiceItem {
+  return {
+    ...(item.id === undefined ? {} : { id: item.id }),
+    text: item.text,
+    ...(item.targetRaw === undefined ? {} : { targetRaw: item.targetRaw }),
+    ...(item.targetLabel === undefined ? {} : { targetLabel: item.targetLabel }),
   };
 }
 

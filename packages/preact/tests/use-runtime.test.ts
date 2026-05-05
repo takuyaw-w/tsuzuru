@@ -231,6 +231,7 @@ describe("isAutoSteppableRuntimeEvent", () => {
       { type: "label", id: "start" },
       { type: "state", command: "flag", name: "met", value: true },
       { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "pluginCommand", name: "bg" },
     ];
 
@@ -371,6 +372,7 @@ describe("isRenderableRuntimeEvent", () => {
       { type: "label", id: "start" },
       { type: "state", command: "flag", name: "met", value: true },
       { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "pluginCommand", name: "bg" },
     ];
 

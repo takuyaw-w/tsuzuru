@@ -45,6 +45,8 @@ export type { CoreCommandDefinition, CoreCommandName } from "./commands.js";
 export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands.js";
 export type { Diagnostic, ParseDiagnostic } from "./diagnostic.js";
 export type {
+  BodyChoiceInstruction,
+  BodyChoiceInstructionItem,
   ChoiceInstruction,
   CommandInstruction,
   CompiledTzrDocument,
@@ -170,6 +172,7 @@ export {
 } from "./dsl-v2/index.js";
 export type {
   ChoiceRuntimeEvent,
+  ChoiceResolveRuntimeEvent,
   DialogueRuntimeEvent,
   EndRuntimeEvent,
   IfRuntimeEvent,
@@ -190,6 +193,9 @@ export type {
   RuntimeInitialStateOptions,
   LabelJumpRuntimeEvent,
   RuntimePendingChoice,
+  RuntimePendingBodyChoice,
+  RuntimePendingBodyChoiceItem,
+  RuntimePendingTargetChoice,
   RuntimePendingWait,
   RuntimePluginDefinition,
   RuntimePluginCommandEvent,

@@ -257,6 +257,7 @@ export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
     case "label":
     case "state":
     case "jump":
+    case "choiceResolve":
       return true;
     case "if":
       return event.event === undefined || isAutoSteppableRuntimeEvent(event.event);
@@ -303,6 +304,7 @@ export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | n
     case "label":
     case "state":
     case "jump":
+    case "choiceResolve":
     case "pluginCommand":
       return null;
     default:

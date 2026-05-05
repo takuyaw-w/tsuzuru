@@ -1,11 +1,12 @@
 import type { RuntimeDocument, TzrInstruction } from "./ir.js";
 import { stepCommandInstruction, unsupportedInstruction } from "./runtime-commands.js";
-import { choiceEvent, stepChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
+import { choiceEvent, stepBodyChoiceInstruction, stepChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
 import {
   advanceActiveBranchFrame,
   getActiveBranchFrame,
   popActiveBranchFrame,
   popFinishedBranchFrames,
+  pushBranchFrame,
 } from "./runtime-frames.js";
 import type {
   RuntimeBlockReason,
@@ -141,6 +142,8 @@ function stepInstruction(
       };
     case "ChoiceInstruction":
       return stepChoiceInstruction(nextState, instruction);
+    case "BodyChoiceInstruction":
+      return stepBodyChoiceInstruction(nextState, instruction);
   }
 }
 
@@ -184,13 +187,41 @@ export function resolveChoice(
     return runtimeError(state, "choice_not_pending", "Cannot resolve a choice because no choice is pending.");
   }
 
-  const item = state.pendingChoice.items[itemIndex];
+  const pendingChoice = state.pendingChoice;
+  const item = pendingChoice.items[itemIndex];
   if (item === undefined) {
     return runtimeError(
       state,
       "choice_index_out_of_range",
-      `Choice index ${itemIndex} is out of range for ${state.pendingChoice.items.length} choice item(s).`,
+      `Choice index ${itemIndex} is out of range for ${pendingChoice.items.length} choice item(s).`,
     );
+  }
+
+  if (pendingChoice.kind === "body") {
+    const bodyItem = pendingChoice.items[itemIndex];
+    if (bodyItem === undefined) {
+      return runtimeError(
+        state,
+        "choice_index_out_of_range",
+        `Choice index ${itemIndex} is out of range for ${pendingChoice.items.length} choice item(s).`,
+      );
+    }
+
+    return {
+      state: pushBranchFrame(
+        {
+          ...state,
+          pendingChoice: null,
+        },
+        bodyItem.body,
+      ),
+      event: {
+        type: "choiceResolve",
+        itemIndex,
+        text: bodyItem.text,
+        ...(bodyItem.id === undefined ? {} : { id: bodyItem.id }),
+      },
+    };
   }
 
   if (item?.targetLabel === undefined) {

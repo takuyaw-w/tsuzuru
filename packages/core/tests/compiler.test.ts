@@ -1936,6 +1936,7 @@ $bad()
               loc: call.loc,
             },
             { type: "ChoiceInstruction", question: "Choose", items: [], loc: call.loc },
+            { type: "BodyChoiceInstruction", question: "Choose", items: [], loc: call.loc },
           ];
         },
       },
@@ -1979,6 +1980,13 @@ $bad()
         line: 2,
         column: 1,
         message: 'Macro "$bad" returned forbidden instruction "ChoiceInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "BodyChoiceInstruction".',
         sourceLine: "$bad()",
       },
     ]);

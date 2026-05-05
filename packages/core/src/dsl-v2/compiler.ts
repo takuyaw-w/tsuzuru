@@ -1,6 +1,8 @@
 import type { SourceLocation, SourceRange, TextLine } from "../ast.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostic.js";
 import type {
+  BodyChoiceInstruction,
+  BodyChoiceInstructionItem,
   CommandInstruction,
   DeclarationIndexEntry,
   DialogueInstruction,
@@ -12,6 +14,7 @@ import type {
 } from "../ir.js";
 import type {
   TzrV2CharacterDeclaration,
+  TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
   TzrV2DialogueStatement,
   TzrV2Document,
@@ -239,6 +242,9 @@ class TzrV2Compiler {
         case "JumpStatement":
           instructions.push(this.buildSceneJumpInstruction(statement.target, statement.loc));
           break;
+        case "ChoiceStatement":
+          instructions.push(this.buildBodyChoiceInstruction(statement));
+          break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
           break;
@@ -293,6 +299,28 @@ class TzrV2Compiler {
       type: "SceneJumpInstruction",
       sceneId,
       loc,
+    };
+  }
+
+  private buildBodyChoiceInstruction(statement: TzrV2ChoiceStatement): BodyChoiceInstruction {
+    return {
+      type: "BodyChoiceInstruction",
+      question: statement.question,
+      items: statement.items.map((item) => this.buildBodyChoiceInstructionItem(item)),
+      loc: statement.loc,
+    };
+  }
+
+  private buildBodyChoiceInstructionItem(item: TzrV2ChoiceItem): BodyChoiceInstructionItem {
+    if (item.condition !== undefined) {
+      this.addError(item.loc.start, "Conditional choice items are not compile-supported yet.");
+    }
+
+    return {
+      label: item.label,
+      ...(item.id === undefined ? {} : { id: item.id }),
+      body: this.buildSceneBodyInstructions(item.body),
+      loc: item.loc,
     };
   }
 

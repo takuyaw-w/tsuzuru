@@ -17,6 +17,7 @@ export type TzrInstruction =
   | CommandInstruction
   | MacroInstruction
   | ChoiceInstruction
+  | BodyChoiceInstruction
   | IfInstruction;
 
 export interface SceneInstruction {
@@ -69,6 +70,20 @@ export interface ChoiceInstruction {
   readonly type: "ChoiceInstruction";
   readonly question: string;
   readonly items: readonly ChoiceItem[];
+  readonly loc: SourceRange;
+}
+
+export interface BodyChoiceInstruction {
+  readonly type: "BodyChoiceInstruction";
+  readonly question: string;
+  readonly items: readonly BodyChoiceInstructionItem[];
+  readonly loc: SourceRange;
+}
+
+export interface BodyChoiceInstructionItem {
+  readonly label: string;
+  readonly id?: string;
+  readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 
