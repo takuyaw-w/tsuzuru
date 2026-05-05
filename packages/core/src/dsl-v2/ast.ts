@@ -5,6 +5,10 @@ export type TzrV2ParseResult =
   | { readonly ok: true; readonly document: TzrV2Document; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly ParseDiagnostic[] };
 
+export type TzrV2ConditionParseResult =
+  | { readonly ok: true; readonly expression: TzrV2ConditionExpression; readonly errors: readonly [] }
+  | { readonly ok: false; readonly errors: readonly ParseDiagnostic[] };
+
 export interface TzrV2ParseOptions {
   readonly filePath?: string;
 }
@@ -88,6 +92,73 @@ export interface TzrV2JumpStatement {
 
 export interface TzrV2EndStatement {
   readonly type: "EndStatement";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2ConditionExpression =
+  | TzrV2ConditionReference
+  | TzrV2ConditionLiteral
+  | TzrV2ConditionUnaryExpression
+  | TzrV2ConditionBinaryExpression
+  | TzrV2ConditionComparisonExpression;
+
+export interface TzrV2ConditionReference {
+  readonly type: "ConditionReference";
+  readonly path: string;
+  readonly root: "scenario" | "system";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2ConditionLiteral =
+  | TzrV2ConditionStringLiteral
+  | TzrV2ConditionNumberLiteral
+  | TzrV2ConditionBooleanLiteral
+  | TzrV2ConditionNullLiteral;
+
+export interface TzrV2ConditionStringLiteral {
+  readonly type: "ConditionStringLiteral";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionNumberLiteral {
+  readonly type: "ConditionNumberLiteral";
+  readonly value: number;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionBooleanLiteral {
+  readonly type: "ConditionBooleanLiteral";
+  readonly value: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionNullLiteral {
+  readonly type: "ConditionNullLiteral";
+  readonly value: null;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionUnaryExpression {
+  readonly type: "ConditionUnaryExpression";
+  readonly operator: "not";
+  readonly expression: TzrV2ConditionExpression;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionBinaryExpression {
+  readonly type: "ConditionBinaryExpression";
+  readonly operator: "and" | "or";
+  readonly left: TzrV2ConditionExpression;
+  readonly right: TzrV2ConditionExpression;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ConditionComparisonExpression {
+  readonly type: "ConditionComparisonExpression";
+  readonly operator: "==" | "!=" | ">=" | "<=" | ">" | "<";
+  readonly left: TzrV2ConditionExpression;
+  readonly right: TzrV2ConditionExpression;
   readonly loc: SourceRange;
 }
 

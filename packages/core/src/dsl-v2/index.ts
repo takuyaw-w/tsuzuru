@@ -2,6 +2,17 @@ export type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
+  TzrV2ConditionBinaryExpression,
+  TzrV2ConditionBooleanLiteral,
+  TzrV2ConditionComparisonExpression,
+  TzrV2ConditionExpression,
+  TzrV2ConditionLiteral,
+  TzrV2ConditionNullLiteral,
+  TzrV2ConditionNumberLiteral,
+  TzrV2ConditionParseResult,
+  TzrV2ConditionReference,
+  TzrV2ConditionStringLiteral,
+  TzrV2ConditionUnaryExpression,
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2EndStatement,
@@ -39,4 +50,5 @@ export type {
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
 } from "./ast.js";
+export { parseTzrV2ConditionExpression } from "./condition-parser.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";
