@@ -11,87 +11,87 @@ import type {
   SceneJumpInstruction,
   SceneInstruction,
   TzrInstruction,
-  V2ElifInstructionBranch,
-  V2IfInstruction,
+  ElifInstructionBranch,
+  IfInstruction,
 } from "./ir.js";
 import type {
-  TzrV2CharacterDeclaration,
-  TzrV2ChoiceItem,
-  TzrV2ChoiceStatement,
-  TzrV2AudioAssetRef,
-  TzrV2BgmStatement,
-  TzrV2BgStatement,
-  TzrV2ClearVisualStatement,
-  TzrV2ConditionExpression,
-  TzrV2DialogueStatement,
-  TzrV2Document,
-  TzrV2HideStatement,
-  TzrV2IfStatement,
-  TzrV2NarrationStatement,
-  TzrV2SceneDeclaration,
-  TzrV2SceneStatement,
-  TzrV2SeStatement,
-  TzrV2ShowStatement,
-  TzrV2SetStatement,
-  TzrV2AddStatement,
-  TzrV2StopBgmStatement,
-  TzrV2TextBlockItem,
-  TzrV2TextLine,
-  TzrV2TitleDeclaration,
-  TzrV2ValueExpression,
-  TzrV2VoiceStatement,
-  TzrV2VisualAssetRef,
-  TzrV2VisualTransition,
+  TzrCharacterDeclaration,
+  TzrChoiceItem,
+  TzrChoiceStatement,
+  TzrAudioAssetRef,
+  TzrBgmStatement,
+  TzrBgStatement,
+  TzrClearVisualStatement,
+  TzrConditionExpression,
+  TzrDialogueStatement,
+  TzrDocument,
+  TzrHideStatement,
+  TzrIfStatement,
+  TzrNarrationStatement,
+  TzrSceneDeclaration,
+  TzrSceneStatement,
+  TzrSeStatement,
+  TzrShowStatement,
+  TzrSetStatement,
+  TzrAddStatement,
+  TzrStopBgmStatement,
+  TzrTextBlockItem,
+  TzrTextLine,
+  TzrTitleDeclaration,
+  TzrValueExpression,
+  TzrVoiceStatement,
+  TzrVisualAssetRef,
+  TzrVisualTransition,
 } from "./scenario-ast.js";
 
-const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
+const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 
-export interface TzrV2CompileOptions {}
+export interface TzrCompileOptions {}
 
-export type TzrV2CompileResult =
-  | { readonly ok: true; readonly document: CompiledTzrV2Document; readonly errors: readonly [] }
+export type TzrCompileResult =
+  | { readonly ok: true; readonly document: CompiledTzrDocument; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly Diagnostic[] };
 
-export interface CompiledTzrV2Document extends RuntimeDocument {
-  readonly type: "CompiledTzrV2Document";
-  readonly source: TzrV2Document;
-  readonly metadata: TzrV2DocumentMetadata;
+export interface CompiledTzrDocument extends RuntimeDocument {
+  readonly type: "CompiledTzrDocument";
+  readonly source: TzrDocument;
+  readonly metadata: TzrDocumentMetadata;
   readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
-export interface TzrV2DocumentMetadata {
+export interface TzrDocumentMetadata {
   readonly title?: string;
-  readonly characters: Readonly<Record<string, TzrV2CompiledCharacter>>;
-  readonly scenes: Readonly<Record<string, TzrV2CompiledSceneMetadata>>;
+  readonly characters: Readonly<Record<string, TzrCompiledCharacter>>;
+  readonly scenes: Readonly<Record<string, TzrCompiledSceneMetadata>>;
 }
 
-export interface TzrV2CompiledCharacter {
+export interface TzrCompiledCharacter {
   readonly id: string;
   readonly name: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2CompiledSceneMetadata {
+export interface TzrCompiledSceneMetadata {
   readonly id: string;
   readonly title?: string;
   readonly loc: SourceRange;
 }
 
-export function compileTzrV2(document: TzrV2Document, _options: TzrV2CompileOptions = {}): TzrV2CompileResult {
-  const compiler = new TzrV2Compiler(document);
+export function compileTzr(document: TzrDocument, _options: TzrCompileOptions = {}): TzrCompileResult {
+  const compiler = new TzrCompiler(document);
   return compiler.compile();
 }
 
-class TzrV2Compiler {
+class TzrCompiler {
   private readonly errors: Diagnostic[] = [];
-  private title: TzrV2TitleDeclaration | undefined;
-  private readonly characters = new Map<string, TzrV2CharacterDeclaration>();
-  private readonly scenes = new Map<string, TzrV2SceneDeclaration>();
+  private title: TzrTitleDeclaration | undefined;
+  private readonly characters = new Map<string, TzrCharacterDeclaration>();
+  private readonly scenes = new Map<string, TzrSceneDeclaration>();
 
-  public constructor(private readonly document: TzrV2Document) {}
+  public constructor(private readonly document: TzrDocument) {}
 
-  public compile(): TzrV2CompileResult {
+  public compile(): TzrCompileResult {
     this.collectTopLevelDeclarations();
     this.validateScenePresence();
     this.validateSceneBodies();
@@ -125,7 +125,7 @@ class TzrV2Compiler {
     }
   }
 
-  private collectTitle(title: TzrV2TitleDeclaration): void {
+  private collectTitle(title: TzrTitleDeclaration): void {
     if (this.title !== undefined) {
       this.addError(title.loc.start, "Duplicate title declaration.");
       return;
@@ -134,7 +134,7 @@ class TzrV2Compiler {
     this.title = title;
   }
 
-  private collectCharacter(character: TzrV2CharacterDeclaration): void {
+  private collectCharacter(character: TzrCharacterDeclaration): void {
     if (this.characters.has(character.id)) {
       this.addError(character.loc.start, `Duplicate character "${character.id}".`);
       return;
@@ -143,7 +143,7 @@ class TzrV2Compiler {
     this.characters.set(character.id, character);
   }
 
-  private collectScene(scene: TzrV2SceneDeclaration): void {
+  private collectScene(scene: TzrSceneDeclaration): void {
     if (this.scenes.has(scene.id)) {
       this.addError(scene.loc.start, `Duplicate scene "${scene.id}".`);
       return;
@@ -166,7 +166,7 @@ class TzrV2Compiler {
     }
   }
 
-  private validateSceneStatements(statements: readonly TzrV2SceneStatement[]): void {
+  private validateSceneStatements(statements: readonly TzrSceneStatement[]): void {
     for (const statement of statements) {
       switch (statement.type) {
         case "DialogueStatement":
@@ -187,7 +187,7 @@ class TzrV2Compiler {
     }
   }
 
-  private validateIfStatement(statement: TzrV2IfStatement): void {
+  private validateIfStatement(statement: TzrIfStatement): void {
     this.validateSupportedCondition(statement.condition);
     this.validateSceneStatements(statement.thenBranch);
     for (const branch of statement.elifBranches) {
@@ -199,7 +199,7 @@ class TzrV2Compiler {
     }
   }
 
-  private validateChoiceStatement(statement: TzrV2ChoiceStatement): void {
+  private validateChoiceStatement(statement: TzrChoiceStatement): void {
     for (const item of statement.items) {
       if (item.condition !== undefined) {
         this.validateSupportedCondition(item.condition);
@@ -220,7 +220,7 @@ class TzrV2Compiler {
     }
   }
 
-  private validateSupportedCondition(expression: TzrV2ConditionExpression): void {
+  private validateSupportedCondition(expression: TzrConditionExpression): void {
     switch (expression.type) {
       case "ConditionReference":
         if (expression.root === "system") {
@@ -243,11 +243,11 @@ class TzrV2Compiler {
     }
   }
 
-  private buildCompiledDocument(): CompiledTzrV2Document {
+  private buildCompiledDocument(): CompiledTzrDocument {
     const instructions = this.buildInstructions();
 
     return {
-      type: "CompiledTzrV2Document",
+      type: "CompiledTzrDocument",
       filePath: this.document.filePath,
       source: this.document,
       metadata: this.buildMetadata(),
@@ -272,7 +272,7 @@ class TzrV2Compiler {
     return instructions;
   }
 
-  private buildSceneBodyInstructions(statements: readonly TzrV2SceneStatement[]): readonly TzrInstruction[] {
+  private buildSceneBodyInstructions(statements: readonly TzrSceneStatement[]): readonly TzrInstruction[] {
     const instructions: TzrInstruction[] = [];
 
     for (const statement of statements) {
@@ -293,7 +293,7 @@ class TzrV2Compiler {
           instructions.push(this.buildBodyChoiceInstruction(statement));
           break;
         case "IfStatement":
-          instructions.push(this.buildV2IfInstruction(statement));
+          instructions.push(this.buildIfInstruction(statement));
           break;
         case "SetStatement":
           instructions.push(...this.buildSetInstruction(statement));
@@ -334,7 +334,7 @@ class TzrV2Compiler {
     return instructions;
   }
 
-  private buildNarrationInstruction(statement: TzrV2NarrationStatement): readonly NarrationInstruction[] {
+  private buildNarrationInstruction(statement: TzrNarrationStatement): readonly NarrationInstruction[] {
     const lines = this.compilePlainTextBlock(statement);
     if (lines === undefined) {
       return [];
@@ -349,7 +349,7 @@ class TzrV2Compiler {
     ];
   }
 
-  private buildDialogueInstruction(statement: TzrV2DialogueStatement): readonly DialogueInstruction[] {
+  private buildDialogueInstruction(statement: TzrDialogueStatement): readonly DialogueInstruction[] {
     const lines = this.compilePlainTextBlock(statement);
     if (lines === undefined) {
       return [];
@@ -382,13 +382,13 @@ class TzrV2Compiler {
     };
   }
 
-  private buildV2IfInstruction(statement: TzrV2IfStatement): V2IfInstruction {
+  private buildIfInstruction(statement: TzrIfStatement): IfInstruction {
     return {
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       condition: statement.condition,
       thenBranch: this.buildSceneBodyInstructions(statement.thenBranch),
       elifBranches: statement.elifBranches.map(
-        (branch): V2ElifInstructionBranch => ({
+        (branch): ElifInstructionBranch => ({
           condition: branch.condition,
           body: this.buildSceneBodyInstructions(branch.body),
           loc: branch.loc,
@@ -399,7 +399,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildSetInstruction(statement: TzrV2SetStatement): readonly CommandInstruction[] {
+  private buildSetInstruction(statement: TzrSetStatement): readonly CommandInstruction[] {
     const value = this.compileSetValue(statement.value);
     if (value === undefined) {
       return [];
@@ -418,10 +418,10 @@ class TzrV2Compiler {
     ];
   }
 
-  private buildAddInstruction(statement: TzrV2AddStatement): CommandInstruction {
+  private buildAddInstruction(statement: TzrAddStatement): CommandInstruction {
     return {
       type: "CommandInstruction",
-      name: DSL_V2_ADD_COMMAND_NAME,
+      name: DSL_ADD_COMMAND_NAME,
       args: [
         this.namedArgument("name", { type: "StringValue", value: statement.target.path, loc: statement.target.loc }, statement.target.loc),
         this.namedArgument("by", { type: "NumberValue", value: statement.value.value, loc: statement.value.loc }, statement.value.loc),
@@ -430,7 +430,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildBgInstruction(statement: TzrV2BgStatement): readonly CommandInstruction[] {
+  private buildBgInstruction(statement: TzrBgStatement): readonly CommandInstruction[] {
     if (!this.validateNoVisualTransition(statement.transition)) {
       return [];
     }
@@ -450,7 +450,7 @@ class TzrV2Compiler {
     ];
   }
 
-  private buildShowInstruction(statement: TzrV2ShowStatement): readonly CommandInstruction[] {
+  private buildShowInstruction(statement: TzrShowStatement): readonly CommandInstruction[] {
     if (!this.validateNoVisualTransition(statement.transition)) {
       return [];
     }
@@ -475,7 +475,7 @@ class TzrV2Compiler {
     ];
   }
 
-  private buildHideInstruction(statement: TzrV2HideStatement): readonly CommandInstruction[] {
+  private buildHideInstruction(statement: TzrHideStatement): readonly CommandInstruction[] {
     if (!this.validateNoVisualTransition(statement.transition)) {
       return [];
     }
@@ -495,12 +495,12 @@ class TzrV2Compiler {
     ];
   }
 
-  private rejectClearVisualStatement(statement: TzrV2ClearVisualStatement): void {
+  private rejectClearVisualStatement(statement: TzrClearVisualStatement): void {
     this.validateNoVisualTransition(statement.transition);
     this.addError(statement.loc.start, "clear visual statements are not compile-supported yet.");
   }
 
-  private validateNoVisualTransition(transition: TzrV2VisualTransition | undefined): boolean {
+  private validateNoVisualTransition(transition: TzrVisualTransition | undefined): boolean {
     if (transition === undefined) {
       return true;
     }
@@ -509,11 +509,11 @@ class TzrV2Compiler {
     return false;
   }
 
-  private visualAssetRefValue(assetRef: TzrV2VisualAssetRef): string {
+  private visualAssetRefValue(assetRef: TzrVisualAssetRef): string {
     return assetRef.value;
   }
 
-  private buildBgmInstruction(statement: TzrV2BgmStatement): CommandInstruction {
+  private buildBgmInstruction(statement: TzrBgmStatement): CommandInstruction {
     return {
       type: "CommandInstruction",
       name: "startBgm",
@@ -527,7 +527,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildStopBgmInstruction(statement: TzrV2StopBgmStatement): CommandInstruction {
+  private buildStopBgmInstruction(statement: TzrStopBgmStatement): CommandInstruction {
     return {
       type: "CommandInstruction",
       name: "stopBgm",
@@ -536,7 +536,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildSeInstruction(statement: TzrV2SeStatement): CommandInstruction {
+  private buildSeInstruction(statement: TzrSeStatement): CommandInstruction {
     return {
       type: "CommandInstruction",
       name: "se",
@@ -550,7 +550,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildVoiceInstruction(statement: TzrV2VoiceStatement): CommandInstruction {
+  private buildVoiceInstruction(statement: TzrVoiceStatement): CommandInstruction {
     return {
       type: "CommandInstruction",
       name: "voice",
@@ -564,11 +564,11 @@ class TzrV2Compiler {
     };
   }
 
-  private audioAssetRefValue(assetRef: TzrV2AudioAssetRef): string {
+  private audioAssetRefValue(assetRef: TzrAudioAssetRef): string {
     return assetRef.value;
   }
 
-  private compileSetValue(value: TzrV2ValueExpression): TzrValue | undefined {
+  private compileSetValue(value: TzrValueExpression): TzrValue | undefined {
     switch (value.type) {
       case "StringValue":
       case "NumberValue":
@@ -608,7 +608,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildBodyChoiceInstruction(statement: TzrV2ChoiceStatement): BodyChoiceInstruction {
+  private buildBodyChoiceInstruction(statement: TzrChoiceStatement): BodyChoiceInstruction {
     return {
       type: "BodyChoiceInstruction",
       question: statement.question,
@@ -617,7 +617,7 @@ class TzrV2Compiler {
     };
   }
 
-  private buildBodyChoiceInstructionItem(item: TzrV2ChoiceItem): BodyChoiceInstructionItem {
+  private buildBodyChoiceInstructionItem(item: TzrChoiceItem): BodyChoiceInstructionItem {
     return {
       label: item.label,
       ...(item.id === undefined ? {} : { id: item.id }),
@@ -627,7 +627,7 @@ class TzrV2Compiler {
     };
   }
 
-  private compilePlainTextBlock(statement: TzrV2NarrationStatement | TzrV2DialogueStatement): readonly TextLine[] | undefined {
+  private compilePlainTextBlock(statement: TzrNarrationStatement | TzrDialogueStatement): readonly TextLine[] | undefined {
     let ok = true;
     const lines: TextLine[] = [];
 
@@ -648,7 +648,7 @@ class TzrV2Compiler {
     return ok ? lines : undefined;
   }
 
-  private compilePlainTextBlockItem(item: TzrV2TextBlockItem): TextLine | undefined {
+  private compilePlainTextBlockItem(item: TzrTextBlockItem): TextLine | undefined {
     switch (item.type) {
       case "TextLine":
         return this.compilePlainTextLine(item);
@@ -661,7 +661,7 @@ class TzrV2Compiler {
     }
   }
 
-  private compilePlainTextLine(line: TzrV2TextLine): TextLine | undefined {
+  private compilePlainTextLine(line: TzrTextLine): TextLine | undefined {
     let ok = true;
 
     for (const node of line.inline) {
@@ -699,9 +699,9 @@ class TzrV2Compiler {
       : undefined;
   }
 
-  private buildMetadata(): TzrV2DocumentMetadata {
-    const characters: Record<string, TzrV2CompiledCharacter> = {};
-    const scenes: Record<string, TzrV2CompiledSceneMetadata> = {};
+  private buildMetadata(): TzrDocumentMetadata {
+    const characters: Record<string, TzrCompiledCharacter> = {};
+    const scenes: Record<string, TzrCompiledSceneMetadata> = {};
 
     for (const character of this.characters.values()) {
       characters[character.id] = {

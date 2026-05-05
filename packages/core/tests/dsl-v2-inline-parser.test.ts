@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2TextLine } from "../src/index.js";
+import { parseTzr, type TzrTextLine } from "../src/index.js";
 
-function parseSingleTextLine(source: string): TzrV2TextLine {
-  const result = parseTzrV2(`scene start:\n  mio:\n    ${source}\n`, { filePath: "scenario/inline.tzr" });
+function parseSingleTextLine(source: string): TzrTextLine {
+  const result = parseTzr(`scene start:\n  mio:\n    ${source}\n`, { filePath: "scenario/inline.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -24,7 +24,7 @@ function parseSingleTextLine(source: string): TzrV2TextLine {
 }
 
 function expectInlineFailure(source: string): string[] {
-  const result = parseTzrV2(`scene start:\n  mio:\n    ${source}\n`, { filePath: "scenario/inline.tzr" });
+  const result = parseTzr(`scene start:\n  mio:\n    ${source}\n`, { filePath: "scenario/inline.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -32,7 +32,7 @@ function expectInlineFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 inline markup", () => {
+describe("parseTzr inline markup", () => {
   it("parses plain text line into InlineText", () => {
     const line = parseSingleTextLine("Plain text.");
 

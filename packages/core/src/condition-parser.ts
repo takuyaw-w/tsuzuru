@@ -1,20 +1,20 @@
 import type { SourceLocation, SourceRange } from "./ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
-  TzrV2ConditionBinaryExpression,
-  TzrV2ConditionBooleanLiteral,
-  TzrV2ConditionComparisonExpression,
-  TzrV2ConditionExpression,
-  TzrV2ConditionLiteral,
-  TzrV2ConditionNullLiteral,
-  TzrV2ConditionNumberLiteral,
-  TzrV2ConditionParseResult,
-  TzrV2ConditionReference,
-  TzrV2ConditionStringLiteral,
-  TzrV2ConditionUnaryExpression,
-  TzrV2ParseOptions,
+  TzrConditionBinaryExpression,
+  TzrConditionBooleanLiteral,
+  TzrConditionComparisonExpression,
+  TzrConditionExpression,
+  TzrConditionLiteral,
+  TzrConditionNullLiteral,
+  TzrConditionNumberLiteral,
+  TzrConditionParseResult,
+  TzrConditionReference,
+  TzrConditionStringLiteral,
+  TzrConditionUnaryExpression,
+  TzrParseOptions,
 } from "./scenario-ast.js";
-import { isValidTzrV2DottedIdentifier } from "./parser.js";
+import { isValidTzrDottedIdentifier } from "./parser.js";
 
 type ComparisonOperator = "==" | "!=" | ">=" | "<=" | ">" | "<";
 type LogicalOperator = "and" | "or" | "not";
@@ -35,21 +35,21 @@ interface TokenizeResult {
   readonly errors: readonly ParseDiagnostic[];
 }
 
-export function parseTzrV2ConditionExpression(
+export function parseTzrConditionExpression(
   source: string,
-  options: TzrV2ParseOptions = {},
-): TzrV2ConditionParseResult {
+  options: TzrParseOptions = {},
+): TzrConditionParseResult {
   const filePath = options.filePath ?? "<anonymous>";
   const tokenizer = tokenizeConditionExpression(source, filePath);
   if (tokenizer.errors.length > 0) {
     return { ok: false, errors: tokenizer.errors };
   }
 
-  const parser = new TzrV2ConditionExpressionParser(source, filePath, tokenizer.tokens);
+  const parser = new TzrConditionExpressionParser(source, filePath, tokenizer.tokens);
   return parser.parse();
 }
 
-class TzrV2ConditionExpressionParser {
+class TzrConditionExpressionParser {
   private readonly errors: ParseDiagnostic[] = [];
   private cursor = 0;
 
@@ -59,7 +59,7 @@ class TzrV2ConditionExpressionParser {
     private readonly tokens: readonly ConditionToken[],
   ) {}
 
-  public parse(): TzrV2ConditionParseResult {
+  public parse(): TzrConditionParseResult {
     if (this.peek().type === "eof") {
       this.addErrorAt(1, "Condition expression must not be empty.");
       return { ok: false, errors: this.errors };
@@ -78,7 +78,7 @@ class TzrV2ConditionExpressionParser {
     return { ok: true, expression, errors: [] };
   }
 
-  private parseOrExpression(): TzrV2ConditionExpression | undefined {
+  private parseOrExpression(): TzrConditionExpression | undefined {
     let left = this.parseAndExpression();
     if (left === undefined) {
       return undefined;
@@ -97,13 +97,13 @@ class TzrV2ConditionExpressionParser {
         left,
         right,
         loc: rangeFrom(left.loc.start, right.loc.end),
-      } satisfies TzrV2ConditionBinaryExpression;
+      } satisfies TzrConditionBinaryExpression;
     }
 
     return left;
   }
 
-  private parseAndExpression(): TzrV2ConditionExpression | undefined {
+  private parseAndExpression(): TzrConditionExpression | undefined {
     let left = this.parseComparisonExpression();
     if (left === undefined) {
       return undefined;
@@ -122,13 +122,13 @@ class TzrV2ConditionExpressionParser {
         left,
         right,
         loc: rangeFrom(left.loc.start, right.loc.end),
-      } satisfies TzrV2ConditionBinaryExpression;
+      } satisfies TzrConditionBinaryExpression;
     }
 
     return left;
   }
 
-  private parseComparisonExpression(): TzrV2ConditionExpression | undefined {
+  private parseComparisonExpression(): TzrConditionExpression | undefined {
     const left = this.parseNotExpression();
     if (left === undefined) {
       return undefined;
@@ -166,10 +166,10 @@ class TzrV2ConditionExpressionParser {
       left,
       right,
       loc: rangeFrom(left.loc.start, right.loc.end),
-    } satisfies TzrV2ConditionComparisonExpression;
+    } satisfies TzrConditionComparisonExpression;
   }
 
-  private parseNotExpression(): TzrV2ConditionExpression | undefined {
+  private parseNotExpression(): TzrConditionExpression | undefined {
     if (!this.matchOperator("not")) {
       return this.parsePrimaryExpression();
     }
@@ -194,10 +194,10 @@ class TzrV2ConditionExpressionParser {
       operator: "not",
       expression,
       loc: rangeFrom(operator.loc.start, expression.loc.end),
-    } satisfies TzrV2ConditionUnaryExpression;
+    } satisfies TzrConditionUnaryExpression;
   }
 
-  private parsePrimaryExpression(): TzrV2ConditionExpression | undefined {
+  private parsePrimaryExpression(): TzrConditionExpression | undefined {
     const token = this.peek();
     if (this.match("leftParen")) {
       const expression = this.parseOrExpression();
@@ -217,11 +217,11 @@ class TzrV2ConditionExpressionParser {
     }
     if (token.type === "string") {
       this.advance();
-      return { type: "ConditionStringLiteral", value: token.value, loc: token.loc } satisfies TzrV2ConditionStringLiteral;
+      return { type: "ConditionStringLiteral", value: token.value, loc: token.loc } satisfies TzrConditionStringLiteral;
     }
     if (token.type === "number") {
       this.advance();
-      return { type: "ConditionNumberLiteral", value: token.value, loc: token.loc } satisfies TzrV2ConditionNumberLiteral;
+      return { type: "ConditionNumberLiteral", value: token.value, loc: token.loc } satisfies TzrConditionNumberLiteral;
     }
     if (token.type === "boolean") {
       this.advance();
@@ -229,11 +229,11 @@ class TzrV2ConditionExpressionParser {
         type: "ConditionBooleanLiteral",
         value: token.value,
         loc: token.loc,
-      } satisfies TzrV2ConditionBooleanLiteral;
+      } satisfies TzrConditionBooleanLiteral;
     }
     if (token.type === "null") {
       this.advance();
-      return { type: "ConditionNullLiteral", value: null, loc: token.loc } satisfies TzrV2ConditionNullLiteral;
+      return { type: "ConditionNullLiteral", value: null, loc: token.loc } satisfies TzrConditionNullLiteral;
     }
     if (token.type === "eof") {
       this.addError(token.loc.start, "Unexpected end of condition expression.");
@@ -244,9 +244,9 @@ class TzrV2ConditionExpressionParser {
     return undefined;
   }
 
-  private parseReferenceToken(token: Extract<ConditionToken, { type: "reference" }>): TzrV2ConditionReference | undefined {
+  private parseReferenceToken(token: Extract<ConditionToken, { type: "reference" }>): TzrConditionReference | undefined {
     const parts = token.value.split(".");
-    if (!isValidTzrV2DottedIdentifier(token.value) || parts.length < 2) {
+    if (!isValidTzrDottedIdentifier(token.value) || parts.length < 2) {
       this.addError(token.loc.start, `Invalid dotted identifier "${token.value}".`);
       return undefined;
     }
@@ -576,7 +576,7 @@ function isComparisonOperator(value: string): value is ComparisonOperator {
   return value === "==" || value === "!=" || value === ">=" || value === "<=" || value === ">" || value === "<";
 }
 
-function isConditionLiteral(expression: TzrV2ConditionExpression): expression is TzrV2ConditionLiteral {
+function isConditionLiteral(expression: TzrConditionExpression): expression is TzrConditionLiteral {
   return (
     expression.type === "ConditionStringLiteral" ||
     expression.type === "ConditionNumberLiteral" ||

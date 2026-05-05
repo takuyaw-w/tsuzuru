@@ -1,8 +1,8 @@
 # Tsuzuru Architecture
 
-> Status: partially historical. This document still contains legacy
-> `parseTzr` / `compileTzr` and legacy AST references. The current supported DSL
-> path is DSL v2 (`parseTzrV2` / `compileTzrV2`), and the cleanup result is tracked
+> Status: partially historical. This document still contains legacy syntax and
+> legacy AST references. The current supported DSL path is DSL v2
+> (`parseTzr` / `compileTzr`), and the cleanup result is tracked
 > in [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md).
 > Legacy examples named `examples/basic` or `examples/preact-basic` were removed.
 
@@ -17,9 +17,9 @@ The main pipeline is:
 
 ```txt
 .tzr source
-  -> parseTzrV2
+  -> parseTzr
   -> DSL v2 AST
-  -> compileTzrV2
+  -> compileTzr
   -> RuntimeDocument / compiled v2 IR
   -> runtime state
   -> runtime events
@@ -558,8 +558,8 @@ The Preact example demonstrates:
 
 ```txt
 scenario/main.tzr
-  -> parseTzrV2
-  -> compileTzrV2
+  -> parseTzr
+  -> compileTzr
   -> useRuntime
   -> RuntimeView
   -> Save / Load / Clear Save

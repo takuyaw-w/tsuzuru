@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2SceneStatement } from "../src/index.js";
+import { parseTzr, type TzrSceneStatement } from "../src/index.js";
 
-function parseSingleStatement(source: string): TzrV2SceneStatement {
-  const result = parseTzrV2(source, { filePath: "scenario/std-audio.tzr" });
+function parseSingleStatement(source: string): TzrSceneStatement {
+  const result = parseTzr(source, { filePath: "scenario/std-audio.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -20,7 +20,7 @@ function parseSingleStatement(source: string): TzrV2SceneStatement {
 }
 
 function expectAudioFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/std-audio.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/std-audio.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -28,7 +28,7 @@ function expectAudioFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 std audio sugar statements", () => {
+describe("parseTzr std audio sugar statements", () => {
   it("parses bgm asset refs", () => {
     expect(parseSingleStatement("scene start:\n  bgm daily_theme\n")).toMatchObject({
       type: "BgmStatement",

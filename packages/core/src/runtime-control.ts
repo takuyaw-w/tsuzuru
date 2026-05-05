@@ -1,10 +1,10 @@
-import { evaluateTzrV2Condition, type TzrV2ConditionEvaluationError } from "./condition-evaluator.js";
+import { evaluateTzrCondition, type TzrConditionEvaluationError } from "./condition-evaluator.js";
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
   RuntimeDocument,
   TzrInstruction,
-  V2IfInstruction,
+  IfInstruction,
 } from "./ir.js";
 import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {
@@ -28,15 +28,15 @@ export type RuntimeInstructionStepper = (
   options: RuntimeStepOptions,
 ) => RuntimeStepResult;
 
-export function stepV2IfInstruction(
+export function stepIfInstruction(
   document: RuntimeDocument,
   state: RuntimeState,
   nextState: RuntimeState,
-  instruction: V2IfInstruction,
+  instruction: IfInstruction,
   options: RuntimeStepOptions,
   stepInstruction: RuntimeInstructionStepper,
 ): RuntimeStepResult {
-  const selected = selectV2IfBranch(instruction, state);
+  const selected = selectIfBranch(instruction, state);
   if (!selected.ok) {
     return {
       state: nextState,
@@ -52,7 +52,7 @@ export function stepV2IfInstruction(
   if (instructions === undefined || instructions.length === 0) {
     return {
       state: nextState,
-      event: v2IfEvent(result, branch, branchIndex),
+      event: ifEvent(result, branch, branchIndex),
     };
   }
 
@@ -61,7 +61,7 @@ export function stepV2IfInstruction(
   if (branchInstruction === undefined) {
     return {
       state: nextState,
-      event: v2IfEvent(result, branch, branchIndex),
+      event: ifEvent(result, branch, branchIndex),
     };
   }
 
@@ -76,7 +76,7 @@ export function stepV2IfInstruction(
   return {
     state: branchResult.state,
     event: {
-      ...v2IfEvent(result, branch, branchIndex),
+      ...ifEvent(result, branch, branchIndex),
       event: branchResult.event,
     },
   };
@@ -136,7 +136,7 @@ type BodyChoiceFilterResult =
     }
   | {
       readonly ok: false;
-      readonly error: TzrV2ConditionEvaluationError;
+      readonly error: TzrConditionEvaluationError;
     };
 
 function filterBodyChoiceItems(state: RuntimeState, instruction: BodyChoiceInstruction): BodyChoiceFilterResult {
@@ -148,7 +148,7 @@ function filterBodyChoiceItems(state: RuntimeState, instruction: BodyChoiceInstr
       continue;
     }
 
-    const result = evaluateTzrV2Condition(item.condition, state);
+    const result = evaluateTzrCondition(item.condition, state);
     if (!result.ok) {
       return result;
     }
@@ -182,7 +182,7 @@ export function waitEvent(pendingWait: RuntimePendingWait): WaitRuntimeEvent {
   };
 }
 
-type V2IfBranchSelection =
+type IfBranchSelection =
   | {
       readonly ok: true;
       readonly result: boolean;
@@ -192,11 +192,11 @@ type V2IfBranchSelection =
     }
   | {
       readonly ok: false;
-      readonly error: TzrV2ConditionEvaluationError;
+      readonly error: TzrConditionEvaluationError;
     };
 
-function selectV2IfBranch(instruction: V2IfInstruction, state: RuntimeState): V2IfBranchSelection {
-  const thenResult = evaluateTzrV2Condition(instruction.condition, state);
+function selectIfBranch(instruction: IfInstruction, state: RuntimeState): IfBranchSelection {
+  const thenResult = evaluateTzrCondition(instruction.condition, state);
   if (!thenResult.ok) {
     return thenResult;
   }
@@ -210,7 +210,7 @@ function selectV2IfBranch(instruction: V2IfInstruction, state: RuntimeState): V2
   }
 
   for (const [branchIndex, branch] of instruction.elifBranches.entries()) {
-    const elifResult = evaluateTzrV2Condition(branch.condition, state);
+    const elifResult = evaluateTzrCondition(branch.condition, state);
     if (!elifResult.ok) {
       return elifResult;
     }
@@ -241,7 +241,7 @@ function selectV2IfBranch(instruction: V2IfInstruction, state: RuntimeState): V2
   };
 }
 
-function v2IfEvent(result: boolean, branch: IfRuntimeEvent["branch"], branchIndex?: number): IfRuntimeEvent {
+function ifEvent(result: boolean, branch: IfRuntimeEvent["branch"], branchIndex?: number): IfRuntimeEvent {
   return {
     type: "if",
     result,

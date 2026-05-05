@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2IfStatement } from "../src/index.js";
+import { parseTzr, type TzrIfStatement } from "../src/index.js";
 
-function parseSingleIf(source: string): TzrV2IfStatement {
-  const result = parseTzrV2(source, { filePath: "scenario/if.tzr" });
+function parseSingleIf(source: string): TzrIfStatement {
+  const result = parseTzr(source, { filePath: "scenario/if.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -20,7 +20,7 @@ function parseSingleIf(source: string): TzrV2IfStatement {
 }
 
 function expectIfFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/if.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/if.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -28,7 +28,7 @@ function expectIfFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 if statements", () => {
+describe("parseTzr if statements", () => {
   it("parses a simple if statement", () => {
     const statement = parseSingleIf(`scene start:
   if scenario.hasNotebook:

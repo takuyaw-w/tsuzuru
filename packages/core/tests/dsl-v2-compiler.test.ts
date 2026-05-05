@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { compileTzrV2, parseTzrV2, type CommandInstruction, type CompiledTzrV2Document } from "../src/index.js";
+import { compileTzr, parseTzr, type CommandInstruction, type CompiledTzrDocument } from "../src/index.js";
 
 function parseSource(source: string) {
-  const parsed = parseTzrV2(source, { filePath: "scenario/v2.tzr" });
+  const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
     throw new Error("expected parser success");
@@ -10,8 +10,8 @@ function parseSource(source: string) {
   return parsed.document;
 }
 
-function compileSource(source: string): CompiledTzrV2Document {
-  const compiled = compileTzrV2(parseSource(source));
+function compileSource(source: string): CompiledTzrDocument {
+  const compiled = compileTzr(parseSource(source));
   expect(compiled.ok).toBe(true);
   if (!compiled.ok) {
     throw new Error("expected compiler success");
@@ -20,7 +20,7 @@ function compileSource(source: string): CompiledTzrV2Document {
 }
 
 function expectCompileFailure(source: string): string[] {
-  const compiled = compileTzrV2(parseSource(source));
+  const compiled = compileTzr(parseSource(source));
   expect(compiled.ok).toBe(false);
   if (compiled.ok) {
     throw new Error("expected compiler failure");
@@ -29,7 +29,7 @@ function expectCompileFailure(source: string): string[] {
 }
 
 function expectCommandInstruction(
-  document: CompiledTzrV2Document,
+  document: CompiledTzrDocument,
   instructionIndex: number,
   name: string,
 ): CommandInstruction {
@@ -41,17 +41,17 @@ function expectCommandInstruction(
   return instruction;
 }
 
-describe("compileTzrV2", () => {
+describe("compileTzr", () => {
   it("compiles a document with one scene", () => {
     const document = compileSource("scene start:\n");
 
     expect(document).toMatchObject({
-      type: "CompiledTzrV2Document",
+      type: "CompiledTzrDocument",
       filePath: "scenario/v2.tzr",
       instructions: [{ type: "SceneInstruction", id: "start" }],
       scenes: { start: { id: "start", statementIndex: 0 } },
     });
-    expect(document.source.type).toBe("TzrV2Document");
+    expect(document.source.type).toBe("TzrDocument");
   });
 
   it("compiles multiple scenes into SceneInstruction entries", () => {
@@ -244,7 +244,7 @@ scene later:
     expect(document.scenes.later).toMatchObject({ statementIndex: 3 });
   });
 
-  it("compiles simple if statements into V2IfInstruction", () => {
+  it("compiles simple if statements into IfInstruction", () => {
     const document = compileSource(`scene start:
   if scenario.hasNotebook:
     narration:
@@ -252,14 +252,14 @@ scene later:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       condition: { type: "ConditionReference", path: "scenario.hasNotebook" },
       thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Open it." }] }],
       elifBranches: [],
     });
   });
 
-  it("compiles if / else statements into V2IfInstruction", () => {
+  it("compiles if / else statements into IfInstruction", () => {
     const document = compileSource(`scene start:
   if scenario.hasNotebook:
     narration:
@@ -270,13 +270,13 @@ scene later:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Open it." }] }],
       elseBranch: [{ type: "NarrationInstruction", lines: [{ text: "Leave it." }] }],
     });
   });
 
-  it("compiles if / elif / else statements into V2IfInstruction", () => {
+  it("compiles if / elif / else statements into IfInstruction", () => {
     const document = compileSource(`scene start:
   if scenario.route.a:
     narration:
@@ -290,7 +290,7 @@ scene later:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Route A." }] }],
       elifBranches: [
         {
@@ -311,12 +311,12 @@ scene later:
 `);
 
     const instruction = document.instructions[1];
-    expect(instruction).toMatchObject({ type: "V2IfInstruction" });
-    if (instruction?.type !== "V2IfInstruction") {
-      throw new Error("expected V2IfInstruction");
+    expect(instruction).toMatchObject({ type: "IfInstruction" });
+    if (instruction?.type !== "IfInstruction") {
+      throw new Error("expected IfInstruction");
     }
     expect(instruction.thenBranch[0]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Nested." }] }],
     });
   });
@@ -425,7 +425,7 @@ scene start:
       { type: "SceneInstruction", id: "start" },
       {
         type: "CommandInstruction",
-        name: "__tsuzuru_v2_add",
+        name: "__tsuzuru_add",
         args: [
           { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.score" } },
           { type: "NamedArgument", name: "by", value: { type: "NumberValue", value: 1 } },
@@ -433,7 +433,7 @@ scene start:
       },
       {
         type: "CommandInstruction",
-        name: "__tsuzuru_v2_add",
+        name: "__tsuzuru_add",
         args: [
           { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.affection" } },
           { type: "NamedArgument", name: "by", value: { type: "NumberValue", value: -1 } },
@@ -680,7 +680,7 @@ scene start:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [
         { type: "CommandInstruction", name: "startBgm" },
         { type: "CommandInstruction", name: "se" },
@@ -699,7 +699,7 @@ scene start:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [
         { type: "CommandInstruction", name: "bg" },
         { type: "CommandInstruction", name: "show" },
@@ -739,7 +739,7 @@ scene start:
           label: "Score",
           body: [
             { type: "CommandInstruction", name: "set" },
-            { type: "CommandInstruction", name: "__tsuzuru_v2_add" },
+            { type: "CommandInstruction", name: "__tsuzuru_add" },
           ],
         },
       ],
@@ -754,10 +754,10 @@ scene start:
 `);
 
     expect(document.instructions[1]).toMatchObject({
-      type: "V2IfInstruction",
+      type: "IfInstruction",
       thenBranch: [
         { type: "CommandInstruction", name: "set" },
-        { type: "CommandInstruction", name: "__tsuzuru_v2_add" },
+        { type: "CommandInstruction", name: "__tsuzuru_add" },
       ],
     });
   });

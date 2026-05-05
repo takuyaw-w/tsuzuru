@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  parseTzrV2ConditionExpression,
-  type TzrV2ConditionExpression,
-  type TzrV2ConditionParseResult,
+  parseTzrConditionExpression,
+  type TzrConditionExpression,
+  type TzrConditionParseResult,
 } from "../src/index.js";
 
-function parseCondition(source: string): TzrV2ConditionExpression {
-  const result = parseTzrV2ConditionExpression(source, { filePath: "scenario/condition.tzr" });
+function parseCondition(source: string): TzrConditionExpression {
+  const result = parseTzrConditionExpression(source, { filePath: "scenario/condition.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -15,7 +15,7 @@ function parseCondition(source: string): TzrV2ConditionExpression {
 }
 
 function expectConditionFailure(source: string): string[] {
-  const result: TzrV2ConditionParseResult = parseTzrV2ConditionExpression(source, {
+  const result: TzrConditionParseResult = parseTzrConditionExpression(source, {
     filePath: "scenario/condition.tzr",
   });
   expect(result.ok).toBe(false);
@@ -25,7 +25,7 @@ function expectConditionFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2ConditionExpression", () => {
+describe("parseTzrConditionExpression", () => {
   it("parses scenario boolean references", () => {
     expect(parseCondition("scenario.inventory.hasNotebook")).toMatchObject({
       type: "ConditionReference",

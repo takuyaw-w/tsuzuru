@@ -2,7 +2,8 @@
 
 > Status: current DSL entry point for `feature/new-dsl`.
 > DSL v2 is the current supported DSL path. The old DSL parser/compiler,
-> legacy `parseTzr` / `compileTzr` APIs, and macro API were removed.
+> legacy AST, and macro API were removed. `parseTzr` / `compileTzr` now refer
+> to the current DSL implementation.
 
 This document is a short entry point for the currently supported `.tzr` syntax.
 For the fuller design notes, see [`docs/design/design/dsl-v2.md`](design/design/dsl-v2.md).
@@ -10,13 +11,13 @@ For runnable code, see [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/).
 
 ## Current API
 
-Use the experimental DSL v2 APIs from `@tsuzuru/core`:
+Use the current DSL APIs from `@tsuzuru/core`:
 
 ```ts
-import { compileTzrV2, parseTzrV2 } from "@tsuzuru/core";
+import { compileTzr, parseTzr } from "@tsuzuru/core";
 ```
 
-`parseTzr` and `compileTzr` are not available in the current public API.
+No compatibility aliases for the transitional v2 API names are exported.
 
 ## Current Syntax Snapshot
 

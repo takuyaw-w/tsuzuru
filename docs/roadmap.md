@@ -1,9 +1,9 @@
 # Tsuzuru Roadmap
 
 > Status: partially historical. The old v0.1 scope sections are retained as
-> pre-DSL-v2-cleanup history. Entries that mention legacy `parseTzr` /
-> `compileTzr`, old DSL syntax, removed macro API, or removed example names are
-> not current feature guidance. Use
+> pre-DSL-v2-cleanup history. Entries that mention old parser/compiler
+> semantics, old DSL syntax, removed macro API, or removed example names are not
+> current feature guidance. Use
 > [`design/design/dsl-v2.md`](design/design/dsl-v2.md) and
 > [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md) for the current
 > DSL direction.
@@ -352,7 +352,7 @@ Possible package:
 @tsuzuru/vite
 ```
 
-This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzrV2`, then compile it with `compileTzrV2`.
+This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`, then compile it with `compileTzr`.
 
 Potential scope:
 

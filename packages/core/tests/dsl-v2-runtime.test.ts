@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  compileTzrV2,
+  compileTzr,
   createRuntimeSnapshot,
   createInitialRuntimeState,
-  parseTzrV2,
+  parseTzr,
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
   type CommandInstruction,
-  type CompiledTzrV2Document,
+  type CompiledTzrDocument,
   type RuntimePluginCommandHandler,
 } from "../src/index.js";
 
 function parseSource(source: string) {
-  const parsed = parseTzrV2(source, { filePath: "scenario/v2.tzr" });
+  const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
     throw new Error("expected parser success");
@@ -21,8 +21,8 @@ function parseSource(source: string) {
   return parsed.document;
 }
 
-function compileSource(source: string): CompiledTzrV2Document {
-  const compiled = compileTzrV2(parseSource(source));
+function compileSource(source: string): CompiledTzrDocument {
+  const compiled = compileTzr(parseSource(source));
   expect(compiled.ok).toBe(true);
   if (!compiled.ok) {
     throw new Error("expected compiler success");

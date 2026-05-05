@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isValidTzrV2DottedIdentifier, parseTzrV2 } from "../src/index.js";
+import { isValidTzrDottedIdentifier, parseTzr } from "../src/index.js";
 
 function expectParseFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/v2.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -10,9 +10,9 @@ function expectParseFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2", () => {
+describe("parseTzr", () => {
   it("parses a valid title declaration", () => {
-    const result = parseTzrV2('title "Rain Station"\n', { filePath: "scenario/v2.tzr" });
+    const result = parseTzr('title "Rain Station"\n', { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -24,7 +24,7 @@ describe("parseTzrV2", () => {
   });
 
   it("parses a valid character declaration", () => {
-    const result = parseTzrV2('character mio name="Mio"\n', { filePath: "scenario/v2.tzr" });
+    const result = parseTzr('character mio name="Mio"\n', { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -38,7 +38,7 @@ describe("parseTzrV2", () => {
   });
 
   it("parses a valid scene declaration", () => {
-    const result = parseTzrV2("scene start:\n", { filePath: "scenario/v2.tzr" });
+    const result = parseTzr("scene start:\n", { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -52,7 +52,7 @@ describe("parseTzrV2", () => {
   });
 
   it("parses a valid scene declaration with title", () => {
-    const result = parseTzrV2('scene start "Rain Platform":\n', { filePath: "scenario/v2.tzr" });
+    const result = parseTzr('scene start "Rain Platform":\n', { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -66,7 +66,7 @@ describe("parseTzrV2", () => {
   });
 
   it("recognizes scene body lines without compiling them", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   narration:
     Rain blurred the platform edge.
@@ -87,7 +87,7 @@ scene next:
   });
 
   it("parses a narration block", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   narration:
     Rain blurred the platform edge.
@@ -111,7 +111,7 @@ scene next:
   });
 
   it("parses an explicit say block", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   say mio:
     You're late.
@@ -130,7 +130,7 @@ scene next:
   });
 
   it("parses character dialogue shorthand", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     You're late.
@@ -149,7 +149,7 @@ scene next:
   });
 
   it("parses a jump statement", () => {
-    const result = parseTzrV2("scene start:\n  jump commonRoute\n", { filePath: "scenario/v2.tzr" });
+    const result = parseTzr("scene start:\n  jump commonRoute\n", { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -162,7 +162,7 @@ scene next:
   });
 
   it("parses an end statement", () => {
-    const result = parseTzrV2("scene start:\n  end\n", { filePath: "scenario/v2.tzr" });
+    const result = parseTzr("scene start:\n  end\n", { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -175,7 +175,7 @@ scene next:
   });
 
   it("parses a small scene containing narration, dialogue, jump, and end", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   narration:
     Rain blurred the platform edge.
@@ -216,7 +216,7 @@ scene commonRoute:
   });
 
   it("parses a normal text line", () => {
-    const result = parseTzrV2("scene start:\n  mio:\n    You're late.\n", { filePath: "scenario/v2.tzr" });
+    const result = parseTzr("scene start:\n  mio:\n    You're late.\n", { filePath: "scenario/v2.tzr" });
 
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -229,7 +229,7 @@ scene commonRoute:
   });
 
   it("parses a blank line as click wait with page kept", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     You're late.
@@ -259,7 +259,7 @@ scene commonRoute:
   });
 
   it("parses page break lines", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     You're late.
@@ -289,7 +289,7 @@ scene commonRoute:
   });
 
   it("accepts a trailing page break", () => {
-    const result = parseTzrV2("scene start:\n  mio:\n    You're late.\n    ---\n", {
+    const result = parseTzr("scene start:\n  mio:\n    You're late.\n    ---\n", {
       filePath: "scenario/v2.tzr",
     });
 
@@ -304,7 +304,7 @@ scene commonRoute:
   });
 
   it("parses escaped page break and line comment markers as literal text", () => {
-    const result = parseTzrV2("scene start:\n  mio:\n    \\---\n    \\// not a comment\n", {
+    const result = parseTzr("scene start:\n  mio:\n    \\---\n    \\// not a comment\n", {
       filePath: "scenario/v2.tzr",
     });
 
@@ -327,7 +327,7 @@ scene commonRoute:
   });
 
   it("parses text block punctuation escapes as literal text", () => {
-    const result = parseTzrV2("scene start:\n  mio:\n    \\{wait ms=500\\} \\| \\\\\n", {
+    const result = parseTzr("scene start:\n  mio:\n    \\{wait ms=500\\} \\| \\\\\n", {
       filePath: "scenario/v2.tzr",
     });
 
@@ -342,7 +342,7 @@ scene commonRoute:
   });
 
   it("strips unescaped line comments inside text block lines", () => {
-    const result = parseTzrV2("scene start:\n  mio:\n    Visible text // hidden comment\n    // full line comment\n", {
+    const result = parseTzr("scene start:\n  mio:\n    Visible text // hidden comment\n    // full line comment\n", {
       filePath: "scenario/v2.tzr",
     });
 
@@ -357,7 +357,7 @@ scene commonRoute:
   });
 
   it("preserves multiple text block items in order", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     First.
@@ -391,7 +391,7 @@ scene commonRoute:
   });
 
   it("parses :meta in a narration block", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   narration:
     :meta
@@ -421,7 +421,7 @@ scene commonRoute:
   });
 
   it("parses :meta in an explicit say block", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   say mio:
     :meta
@@ -451,7 +451,7 @@ scene commonRoute:
   });
 
   it("parses :meta in shorthand dialogue", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     :meta
@@ -481,7 +481,7 @@ scene commonRoute:
   });
 
   it("parses all supported :meta attributes", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     :meta
@@ -521,7 +521,7 @@ scene commonRoute:
   });
 
   it("accepts :meta shorthand color and boolean false values", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     :meta
@@ -555,7 +555,7 @@ scene commonRoute:
   });
 
   it("does not carry :meta to the next text block", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     :meta
@@ -590,7 +590,7 @@ scene commonRoute:
   });
 
   it("keeps text block items after :meta in order", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `scene start:
   mio:
     :meta
@@ -637,7 +637,7 @@ scene commonRoute:
   });
 
   it("rejects an invalid dotted identifier", () => {
-    expect(isValidTzrV2DottedIdentifier("system.true-ending.seen")).toBe(false);
+    expect(isValidTzrDottedIdentifier("system.true-ending.seen")).toBe(false);
   });
 
   it("rejects single-quoted strings", () => {
@@ -827,7 +827,7 @@ scene commonRoute:
   });
 
   it("ignores comments between statements", () => {
-    const result = parseTzrV2(
+    const result = parseTzr(
       `// leading comment
 title "Rain Station" // inline comment
 /*

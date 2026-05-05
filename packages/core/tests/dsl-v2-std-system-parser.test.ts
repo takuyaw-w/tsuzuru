@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2SceneStatement } from "../src/index.js";
+import { parseTzr, type TzrSceneStatement } from "../src/index.js";
 
-function parseSingleStatement(source: string): TzrV2SceneStatement {
-  const result = parseTzrV2(source, { filePath: "scenario/std-system.tzr" });
+function parseSingleStatement(source: string): TzrSceneStatement {
+  const result = parseTzr(source, { filePath: "scenario/std-system.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -20,7 +20,7 @@ function parseSingleStatement(source: string): TzrV2SceneStatement {
 }
 
 function expectSystemFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/std-system.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/std-system.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -28,7 +28,7 @@ function expectSystemFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 std system sugar statements", () => {
+describe("parseTzr std system sugar statements", () => {
   it("parses system.unlockEnding ids", () => {
     expect(parseSingleStatement("scene start:\n  system.unlockEnding trueEnd\n")).toMatchObject({
       type: "SystemUnlockStatement",

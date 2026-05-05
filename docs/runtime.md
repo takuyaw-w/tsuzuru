@@ -1,9 +1,9 @@
 # Tsuzuru Runtime
 
 > Status: DSL v2-first. The runtime still provides shared execution, snapshot,
-> plugin dispatch, and command primitives, but legacy label jumps,
-> `ChoiceInstruction`, `IfInstruction`, and `CompiledTzrDocument` were removed.
-> DSL v2 uses scene jumps, body choices, and `V2IfInstruction`.
+> plugin dispatch, and command primitives, but legacy label jumps and old
+> target-label choices were removed. DSL v2 uses scene jumps, body choices, and
+> the current `IfInstruction`.
 
 This document describes the currently implemented DSL v2 runtime surface in `@tsuzuru/core`.
 
@@ -15,7 +15,7 @@ The core runtime does not render UI and does not manage real time. It has no dep
 
 ## Input
 
-Runtime execution uses a `RuntimeDocument`. DSL v2 compilation returns a `CompiledTzrV2Document`, which extends that runtime document shape.
+Runtime execution uses a `RuntimeDocument`. DSL v2 compilation returns a `CompiledTzrDocument`, which extends that runtime document shape.
 
 ```ts
 const state = createInitialRuntimeState(compiledDocument);
@@ -85,7 +85,7 @@ Current `RuntimeEvent` variants:
 - `stop`: emitted for `@stop()`
 - `state`: emitted for DSL v2 `set` and `add`; also emitted by retained low-level `inc`, `dec`, `flag`, and `unflag` handlers
 - `jump`: emitted for `SceneJumpInstruction`
-- `if`: emitted when evaluating a `V2IfInstruction`
+- `if`: emitted when evaluating an `IfInstruction`
 - `choice`: emitted for `BodyChoiceInstruction` and repeated while a choice is pending
 - `wait`: emitted for `@wait(ms)` and repeated while timed wait is pending
 - `pluginCommand`: emitted by plugin command handlers
@@ -191,13 +191,13 @@ Each state command emits a `state` event.
 }
 ```
 
-When a `V2IfInstruction` or selected body choice has a non-empty branch, the runtime pushes a frame and immediately executes the first instruction in that branch. Subsequent calls to `stepRuntime` continue executing the frame until it reaches the end. Then the frame is popped and execution returns to the already-advanced top-level pointer.
+When an `IfInstruction` or selected body choice has a non-empty branch, the runtime pushes a frame and immediately executes the first instruction in that branch. Subsequent calls to `stepRuntime` continue executing the frame until it reaches the end. Then the frame is popped and execution returns to the already-advanced top-level pointer.
 
 For v0.1, branch frames are included directly in snapshots.
 
 ## If, Jump, and Choice Model
 
-`V2IfInstruction` and conditional body choice items evaluate DSL v2 condition expressions with the DSL v2 condition evaluator.
+`IfInstruction` and conditional body choice items evaluate DSL v2 condition expressions with the DSL v2 condition evaluator.
 
 - true: push and execute `thenBranch`
 - false with `elseBranch`: push and execute `elseBranch`
@@ -213,7 +213,7 @@ Body choices produce a blocked `pendingChoice` state and are resolved separately
 
 DSL v2 compiles its supported std visual/audio statements to shared `CommandInstruction` values. Runtime dispatch uses command handlers supplied to `stepRuntime`.
 
-The legacy `compileTzr({ pluginCommands })` validation path was removed with the old DSL compiler. `definePluginCommand` and plugin command schema metadata remain exported for std plugins and future validation policy work, but the current DSL v2 compiler does not accept a plugin command registry.
+The legacy compiler's `pluginCommands` validation path was removed with the old DSL compiler. `definePluginCommand` and plugin command schema metadata remain exported for std plugins and future validation policy work, but the current DSL v2 compiler does not accept a plugin command registry.
 
 Runtime handlers should use the same command names emitted by the compiler.
 

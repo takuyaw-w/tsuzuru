@@ -1,472 +1,472 @@
 import type { SourceRange } from "./ast.js";
 import type { ParseDiagnostic } from "./diagnostic.js";
 
-export type TzrV2ParseResult =
-  | { readonly ok: true; readonly document: TzrV2Document; readonly errors: readonly [] }
+export type TzrParseResult =
+  | { readonly ok: true; readonly document: TzrDocument; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly ParseDiagnostic[] };
 
-export type TzrV2ConditionParseResult =
-  | { readonly ok: true; readonly expression: TzrV2ConditionExpression; readonly errors: readonly [] }
+export type TzrConditionParseResult =
+  | { readonly ok: true; readonly expression: TzrConditionExpression; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly ParseDiagnostic[] };
 
-export interface TzrV2ParseOptions {
+export interface TzrParseOptions {
   readonly filePath?: string;
 }
 
-export interface TzrV2Document {
-  readonly type: "TzrV2Document";
+export interface TzrDocument {
+  readonly type: "TzrDocument";
   readonly filePath: string;
   readonly sourceLines: readonly string[];
-  readonly declarations: readonly TzrV2TopLevelDeclaration[];
+  readonly declarations: readonly TzrTopLevelDeclaration[];
 }
 
-export type TzrV2TopLevelDeclaration =
-  | TzrV2TitleDeclaration
-  | TzrV2CharacterDeclaration
-  | TzrV2SceneDeclaration;
+export type TzrTopLevelDeclaration =
+  | TzrTitleDeclaration
+  | TzrCharacterDeclaration
+  | TzrSceneDeclaration;
 
-export interface TzrV2TitleDeclaration {
+export interface TzrTitleDeclaration {
   readonly type: "TitleDeclaration";
   readonly title: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2CharacterDeclaration {
+export interface TzrCharacterDeclaration {
   readonly type: "CharacterDeclaration";
   readonly id: string;
   readonly name: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2SceneDeclaration {
+export interface TzrSceneDeclaration {
   readonly type: "SceneDeclaration";
   readonly id: string;
   readonly title?: string;
-  readonly body: readonly TzrV2SceneStatement[];
+  readonly body: readonly TzrSceneStatement[];
   readonly loc: SourceRange;
 }
 
-export type TzrV2SceneStatement =
-  | TzrV2NarrationStatement
-  | TzrV2DialogueStatement
-  | TzrV2ChoiceStatement
-  | TzrV2IfStatement
-  | TzrV2SetStatement
-  | TzrV2AddStatement
-  | TzrV2CallStatement
-  | TzrV2WaitStatement
-  | TzrV2BgStatement
-  | TzrV2ShowStatement
-  | TzrV2HideStatement
-  | TzrV2ClearVisualStatement
-  | TzrV2BgmStatement
-  | TzrV2StopBgmStatement
-  | TzrV2SeStatement
-  | TzrV2VoiceStatement
-  | TzrV2SystemUnlockStatement
-  | TzrV2JumpStatement
-  | TzrV2EndStatement;
+export type TzrSceneStatement =
+  | TzrNarrationStatement
+  | TzrDialogueStatement
+  | TzrChoiceStatement
+  | TzrIfStatement
+  | TzrSetStatement
+  | TzrAddStatement
+  | TzrCallStatement
+  | TzrWaitStatement
+  | TzrBgStatement
+  | TzrShowStatement
+  | TzrHideStatement
+  | TzrClearVisualStatement
+  | TzrBgmStatement
+  | TzrStopBgmStatement
+  | TzrSeStatement
+  | TzrVoiceStatement
+  | TzrSystemUnlockStatement
+  | TzrJumpStatement
+  | TzrEndStatement;
 
-export interface TzrV2NarrationStatement {
+export interface TzrNarrationStatement {
   readonly type: "NarrationStatement";
-  readonly meta?: TzrV2TextBlockMeta;
-  readonly lines: readonly TzrV2TextBlockItem[];
+  readonly meta?: TzrTextBlockMeta;
+  readonly lines: readonly TzrTextBlockItem[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2DialogueStatement {
+export interface TzrDialogueStatement {
   readonly type: "DialogueStatement";
   readonly speaker: string;
-  readonly meta?: TzrV2TextBlockMeta;
-  readonly lines: readonly TzrV2TextBlockItem[];
+  readonly meta?: TzrTextBlockMeta;
+  readonly lines: readonly TzrTextBlockItem[];
   readonly explicit: boolean;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ChoiceStatement {
+export interface TzrChoiceStatement {
   readonly type: "ChoiceStatement";
   readonly question: string;
-  readonly items: readonly TzrV2ChoiceItem[];
+  readonly items: readonly TzrChoiceItem[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ChoiceItem {
+export interface TzrChoiceItem {
   readonly type: "ChoiceItem";
   readonly label: string;
   readonly id?: string;
-  readonly condition?: TzrV2ConditionExpression;
-  readonly body: readonly TzrV2SceneStatement[];
+  readonly condition?: TzrConditionExpression;
+  readonly body: readonly TzrSceneStatement[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2IfStatement {
+export interface TzrIfStatement {
   readonly type: "IfStatement";
-  readonly condition: TzrV2ConditionExpression;
-  readonly thenBranch: readonly TzrV2SceneStatement[];
-  readonly elifBranches: readonly TzrV2ElifBranch[];
-  readonly elseBranch?: readonly TzrV2SceneStatement[];
+  readonly condition: TzrConditionExpression;
+  readonly thenBranch: readonly TzrSceneStatement[];
+  readonly elifBranches: readonly TzrElifBranch[];
+  readonly elseBranch?: readonly TzrSceneStatement[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ElifBranch {
+export interface TzrElifBranch {
   readonly type: "ElifBranch";
-  readonly condition: TzrV2ConditionExpression;
-  readonly body: readonly TzrV2SceneStatement[];
+  readonly condition: TzrConditionExpression;
+  readonly body: readonly TzrSceneStatement[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2SetStatement {
+export interface TzrSetStatement {
   readonly type: "SetStatement";
-  readonly target: TzrV2StatePath;
-  readonly value: TzrV2ValueExpression;
+  readonly target: TzrStatePath;
+  readonly value: TzrValueExpression;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2AddStatement {
+export interface TzrAddStatement {
   readonly type: "AddStatement";
-  readonly target: TzrV2StatePath;
-  readonly value: TzrV2NumberValue;
+  readonly target: TzrStatePath;
+  readonly value: TzrNumberValue;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2StatePath {
+export interface TzrStatePath {
   readonly type: "StatePath";
   readonly path: string;
   readonly root: "scenario";
   readonly loc: SourceRange;
 }
 
-export type TzrV2ValueExpression =
-  | TzrV2StringValue
-  | TzrV2NumberValue
-  | TzrV2BooleanValue
-  | TzrV2NullValue
-  | TzrV2VariableReferenceValue;
+export type TzrValueExpression =
+  | TzrStringValue
+  | TzrNumberValue
+  | TzrBooleanValue
+  | TzrNullValue
+  | TzrVariableReferenceValue;
 
-export interface TzrV2StringValue {
+export interface TzrStringValue {
   readonly type: "StringValue";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2NumberValue {
+export interface TzrNumberValue {
   readonly type: "NumberValue";
   readonly value: number;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2BooleanValue {
+export interface TzrBooleanValue {
   readonly type: "BooleanValue";
   readonly value: boolean;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2NullValue {
+export interface TzrNullValue {
   readonly type: "NullValue";
   readonly value: null;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2VariableReferenceValue {
+export interface TzrVariableReferenceValue {
   readonly type: "VariableReferenceValue";
   readonly path: string;
   readonly root: "scenario" | "system";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2CallStatement {
+export interface TzrCallStatement {
   readonly type: "CallStatement";
   readonly name: string;
-  readonly args: readonly TzrV2NamedArgument[];
+  readonly args: readonly TzrNamedArgument[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2WaitStatement {
+export interface TzrWaitStatement {
   readonly type: "WaitStatement";
   readonly name: string;
-  readonly args: readonly TzrV2NamedArgument[];
+  readonly args: readonly TzrNamedArgument[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2NamedArgument {
+export interface TzrNamedArgument {
   readonly type: "NamedArgument";
   readonly name: string;
-  readonly value: TzrV2ArgumentValue;
+  readonly value: TzrArgumentValue;
   readonly loc: SourceRange;
 }
 
-export type TzrV2ArgumentValue =
-  | TzrV2StringValue
-  | TzrV2NumberValue
-  | TzrV2BooleanValue
-  | TzrV2NullValue
-  | TzrV2IdentifierValue
-  | TzrV2VariableReferenceValue;
+export type TzrArgumentValue =
+  | TzrStringValue
+  | TzrNumberValue
+  | TzrBooleanValue
+  | TzrNullValue
+  | TzrIdentifierValue
+  | TzrVariableReferenceValue;
 
-export interface TzrV2IdentifierValue {
+export interface TzrIdentifierValue {
   readonly type: "IdentifierValue";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2BgStatement {
+export interface TzrBgStatement {
   readonly type: "BgStatement";
-  readonly assetRef: TzrV2VisualAssetRef;
-  readonly transition?: TzrV2VisualTransition;
+  readonly assetRef: TzrVisualAssetRef;
+  readonly transition?: TzrVisualTransition;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ShowStatement {
+export interface TzrShowStatement {
   readonly type: "ShowStatement";
-  readonly assetRef: TzrV2VisualAssetRef;
-  readonly placement: TzrV2VisualPlacement;
-  readonly transition?: TzrV2VisualTransition;
+  readonly assetRef: TzrVisualAssetRef;
+  readonly placement: TzrVisualPlacement;
+  readonly transition?: TzrVisualTransition;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2HideStatement {
+export interface TzrHideStatement {
   readonly type: "HideStatement";
-  readonly assetRef: TzrV2VisualAssetRef;
-  readonly transition?: TzrV2VisualTransition;
+  readonly assetRef: TzrVisualAssetRef;
+  readonly transition?: TzrVisualTransition;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ClearVisualStatement {
+export interface TzrClearVisualStatement {
   readonly type: "ClearVisualStatement";
   readonly target: "sprites" | "bg";
-  readonly transition?: TzrV2VisualTransition;
+  readonly transition?: TzrVisualTransition;
   readonly loc: SourceRange;
 }
 
-export type TzrV2VisualAssetRef = TzrV2VisualIdentifierAssetRef | TzrV2VisualStringAssetRef;
+export type TzrVisualAssetRef = TzrVisualIdentifierAssetRef | TzrVisualStringAssetRef;
 
-export interface TzrV2VisualIdentifierAssetRef {
+export interface TzrVisualIdentifierAssetRef {
   readonly type: "VisualIdentifierAssetRef";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2VisualStringAssetRef {
+export interface TzrVisualStringAssetRef {
   readonly type: "VisualStringAssetRef";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export type TzrV2VisualPlacement = TzrV2VisualNamedPlacement | TzrV2VisualCoordinatePlacement;
+export type TzrVisualPlacement = TzrVisualNamedPlacement | TzrVisualCoordinatePlacement;
 
-export interface TzrV2VisualNamedPlacement {
+export interface TzrVisualNamedPlacement {
   readonly type: "VisualNamedPlacement";
   readonly value: "left" | "center" | "right";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2VisualCoordinatePlacement {
+export interface TzrVisualCoordinatePlacement {
   readonly type: "VisualCoordinatePlacement";
   readonly x: number;
   readonly y: number;
   readonly loc: SourceRange;
 }
 
-export type TzrV2VisualTransitionName = "fade" | "dissolve";
+export type TzrVisualTransitionName = "fade" | "dissolve";
 
-export interface TzrV2VisualTransition {
+export interface TzrVisualTransition {
   readonly type: "VisualTransition";
-  readonly name: TzrV2VisualTransitionName;
+  readonly name: TzrVisualTransitionName;
   readonly duration: number;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2BgmStatement {
+export interface TzrBgmStatement {
   readonly type: "BgmStatement";
-  readonly assetRef: TzrV2AudioAssetRef;
+  readonly assetRef: TzrAudioAssetRef;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2StopBgmStatement {
+export interface TzrStopBgmStatement {
   readonly type: "StopBgmStatement";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2SeStatement {
+export interface TzrSeStatement {
   readonly type: "SeStatement";
-  readonly assetRef: TzrV2AudioAssetRef;
+  readonly assetRef: TzrAudioAssetRef;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2VoiceStatement {
+export interface TzrVoiceStatement {
   readonly type: "VoiceStatement";
-  readonly assetRef: TzrV2AudioAssetRef;
+  readonly assetRef: TzrAudioAssetRef;
   readonly loc: SourceRange;
 }
 
-export type TzrV2AudioAssetRef = TzrV2AudioIdentifierAssetRef | TzrV2AudioStringAssetRef;
+export type TzrAudioAssetRef = TzrAudioIdentifierAssetRef | TzrAudioStringAssetRef;
 
-export interface TzrV2AudioIdentifierAssetRef {
+export interface TzrAudioIdentifierAssetRef {
   readonly type: "AudioIdentifierAssetRef";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2AudioStringAssetRef {
+export interface TzrAudioStringAssetRef {
   readonly type: "AudioStringAssetRef";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export type TzrV2SystemUnlockKind = "ending" | "cg" | "achievement";
+export type TzrSystemUnlockKind = "ending" | "cg" | "achievement";
 
-export interface TzrV2SystemUnlockStatement {
+export interface TzrSystemUnlockStatement {
   readonly type: "SystemUnlockStatement";
-  readonly kind: TzrV2SystemUnlockKind;
-  readonly id: TzrV2SystemUnlockId;
+  readonly kind: TzrSystemUnlockKind;
+  readonly id: TzrSystemUnlockId;
   readonly loc: SourceRange;
 }
 
-export type TzrV2SystemUnlockId = TzrV2SystemUnlockIdentifierId | TzrV2SystemUnlockStringId;
+export type TzrSystemUnlockId = TzrSystemUnlockIdentifierId | TzrSystemUnlockStringId;
 
-export interface TzrV2SystemUnlockIdentifierId {
+export interface TzrSystemUnlockIdentifierId {
   readonly type: "SystemUnlockIdentifierId";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2SystemUnlockStringId {
+export interface TzrSystemUnlockStringId {
   readonly type: "SystemUnlockStringId";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2JumpStatement {
+export interface TzrJumpStatement {
   readonly type: "JumpStatement";
   readonly target: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2EndStatement {
+export interface TzrEndStatement {
   readonly type: "EndStatement";
   readonly loc: SourceRange;
 }
 
-export type TzrV2ConditionExpression =
-  | TzrV2ConditionReference
-  | TzrV2ConditionLiteral
-  | TzrV2ConditionUnaryExpression
-  | TzrV2ConditionBinaryExpression
-  | TzrV2ConditionComparisonExpression;
+export type TzrConditionExpression =
+  | TzrConditionReference
+  | TzrConditionLiteral
+  | TzrConditionUnaryExpression
+  | TzrConditionBinaryExpression
+  | TzrConditionComparisonExpression;
 
-export interface TzrV2ConditionReference {
+export interface TzrConditionReference {
   readonly type: "ConditionReference";
   readonly path: string;
   readonly root: "scenario" | "system";
   readonly loc: SourceRange;
 }
 
-export type TzrV2ConditionLiteral =
-  | TzrV2ConditionStringLiteral
-  | TzrV2ConditionNumberLiteral
-  | TzrV2ConditionBooleanLiteral
-  | TzrV2ConditionNullLiteral;
+export type TzrConditionLiteral =
+  | TzrConditionStringLiteral
+  | TzrConditionNumberLiteral
+  | TzrConditionBooleanLiteral
+  | TzrConditionNullLiteral;
 
-export interface TzrV2ConditionStringLiteral {
+export interface TzrConditionStringLiteral {
   readonly type: "ConditionStringLiteral";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionNumberLiteral {
+export interface TzrConditionNumberLiteral {
   readonly type: "ConditionNumberLiteral";
   readonly value: number;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionBooleanLiteral {
+export interface TzrConditionBooleanLiteral {
   readonly type: "ConditionBooleanLiteral";
   readonly value: boolean;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionNullLiteral {
+export interface TzrConditionNullLiteral {
   readonly type: "ConditionNullLiteral";
   readonly value: null;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionUnaryExpression {
+export interface TzrConditionUnaryExpression {
   readonly type: "ConditionUnaryExpression";
   readonly operator: "not";
-  readonly expression: TzrV2ConditionExpression;
+  readonly expression: TzrConditionExpression;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionBinaryExpression {
+export interface TzrConditionBinaryExpression {
   readonly type: "ConditionBinaryExpression";
   readonly operator: "and" | "or";
-  readonly left: TzrV2ConditionExpression;
-  readonly right: TzrV2ConditionExpression;
+  readonly left: TzrConditionExpression;
+  readonly right: TzrConditionExpression;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2ConditionComparisonExpression {
+export interface TzrConditionComparisonExpression {
   readonly type: "ConditionComparisonExpression";
   readonly operator: "==" | "!=" | ">=" | "<=" | ">" | "<";
-  readonly left: TzrV2ConditionExpression;
-  readonly right: TzrV2ConditionExpression;
+  readonly left: TzrConditionExpression;
+  readonly right: TzrConditionExpression;
   readonly loc: SourceRange;
 }
 
-export type TzrV2TextBlockItem = TzrV2TextLine | TzrV2TextClickWait | TzrV2TextPageBreak;
+export type TzrTextBlockItem = TzrTextLine | TzrTextClickWait | TzrTextPageBreak;
 
-export interface TzrV2TextLine {
+export interface TzrTextLine {
   readonly type: "TextLine";
   readonly text: string;
-  readonly inline: readonly TzrV2InlineNode[];
+  readonly inline: readonly TzrInlineNode[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextClickWait {
+export interface TzrTextClickWait {
   readonly type: "TextClickWait";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextPageBreak {
+export interface TzrTextPageBreak {
   readonly type: "TextPageBreak";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextBlockMeta {
+export interface TzrTextBlockMeta {
   readonly type: "TextBlockMeta";
-  readonly attributes: readonly TzrV2TextBlockMetaAttribute[];
+  readonly attributes: readonly TzrTextBlockMetaAttribute[];
   readonly loc: SourceRange;
 }
 
-export type TzrV2TextBlockMetaAttribute =
-  | TzrV2TextBlockColorMetaAttribute
-  | TzrV2TextBlockBooleanMetaAttribute
-  | TzrV2TextBlockNumberMetaAttribute
-  | TzrV2TextBlockMoodMetaAttribute;
+export type TzrTextBlockMetaAttribute =
+  | TzrTextBlockColorMetaAttribute
+  | TzrTextBlockBooleanMetaAttribute
+  | TzrTextBlockNumberMetaAttribute
+  | TzrTextBlockMoodMetaAttribute;
 
-export interface TzrV2TextBlockColorMetaAttribute {
+export interface TzrTextBlockColorMetaAttribute {
   readonly type: "TextBlockColorMetaAttribute";
   readonly name: "color";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextBlockBooleanMetaAttribute {
+export interface TzrTextBlockBooleanMetaAttribute {
   readonly type: "TextBlockBooleanMetaAttribute";
   readonly name: "bold" | "italic";
   readonly value: boolean;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextBlockNumberMetaAttribute {
+export interface TzrTextBlockNumberMetaAttribute {
   readonly type: "TextBlockNumberMetaAttribute";
   readonly name: "size" | "delay";
   readonly value: number;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2TextBlockMoodMetaAttribute {
+export interface TzrTextBlockMoodMetaAttribute {
   readonly type: "TextBlockMoodMetaAttribute";
   readonly name: "mood";
   readonly value: string;
@@ -474,100 +474,100 @@ export interface TzrV2TextBlockMoodMetaAttribute {
   readonly loc: SourceRange;
 }
 
-export type TzrV2InlineNode =
-  | TzrV2InlineText
-  | TzrV2InlineTextSpan
-  | TzrV2InlineDelaySpan
-  | TzrV2InlineWaitEvent
-  | TzrV2InlineSeEvent
-  | TzrV2InlineVoiceEvent;
+export type TzrInlineNode =
+  | TzrInlineText
+  | TzrInlineTextSpan
+  | TzrInlineDelaySpan
+  | TzrInlineWaitEvent
+  | TzrInlineSeEvent
+  | TzrInlineVoiceEvent;
 
-export interface TzrV2InlineText {
+export interface TzrInlineText {
   readonly type: "InlineText";
   readonly text: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineTextSpan {
+export interface TzrInlineTextSpan {
   readonly type: "InlineTextSpan";
-  readonly attributes: readonly TzrV2InlineTextAttribute[];
-  readonly children: readonly TzrV2InlineNode[];
+  readonly attributes: readonly TzrInlineTextAttribute[];
+  readonly children: readonly TzrInlineNode[];
   readonly text: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineDelaySpan {
+export interface TzrInlineDelaySpan {
   readonly type: "InlineDelaySpan";
   readonly ms: number;
-  readonly children: readonly TzrV2InlineNode[];
+  readonly children: readonly TzrInlineNode[];
   readonly text: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineWaitEvent {
+export interface TzrInlineWaitEvent {
   readonly type: "InlineWaitEvent";
   readonly ms: number;
   readonly text: "";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineSeEvent {
+export interface TzrInlineSeEvent {
   readonly type: "InlineSeEvent";
-  readonly assetId: TzrV2InlineAssetId;
+  readonly assetId: TzrInlineAssetId;
   readonly text: "";
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineVoiceEvent {
+export interface TzrInlineVoiceEvent {
   readonly type: "InlineVoiceEvent";
-  readonly assetId: TzrV2InlineAssetId;
+  readonly assetId: TzrInlineAssetId;
   readonly text: "";
   readonly loc: SourceRange;
 }
 
-export type TzrV2InlineAssetId =
-  | TzrV2InlineIdentifierAssetId
-  | TzrV2InlineStringAssetId
-  | TzrV2InlineVariableAssetId;
+export type TzrInlineAssetId =
+  | TzrInlineIdentifierAssetId
+  | TzrInlineStringAssetId
+  | TzrInlineVariableAssetId;
 
-export interface TzrV2InlineIdentifierAssetId {
+export interface TzrInlineIdentifierAssetId {
   readonly type: "InlineIdentifierAssetId";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineStringAssetId {
+export interface TzrInlineStringAssetId {
   readonly type: "InlineStringAssetId";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineVariableAssetId {
+export interface TzrInlineVariableAssetId {
   readonly type: "InlineVariableAssetId";
   readonly path: string;
   readonly loc: SourceRange;
 }
 
-export type TzrV2InlineTextAttribute =
-  | TzrV2InlineTextColorAttribute
-  | TzrV2InlineTextBooleanAttribute
-  | TzrV2InlineTextSizeAttribute;
+export type TzrInlineTextAttribute =
+  | TzrInlineTextColorAttribute
+  | TzrInlineTextBooleanAttribute
+  | TzrInlineTextSizeAttribute;
 
-export interface TzrV2InlineTextColorAttribute {
+export interface TzrInlineTextColorAttribute {
   readonly type: "InlineTextColorAttribute";
   readonly name: "color";
   readonly value: string;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineTextBooleanAttribute {
+export interface TzrInlineTextBooleanAttribute {
   readonly type: "InlineTextBooleanAttribute";
   readonly name: "bold" | "italic";
   readonly value: boolean;
   readonly loc: SourceRange;
 }
 
-export interface TzrV2InlineTextSizeAttribute {
+export interface TzrInlineTextSizeAttribute {
   readonly type: "InlineTextSizeAttribute";
   readonly name: "size";
   readonly value: number;

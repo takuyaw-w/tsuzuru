@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   clearClickWait,
   clearWait,
-  compileTzrV2,
+  compileTzr,
   createInitialRuntimeState,
   createRuntimeSnapshot,
   definePluginCommand,
   getRuntimeBlockReason,
   isRuntimeBlocked,
-  parseTzrV2,
+  parseTzr,
   restoreRuntimeState,
   stepRuntime,
   type CommandInstruction,
@@ -23,13 +23,13 @@ const loc = {
 };
 
 function compileSource(source: string): RuntimeDocument {
-  const parsed = parseTzrV2(source, { filePath: "scenario/runtime.tzr" });
+  const parsed = parseTzr(source, { filePath: "scenario/runtime.tzr" });
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
     throw new Error("expected parser success");
   }
 
-  const compiled = compileTzrV2(parsed.document);
+  const compiled = compileTzr(parsed.document);
   expect(compiled.ok).toBe(true);
   if (!compiled.ok) {
     throw new Error("expected compiler success");
@@ -285,7 +285,7 @@ describe("runtime blocking and snapshots", () => {
 });
 
 describe("plugin command metadata", () => {
-  it("keeps plugin command definitions available without legacy compileTzr", () => {
+  it("keeps plugin command definitions available without the legacy compiler validation path", () => {
     expect(
       definePluginCommand("bg", {
         kind: "positional",

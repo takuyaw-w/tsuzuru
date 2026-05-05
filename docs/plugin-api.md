@@ -1,9 +1,9 @@
 # Plugin API
 
 > Status: partially historical. Plugin command metadata and runtime handlers
-> remain, but legacy `compileTzr({ pluginCommands })` validation was removed with
-> the old DSL compiler. DSL v2 currently emits std visual/audio runtime commands
-> directly for the supported subset.
+> remain, but the old compiler's `pluginCommands` validation path was removed.
+> DSL v2 currently emits std visual/audio runtime commands directly for the
+> supported subset.
 
 This document describes the currently implemented plugin command metadata and runtime handler surface in `@tsuzuru/core`.
 
@@ -11,7 +11,7 @@ Plugins extend runtime presentation behavior by handling command names emitted b
 
 ## Command Metadata
 
-Plugin command metadata remains available through `definePluginCommand`. The legacy compiler path that consumed `pluginCommands` was removed with `compileTzr`, so this metadata is not currently a DSL v2 compile-time validation registry.
+Plugin command metadata remains available through `definePluginCommand`. The legacy compiler path that consumed `pluginCommands` was removed, so this metadata is not currently a DSL v2 compile-time validation registry.
 
 ```ts
 import { definePluginCommand } from "@tsuzuru/core";

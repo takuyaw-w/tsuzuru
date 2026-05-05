@@ -1,6 +1,6 @@
 # Tsuzuru DSL v2 Basic Example
 
-This example parses `scenario/main.tzr` with `parseTzrV2`, compiles it with `compileTzrV2`, and runs the compiled document through the core runtime.
+This example parses `scenario/main.tzr` with `parseTzr`, compiles it with `compileTzr`, and runs the compiled document through the core runtime.
 
 It demonstrates the current runnable DSL v2 subset: visual sugar, audio sugar, dialogue, narration, state updates, `if` / `else`, conditional body choices, scene jumps, and `end`.
 

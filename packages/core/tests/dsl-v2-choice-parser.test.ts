@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2ChoiceStatement } from "../src/index.js";
+import { parseTzr, type TzrChoiceStatement } from "../src/index.js";
 
-function parseSingleChoice(source: string): TzrV2ChoiceStatement {
-  const result = parseTzrV2(source, { filePath: "scenario/choice.tzr" });
+function parseSingleChoice(source: string): TzrChoiceStatement {
+  const result = parseTzr(source, { filePath: "scenario/choice.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -20,7 +20,7 @@ function parseSingleChoice(source: string): TzrV2ChoiceStatement {
 }
 
 function expectChoiceFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/choice.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/choice.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -28,7 +28,7 @@ function expectChoiceFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 choice statements", () => {
+describe("parseTzr choice statements", () => {
   it("parses a basic choice with two items", () => {
     const choice = parseSingleChoice(`scene start:
   choice "どう答える？":

@@ -7,7 +7,7 @@
 
 ## Current Supported DSL Surface
 
-- Public APIs: `parseTzrV2`, `compileTzrV2`
+- Public APIs: `parseTzr`, `compileTzr`
 - Parser: `packages/core/src/parser.ts`
 - Compiler: `packages/core/src/compiler.ts`
 - DSL AST: `packages/core/src/scenario-ast.ts`
@@ -21,7 +21,7 @@ implementation now lives directly under `packages/core/src/`.
 
 The following legacy-only items were removed during the DSL v2 cleanup:
 
-- legacy parser/compiler public APIs: `parseTzr`, `compileTzr`
+- legacy parser/compiler implementations previously exported as `parseTzr` and `compileTzr`
 - legacy parser/compiler result and option types
 - legacy AST document/statement types
 - legacy IR instruction types such as label jumps, old choices, old if blocks,
@@ -32,7 +32,7 @@ The following legacy-only items were removed during the DSL v2 cleanup:
 - legacy example source packages
 - the old `packages/core/src/dsl-v2/` internal directory layout
 
-The legacy `compileTzr({ pluginCommands })` validation path is also gone.
+The legacy compiler `pluginCommands` validation path is also gone.
 `definePluginCommand` and std plugin command maps remain as metadata/runtime
 integration points. DSL v2 plugin command validation policy is still undecided.
 
@@ -71,7 +71,7 @@ integration and must not be removed as part of legacy cleanup:
 ## RuntimeDocument And Runtime State Follow-Ups
 
 `RuntimeDocument.labels` remains for now. Current DSL v2 scene jumps and body
-choices do not use it, and `CompiledTzrV2Document` currently emits `labels: {}`.
+choices do not use it, and `CompiledTzrDocument` currently emits `labels: {}`.
 Removing the field would touch public type shape and many tests/fixtures, so it
 should be handled in a focused runtime document cleanup.
 
@@ -90,16 +90,14 @@ Residual mentions of legacy syntax or APIs are acceptable only in:
 - repository instructions that describe old design context
 
 Current entry points such as `README.md`, `docs/dsl.md`, current plugin docs,
-and runnable example docs should present DSL v2 as the supported path and must
-not direct users to `parseTzr`, `compileTzr`, `$macro(...)`, `#scene(...)`, or
-old example packages as current behavior.
+and runnable example docs should present DSL v2 as the supported path. Current
+`parseTzr` / `compileTzr` names refer to DSL v2; docs must not present
+`$macro(...)`, `#scene(...)`, old compiler options, or old example packages as
+current behavior.
 
 ## Remaining PR-Ready Tasks
 
 - Decide DSL v2 plugin command validation policy.
-- Decide public API naming before release planning: keep `parseTzrV2` /
-  `compileTzrV2`, or rename the current DSL path back to `parseTzr` /
-  `compileTzr` in a separate breaking API task.
 - Decide whether `RuntimeDocument.labels` should be removed or made optional.
 - Decide whether `RuntimeState.flags` and `inc` / `dec` / `flag` / `unflag`
   remain long-term runtime primitives.

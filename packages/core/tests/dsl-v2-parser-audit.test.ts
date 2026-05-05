@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2SceneStatement } from "../src/index.js";
+import { parseTzr, type TzrSceneStatement } from "../src/index.js";
 
-function parseSceneBody(source: string): readonly TzrV2SceneStatement[] {
-  const result = parseTzrV2(source, { filePath: "scenario/audit.tzr" });
+function parseSceneBody(source: string): readonly TzrSceneStatement[] {
+  const result = parseTzr(source, { filePath: "scenario/audit.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -16,7 +16,7 @@ function parseSceneBody(source: string): readonly TzrV2SceneStatement[] {
   return scene.body;
 }
 
-describe("parseTzrV2 parser audit coverage", () => {
+describe("parseTzr parser audit coverage", () => {
   it("parses state statements inside nested if branches", () => {
     const body = parseSceneBody(`scene start:
   if scenario.outer:

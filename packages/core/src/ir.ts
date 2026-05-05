@@ -1,5 +1,5 @@
 import type { SourceRange, TextLine, TzrArgument } from "./ast.js";
-import type { TzrV2ConditionExpression } from "./scenario-ast.js";
+import type { TzrConditionExpression } from "./scenario-ast.js";
 
 export type TzrInstruction =
   | SceneInstruction
@@ -8,7 +8,7 @@ export type TzrInstruction =
   | DialogueInstruction
   | CommandInstruction
   | BodyChoiceInstruction
-  | V2IfInstruction;
+  | IfInstruction;
 
 export interface SceneInstruction {
   readonly type: "SceneInstruction";
@@ -52,22 +52,22 @@ export interface BodyChoiceInstruction {
 export interface BodyChoiceInstructionItem {
   readonly label: string;
   readonly id?: string;
-  readonly condition?: TzrV2ConditionExpression;
+  readonly condition?: TzrConditionExpression;
   readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 
-export interface V2IfInstruction {
-  readonly type: "V2IfInstruction";
-  readonly condition: TzrV2ConditionExpression;
+export interface IfInstruction {
+  readonly type: "IfInstruction";
+  readonly condition: TzrConditionExpression;
   readonly thenBranch: readonly TzrInstruction[];
-  readonly elifBranches: readonly V2ElifInstructionBranch[];
+  readonly elifBranches: readonly ElifInstructionBranch[];
   readonly elseBranch?: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 
-export interface V2ElifInstructionBranch {
-  readonly condition: TzrV2ConditionExpression;
+export interface ElifInstructionBranch {
+  readonly condition: TzrConditionExpression;
   readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }

@@ -1,69 +1,69 @@
 import type { SourceLocation, SourceRange } from "./ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
-  TzrV2AddStatement,
-  TzrV2ArgumentValue,
-  TzrV2AudioAssetRef,
-  TzrV2BgStatement,
-  TzrV2BgmStatement,
-  TzrV2BooleanValue,
-  TzrV2CallStatement,
-  TzrV2CharacterDeclaration,
-  TzrV2ChoiceItem,
-  TzrV2ChoiceStatement,
-  TzrV2ClearVisualStatement,
-  TzrV2DialogueStatement,
-  TzrV2Document,
-  TzrV2ConditionExpression,
-  TzrV2ElifBranch,
-  TzrV2EndStatement,
-  TzrV2IfStatement,
-  TzrV2IdentifierValue,
-  TzrV2HideStatement,
-  TzrV2InlineAssetId,
-  TzrV2InlineDelaySpan,
-  TzrV2InlineNode,
-  TzrV2InlineSeEvent,
-  TzrV2InlineTextAttribute,
-  TzrV2InlineTextSpan,
-  TzrV2InlineVoiceEvent,
-  TzrV2InlineWaitEvent,
-  TzrV2JumpStatement,
-  TzrV2NamedArgument,
-  TzrV2NarrationStatement,
-  TzrV2NullValue,
-  TzrV2NumberValue,
-  TzrV2ParseOptions,
-  TzrV2ParseResult,
-  TzrV2SceneDeclaration,
-  TzrV2SceneStatement,
-  TzrV2SeStatement,
-  TzrV2SetStatement,
-  TzrV2StopBgmStatement,
-  TzrV2StatePath,
-  TzrV2StringValue,
-  TzrV2SystemUnlockId,
-  TzrV2SystemUnlockKind,
-  TzrV2SystemUnlockStatement,
-  TzrV2TextBlockItem,
-  TzrV2TextBlockMeta,
-  TzrV2TextBlockMetaAttribute,
-  TzrV2TextLine,
-  TzrV2TitleDeclaration,
-  TzrV2TopLevelDeclaration,
-  TzrV2ValueExpression,
-  TzrV2VariableReferenceValue,
-  TzrV2VisualAssetRef,
-  TzrV2VisualCoordinatePlacement,
-  TzrV2VisualNamedPlacement,
-  TzrV2VisualPlacement,
-  TzrV2VisualTransition,
-  TzrV2VisualTransitionName,
-  TzrV2VoiceStatement,
-  TzrV2WaitStatement,
-  TzrV2ShowStatement,
+  TzrAddStatement,
+  TzrArgumentValue,
+  TzrAudioAssetRef,
+  TzrBgStatement,
+  TzrBgmStatement,
+  TzrBooleanValue,
+  TzrCallStatement,
+  TzrCharacterDeclaration,
+  TzrChoiceItem,
+  TzrChoiceStatement,
+  TzrClearVisualStatement,
+  TzrDialogueStatement,
+  TzrDocument,
+  TzrConditionExpression,
+  TzrElifBranch,
+  TzrEndStatement,
+  TzrIfStatement,
+  TzrIdentifierValue,
+  TzrHideStatement,
+  TzrInlineAssetId,
+  TzrInlineDelaySpan,
+  TzrInlineNode,
+  TzrInlineSeEvent,
+  TzrInlineTextAttribute,
+  TzrInlineTextSpan,
+  TzrInlineVoiceEvent,
+  TzrInlineWaitEvent,
+  TzrJumpStatement,
+  TzrNamedArgument,
+  TzrNarrationStatement,
+  TzrNullValue,
+  TzrNumberValue,
+  TzrParseOptions,
+  TzrParseResult,
+  TzrSceneDeclaration,
+  TzrSceneStatement,
+  TzrSeStatement,
+  TzrSetStatement,
+  TzrStopBgmStatement,
+  TzrStatePath,
+  TzrStringValue,
+  TzrSystemUnlockId,
+  TzrSystemUnlockKind,
+  TzrSystemUnlockStatement,
+  TzrTextBlockItem,
+  TzrTextBlockMeta,
+  TzrTextBlockMetaAttribute,
+  TzrTextLine,
+  TzrTitleDeclaration,
+  TzrTopLevelDeclaration,
+  TzrValueExpression,
+  TzrVariableReferenceValue,
+  TzrVisualAssetRef,
+  TzrVisualCoordinatePlacement,
+  TzrVisualNamedPlacement,
+  TzrVisualPlacement,
+  TzrVisualTransition,
+  TzrVisualTransitionName,
+  TzrVoiceStatement,
+  TzrWaitStatement,
+  TzrShowStatement,
 } from "./scenario-ast.js";
-import { parseTzrV2ConditionExpression } from "./condition-parser.js";
+import { parseTzrConditionExpression } from "./condition-parser.js";
 
 interface SourceLine {
   readonly original: string;
@@ -78,35 +78,35 @@ interface CommentScanResult {
 }
 
 interface ParsedTextBlock {
-  readonly meta?: TzrV2TextBlockMeta;
-  readonly lines: readonly TzrV2TextBlockItem[];
+  readonly meta?: TzrTextBlockMeta;
+  readonly lines: readonly TzrTextBlockItem[];
 }
 
 interface ParsedInlineContent {
-  readonly nodes: readonly TzrV2InlineNode[];
+  readonly nodes: readonly TzrInlineNode[];
   readonly text: string;
   readonly nextIndex: number;
 }
 
 interface ParsedInlineMarkup {
-  readonly node: TzrV2InlineTextSpan | TzrV2InlineDelaySpan | TzrV2InlineWaitEvent | TzrV2InlineSeEvent | TzrV2InlineVoiceEvent;
+  readonly node: TzrInlineTextSpan | TzrInlineDelaySpan | TzrInlineWaitEvent | TzrInlineSeEvent | TzrInlineVoiceEvent;
   readonly nextIndex: number;
 }
 
 interface ParsedChoiceItemHeader {
   readonly label: string;
   readonly id?: string;
-  readonly condition?: TzrV2ConditionExpression;
+  readonly condition?: TzrConditionExpression;
 }
 
 interface ParsedConditionBranchHeader {
-  readonly condition: TzrV2ConditionExpression;
+  readonly condition: TzrConditionExpression;
 }
 
 interface ParsedVisualStatementBody {
   readonly bodySource: string;
   readonly bodyColumn: number;
-  readonly transition?: TzrV2VisualTransition;
+  readonly transition?: TzrVisualTransition;
 }
 
 type StateStatementKeyword = "set" | "add";
@@ -127,21 +127,21 @@ const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 const NUMBER_LITERAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 
-export function parseTzrV2(source: string, options: TzrV2ParseOptions = {}): TzrV2ParseResult {
+export function parseTzr(source: string, options: TzrParseOptions = {}): TzrParseResult {
   const filePath = options.filePath ?? "<anonymous>";
-  const parser = new TzrV2Parser(source, filePath);
+  const parser = new TzrParser(source, filePath);
   return parser.parse();
 }
 
-export function isValidTzrV2Identifier(value: string): boolean {
+export function isValidTzrIdentifier(value: string): boolean {
   return IDENTIFIER_PATTERN.test(value);
 }
 
-export function isValidTzrV2DottedIdentifier(value: string): boolean {
-  return value.split(".").every((part) => part.length > 0 && isValidTzrV2Identifier(part));
+export function isValidTzrDottedIdentifier(value: string): boolean {
+  return value.split(".").every((part) => part.length > 0 && isValidTzrIdentifier(part));
 }
 
-class TzrV2Parser {
+class TzrParser {
   private readonly lines: readonly SourceLine[];
   private readonly errors: ParseDiagnostic[];
   private cursor = 0;
@@ -153,8 +153,8 @@ class TzrV2Parser {
     this.errors = [...scanned.errors];
   }
 
-  public parse(): TzrV2ParseResult {
-    const declarations: TzrV2TopLevelDeclaration[] = [];
+  public parse(): TzrParseResult {
+    const declarations: TzrTopLevelDeclaration[] = [];
 
     while (!this.isAtEnd()) {
       const line = this.currentRequired();
@@ -183,7 +183,7 @@ class TzrV2Parser {
     return {
       ok: true,
       document: {
-        type: "TzrV2Document",
+        type: "TzrDocument",
         filePath: this.filePath,
         sourceLines: this.lines.map((line) => line.original),
         declarations,
@@ -192,7 +192,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseTopLevelDeclaration(line: SourceLine): TzrV2TopLevelDeclaration | undefined {
+  private parseTopLevelDeclaration(line: SourceLine): TzrTopLevelDeclaration | undefined {
     const keyword = line.code.trim().match(/^\S+/)?.[0];
     if (keyword === "title") {
       const declaration = this.parseTitle(line);
@@ -213,7 +213,7 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseTitle(line: SourceLine): TzrV2TitleDeclaration | undefined {
+  private parseTitle(line: SourceLine): TzrTitleDeclaration | undefined {
     const match = /^title\s+(.+)$/.exec(line.code.trim());
     if (match === null) {
       this.addError(line, firstContentColumn(line), 'title must use `title "..."` syntax.');
@@ -234,7 +234,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseCharacter(line: SourceLine): TzrV2CharacterDeclaration | undefined {
+  private parseCharacter(line: SourceLine): TzrCharacterDeclaration | undefined {
     const match = /^character\s+(\S+)\s+name=(.+)$/.exec(line.code.trim());
     if (match === null) {
       this.addError(line, firstContentColumn(line), 'character must use `character id name="..."` syntax.');
@@ -261,7 +261,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseScene(line: SourceLine): TzrV2SceneDeclaration | undefined {
+  private parseScene(line: SourceLine): TzrSceneDeclaration | undefined {
     const match = /^scene\s+(\S+)(?:\s+(.+))?:$/.exec(line.code.trim());
     const headerColumn = firstContentColumn(line);
     this.cursor += 1;
@@ -297,15 +297,15 @@ class TzrV2Parser {
     };
   }
 
-  private collectSceneBody(): readonly TzrV2SceneStatement[] {
+  private collectSceneBody(): readonly TzrSceneStatement[] {
     return this.collectSceneStatements(1, "Scene statements must be indented 2 spaces.");
   }
 
   private collectSceneStatements(
     expectedIndentLevel: number,
     indentationMessage: string,
-  ): readonly TzrV2SceneStatement[] {
-    const body: TzrV2SceneStatement[] = [];
+  ): readonly TzrSceneStatement[] {
+    const body: TzrSceneStatement[] = [];
     const expectedIndent = expectedIndentLevel * 2;
 
     while (!this.isAtEnd()) {
@@ -340,7 +340,7 @@ class TzrV2Parser {
     return body;
   }
 
-  private parseSceneStatement(line: SourceLine, indentLevel: number): TzrV2SceneStatement | undefined {
+  private parseSceneStatement(line: SourceLine, indentLevel: number): TzrSceneStatement | undefined {
     const sourceIndent = indentLevel * 2;
     const source = line.code.slice(sourceIndent).trimEnd();
     const statementColumn = sourceIndent + 1;
@@ -431,7 +431,7 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseNarrationStatement(header: SourceLine, indentLevel: number): TzrV2NarrationStatement {
+  private parseNarrationStatement(header: SourceLine, indentLevel: number): TzrNarrationStatement {
     const headerLoc = this.lineRange(header);
     const statementColumn = indentLevel * 2 + 1;
     this.cursor += 1;
@@ -451,7 +451,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): TzrV2DialogueStatement | undefined {
+  ): TzrDialogueStatement | undefined {
     const match = /^say\s+(\S+):$/.exec(source);
     if (match === null) {
       this.addError(header, statementColumn, "say block must use `say speaker:` syntax.");
@@ -486,7 +486,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): TzrV2DialogueStatement | undefined {
+  ): TzrDialogueStatement | undefined {
     const speaker = source.slice(0, -1).trim();
     const speakerColumn = header.code.indexOf(speaker) + 1;
     if (!this.validateIdentifier(speaker, header, speakerColumn)) {
@@ -514,7 +514,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): TzrV2ChoiceStatement | undefined {
+  ): TzrChoiceStatement | undefined {
     if (source === "choice" || source === "choice:") {
       this.addError(header, statementColumn, "choice question is required.");
       this.cursor += 1;
@@ -556,8 +556,8 @@ class TzrV2Parser {
     };
   }
 
-  private collectChoiceItems(header: SourceLine, choiceIndentLevel: number): readonly TzrV2ChoiceItem[] {
-    const items: TzrV2ChoiceItem[] = [];
+  private collectChoiceItems(header: SourceLine, choiceIndentLevel: number): readonly TzrChoiceItem[] {
+    const items: TzrChoiceItem[] = [];
     const seenIds = new Set<string>();
     const itemIndentLevel = choiceIndentLevel + 1;
     const expectedItemIndent = itemIndentLevel * 2;
@@ -604,7 +604,7 @@ class TzrV2Parser {
     return items;
   }
 
-  private parseChoiceItem(header: SourceLine, itemIndentLevel: number): TzrV2ChoiceItem | undefined {
+  private parseChoiceItem(header: SourceLine, itemIndentLevel: number): TzrChoiceItem | undefined {
     const sourceIndent = itemIndentLevel * 2;
     const source = header.code.slice(sourceIndent).trimEnd();
     const sourceColumn = sourceIndent + 1;
@@ -682,7 +682,7 @@ class TzrV2Parser {
 
     const id = idMatch[1] ?? "";
     const idColumn = restColumn + rest.indexOf(id);
-    if (!isValidTzrV2Identifier(id)) {
+    if (!isValidTzrIdentifier(id)) {
       this.addError(line, idColumn, `Invalid choice item id "${id}".`);
       return undefined;
     }
@@ -717,7 +717,7 @@ class TzrV2Parser {
     }
 
     const conditionColumn = sourceColumn + source.indexOf(conditionSource);
-    const result = parseTzrV2ConditionExpression(conditionSource, { filePath: this.filePath });
+    const result = parseTzrConditionExpression(conditionSource, { filePath: this.filePath });
     if (!result.ok) {
       for (const error of result.errors) {
         this.addError(
@@ -741,7 +741,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): TzrV2IfStatement | undefined {
+  ): TzrIfStatement | undefined {
     const parsedHeader = this.parseConditionBranchHeader(header, source, "if", statementColumn);
     const headerRange = this.lineRange(header);
     this.cursor += 1;
@@ -755,8 +755,8 @@ class TzrV2Parser {
       this.addError(header, statementColumn, "If branch body must include at least one statement.");
     }
 
-    const elifBranches: TzrV2ElifBranch[] = [];
-    let elseBranch: readonly TzrV2SceneStatement[] | undefined;
+    const elifBranches: TzrElifBranch[] = [];
+    let elseBranch: readonly TzrSceneStatement[] | undefined;
     let sawElse = false;
     let end = thenBranch.at(-1)?.loc.end ?? headerRange.end;
 
@@ -833,7 +833,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): TzrV2ElifBranch | undefined {
+  ): TzrElifBranch | undefined {
     const parsedHeader = this.parseConditionBranchHeader(header, source, "elif", statementColumn);
     const headerRange = this.lineRange(header);
     this.cursor += 1;
@@ -864,7 +864,7 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
     indentLevel: number,
-  ): { readonly body: readonly TzrV2SceneStatement[]; readonly end: SourceLocation } | undefined {
+  ): { readonly body: readonly TzrSceneStatement[]; readonly end: SourceLocation } | undefined {
     const validHeader = this.validateElseHeader(header, source, statementColumn);
     const headerRange = this.lineRange(header);
     this.cursor += 1;
@@ -910,7 +910,7 @@ class TzrV2Parser {
     }
 
     const conditionColumn = statementColumn + source.indexOf(conditionSource);
-    const result = parseTzrV2ConditionExpression(conditionSource, { filePath: this.filePath });
+    const result = parseTzrConditionExpression(conditionSource, { filePath: this.filePath });
     if (!result.ok) {
       for (const error of result.errors) {
         this.addError(
@@ -954,7 +954,7 @@ class TzrV2Parser {
     }
   }
 
-  private parseSetStatement(line: SourceLine, source: string, statementColumn: number): TzrV2SetStatement | undefined {
+  private parseSetStatement(line: SourceLine, source: string, statementColumn: number): TzrSetStatement | undefined {
     const parsed = this.parseStateStatementParts(line, source, "set", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -974,7 +974,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseAddStatement(line: SourceLine, source: string, statementColumn: number): TzrV2AddStatement | undefined {
+  private parseAddStatement(line: SourceLine, source: string, statementColumn: number): TzrAddStatement | undefined {
     const parsed = this.parseStateStatementParts(line, source, "add", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1001,7 +1001,7 @@ class TzrV2Parser {
     statementColumn: number,
   ):
     | {
-        readonly target: TzrV2StatePath;
+        readonly target: TzrStatePath;
         readonly valueSource: string;
         readonly valueColumn: number;
       }
@@ -1062,9 +1062,9 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: StateStatementKeyword,
-  ): TzrV2StatePath | undefined {
+  ): TzrStatePath | undefined {
     const parts = source.split(".");
-    if (!isValidTzrV2DottedIdentifier(source) || parts.length < 2) {
+    if (!isValidTzrDottedIdentifier(source) || parts.length < 2) {
       this.addError(line, sourceColumn, `Invalid ${keyword} target dotted identifier.`);
       return undefined;
     }
@@ -1090,7 +1090,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseSetValue(line: SourceLine, source: string, sourceColumn: number): TzrV2ValueExpression | undefined {
+  private parseSetValue(line: SourceLine, source: string, sourceColumn: number): TzrValueExpression | undefined {
     const loc = {
       start: this.location(line.line, sourceColumn),
       end: this.location(line.line, sourceColumn + source.length),
@@ -1103,13 +1103,13 @@ class TzrV2Parser {
       return this.parseVariableReferenceValue(line, source, sourceColumn);
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
-      return { type: "NumberValue", value: Number(source), loc } satisfies TzrV2NumberValue;
+      return { type: "NumberValue", value: Number(source), loc } satisfies TzrNumberValue;
     }
     if (source === "true" || source === "false") {
-      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrV2BooleanValue;
+      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrBooleanValue;
     }
     if (source === "null") {
-      return { type: "NullValue", value: null, loc } satisfies TzrV2NullValue;
+      return { type: "NullValue", value: null, loc } satisfies TzrNullValue;
     }
 
     if (/\s/.test(source)) {
@@ -1121,7 +1121,7 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseStringValue(line: SourceLine, source: string, sourceColumn: number): TzrV2StringValue | undefined {
+  private parseStringValue(line: SourceLine, source: string, sourceColumn: number): TzrStringValue | undefined {
     const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
     if (literalEnd !== undefined) {
       const trailing = source.slice(literalEnd + 1);
@@ -1150,7 +1150,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-  ): TzrV2VariableReferenceValue | undefined {
+  ): TzrVariableReferenceValue | undefined {
     if (/\s/.test(source)) {
       this.addError(line, sourceColumn + source.search(/\s/), "set statement must not have extra trailing tokens.");
       return undefined;
@@ -1158,7 +1158,7 @@ class TzrV2Parser {
 
     const path = source.slice(1);
     const parts = path.split(".");
-    if (!isValidTzrV2DottedIdentifier(path) || parts.length < 2) {
+    if (!isValidTzrDottedIdentifier(path) || parts.length < 2) {
       this.addError(line, sourceColumn, "Invalid set variable reference.");
       return undefined;
     }
@@ -1180,7 +1180,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseAddValue(line: SourceLine, source: string, sourceColumn: number): TzrV2NumberValue | undefined {
+  private parseAddValue(line: SourceLine, source: string, sourceColumn: number): TzrNumberValue | undefined {
     if (/\s/.test(source)) {
       this.addError(line, sourceColumn + source.search(/\s/), "add statement must not have extra trailing tokens.");
       return undefined;
@@ -1204,7 +1204,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2CallStatement | undefined {
+  ): TzrCallStatement | undefined {
     const parsed = this.parseCallWaitStatementParts(line, source, "call", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1223,7 +1223,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2WaitStatement | undefined {
+  ): TzrWaitStatement | undefined {
     const parsed = this.parseCallWaitStatementParts(line, source, "wait", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1243,7 +1243,7 @@ class TzrV2Parser {
     source: string,
     keyword: CallWaitStatementKeyword,
     statementColumn: number,
-  ): { readonly name: string; readonly args: readonly TzrV2NamedArgument[] } | undefined {
+  ): { readonly name: string; readonly args: readonly TzrNamedArgument[] } | undefined {
     const rest = source.slice(keyword.length).trim();
     if (rest.length === 0) {
       this.addError(line, statementColumn, `${keyword} name is required.`);
@@ -1265,7 +1265,7 @@ class TzrV2Parser {
 
     const nameColumn = restColumn + rest.indexOf(nameSource);
     const nameParts = nameSource.split(".");
-    if (!isValidTzrV2DottedIdentifier(nameSource)) {
+    if (!isValidTzrDottedIdentifier(nameSource)) {
       this.addError(line, nameColumn, `Invalid ${keyword} name dotted identifier.`);
       return undefined;
     }
@@ -1327,7 +1327,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: CallWaitStatementKeyword,
-  ): readonly TzrV2NamedArgument[] | undefined {
+  ): readonly TzrNamedArgument[] | undefined {
     if (source.trim().length === 0) {
       return [];
     }
@@ -1337,7 +1337,7 @@ class TzrV2Parser {
       return undefined;
     }
 
-    const args: TzrV2NamedArgument[] = [];
+    const args: TzrNamedArgument[] = [];
     const seen = new Set<string>();
     for (const part of parts) {
       const argument = this.parseNamedArgument(line, part.source, part.column, keyword);
@@ -1415,7 +1415,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: CallWaitStatementKeyword,
-  ): TzrV2NamedArgument | undefined {
+  ): TzrNamedArgument | undefined {
     const equalsIndex = source.indexOf("=");
     if (equalsIndex === -1) {
       this.addError(line, sourceColumn, "Positional arguments are not supported.");
@@ -1428,7 +1428,7 @@ class TzrV2Parser {
       return undefined;
     }
     const nameColumn = sourceColumn + source.indexOf(name);
-    if (!isValidTzrV2Identifier(name)) {
+    if (!isValidTzrIdentifier(name)) {
       this.addError(line, nameColumn, "Invalid argument name.");
       return undefined;
     }
@@ -1463,7 +1463,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: CallWaitStatementKeyword,
-  ): TzrV2ArgumentValue | undefined {
+  ): TzrArgumentValue | undefined {
     const loc = {
       start: this.location(line.line, sourceColumn),
       end: this.location(line.line, sourceColumn + source.length),
@@ -1476,16 +1476,16 @@ class TzrV2Parser {
       return this.parseArgumentVariableReferenceValue(line, source, sourceColumn, keyword);
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
-      return { type: "NumberValue", value: Number(source), loc } satisfies TzrV2NumberValue;
+      return { type: "NumberValue", value: Number(source), loc } satisfies TzrNumberValue;
     }
     if (source === "true" || source === "false") {
-      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrV2BooleanValue;
+      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrBooleanValue;
     }
     if (source === "null") {
-      return { type: "NullValue", value: null, loc } satisfies TzrV2NullValue;
+      return { type: "NullValue", value: null, loc } satisfies TzrNullValue;
     }
-    if (isValidTzrV2DottedIdentifier(source)) {
-      return { type: "IdentifierValue", value: source, loc } satisfies TzrV2IdentifierValue;
+    if (isValidTzrDottedIdentifier(source)) {
+      return { type: "IdentifierValue", value: source, loc } satisfies TzrIdentifierValue;
     }
     if (/\s/.test(source)) {
       this.addError(line, sourceColumn + source.search(/\s/), `Invalid ${keyword} argument value.`);
@@ -1501,7 +1501,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: CallWaitStatementKeyword,
-  ): TzrV2StringValue | undefined {
+  ): TzrStringValue | undefined {
     const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
     if (literalEnd !== undefined) {
       const trailing = source.slice(literalEnd + 1);
@@ -1531,7 +1531,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: CallWaitStatementKeyword,
-  ): TzrV2VariableReferenceValue | undefined {
+  ): TzrVariableReferenceValue | undefined {
     if (/\s/.test(source)) {
       this.addError(line, sourceColumn + source.search(/\s/), `Invalid ${keyword} argument variable reference.`);
       return undefined;
@@ -1539,7 +1539,7 @@ class TzrV2Parser {
 
     const path = source.slice(1);
     const parts = path.split(".");
-    if (!isValidTzrV2DottedIdentifier(path) || parts.length < 2) {
+    if (!isValidTzrDottedIdentifier(path) || parts.length < 2) {
       this.addError(line, sourceColumn, `Invalid ${keyword} argument variable reference.`);
       return undefined;
     }
@@ -1561,7 +1561,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseBgStatement(line: SourceLine, source: string, statementColumn: number): TzrV2BgStatement | undefined {
+  private parseBgStatement(line: SourceLine, source: string, statementColumn: number): TzrBgStatement | undefined {
     const parsed = this.parseSingleVisualAssetStatement(line, source, "bg", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1576,7 +1576,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseHideStatement(line: SourceLine, source: string, statementColumn: number): TzrV2HideStatement | undefined {
+  private parseHideStatement(line: SourceLine, source: string, statementColumn: number): TzrHideStatement | undefined {
     const parsed = this.parseSingleVisualAssetStatement(line, source, "hide", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1596,7 +1596,7 @@ class TzrV2Parser {
     source: string,
     keyword: "bg" | "hide",
     statementColumn: number,
-  ): { readonly assetRef: TzrV2VisualAssetRef; readonly transition?: TzrV2VisualTransition } | undefined {
+  ): { readonly assetRef: TzrVisualAssetRef; readonly transition?: TzrVisualTransition } | undefined {
     const parsed = this.parseVisualStatementBody(line, source, keyword, statementColumn);
     if (parsed === undefined) {
       return undefined;
@@ -1621,7 +1621,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2ShowStatement | undefined {
+  ): TzrShowStatement | undefined {
     const parsed = this.parseShowStatementParts(line, source, statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1643,9 +1643,9 @@ class TzrV2Parser {
     statementColumn: number,
   ):
     | {
-        readonly assetRef: TzrV2VisualAssetRef;
-        readonly placement: TzrV2VisualPlacement;
-        readonly transition?: TzrV2VisualTransition;
+        readonly assetRef: TzrVisualAssetRef;
+        readonly placement: TzrVisualPlacement;
+        readonly transition?: TzrVisualTransition;
       }
     | undefined {
     const parsed = this.parseVisualStatementBody(line, source, "show", statementColumn);
@@ -1701,7 +1701,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: VisualAssetStatementKeyword,
-  ): TzrV2VisualAssetRef | undefined {
+  ): TzrVisualAssetRef | undefined {
     if (source.startsWith("$")) {
       this.addError(line, sourceColumn, `${keyword} visual assetRef must be static.`);
       return undefined;
@@ -1747,7 +1747,7 @@ class TzrV2Parser {
       return undefined;
     }
 
-    if (!isValidTzrV2DottedIdentifier(source)) {
+    if (!isValidTzrDottedIdentifier(source)) {
       this.addError(line, sourceColumn, `Invalid ${keyword} visual assetRef.`);
       return undefined;
     }
@@ -1766,7 +1766,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-  ): TzrV2VisualPlacement | undefined {
+  ): TzrVisualPlacement | undefined {
     if (source === "left" || source === "center" || source === "right") {
       return {
         type: "VisualNamedPlacement",
@@ -1775,7 +1775,7 @@ class TzrV2Parser {
           start: this.location(line.line, sourceColumn),
           end: this.location(line.line, sourceColumn + source.length),
         },
-      } satisfies TzrV2VisualNamedPlacement;
+      } satisfies TzrVisualNamedPlacement;
     }
 
     const coordinateMatch = /^x=(\S+)\s+y=(\S+)$/.exec(source);
@@ -1795,7 +1795,7 @@ class TzrV2Parser {
           start: this.location(line.line, sourceColumn),
           end: this.location(line.line, sourceColumn + source.length),
         },
-      } satisfies TzrV2VisualCoordinatePlacement;
+      } satisfies TzrVisualCoordinatePlacement;
     }
 
     const hasX = /(?:^|\s)x=/.test(source);
@@ -1817,7 +1817,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2ClearVisualStatement | undefined {
+  ): TzrClearVisualStatement | undefined {
     const parsed = this.parseVisualStatementBody(line, source, "clear", statementColumn);
     if (parsed === undefined) {
       this.cursor += 1;
@@ -1905,7 +1905,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-  ): TzrV2VisualTransition | undefined {
+  ): TzrVisualTransition | undefined {
     if (source.startsWith("(")) {
       this.addError(line, sourceColumn, "Visual transition name is required.");
       return undefined;
@@ -1922,7 +1922,7 @@ class TzrV2Parser {
       this.addError(line, sourceColumn, "Visual transition name is required.");
       return undefined;
     }
-    if (!isValidTzrV2Identifier(name)) {
+    if (!isValidTzrIdentifier(name)) {
       this.addError(line, sourceColumn, "Malformed visual transition syntax.");
       return undefined;
     }
@@ -1951,7 +1951,7 @@ class TzrV2Parser {
 
     return {
       type: "VisualTransition",
-      name: name satisfies TzrV2VisualTransitionName,
+      name: name satisfies TzrVisualTransitionName,
       duration,
       loc: {
         start: this.location(line.line, sourceColumn),
@@ -2057,7 +2057,7 @@ class TzrV2Parser {
     return parts;
   }
 
-  private parseBgmStatement(line: SourceLine, source: string, statementColumn: number): TzrV2BgmStatement | undefined {
+  private parseBgmStatement(line: SourceLine, source: string, statementColumn: number): TzrBgmStatement | undefined {
     const assetRef = this.parseSingleAudioAssetStatement(line, source, "bgm", statementColumn);
     this.cursor += 1;
     if (assetRef === undefined) {
@@ -2071,7 +2071,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseSeStatement(line: SourceLine, source: string, statementColumn: number): TzrV2SeStatement | undefined {
+  private parseSeStatement(line: SourceLine, source: string, statementColumn: number): TzrSeStatement | undefined {
     const assetRef = this.parseSingleAudioAssetStatement(line, source, "se", statementColumn);
     this.cursor += 1;
     if (assetRef === undefined) {
@@ -2089,7 +2089,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2VoiceStatement | undefined {
+  ): TzrVoiceStatement | undefined {
     const assetRef = this.parseSingleAudioAssetStatement(line, source, "voice", statementColumn);
     this.cursor += 1;
     if (assetRef === undefined) {
@@ -2108,7 +2108,7 @@ class TzrV2Parser {
     source: string,
     keyword: AudioAssetStatementKeyword,
     statementColumn: number,
-  ): TzrV2AudioAssetRef | undefined {
+  ): TzrAudioAssetRef | undefined {
     const rest = source.slice(keyword.length).trim();
     if (rest.length === 0) {
       this.addError(line, statementColumn, `${keyword} assetRef is required.`);
@@ -2123,7 +2123,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     keyword: AudioAssetStatementKeyword,
-  ): TzrV2AudioAssetRef | undefined {
+  ): TzrAudioAssetRef | undefined {
     if (source.startsWith("$")) {
       this.addError(line, sourceColumn, `${keyword} audio assetRef must be static.`);
       return undefined;
@@ -2169,7 +2169,7 @@ class TzrV2Parser {
       return undefined;
     }
 
-    if (!isValidTzrV2DottedIdentifier(source)) {
+    if (!isValidTzrDottedIdentifier(source)) {
       this.addError(line, sourceColumn, `Invalid ${keyword} audio assetRef.`);
       return undefined;
     }
@@ -2188,7 +2188,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2StopBgmStatement | undefined {
+  ): TzrStopBgmStatement | undefined {
     if (source !== "stopBgm") {
       this.addError(line, statementColumn + "stopBgm".length + 1, "stopBgm statement must not have extra trailing tokens.");
       this.cursor += 1;
@@ -2206,7 +2206,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): TzrV2SystemUnlockStatement | undefined {
+  ): TzrSystemUnlockStatement | undefined {
     const statementName = source.match(/^\S+/)?.[0] ?? "";
     if (!isSystemUnlockStatementName(statementName)) {
       this.addError(line, statementColumn, "Unknown system statement.");
@@ -2240,7 +2240,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     statementName: SystemUnlockStatementName,
-  ): TzrV2SystemUnlockId | undefined {
+  ): TzrSystemUnlockId | undefined {
     if (source.startsWith("$")) {
       this.addError(line, sourceColumn, `${statementName} id must be static.`);
       return undefined;
@@ -2286,7 +2286,7 @@ class TzrV2Parser {
       return undefined;
     }
 
-    if (!isValidTzrV2DottedIdentifier(source)) {
+    if (!isValidTzrDottedIdentifier(source)) {
       this.addError(line, sourceColumn, `Invalid ${statementName} id.`);
       return undefined;
     }
@@ -2320,7 +2320,7 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseJumpStatement(line: SourceLine, source: string, statementColumn: number): TzrV2JumpStatement | undefined {
+  private parseJumpStatement(line: SourceLine, source: string, statementColumn: number): TzrJumpStatement | undefined {
     const match = /^jump(?:\s+(.+))?$/.exec(source);
     if (match === null) {
       this.addError(line, statementColumn, "jump statement must use `jump target` syntax.");
@@ -2347,7 +2347,7 @@ class TzrV2Parser {
     };
   }
 
-  private parseEndStatement(line: SourceLine, source: string, statementColumn: number): TzrV2EndStatement | undefined {
+  private parseEndStatement(line: SourceLine, source: string, statementColumn: number): TzrEndStatement | undefined {
     if (source !== "end") {
       this.addError(line, statementColumn, "end statement must not have arguments.");
       this.cursor += 1;
@@ -2362,8 +2362,8 @@ class TzrV2Parser {
   }
 
   private collectTextBlock(header: SourceLine, headerIndentLevel: number): ParsedTextBlock {
-    const items: TzrV2TextBlockItem[] = [];
-    let meta: TzrV2TextBlockMeta | undefined;
+    const items: TzrTextBlockItem[] = [];
+    let meta: TzrTextBlockMeta | undefined;
     const expectedIndent = (headerIndentLevel + 1) * 2;
 
     while (!this.isAtEnd()) {
@@ -2464,9 +2464,9 @@ class TzrV2Parser {
     };
   }
 
-  private parseTextBlockMeta(header: SourceLine, metaIndentLevel: number): TzrV2TextBlockMeta {
+  private parseTextBlockMeta(header: SourceLine, metaIndentLevel: number): TzrTextBlockMeta {
     const headerRange = this.lineRange(header);
-    const attributes: TzrV2TextBlockMetaAttribute[] = [];
+    const attributes: TzrTextBlockMetaAttribute[] = [];
     const seen = new Set<string>();
     const expectedAttributeIndent = (metaIndentLevel + 1) * 2;
     this.cursor += 1;
@@ -2514,7 +2514,7 @@ class TzrV2Parser {
     source: string,
     sourceColumn: number,
     seen: ReadonlySet<string>,
-  ): TzrV2TextBlockMetaAttribute | undefined {
+  ): TzrTextBlockMetaAttribute | undefined {
     const equalsIndex = source.indexOf("=");
     if (equalsIndex === -1) {
       this.addError(line, sourceColumn, ":meta attribute must use key=value syntax.");
@@ -2589,7 +2589,7 @@ class TzrV2Parser {
         ? undefined
         : { type: "TextBlockMoodMetaAttribute", name: "mood", value, valueKind: "string", loc };
     }
-    if (!isValidTzrV2Identifier(valueSource)) {
+    if (!isValidTzrIdentifier(valueSource)) {
       this.addError(line, valueColumn, "Invalid :meta mood value.");
       return undefined;
     }
@@ -2622,7 +2622,7 @@ class TzrV2Parser {
     startIndex: number,
     stopOnClosingBrace: boolean,
   ): ParsedInlineContent | undefined {
-    const nodes: TzrV2InlineNode[] = [];
+    const nodes: TzrInlineNode[] = [];
     let text = "";
     let textStartIndex: number | undefined;
 
@@ -2877,7 +2877,7 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-  ): readonly TzrV2InlineTextAttribute[] | undefined {
+  ): readonly TzrInlineTextAttribute[] | undefined {
     if (source.trim().length === 0) {
       this.addError(line, sourceColumn, "{text} requires at least one attribute.");
       return undefined;
@@ -2888,7 +2888,7 @@ class TzrV2Parser {
       return undefined;
     }
 
-    const parsed: TzrV2InlineTextAttribute[] = [];
+    const parsed: TzrInlineTextAttribute[] = [];
     const seen = new Set<string>();
     for (const attribute of attributes) {
       if (!["color", "bold", "italic", "size"].includes(attribute.key)) {
@@ -3001,7 +3001,7 @@ class TzrV2Parser {
     name: "se" | "voice",
     source: string,
     sourceColumn: number,
-  ): TzrV2InlineAssetId | undefined {
+  ): TzrInlineAssetId | undefined {
     const attributes = this.parseInlineRawAttributes(line, source, sourceColumn);
     if (attributes === undefined) {
       return undefined;
@@ -3032,7 +3032,7 @@ class TzrV2Parser {
     line: SourceLine,
     name: "se" | "voice",
     attribute: InlineRawAttribute,
-  ): TzrV2InlineAssetId | undefined {
+  ): TzrInlineAssetId | undefined {
     const value = attribute.value;
     if (value.length === 0) {
       this.addError(line, attribute.valueColumn, `{${name}} assetId must not be empty.`);
@@ -3053,14 +3053,14 @@ class TzrV2Parser {
 
     if (value.startsWith("$")) {
       const path = value.slice(1);
-      if (!isValidTzrV2DottedIdentifier(path)) {
+      if (!isValidTzrDottedIdentifier(path)) {
         this.addError(line, attribute.valueColumn, `Invalid {${name}} variable assetId.`);
         return undefined;
       }
       return { type: "InlineVariableAssetId", path, loc: attribute.loc };
     }
 
-    if (!isValidTzrV2DottedIdentifier(value)) {
+    if (!isValidTzrDottedIdentifier(value)) {
       this.addError(line, attribute.valueColumn, `Invalid {${name}} assetId value.`);
       return undefined;
     }
@@ -3198,7 +3198,7 @@ class TzrV2Parser {
   }
 
   private validateIdentifier(value: string, line: SourceLine, column: number): boolean {
-    if (isValidTzrV2Identifier(value)) {
+    if (isValidTzrIdentifier(value)) {
       return true;
     }
     this.addError(line, column, `Invalid identifier "${value}".`);
@@ -3449,7 +3449,7 @@ function isSystemUnlockStatementName(value: string): value is SystemUnlockStatem
   );
 }
 
-function systemUnlockKind(statementName: SystemUnlockStatementName): TzrV2SystemUnlockKind {
+function systemUnlockKind(statementName: SystemUnlockStatementName): TzrSystemUnlockKind {
   switch (statementName) {
     case "system.unlockEnding":
       return "ending";

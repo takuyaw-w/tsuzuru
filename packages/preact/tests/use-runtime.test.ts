@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { h, isValidElement, render, type ComponentChildren, type VNode } from "preact";
 import { act } from "preact/test-utils";
 import {
-  compileTzrV2,
+  compileTzr,
   createInitialRuntimeState,
   createRuntimeSnapshot,
-  parseTzrV2,
+  parseTzr,
   stepRuntime,
   type RuntimeDocument,
   type RuntimeEvent,
@@ -43,13 +43,13 @@ const snapshot: RuntimeSnapshot = {
 };
 
 function compileScript(source: string): RuntimeDocument {
-  const parsed = parseTzrV2(source, { filePath: "scenario/main.tzr" });
+  const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
     throw new Error("expected parser success");
   }
 
-  const compiled = compileTzrV2(parsed.document);
+  const compiled = compileTzr(parsed.document);
   expect(compiled.ok).toBe(true);
   if (!compiled.ok) {
     throw new Error("expected compiler success");

@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from "preact/hooks";
 import {
-  compileTzrV2,
+  compileTzr,
   createInitialRuntimeState,
   getRuntimeBlockReason,
-  parseTzrV2,
+  parseTzr,
   resolveChoice,
   stepRuntime,
-  type CompiledTzrV2Document,
+  type CompiledTzrDocument,
   type RuntimeDiagnostic,
   type RuntimeEvent,
   type RuntimePluginDefinition,
@@ -32,7 +32,7 @@ import { AudioLayer } from "./AudioLayer.js";
 import { VisualLayer } from "./VisualLayer.js";
 
 type DocumentResult =
-  | { readonly ok: true; readonly document: CompiledTzrV2Document }
+  | { readonly ok: true; readonly document: CompiledTzrDocument }
   | { readonly ok: false; readonly message: string };
 
 interface RuntimeRunResult {
@@ -55,7 +55,7 @@ export function App() {
 }
 
 interface RuntimeAppProps {
-  readonly document: CompiledTzrV2Document;
+  readonly document: CompiledTzrDocument;
 }
 
 function RuntimeApp({ document }: RuntimeAppProps) {
@@ -135,7 +135,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     <main className="app">
       <header className="app__header">
         <h1>{document.metadata.title ?? "DSL v2 Basic"}</h1>
-        <p>parseTzrV2 -&gt; compileTzrV2 -&gt; runtime</p>
+        <p>parseTzr -&gt; compileTzr -&gt; runtime</p>
       </header>
       <GameViewport aspectRatio="16:9" maxWidth={960}>
         <GameShell className="app__shell">
@@ -182,7 +182,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
 }
 
 function runUntilVisible(
-  document: CompiledTzrV2Document,
+  document: CompiledTzrDocument,
   initialState: RuntimeState,
   options: RuntimeStepOptions,
 ): RuntimeRunResult {
@@ -213,12 +213,12 @@ function runUntilVisible(
 }
 
 function compileScenario(source: string): DocumentResult {
-  const parsed = parseTzrV2(source, { filePath: "examples/dsl-v2-basic/scenario/main.tzr" });
+  const parsed = parseTzr(source, { filePath: "examples/dsl-v2-basic/scenario/main.tzr" });
   if (!parsed.ok) {
     return { ok: false, message: formatDiagnostics(parsed.errors) };
   }
 
-  const compiled = compileTzrV2(parsed.document);
+  const compiled = compileTzr(parsed.document);
   if (!compiled.ok) {
     return { ok: false, message: formatDiagnostics(compiled.errors) };
   }

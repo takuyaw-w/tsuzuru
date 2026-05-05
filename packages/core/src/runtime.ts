@@ -3,7 +3,7 @@ import { stepCommandInstruction, unsupportedInstruction } from "./runtime-comman
 import {
   choiceEvent,
   stepBodyChoiceInstruction,
-  stepV2IfInstruction,
+  stepIfInstruction,
   waitEvent,
 } from "./runtime-control.js";
 import {
@@ -133,8 +133,8 @@ function stepInstruction(
       };
     case "CommandInstruction":
       return stepCommandInstruction(document, state, nextState, instruction, options);
-    case "V2IfInstruction":
-      return stepV2IfInstruction(document, state, nextState, instruction, options, stepInstruction);
+    case "IfInstruction":
+      return stepIfInstruction(document, state, nextState, instruction, options, stepInstruction);
     case "BodyChoiceInstruction":
       return stepBodyChoiceInstruction(nextState, instruction);
   }

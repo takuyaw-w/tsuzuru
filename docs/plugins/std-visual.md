@@ -1,8 +1,8 @@
 # std-visual plugin
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
-> the legacy `compileTzr({ pluginCommands })` validation path is historical
-> because `compileTzr` was removed. The current runnable integration is
+> the legacy compiler `pluginCommands` validation path is historical. The
+> current runnable integration is
 > [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
 
 `@tsuzuru/plugin-std-visual` は、Tsuzuru 公式の標準 visual plugin です。
@@ -24,7 +24,7 @@ const runtimeState = createInitialRuntimeState(document, {
 });
 ```
 
-DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。legacy `compileTzr({ pluginCommands })` registry は削除済みで、DSL v2 の任意 plugin command validation policy は未決です。
+DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。legacy compiler の `pluginCommands` registry は削除済みで、DSL v2 の任意 plugin command validation policy は未決です。
 
 runtime 実行時は std-visual command handler を渡します。
 

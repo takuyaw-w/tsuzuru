@@ -9,7 +9,7 @@ import {
 } from "./runtime-args.js";
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
 
-export const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
+export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 
 export function stepCommandInstruction(
   document: RuntimeDocument,
@@ -64,7 +64,7 @@ export function stepCommandInstruction(
     };
   }
 
-  if (name === DSL_V2_ADD_COMMAND_NAME) {
+  if (name === DSL_ADD_COMMAND_NAME) {
     const variableName = getNamedString(args, "name");
     const by = getNamedNumber(args, "by");
     if (variableName === undefined || by === undefined) {

@@ -11,8 +11,8 @@ DSL v2 is not a small extension of the old DSL. It is the current scenario autho
 Current implementation note:
 
 - Parser, compiler, condition support, and DSL v2 AST types are implemented under `packages/core/src/` as `parser.ts`, `compiler.ts`, `condition-parser.ts`, `condition-evaluator.ts`, and `scenario-ast.ts`.
-- Experimental `parseTzrV2` / `compileTzrV2` APIs are exported from `@tsuzuru/core`.
-- Legacy `parseTzr` / `compileTzr`, legacy AST, legacy compiler, and macro API were removed during the DSL v2 cleanup.
+- Current `parseTzr` / `compileTzr` APIs are exported from `@tsuzuru/core`.
+- The old DSL parser/compiler previously associated with these names, legacy AST, legacy compiler, and macro API were removed during the DSL v2 cleanup.
 - A runnable example exists at [`examples/dsl-v2-basic`](../../../examples/dsl-v2-basic/).
 - Compile/runtime support covers a practical subset including scenes, narration, dialogue, scene jumps, choices, conditional choices, `if`, state updates, `end`, and std visual/audio sugar.
 - Some syntax remains parser-only, draft-only, or unsupported at runtime.

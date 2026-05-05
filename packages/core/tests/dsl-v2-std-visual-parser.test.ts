@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTzrV2, type TzrV2SceneStatement } from "../src/index.js";
+import { parseTzr, type TzrSceneStatement } from "../src/index.js";
 
-function parseSingleStatement(source: string): TzrV2SceneStatement {
-  const result = parseTzrV2(source, { filePath: "scenario/std-visual.tzr" });
+function parseSingleStatement(source: string): TzrSceneStatement {
+  const result = parseTzr(source, { filePath: "scenario/std-visual.tzr" });
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error("expected parser success");
@@ -20,7 +20,7 @@ function parseSingleStatement(source: string): TzrV2SceneStatement {
 }
 
 function expectVisualFailure(source: string): string[] {
-  const result = parseTzrV2(source, { filePath: "scenario/std-visual.tzr" });
+  const result = parseTzr(source, { filePath: "scenario/std-visual.tzr" });
   expect(result.ok).toBe(false);
   if (result.ok) {
     throw new Error("expected parser failure");
@@ -28,7 +28,7 @@ function expectVisualFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzrV2 std visual sugar statements", () => {
+describe("parseTzr std visual sugar statements", () => {
   it("parses bg asset refs", () => {
     expect(parseSingleStatement("scene start:\n  bg classroom\n")).toMatchObject({
       type: "BgStatement",

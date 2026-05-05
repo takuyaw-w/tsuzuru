@@ -8,9 +8,9 @@ Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノ�
 
 Tsuzuru は現在、`feature/new-dsl` ブランチで DSL v2 へ移行中です。
 
-DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzrV2` / `compileTzrV2` は experimental DSL v2 APIs として公開されており、現在の runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。
+DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。
 
-旧 DSL の `parseTzr` / `compileTzr`、legacy AST、legacy compiler、macro API は削除済みです。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
+旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
 
 このリポジトリは production ready な完成製品ではなく、初期実装と DSL v2 移行を進めている段階です。
 
@@ -136,7 +136,7 @@ pnpm --filter @tsuzuru/example-dsl-v2-basic dev
 pnpm --filter @tsuzuru/example-dsl-v2-basic build
 ```
 
-`examples/dsl-v2-basic` は `parseTzrV2` / `compileTzrV2` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
+`examples/dsl-v2-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
 `create-tsuzuru` と `@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
 
@@ -165,8 +165,8 @@ scene start:
 
 API surface:
 
-- DSL v2: `parseTzrV2` / `compileTzrV2`
-- Removed legacy DSL APIs: `parseTzr` / `compileTzr`
+- DSL v2: `parseTzr` / `compileTzr`
+- Legacy implementation previously behind these names: removed
 
 関連ドキュメント:
 
@@ -272,7 +272,7 @@ show haruka_smile at center
 bgm daily_theme
 ```
 
-std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。legacy `compileTzr({ pluginCommands })` による plugin command validation path は削除済みです。
+std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。legacy compiler の `pluginCommands` validation path は削除済みです。
 
 ## v0.1 の範囲
 

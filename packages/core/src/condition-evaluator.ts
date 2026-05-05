@@ -1,36 +1,36 @@
 import type {
-  TzrV2ConditionComparisonExpression,
-  TzrV2ConditionExpression,
-  TzrV2ConditionReference,
+  TzrConditionComparisonExpression,
+  TzrConditionExpression,
+  TzrConditionReference,
 } from "./scenario-ast.js";
 import type { RuntimeErrorCode, RuntimeState, RuntimeValue } from "./runtime-types.js";
 
-export type TzrV2ConditionEvaluationResult =
+export type TzrConditionEvaluationResult =
   | { readonly ok: true; readonly value: boolean }
-  | { readonly ok: false; readonly error: TzrV2ConditionEvaluationError };
+  | { readonly ok: false; readonly error: TzrConditionEvaluationError };
 
-export interface TzrV2ConditionEvaluationError {
+export interface TzrConditionEvaluationError {
   readonly code: RuntimeErrorCode;
   readonly message: string;
 }
 
-type TzrV2ConditionValue = RuntimeValue | null | undefined;
+type TzrConditionValue = RuntimeValue | null | undefined;
 
 type ValueEvaluationResult =
-  | { readonly ok: true; readonly value: TzrV2ConditionValue }
-  | { readonly ok: false; readonly error: TzrV2ConditionEvaluationError };
+  | { readonly ok: true; readonly value: TzrConditionValue }
+  | { readonly ok: false; readonly error: TzrConditionEvaluationError };
 
-export function evaluateTzrV2Condition(
-  expression: TzrV2ConditionExpression,
+export function evaluateTzrCondition(
+  expression: TzrConditionExpression,
   state: RuntimeState,
-): TzrV2ConditionEvaluationResult {
+): TzrConditionEvaluationResult {
   return evaluateBooleanExpression(expression, state);
 }
 
 function evaluateBooleanExpression(
-  expression: TzrV2ConditionExpression,
+  expression: TzrConditionExpression,
   state: RuntimeState,
-): TzrV2ConditionEvaluationResult {
+): TzrConditionEvaluationResult {
   switch (expression.type) {
     case "ConditionBinaryExpression":
       return evaluateLogicalExpression(expression.operator, expression.left, expression.right, state);
@@ -49,10 +49,10 @@ function evaluateBooleanExpression(
 
 function evaluateLogicalExpression(
   operator: "and" | "or",
-  leftExpression: TzrV2ConditionExpression,
-  rightExpression: TzrV2ConditionExpression,
+  leftExpression: TzrConditionExpression,
+  rightExpression: TzrConditionExpression,
   state: RuntimeState,
-): TzrV2ConditionEvaluationResult {
+): TzrConditionEvaluationResult {
   const left = evaluateBooleanExpression(leftExpression, state);
   if (!left.ok) {
     return left;
@@ -72,9 +72,9 @@ function evaluateLogicalExpression(
 }
 
 function evaluateComparisonExpression(
-  expression: TzrV2ConditionComparisonExpression,
+  expression: TzrConditionComparisonExpression,
   state: RuntimeState,
-): TzrV2ConditionEvaluationResult {
+): TzrConditionEvaluationResult {
   const left = evaluateValueExpression(expression.left, state);
   if (!left.ok) {
     return left;
@@ -99,9 +99,9 @@ function evaluateComparisonExpression(
 
 function evaluateNumericComparison(
   operator: ">" | ">=" | "<" | "<=",
-  left: TzrV2ConditionValue,
-  right: TzrV2ConditionValue,
-): TzrV2ConditionEvaluationResult {
+  left: TzrConditionValue,
+  right: TzrConditionValue,
+): TzrConditionEvaluationResult {
   if (typeof left !== "number" || typeof right !== "number") {
     return {
       ok: false,
@@ -125,7 +125,7 @@ function evaluateNumericComparison(
 }
 
 function evaluateValueExpression(
-  expression: TzrV2ConditionExpression,
+  expression: TzrConditionExpression,
   state: RuntimeState,
 ): ValueEvaluationResult {
   switch (expression.type) {
@@ -145,7 +145,7 @@ function evaluateValueExpression(
   }
 }
 
-function evaluateReference(reference: TzrV2ConditionReference, state: RuntimeState): ValueEvaluationResult {
+function evaluateReference(reference: TzrConditionReference, state: RuntimeState): ValueEvaluationResult {
   if (reference.root === "system") {
     return {
       ok: false,
@@ -159,10 +159,10 @@ function evaluateReference(reference: TzrV2ConditionReference, state: RuntimeSta
   return { ok: true, value: state.variables[reference.path] };
 }
 
-function toConditionBoolean(value: TzrV2ConditionValue): boolean {
+function toConditionBoolean(value: TzrConditionValue): boolean {
   return value === true;
 }
 
-function normalizeEqualityValue(value: TzrV2ConditionValue): RuntimeValue | null {
+function normalizeEqualityValue(value: TzrConditionValue): RuntimeValue | null {
   return value === undefined ? null : value;
 }
