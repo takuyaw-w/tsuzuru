@@ -59,6 +59,10 @@ export type TzrV2SceneStatement =
   | TzrV2ShowStatement
   | TzrV2HideStatement
   | TzrV2ClearVisualStatement
+  | TzrV2BgmStatement
+  | TzrV2StopBgmStatement
+  | TzrV2SeStatement
+  | TzrV2VoiceStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -268,6 +272,43 @@ export interface TzrV2VisualTransition {
   readonly type: "VisualTransition";
   readonly name: TzrV2VisualTransitionName;
   readonly duration: number;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2BgmStatement {
+  readonly type: "BgmStatement";
+  readonly assetRef: TzrV2AudioAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2StopBgmStatement {
+  readonly type: "StopBgmStatement";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2SeStatement {
+  readonly type: "SeStatement";
+  readonly assetRef: TzrV2AudioAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2VoiceStatement {
+  readonly type: "VoiceStatement";
+  readonly assetRef: TzrV2AudioAssetRef;
+  readonly loc: SourceRange;
+}
+
+export type TzrV2AudioAssetRef = TzrV2AudioIdentifierAssetRef | TzrV2AudioStringAssetRef;
+
+export interface TzrV2AudioIdentifierAssetRef {
+  readonly type: "AudioIdentifierAssetRef";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2AudioStringAssetRef {
+  readonly type: "AudioStringAssetRef";
+  readonly value: string;
   readonly loc: SourceRange;
 }
 

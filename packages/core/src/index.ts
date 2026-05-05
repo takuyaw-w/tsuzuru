@@ -64,7 +64,11 @@ export { parseTzr } from "./parser.js";
 export type {
   TzrV2AddStatement,
   TzrV2ArgumentValue,
+  TzrV2AudioAssetRef,
+  TzrV2AudioIdentifierAssetRef,
+  TzrV2AudioStringAssetRef,
   TzrV2BgStatement,
+  TzrV2BgmStatement,
   TzrV2BooleanValue,
   TzrV2CallStatement,
   TzrV2CharacterDeclaration,
@@ -112,6 +116,7 @@ export type {
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SeStatement,
   TzrV2SetStatement,
   TzrV2StatePath,
   TzrV2StringValue,
@@ -137,9 +142,11 @@ export type {
   TzrV2VisualStringAssetRef,
   TzrV2VisualTransition,
   TzrV2VisualTransitionName,
+  TzrV2VoiceStatement,
   TzrV2WaitStatement,
   TzrV2HideStatement,
   TzrV2ShowStatement,
+  TzrV2StopBgmStatement,
 } from "./dsl-v2/index.js";
 export {
   isValidTzrV2DottedIdentifier,

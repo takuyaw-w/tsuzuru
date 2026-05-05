@@ -3,7 +3,9 @@ import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
 import type {
   TzrV2AddStatement,
   TzrV2ArgumentValue,
+  TzrV2AudioAssetRef,
   TzrV2BgStatement,
+  TzrV2BgmStatement,
   TzrV2BooleanValue,
   TzrV2CallStatement,
   TzrV2CharacterDeclaration,
@@ -35,7 +37,9 @@ import type {
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SeStatement,
   TzrV2SetStatement,
+  TzrV2StopBgmStatement,
   TzrV2StatePath,
   TzrV2StringValue,
   TzrV2TextBlockItem,
@@ -52,6 +56,7 @@ import type {
   TzrV2VisualPlacement,
   TzrV2VisualTransition,
   TzrV2VisualTransitionName,
+  TzrV2VoiceStatement,
   TzrV2WaitStatement,
   TzrV2ShowStatement,
 } from "./ast.js";
@@ -104,6 +109,7 @@ interface ParsedVisualStatementBody {
 type StateStatementKeyword = "set" | "add";
 type CallWaitStatementKeyword = "call" | "wait";
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
+type AudioAssetStatementKeyword = "bgm" | "se" | "voice";
 
 interface InlineRawAttribute {
   readonly key: string;
@@ -385,6 +391,18 @@ class TzrV2Parser {
     }
     if (source === "clear" || source.startsWith("clear ")) {
       return this.parseClearVisualStatement(line, source, statementColumn);
+    }
+    if (source === "bgm" || source.startsWith("bgm ")) {
+      return this.parseBgmStatement(line, source, statementColumn);
+    }
+    if (source === "stopBgm" || source.startsWith("stopBgm ")) {
+      return this.parseStopBgmStatement(line, source, statementColumn);
+    }
+    if (source === "se" || source.startsWith("se ")) {
+      return this.parseSeStatement(line, source, statementColumn);
+    }
+    if (source === "voice" || source.startsWith("voice ")) {
+      return this.parseVoiceStatement(line, source, statementColumn);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -2030,6 +2048,151 @@ class TzrV2Parser {
       column: sourceColumn + partStart + lastPart.indexOf(trimmed),
     });
     return parts;
+  }
+
+  private parseBgmStatement(line: SourceLine, source: string, statementColumn: number): TzrV2BgmStatement | undefined {
+    const assetRef = this.parseSingleAudioAssetStatement(line, source, "bgm", statementColumn);
+    this.cursor += 1;
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "BgmStatement",
+      assetRef,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseSeStatement(line: SourceLine, source: string, statementColumn: number): TzrV2SeStatement | undefined {
+    const assetRef = this.parseSingleAudioAssetStatement(line, source, "se", statementColumn);
+    this.cursor += 1;
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "SeStatement",
+      assetRef,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseVoiceStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2VoiceStatement | undefined {
+    const assetRef = this.parseSingleAudioAssetStatement(line, source, "voice", statementColumn);
+    this.cursor += 1;
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "VoiceStatement",
+      assetRef,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseSingleAudioAssetStatement(
+    line: SourceLine,
+    source: string,
+    keyword: AudioAssetStatementKeyword,
+    statementColumn: number,
+  ): TzrV2AudioAssetRef | undefined {
+    const rest = source.slice(keyword.length).trim();
+    if (rest.length === 0) {
+      this.addError(line, statementColumn, `${keyword} assetRef is required.`);
+      return undefined;
+    }
+
+    return this.parseAudioAssetRef(line, rest, statementColumn + source.indexOf(rest), keyword);
+  }
+
+  private parseAudioAssetRef(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: AudioAssetStatementKeyword,
+  ): TzrV2AudioAssetRef | undefined {
+    if (source.startsWith("$")) {
+      this.addError(line, sourceColumn, `${keyword} audio assetRef must be static.`);
+      return undefined;
+    }
+
+    if (source.startsWith("'") || source.startsWith("`")) {
+      this.parseStringLiteral(line, source, sourceColumn);
+      return undefined;
+    }
+
+    if (source.startsWith('"')) {
+      const literalEnd = this.findStringLiteralEnd(source);
+      if (literalEnd !== undefined) {
+        const trailing = source.slice(literalEnd + 1);
+        if (trailing.trim().length > 0) {
+          this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `${keyword} statement must not have extra trailing tokens.`);
+          return undefined;
+        }
+      }
+
+      const value = this.parseStringLiteral(line, source, sourceColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+      if (value.length === 0) {
+        this.addError(line, sourceColumn, `${keyword} audio assetRef must not be empty.`);
+        return undefined;
+      }
+
+      return {
+        type: "AudioStringAssetRef",
+        value,
+        loc: {
+          start: this.location(line.line, sourceColumn),
+          end: this.location(line.line, sourceColumn + source.length),
+        },
+      };
+    }
+
+    const firstWhitespace = source.search(/\s/);
+    if (firstWhitespace !== -1) {
+      this.addError(line, sourceColumn + firstWhitespace, `${keyword} statement must not have extra trailing tokens.`);
+      return undefined;
+    }
+
+    if (!isValidTzrV2DottedIdentifier(source)) {
+      this.addError(line, sourceColumn, `Invalid ${keyword} audio assetRef.`);
+      return undefined;
+    }
+
+    return {
+      type: "AudioIdentifierAssetRef",
+      value: source,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseStopBgmStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2StopBgmStatement | undefined {
+    if (source !== "stopBgm") {
+      this.addError(line, statementColumn + "stopBgm".length + 1, "stopBgm statement must not have extra trailing tokens.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    this.cursor += 1;
+    return {
+      type: "StopBgmStatement",
+      loc: this.lineRange(line),
+    };
   }
 
   private findStringLiteralEnd(source: string): number | undefined {
