@@ -90,18 +90,18 @@ class TzrV2Parser {
   }
 
   private parseTopLevelDeclaration(line: SourceLine): TzrV2TopLevelDeclaration | undefined {
-    const trimmed = line.code.trim();
-    if (trimmed.startsWith("title")) {
+    const keyword = line.code.trim().match(/^\S+/)?.[0];
+    if (keyword === "title") {
       const declaration = this.parseTitle(line);
       this.cursor += 1;
       return declaration;
     }
-    if (trimmed.startsWith("character")) {
+    if (keyword === "character") {
       const declaration = this.parseCharacter(line);
       this.cursor += 1;
       return declaration;
     }
-    if (trimmed.startsWith("scene")) {
+    if (keyword === "scene") {
       return this.parseScene(line);
     }
 
@@ -209,18 +209,24 @@ class TzrV2Parser {
         break;
       }
 
-      if (indent !== 2) {
-        this.addError(line, 1, `Expected 2 spaces, but found ${indent} spaces.`);
+      if (indent % 2 !== 0) {
+        this.cursor += 1;
+        continue;
+      }
+
+      const indentLevel = indent / 2;
+      if (indentLevel < 1) {
+        this.addError(line, 1, "Scene body lines must be indented.");
         this.cursor += 1;
         continue;
       }
 
       body.push({
         type: "SceneBodyLine",
-        text: line.code.slice(2).trimEnd(),
-        indentLevel: 1,
+        text: line.code.slice(indent).trimEnd(),
+        indentLevel,
         loc: {
-          start: this.location(line.line, 3),
+          start: this.location(line.line, indent + 1),
           end: this.location(line.line, line.code.length + 1),
         },
       });
