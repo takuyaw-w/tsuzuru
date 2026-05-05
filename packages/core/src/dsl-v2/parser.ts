@@ -50,6 +50,8 @@ import type {
   TzrV2VisualCoordinatePlacement,
   TzrV2VisualNamedPlacement,
   TzrV2VisualPlacement,
+  TzrV2VisualTransition,
+  TzrV2VisualTransitionName,
   TzrV2WaitStatement,
   TzrV2ShowStatement,
 } from "./ast.js";
@@ -91,6 +93,12 @@ interface ParsedChoiceItemHeader {
 
 interface ParsedConditionBranchHeader {
   readonly condition: TzrV2ConditionExpression;
+}
+
+interface ParsedVisualStatementBody {
+  readonly bodySource: string;
+  readonly bodyColumn: number;
+  readonly transition?: TzrV2VisualTransition;
 }
 
 type StateStatementKeyword = "set" | "add";
@@ -1529,29 +1537,31 @@ class TzrV2Parser {
   }
 
   private parseBgStatement(line: SourceLine, source: string, statementColumn: number): TzrV2BgStatement | undefined {
-    const assetRef = this.parseSingleVisualAssetStatement(line, source, "bg", statementColumn);
+    const parsed = this.parseSingleVisualAssetStatement(line, source, "bg", statementColumn);
     this.cursor += 1;
-    if (assetRef === undefined) {
+    if (parsed === undefined) {
       return undefined;
     }
 
     return {
       type: "BgStatement",
-      assetRef,
+      assetRef: parsed.assetRef,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
       loc: this.lineRange(line),
     };
   }
 
   private parseHideStatement(line: SourceLine, source: string, statementColumn: number): TzrV2HideStatement | undefined {
-    const assetRef = this.parseSingleVisualAssetStatement(line, source, "hide", statementColumn);
+    const parsed = this.parseSingleVisualAssetStatement(line, source, "hide", statementColumn);
     this.cursor += 1;
-    if (assetRef === undefined) {
+    if (parsed === undefined) {
       return undefined;
     }
 
     return {
       type: "HideStatement",
-      assetRef,
+      assetRef: parsed.assetRef,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
       loc: this.lineRange(line),
     };
   }
@@ -1561,20 +1571,25 @@ class TzrV2Parser {
     source: string,
     keyword: "bg" | "hide",
     statementColumn: number,
-  ): TzrV2VisualAssetRef | undefined {
-    const transitionIndex = findVisualWithKeyword(source);
-    if (transitionIndex !== undefined) {
-      this.addError(line, statementColumn + transitionIndex, "Visual transitions are not implemented yet.");
+  ): { readonly assetRef: TzrV2VisualAssetRef; readonly transition?: TzrV2VisualTransition } | undefined {
+    const parsed = this.parseVisualStatementBody(line, source, keyword, statementColumn);
+    if (parsed === undefined) {
       return undefined;
     }
-
-    const rest = source.slice(keyword.length).trim();
-    if (rest.length === 0) {
+    if (parsed.bodySource.length === 0) {
       this.addError(line, statementColumn, `${keyword} assetRef is required.`);
       return undefined;
     }
 
-    return this.parseVisualAssetRef(line, rest, statementColumn + source.indexOf(rest), keyword);
+    const assetRef = this.parseVisualAssetRef(line, parsed.bodySource, parsed.bodyColumn, keyword);
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return {
+      assetRef,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
+    };
   }
 
   private parseShowStatement(
@@ -1592,6 +1607,7 @@ class TzrV2Parser {
       type: "ShowStatement",
       assetRef: parsed.assetRef,
       placement: parsed.placement,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
       loc: this.lineRange(line),
     };
   }
@@ -1600,20 +1616,25 @@ class TzrV2Parser {
     line: SourceLine,
     source: string,
     statementColumn: number,
-  ): { readonly assetRef: TzrV2VisualAssetRef; readonly placement: TzrV2VisualPlacement } | undefined {
-    const transitionIndex = findVisualWithKeyword(source);
-    if (transitionIndex !== undefined) {
-      this.addError(line, statementColumn + transitionIndex, "Visual transitions are not implemented yet.");
+  ):
+    | {
+        readonly assetRef: TzrV2VisualAssetRef;
+        readonly placement: TzrV2VisualPlacement;
+        readonly transition?: TzrV2VisualTransition;
+      }
+    | undefined {
+    const parsed = this.parseVisualStatementBody(line, source, "show", statementColumn);
+    if (parsed === undefined) {
       return undefined;
     }
 
-    const rest = source.slice("show".length).trim();
+    const rest = parsed.bodySource;
     if (rest.length === 0) {
       this.addError(line, statementColumn, "show assetRef is required.");
       return undefined;
     }
 
-    const restColumn = statementColumn + source.indexOf(rest);
+    const restColumn = parsed.bodyColumn;
     const atIndex = findVisualStandaloneToken(rest, "at");
     if (atIndex === undefined) {
       this.addError(line, restColumn, "show statement must include `at`.");
@@ -1643,7 +1664,11 @@ class TzrV2Parser {
       return undefined;
     }
 
-    return { assetRef, placement };
+    return {
+      assetRef,
+      placement,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
+    };
   }
 
   private parseVisualAssetRef(
@@ -1768,21 +1793,20 @@ class TzrV2Parser {
     source: string,
     statementColumn: number,
   ): TzrV2ClearVisualStatement | undefined {
-    const transitionIndex = findVisualWithKeyword(source);
-    if (transitionIndex !== undefined) {
-      this.addError(line, statementColumn + transitionIndex, "Visual transitions are not implemented yet.");
+    const parsed = this.parseVisualStatementBody(line, source, "clear", statementColumn);
+    if (parsed === undefined) {
       this.cursor += 1;
       return undefined;
     }
 
-    const rest = source.slice("clear".length).trim();
+    const rest = parsed.bodySource;
     if (rest.length === 0) {
       this.addError(line, statementColumn, "clear target is required.");
       this.cursor += 1;
       return undefined;
     }
 
-    const restColumn = statementColumn + source.indexOf(rest);
+    const restColumn = parsed.bodyColumn;
     const parts = rest.split(/\s+/);
     const target = parts[0] ?? "";
     if (target !== "sprites" && target !== "bg") {
@@ -1800,8 +1824,212 @@ class TzrV2Parser {
     return {
       type: "ClearVisualStatement",
       target,
+      ...(parsed.transition === undefined ? {} : { transition: parsed.transition }),
       loc: this.lineRange(line),
     };
+  }
+
+  private parseVisualStatementBody(
+    line: SourceLine,
+    source: string,
+    keyword: "bg" | "show" | "hide" | "clear",
+    statementColumn: number,
+  ): ParsedVisualStatementBody | undefined {
+    const rest = source.slice(keyword.length);
+    const bodyOffset = rest.search(/\S/);
+    if (bodyOffset === -1) {
+      return {
+        bodySource: "",
+        bodyColumn: statementColumn + keyword.length,
+      };
+    }
+
+    const trimmedRest = rest.slice(bodyOffset).trimEnd();
+    const restColumn = statementColumn + keyword.length + bodyOffset;
+    const withIndex = findVisualWithKeyword(trimmedRest);
+    if (withIndex === undefined) {
+      return {
+        bodySource: trimmedRest,
+        bodyColumn: restColumn,
+      };
+    }
+
+    const bodySource = trimmedRest.slice(0, withIndex).trimEnd();
+    const afterWith = trimmedRest.slice(withIndex + "with".length);
+    const transitionOffset = afterWith.search(/\S/);
+    if (transitionOffset === -1) {
+      this.addError(line, restColumn + withIndex, "Visual transition is required after `with`.");
+      return undefined;
+    }
+
+    const transitionSource = afterWith.slice(transitionOffset).trimEnd();
+    const transitionColumn = restColumn + withIndex + "with".length + transitionOffset;
+    const transition = this.parseVisualTransition(line, transitionSource, transitionColumn);
+    if (transition === undefined) {
+      return undefined;
+    }
+
+    return {
+      bodySource,
+      bodyColumn: restColumn,
+      transition,
+    };
+  }
+
+  private parseVisualTransition(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): TzrV2VisualTransition | undefined {
+    if (source.startsWith("(")) {
+      this.addError(line, sourceColumn, "Visual transition name is required.");
+      return undefined;
+    }
+
+    const openParenIndex = source.indexOf("(");
+    if (openParenIndex === -1) {
+      this.addError(line, sourceColumn, "Visual transition must include parentheses.");
+      return undefined;
+    }
+
+    const name = source.slice(0, openParenIndex).trim();
+    if (name.length === 0) {
+      this.addError(line, sourceColumn, "Visual transition name is required.");
+      return undefined;
+    }
+    if (!isValidTzrV2Identifier(name)) {
+      this.addError(line, sourceColumn, "Malformed visual transition syntax.");
+      return undefined;
+    }
+    if (name !== "fade" && name !== "dissolve") {
+      this.addError(line, sourceColumn, `Unknown visual transition "${name}".`);
+      return undefined;
+    }
+
+    const closeParenIndex = this.findCallWaitClosingParenthesis(source, openParenIndex);
+    if (closeParenIndex === undefined) {
+      this.addError(line, sourceColumn + openParenIndex, "Visual transition is missing closing parenthesis.");
+      return undefined;
+    }
+
+    const trailing = source.slice(closeParenIndex + 1);
+    if (trailing.trim().length > 0) {
+      this.addError(line, sourceColumn + closeParenIndex + 1 + trailing.search(/\S/), "Visual transition must not have extra trailing tokens.");
+      return undefined;
+    }
+
+    const argsSource = source.slice(openParenIndex + 1, closeParenIndex);
+    const duration = this.parseVisualTransitionDuration(line, argsSource, sourceColumn + openParenIndex + 1);
+    if (duration === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "VisualTransition",
+      name: name satisfies TzrV2VisualTransitionName,
+      duration,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + closeParenIndex + 1),
+      },
+    };
+  }
+
+  private parseVisualTransitionDuration(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): number | undefined {
+    if (source.trim().length === 0) {
+      this.addError(line, sourceColumn, "Visual transition duration is required.");
+      return undefined;
+    }
+
+    const parts = this.splitVisualTransitionArguments(line, source, sourceColumn);
+    if (parts === undefined) {
+      return undefined;
+    }
+
+    let duration: number | undefined;
+    for (const part of parts) {
+      const equalsIndex = part.source.indexOf("=");
+      if (equalsIndex === -1) {
+        this.addError(line, part.column, "Visual transition positional arguments are not supported.");
+        return undefined;
+      }
+
+      const name = part.source.slice(0, equalsIndex).trim();
+      const nameColumn = part.column + part.source.indexOf(name);
+      if (name !== "duration") {
+        this.addError(line, nameColumn, `Unknown visual transition argument "${name}".`);
+        return undefined;
+      }
+      if (duration !== undefined) {
+        this.addError(line, nameColumn, 'Duplicate visual transition argument "duration".');
+        return undefined;
+      }
+
+      const valueRest = part.source.slice(equalsIndex + 1);
+      const valueOffset = valueRest.search(/\S/);
+      if (valueOffset === -1) {
+        this.addError(line, part.column + equalsIndex + 1, "Invalid visual transition duration.");
+        return undefined;
+      }
+
+      const value = valueRest.slice(valueOffset).trimEnd();
+      const valueColumn = part.column + equalsIndex + 1 + valueOffset;
+      if (!/^\d+$/.test(value)) {
+        this.addError(line, valueColumn, "Invalid visual transition duration.");
+        return undefined;
+      }
+
+      duration = Number(value);
+    }
+
+    if (duration === undefined) {
+      this.addError(line, sourceColumn, "Visual transition duration is required.");
+      return undefined;
+    }
+
+    return duration;
+  }
+
+  private splitVisualTransitionArguments(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): readonly { readonly source: string; readonly column: number }[] | undefined {
+    const parts: { readonly source: string; readonly column: number }[] = [];
+    let partStart = 0;
+    for (let index = 0; index < source.length; index += 1) {
+      if (source[index] !== ",") {
+        continue;
+      }
+
+      const part = source.slice(partStart, index);
+      const trimmed = part.trim();
+      if (trimmed.length === 0) {
+        this.addError(line, sourceColumn + partStart, "Malformed visual transition syntax.");
+        return undefined;
+      }
+      parts.push({
+        source: trimmed,
+        column: sourceColumn + partStart + part.indexOf(trimmed),
+      });
+      partStart = index + 1;
+    }
+
+    const lastPart = source.slice(partStart);
+    const trimmed = lastPart.trim();
+    if (trimmed.length === 0) {
+      this.addError(line, sourceColumn + partStart, "Malformed visual transition syntax.");
+      return undefined;
+    }
+    parts.push({
+      source: trimmed,
+      column: sourceColumn + partStart + lastPart.indexOf(trimmed),
+    });
+    return parts;
   }
 
   private findStringLiteralEnd(source: string): number | undefined {

@@ -135,6 +135,8 @@ export type {
   TzrV2VisualNamedPlacement,
   TzrV2VisualPlacement,
   TzrV2VisualStringAssetRef,
+  TzrV2VisualTransition,
+  TzrV2VisualTransitionName,
   TzrV2WaitStatement,
   TzrV2HideStatement,
   TzrV2ShowStatement,

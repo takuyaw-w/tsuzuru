@@ -207,6 +207,7 @@ export interface TzrV2IdentifierValue {
 export interface TzrV2BgStatement {
   readonly type: "BgStatement";
   readonly assetRef: TzrV2VisualAssetRef;
+  readonly transition?: TzrV2VisualTransition;
   readonly loc: SourceRange;
 }
 
@@ -214,18 +215,21 @@ export interface TzrV2ShowStatement {
   readonly type: "ShowStatement";
   readonly assetRef: TzrV2VisualAssetRef;
   readonly placement: TzrV2VisualPlacement;
+  readonly transition?: TzrV2VisualTransition;
   readonly loc: SourceRange;
 }
 
 export interface TzrV2HideStatement {
   readonly type: "HideStatement";
   readonly assetRef: TzrV2VisualAssetRef;
+  readonly transition?: TzrV2VisualTransition;
   readonly loc: SourceRange;
 }
 
 export interface TzrV2ClearVisualStatement {
   readonly type: "ClearVisualStatement";
   readonly target: "sprites" | "bg";
+  readonly transition?: TzrV2VisualTransition;
   readonly loc: SourceRange;
 }
 
@@ -255,6 +259,15 @@ export interface TzrV2VisualCoordinatePlacement {
   readonly type: "VisualCoordinatePlacement";
   readonly x: number;
   readonly y: number;
+  readonly loc: SourceRange;
+}
+
+export type TzrV2VisualTransitionName = "fade" | "dissolve";
+
+export interface TzrV2VisualTransition {
+  readonly type: "VisualTransition";
+  readonly name: TzrV2VisualTransitionName;
+  readonly duration: number;
   readonly loc: SourceRange;
 }
 
