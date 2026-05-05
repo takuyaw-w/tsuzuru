@@ -85,6 +85,7 @@ export interface BodyChoiceInstruction {
 export interface BodyChoiceInstructionItem {
   readonly label: string;
   readonly id?: string;
+  readonly condition?: TzrV2ConditionExpression;
   readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }

@@ -190,6 +190,9 @@ class TzrV2Compiler {
 
   private validateChoiceStatement(statement: TzrV2ChoiceStatement): void {
     for (const item of statement.items) {
+      if (item.condition !== undefined) {
+        this.validateSupportedCondition(item.condition);
+      }
       this.validateSceneStatements(item.body);
     }
   }
@@ -426,13 +429,10 @@ class TzrV2Compiler {
   }
 
   private buildBodyChoiceInstructionItem(item: TzrV2ChoiceItem): BodyChoiceInstructionItem {
-    if (item.condition !== undefined) {
-      this.addError(item.loc.start, "Conditional choice items are not compile-supported yet.");
-    }
-
     return {
       label: item.label,
       ...(item.id === undefined ? {} : { id: item.id }),
+      ...(item.condition === undefined ? {} : { condition: item.condition }),
       body: this.buildSceneBodyInstructions(item.body),
       loc: item.loc,
     };

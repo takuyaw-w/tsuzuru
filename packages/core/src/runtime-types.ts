@@ -223,6 +223,7 @@ export interface UnsupportedRuntimeEvent {
 export type RuntimeErrorCode =
   | "choice_not_pending"
   | "choice_index_out_of_range"
+  | "choice_no_available_items"
   | "state_add_non_number"
   | "condition_invalid_numeric_comparison"
   | "condition_system_reference_unsupported";

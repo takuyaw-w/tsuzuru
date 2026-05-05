@@ -156,10 +156,33 @@ export function stepChoiceInstruction(state: RuntimeState, instruction: ChoiceIn
 }
 
 export function stepBodyChoiceInstruction(state: RuntimeState, instruction: BodyChoiceInstruction): RuntimeStepResult {
+  const visibleItems = filterBodyChoiceItems(state, instruction);
+  if (!visibleItems.ok) {
+    return {
+      state,
+      event: {
+        type: "error",
+        code: visibleItems.error.code,
+        message: visibleItems.error.message,
+      },
+    };
+  }
+
+  if (visibleItems.items.length === 0) {
+    return {
+      state,
+      event: {
+        type: "error",
+        code: "choice_no_available_items",
+        message: `Choice "${instruction.question}" has no available items.`,
+      },
+    };
+  }
+
   const pendingChoice: RuntimePendingChoice = {
     kind: "body",
     question: instruction.question,
-    items: instruction.items.map(bodyChoiceItemToRuntimePendingChoiceItem),
+    items: visibleItems.items.map(bodyChoiceItemToRuntimePendingChoiceItem),
   };
 
   return {
@@ -185,6 +208,37 @@ function bodyChoiceItemToRuntimePendingChoiceItem(item: BodyChoiceInstructionIte
     text: item.label,
     body: item.body,
   };
+}
+
+type BodyChoiceFilterResult =
+  | {
+      readonly ok: true;
+      readonly items: readonly BodyChoiceInstructionItem[];
+    }
+  | {
+      readonly ok: false;
+      readonly error: TzrV2ConditionEvaluationError;
+    };
+
+function filterBodyChoiceItems(state: RuntimeState, instruction: BodyChoiceInstruction): BodyChoiceFilterResult {
+  const items: BodyChoiceInstructionItem[] = [];
+
+  for (const item of instruction.items) {
+    if (item.condition === undefined) {
+      items.push(item);
+      continue;
+    }
+
+    const result = evaluateTzrV2Condition(item.condition, state);
+    if (!result.ok) {
+      return result;
+    }
+    if (result.value) {
+      items.push(item);
+    }
+  }
+
+  return { ok: true, items };
 }
 
 export function choiceEvent(pendingChoice: RuntimePendingChoice): ChoiceRuntimeEvent {

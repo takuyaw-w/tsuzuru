@@ -498,13 +498,64 @@ scene start:
 `)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
-  it("rejects conditional choice items for now", () => {
-    expect(expectCompileFailure(`scene start:
+  it("compiles conditional choice items into BodyChoiceInstructionItem conditions", () => {
+    const document = compileSource(`scene start:
   choice "Choose":
-    "Locked" if scenario.unlocked:
+    "Locked" id=locked if scenario.unlocked:
       jump later
 scene later:
-`)).toContain("Conditional choice items are not compile-supported yet.");
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      question: "Choose",
+      items: [
+        {
+          label: "Locked",
+          id: "locked",
+          condition: { type: "ConditionReference", path: "scenario.unlocked" },
+          body: [{ type: "SceneJumpInstruction", sceneId: "later" }],
+        },
+      ],
+    });
+  });
+
+  it("compiles mixed conditional and unconditional choice items", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Open" id=open if scenario.hasNotebook:
+      narration:
+        Open.
+    "Leave" id=leave:
+      narration:
+        Leave.
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      items: [
+        {
+          label: "Open",
+          id: "open",
+          condition: { type: "ConditionReference", path: "scenario.hasNotebook" },
+          body: [{ type: "NarrationInstruction", lines: [{ text: "Open." }] }],
+        },
+        {
+          label: "Leave",
+          id: "leave",
+          body: [{ type: "NarrationInstruction", lines: [{ text: "Leave." }] }],
+        },
+      ],
+    });
+  });
+
+  it("rejects system references in conditional choice item conditions for now", () => {
+    expect(expectCompileFailure(`scene start:
+  choice "Choose":
+    "True end" if system.endings.trueEnd.unlocked:
+      narration:
+        True end.
+`)).toContain("system condition references are not compile-supported yet.");
   });
 
   it("rejects unsupported statements inside choice item bodies", () => {

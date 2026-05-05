@@ -317,6 +317,185 @@ scene later:
     });
   });
 
+  it("filters DSL v2 conditional body choice items when emitting a choice event", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  set scenario.hasKey = false
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      jump notebook
+    "Use key" id=useKey if scenario.hasKey:
+      jump key
+    "Leave" id=leave:
+      jump leave
+scene notebook:
+scene key:
+scene leave:
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const hasNotebook = stepRuntime(document, scene.state);
+    const hasKey = stepRuntime(document, hasNotebook.state);
+    const choice = stepRuntime(document, hasKey.state);
+
+    expect(choice.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [
+        { id: "openNotebook", text: "Open notebook" },
+        { id: "leave", text: "Leave" },
+      ],
+    });
+    expect(choice.state.pendingChoice).toMatchObject({
+      kind: "body",
+      items: [
+        { id: "openNotebook", text: "Open notebook", body: [{ type: "SceneJumpInstruction", sceneId: "notebook" }] },
+        { id: "leave", text: "Leave", body: [{ type: "SceneJumpInstruction", sceneId: "leave" }] },
+      ],
+    });
+  });
+
+  it("resolves the first visible DSL v2 conditional choice item to the correct body", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      jump notebook
+    "Use key" id=useKey if scenario.hasKey:
+      jump key
+    "Leave" id=leave:
+      jump leave
+scene notebook:
+scene key:
+scene leave:
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const jump = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 0,
+      id: "openNotebook",
+      text: "Open notebook",
+    });
+    expect(jump.event).toEqual({
+      type: "jump",
+      sceneId: "notebook",
+      instructionIndex: 3,
+    });
+  });
+
+  it("resolves the second visible DSL v2 conditional choice item to the correct body", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      jump notebook
+    "Use key" id=useKey if scenario.hasKey:
+      jump key
+    "Leave" id=leave:
+      jump leave
+scene notebook:
+scene key:
+scene leave:
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const resolved = resolveChoice(document, choice.state, 1);
+    const jump = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 1,
+      id: "leave",
+      text: "Leave",
+    });
+    expect(jump.event).toEqual({
+      type: "jump",
+      sceneId: "leave",
+      instructionIndex: 5,
+    });
+  });
+
+  it("returns a runtime error when all DSL v2 conditional choice items are hidden", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      narration:
+        Open.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+
+    expect(choice.event).toEqual({
+      type: "error",
+      code: "choice_no_available_items",
+      message: 'Choice "Choose" has no available items.',
+    });
+    expect(choice.state.pendingChoice).toBeNull();
+  });
+
+  it("returns a runtime error when a DSL v2 conditional choice condition evaluation fails", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  choice "Choose":
+    "Invalid" id=invalid if scenario.route > 1:
+      narration:
+        Invalid.
+    "Leave" id=leave:
+      narration:
+        Leave.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+
+    expect(choice.event).toEqual({
+      type: "error",
+      code: "condition_invalid_numeric_comparison",
+      message: 'Cannot evaluate condition operator ">" because both operands must be numbers.',
+    });
+    expect(choice.state.pendingChoice).toBeNull();
+  });
+
+  it("preserves filtered DSL v2 pending body choices through snapshot restore", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      narration:
+        Open.
+    "Use key" id=useKey if scenario.hasKey:
+      narration:
+        Key.
+    "Leave" id=leave:
+      narration:
+        Leave.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const restored = restoreRuntimeState(JSON.parse(JSON.stringify(createRuntimeSnapshot(choice.state))));
+    const resolved = resolveChoice(document, restored, 1);
+    const narration = stepRuntime(document, resolved.state);
+
+    expect(restored.pendingChoice).toMatchObject({
+      kind: "body",
+      question: "Choose",
+      items: [
+        { id: "openNotebook", text: "Open notebook", body: [{ type: "NarrationInstruction" }] },
+        { id: "leave", text: "Leave", body: [{ type: "NarrationInstruction" }] },
+      ],
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Leave." }],
+    });
+  });
+
   it("runs DSL v2 set string, number, and boolean statements", () => {
     const document = compileSource(`scene start:
   set scenario.route = "mio"
