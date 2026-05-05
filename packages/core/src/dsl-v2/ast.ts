@@ -50,6 +50,7 @@ export type TzrV2SceneStatement =
 
 export interface TzrV2NarrationStatement {
   readonly type: "NarrationStatement";
+  readonly meta?: TzrV2TextBlockMeta;
   readonly lines: readonly TzrV2TextBlockItem[];
   readonly loc: SourceRange;
 }
@@ -57,6 +58,7 @@ export interface TzrV2NarrationStatement {
 export interface TzrV2DialogueStatement {
   readonly type: "DialogueStatement";
   readonly speaker: string;
+  readonly meta?: TzrV2TextBlockMeta;
   readonly lines: readonly TzrV2TextBlockItem[];
   readonly explicit: boolean;
   readonly loc: SourceRange;
@@ -88,5 +90,46 @@ export interface TzrV2TextClickWait {
 
 export interface TzrV2TextPageBreak {
   readonly type: "TextPageBreak";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextBlockMeta {
+  readonly type: "TextBlockMeta";
+  readonly attributes: readonly TzrV2TextBlockMetaAttribute[];
+  readonly loc: SourceRange;
+}
+
+export type TzrV2TextBlockMetaAttribute =
+  | TzrV2TextBlockColorMetaAttribute
+  | TzrV2TextBlockBooleanMetaAttribute
+  | TzrV2TextBlockNumberMetaAttribute
+  | TzrV2TextBlockMoodMetaAttribute;
+
+export interface TzrV2TextBlockColorMetaAttribute {
+  readonly type: "TextBlockColorMetaAttribute";
+  readonly name: "color";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextBlockBooleanMetaAttribute {
+  readonly type: "TextBlockBooleanMetaAttribute";
+  readonly name: "bold" | "italic";
+  readonly value: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextBlockNumberMetaAttribute {
+  readonly type: "TextBlockNumberMetaAttribute";
+  readonly name: "size" | "delay";
+  readonly value: number;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextBlockMoodMetaAttribute {
+  readonly type: "TextBlockMoodMetaAttribute";
+  readonly name: "mood";
+  readonly value: string;
+  readonly valueKind: "identifier" | "string";
   readonly loc: SourceRange;
 }

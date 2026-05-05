@@ -390,6 +390,208 @@ scene commonRoute:
     });
   });
 
+  it("parses :meta in a narration block", () => {
+    const result = parseTzrV2(
+      `scene start:
+  narration:
+    :meta
+      delay=70
+    Rain blurred the platform edge.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "NarrationStatement",
+          meta: {
+            type: "TextBlockMeta",
+            attributes: [{ type: "TextBlockNumberMetaAttribute", name: "delay", value: 70 }],
+          },
+          lines: [{ type: "TextLine", text: "Rain blurred the platform edge." }],
+        },
+      ],
+    });
+  });
+
+  it("parses :meta in an explicit say block", () => {
+    const result = parseTzrV2(
+      `scene start:
+  say mio:
+    :meta
+      mood=annoyed
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          explicit: true,
+          meta: {
+            attributes: [{ type: "TextBlockMoodMetaAttribute", name: "mood", value: "annoyed", valueKind: "identifier" }],
+          },
+          lines: [{ type: "TextLine", text: "You're late." }],
+        },
+      ],
+    });
+  });
+
+  it("parses :meta in shorthand dialogue", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    :meta
+      color=#ff5555
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          explicit: false,
+          meta: {
+            attributes: [{ type: "TextBlockColorMetaAttribute", name: "color", value: "#ff5555" }],
+          },
+          lines: [{ type: "TextLine", text: "You're late." }],
+        },
+      ],
+    });
+  });
+
+  it("parses all supported :meta attributes", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    :meta
+      color=#ff5555cc
+      bold=true
+      italic=false
+      size=28
+      delay=0
+      mood="annoyed"
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          meta: {
+            attributes: [
+              { type: "TextBlockColorMetaAttribute", name: "color", value: "#ff5555cc" },
+              { type: "TextBlockBooleanMetaAttribute", name: "bold", value: true },
+              { type: "TextBlockBooleanMetaAttribute", name: "italic", value: false },
+              { type: "TextBlockNumberMetaAttribute", name: "size", value: 28 },
+              { type: "TextBlockNumberMetaAttribute", name: "delay", value: 0 },
+              { type: "TextBlockMoodMetaAttribute", name: "mood", value: "annoyed", valueKind: "string" },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
+  it("does not carry :meta to the next text block", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    :meta
+      mood=annoyed
+    You're late.
+  mio:
+    Sorry.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        { type: "DialogueStatement", meta: { type: "TextBlockMeta" } },
+        { type: "DialogueStatement", lines: [{ type: "TextLine", text: "Sorry." }] },
+      ],
+    });
+    const scene = result.document.declarations[0];
+    if (scene === undefined || scene.type !== "SceneDeclaration") {
+      throw new Error("expected scene");
+    }
+    const secondStatement = scene.body[1];
+    if (secondStatement === undefined) {
+      throw new Error("expected second statement");
+    }
+    expect(secondStatement).not.toHaveProperty("meta");
+  });
+
+  it("keeps text block items after :meta in order", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    :meta
+      delay=70
+    First.
+
+    Second.
+    ---
+    Third.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          meta: { attributes: [{ name: "delay", value: 70 }] },
+          lines: [
+            { type: "TextLine", text: "First." },
+            { type: "TextClickWait" },
+            { type: "TextLine", text: "Second." },
+            { type: "TextPageBreak" },
+            { type: "TextLine", text: "Third." },
+          ],
+        },
+      ],
+    });
+  });
+
   it("rejects unknown top-level declaration names that share known prefixes", () => {
     expect(expectParseFailure('titlex "Rain Station"\n')).toContain("Expected a DSL v2 top-level declaration.");
     expect(expectParseFailure('characterx mio name="Mio"\n')).toContain("Expected a DSL v2 top-level declaration.");
@@ -487,6 +689,99 @@ scene commonRoute:
 
   it("rejects incomplete text block escapes", () => {
     expect(expectParseFailure("scene start:\n  mio:\n    trailing \\\n")).toContain("Incomplete text block escape.");
+  });
+
+  it("rejects duplicate :meta", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      mood=annoyed\n    :meta\n      delay=70\n    Text.\n")).toContain(
+      "Duplicate :meta block.",
+    );
+  });
+
+  it("rejects :meta after text block items", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    Text.\n    :meta\n      delay=70\n")).toContain(
+      ":meta must appear before text block items.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    Text.\n\n    :meta\n      delay=70\n")).toContain(
+      ":meta must appear before text block items.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    Text.\n    ---\n    :meta\n      delay=70\n")).toContain(
+      ":meta must appear before text block items.",
+    );
+  });
+
+  it("rejects empty :meta", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n    Text.\n")).toContain(
+      ":meta must include at least one attribute.",
+    );
+  });
+
+  it("rejects malformed :meta indentation", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n      :meta\n        delay=70\n    Text.\n")).toContain(
+      ":meta must be indented at the text block level.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n        delay=70\n    Text.\n")).toContain(
+      ":meta attributes must be indented 6 spaces.",
+    );
+  });
+
+  it("rejects malformed :meta attributes", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay\n    Text.\n")).toContain(
+      ":meta attribute must use key=value syntax.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      unknown=true\n    Text.\n")).toContain(
+      'Unknown :meta attribute "unknown".',
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=70\n      delay=80\n    Text.\n")).toContain(
+      'Duplicate :meta attribute "delay".',
+    );
+  });
+
+  it("rejects invalid :meta color values", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      color=red\n    Text.\n")).toContain(
+      "Invalid :meta color value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      color=rgb(255,0,0)\n    Text.\n")).toContain(
+      "Invalid :meta color value.",
+    );
+  });
+
+  it("rejects invalid :meta boolean values", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      bold=yes\n    Text.\n")).toContain(
+      "Invalid :meta bold value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      italic=1\n    Text.\n")).toContain(
+      "Invalid :meta italic value.",
+    );
+  });
+
+  it("rejects invalid :meta numeric values", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      size=0\n    Text.\n")).toContain(
+      "Invalid :meta size value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      size=-1\n    Text.\n")).toContain(
+      "Invalid :meta size value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=-1\n    Text.\n")).toContain(
+      "Invalid :meta delay value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=\"70\"\n    Text.\n")).toContain(
+      "Invalid :meta delay value.",
+    );
+  });
+
+  it("rejects invalid :meta mood and voice values", () => {
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      mood=annoyed-face\n    Text.\n")).toContain(
+      "Invalid :meta mood value.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      voice=mio_001\n    Text.\n")).toContain(
+      "voice is not allowed in :meta.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      mood='annoyed'\n    Text.\n")).toContain(
+      "Only double-quoted string literals are supported.",
+    );
+    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      mood=`annoyed`\n    Text.\n")).toContain(
+      "Backtick string literals are not supported.",
+    );
   });
 
   it("rejects an unterminated block comment", () => {

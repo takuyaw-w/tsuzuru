@@ -12,6 +12,8 @@ import type {
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
   TzrV2TextBlockItem,
+  TzrV2TextBlockMeta,
+  TzrV2TextBlockMetaAttribute,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
@@ -29,7 +31,13 @@ interface CommentScanResult {
   readonly errors: readonly ParseDiagnostic[];
 }
 
+interface ParsedTextBlock {
+  readonly meta?: TzrV2TextBlockMeta;
+  readonly lines: readonly TzrV2TextBlockItem[];
+}
+
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 
 export function parseTzrV2(source: string, options: TzrV2ParseOptions = {}): TzrV2ParseResult {
   const filePath = options.filePath ?? "<anonymous>";
@@ -275,10 +283,12 @@ class TzrV2Parser {
   private parseNarrationStatement(header: SourceLine): TzrV2NarrationStatement {
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
-    const lines = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, 1);
+    const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
       type: "NarrationStatement",
+      ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
       lines,
       loc: { start: this.location(header.line, 3), end },
     };
@@ -305,12 +315,14 @@ class TzrV2Parser {
 
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
-    const lines = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, 1);
+    const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
       type: "DialogueStatement",
       speaker,
       explicit: true,
+      ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
       lines,
       loc: { start: this.location(header.line, statementColumn), end },
     };
@@ -330,12 +342,14 @@ class TzrV2Parser {
 
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
-    const lines = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, 1);
+    const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
       type: "DialogueStatement",
       speaker,
       explicit: false,
+      ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
       lines,
       loc: { start: this.location(header.line, statementColumn), end },
     };
@@ -382,8 +396,9 @@ class TzrV2Parser {
     };
   }
 
-  private collectTextBlock(header: SourceLine, headerIndentLevel: number): readonly TzrV2TextBlockItem[] {
+  private collectTextBlock(header: SourceLine, headerIndentLevel: number): ParsedTextBlock {
     const items: TzrV2TextBlockItem[] = [];
+    let meta: TzrV2TextBlockMeta | undefined;
     const expectedIndent = (headerIndentLevel + 1) * 2;
 
     while (!this.isAtEnd()) {
@@ -417,6 +432,11 @@ class TzrV2Parser {
       if (indent <= headerIndentLevel * 2) {
         break;
       }
+      if (line.code.trim() === ":meta" && indent !== expectedIndent) {
+        this.addError(line, 1, ":meta must be indented at the text block level.");
+        this.cursor += 1;
+        continue;
+      }
       if (indent !== expectedIndent) {
         if (line.code.trim() === "---") {
           this.addError(line, 1, "`---` must be indented at the text block level.");
@@ -428,6 +448,22 @@ class TzrV2Parser {
       }
 
       const rawText = line.code.slice(expectedIndent).trimEnd();
+      if (rawText === ":meta") {
+        if (items.length > 0) {
+          this.addError(line, expectedIndent + 1, ":meta must appear before text block items.");
+          this.cursor += 1;
+          continue;
+        }
+        if (meta !== undefined) {
+          this.addError(line, expectedIndent + 1, "Duplicate :meta block.");
+          this.cursor += 1;
+          continue;
+        }
+
+        meta = this.parseTextBlockMeta(line, headerIndentLevel + 1);
+        continue;
+      }
+
       const loc = {
         start: this.location(line.line, expectedIndent + 1),
         end: this.location(line.line, line.code.length + 1),
@@ -456,7 +492,142 @@ class TzrV2Parser {
       this.addError(header, firstContentColumn(header), "Text block must include at least one indented text line.");
     }
 
-    return items;
+    return {
+      ...(meta === undefined ? {} : { meta }),
+      lines: items,
+    };
+  }
+
+  private parseTextBlockMeta(header: SourceLine, metaIndentLevel: number): TzrV2TextBlockMeta {
+    const headerRange = this.lineRange(header);
+    const attributes: TzrV2TextBlockMetaAttribute[] = [];
+    const seen = new Set<string>();
+    const expectedAttributeIndent = (metaIndentLevel + 1) * 2;
+    this.cursor += 1;
+
+    while (!this.isAtEnd()) {
+      const line = this.currentRequired();
+      if (this.isIgnorable(line)) {
+        this.cursor += 1;
+        continue;
+      }
+
+      const indent = this.validateIndent(line);
+      if (indent <= metaIndentLevel * 2) {
+        break;
+      }
+      if (indent !== expectedAttributeIndent) {
+        this.addError(line, 1, `:meta attributes must be indented ${expectedAttributeIndent} spaces.`);
+        this.cursor += 1;
+        continue;
+      }
+
+      const source = line.code.slice(expectedAttributeIndent).trim();
+      const attribute = this.parseTextBlockMetaAttribute(line, source, expectedAttributeIndent + 1, seen);
+      if (attribute !== undefined) {
+        attributes.push(attribute);
+        seen.add(attribute.name);
+      }
+      this.cursor += 1;
+    }
+
+    if (attributes.length === 0) {
+      this.addError(header, firstContentColumn(header), ":meta must include at least one attribute.");
+    }
+
+    const end = attributes.at(-1)?.loc.end ?? headerRange.end;
+    return {
+      type: "TextBlockMeta",
+      attributes,
+      loc: { start: headerRange.start, end },
+    };
+  }
+
+  private parseTextBlockMetaAttribute(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    seen: ReadonlySet<string>,
+  ): TzrV2TextBlockMetaAttribute | undefined {
+    const equalsIndex = source.indexOf("=");
+    if (equalsIndex === -1) {
+      this.addError(line, sourceColumn, ":meta attribute must use key=value syntax.");
+      return undefined;
+    }
+
+    const key = source.slice(0, equalsIndex).trim();
+    const valueSource = source.slice(equalsIndex + 1).trim();
+    const keyColumn = sourceColumn + source.indexOf(key);
+    const valueColumn = sourceColumn + equalsIndex + 1 + source.slice(equalsIndex + 1).search(/\S/);
+
+    if (key.length === 0 || valueSource.length === 0) {
+      this.addError(line, sourceColumn, ":meta attribute must use key=value syntax.");
+      return undefined;
+    }
+    if (key === "voice") {
+      this.addError(line, keyColumn, "voice is not allowed in :meta.");
+      return undefined;
+    }
+    if (!["color", "bold", "italic", "size", "delay", "mood"].includes(key)) {
+      this.addError(line, keyColumn, `Unknown :meta attribute "${key}".`);
+      return undefined;
+    }
+    if (seen.has(key)) {
+      this.addError(line, keyColumn, `Duplicate :meta attribute "${key}".`);
+      return undefined;
+    }
+
+    const loc = {
+      start: this.location(line.line, keyColumn),
+      end: this.location(line.line, valueColumn + valueSource.length),
+    };
+
+    if (key === "color") {
+      if (!COLOR_PATTERN.test(valueSource)) {
+        this.addError(line, valueColumn, "Invalid :meta color value.");
+        return undefined;
+      }
+      return { type: "TextBlockColorMetaAttribute", name: "color", value: valueSource, loc };
+    }
+
+    if (key === "bold" || key === "italic") {
+      if (valueSource !== "true" && valueSource !== "false") {
+        this.addError(line, valueColumn, `Invalid :meta ${key} value.`);
+        return undefined;
+      }
+      return { type: "TextBlockBooleanMetaAttribute", name: key, value: valueSource === "true", loc };
+    }
+
+    if (key === "size" || key === "delay") {
+      if (!/^-?\d+$/.test(valueSource)) {
+        this.addError(line, valueColumn, `Invalid :meta ${key} value.`);
+        return undefined;
+      }
+      const value = Number(valueSource);
+      const min = key === "size" ? 1 : 0;
+      if (value < min) {
+        this.addError(line, valueColumn, `Invalid :meta ${key} value.`);
+        return undefined;
+      }
+      return { type: "TextBlockNumberMetaAttribute", name: key, value, loc };
+    }
+
+    if (valueSource.startsWith("'") || valueSource.startsWith("`")) {
+      this.parseStringLiteral(line, valueSource, valueColumn);
+      this.addError(line, valueColumn, "Invalid :meta mood value.");
+      return undefined;
+    }
+    if (valueSource.startsWith('"')) {
+      const value = this.parseStringLiteral(line, valueSource, valueColumn);
+      return value === undefined
+        ? undefined
+        : { type: "TextBlockMoodMetaAttribute", name: "mood", value, valueKind: "string", loc };
+    }
+    if (!isValidTzrV2Identifier(valueSource)) {
+      this.addError(line, valueColumn, "Invalid :meta mood value.");
+      return undefined;
+    }
+    return { type: "TextBlockMoodMetaAttribute", name: "mood", value: valueSource, valueKind: "identifier", loc };
   }
 
   private findNextTextBlockLine(startCursor: number, headerIndentLevel: number): SourceLine | undefined {
