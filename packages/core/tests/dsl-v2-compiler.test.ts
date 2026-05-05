@@ -298,6 +298,115 @@ scene start:
     });
   });
 
+  it("compiles set string, number, and boolean statements into set commands", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  set scenario.score = 10
+  set scenario.hasNotebook = true
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "set",
+        args: [
+          { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.route" } },
+          { type: "NamedArgument", name: "value", value: { type: "StringValue", value: "mio" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "set",
+        args: [
+          { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.score" } },
+          { type: "NamedArgument", name: "value", value: { type: "NumberValue", value: 10 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "set",
+        args: [
+          { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.hasNotebook" } },
+          { type: "NamedArgument", name: "value", value: { type: "BooleanValue", value: true } },
+        ],
+      },
+    ]);
+  });
+
+  it("compiles add number and negative number statements into v2 add commands", () => {
+    const document = compileSource(`scene start:
+  add scenario.score += 1
+  add scenario.affection += -1
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "__tsuzuru_v2_add",
+        args: [
+          { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.score" } },
+          { type: "NamedArgument", name: "by", value: { type: "NumberValue", value: 1 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "__tsuzuru_v2_add",
+        args: [
+          { type: "NamedArgument", name: "name", value: { type: "StringValue", value: "scenario.affection" } },
+          { type: "NamedArgument", name: "by", value: { type: "NumberValue", value: -1 } },
+        ],
+      },
+    ]);
+  });
+
+  it("rejects set null values for now", () => {
+    expect(expectCompileFailure(`scene start:
+  set scenario.currentCg = null
+`)).toContain("set null value is not compile-supported yet.");
+  });
+
+  it("rejects set variable reference values for now", () => {
+    expect(expectCompileFailure(`scene start:
+  set scenario.currentVoice = $scenario.nextVoice
+  set scenario.lastUnlocked = $system.endings.trueEnd
+`)).toEqual([
+      "set variable reference value is not compile-supported yet.",
+      "set variable reference value is not compile-supported yet.",
+    ]);
+  });
+
+  it("compiles set and add inside choice item bodies", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Score":
+      set scenario.route = "mio"
+      add scenario.score += 1
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      items: [
+        {
+          label: "Score",
+          body: [
+            { type: "CommandInstruction", name: "set" },
+            { type: "CommandInstruction", name: "__tsuzuru_v2_add" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("keeps set and add inside if blocked by unsupported if compilation", () => {
+    expect(expectCompileFailure(`scene start:
+  if scenario.hasNotebook:
+    set scenario.route = "mio"
+    add scenario.score += 1
+`)).toContain('DSL v2 statement "IfStatement" is not compile-supported yet.');
+  });
+
   it("rejects conditional choice items for now", () => {
     expect(expectCompileFailure(`scene start:
   choice "Choose":
@@ -311,8 +420,8 @@ scene later:
     expect(expectCompileFailure(`scene start:
   choice "Choose":
     "Set route":
-      set scenario.route = "mio"
-`)).toContain('DSL v2 statement "SetStatement" is not compile-supported yet.');
+      call screen.open(id=notebook)
+`)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
   it("rejects duplicate title declarations", () => {
@@ -450,8 +559,6 @@ scene start:
 
   it("rejects unsupported state, call, wait, visual, audio, and system statements", () => {
     const cases = [
-      { source: 'set scenario.route = "mio"', statement: "SetStatement" },
-      { source: "add scenario.score += 1", statement: "AddStatement" },
       { source: "call screen.open(id=notebook)", statement: "CallStatement" },
       { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
       { source: "bg classroom", statement: "BgStatement" },

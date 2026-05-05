@@ -316,4 +316,108 @@ scene later:
       items: [{ text: "Stay" }],
     });
   });
+
+  it("runs DSL v2 set string, number, and boolean statements", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  set scenario.score = 10
+  set scenario.hasNotebook = true
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const route = stepRuntime(document, scene.state);
+    const score = stepRuntime(document, route.state);
+    const hasNotebook = stepRuntime(document, score.state);
+
+    expect(route.event).toEqual({ type: "state", command: "set", name: "scenario.route", value: "mio" });
+    expect(score.event).toEqual({ type: "state", command: "set", name: "scenario.score", value: 10 });
+    expect(hasNotebook.event).toEqual({
+      type: "state",
+      command: "set",
+      name: "scenario.hasNotebook",
+      value: true,
+    });
+    expect(hasNotebook.state.variables).toEqual({
+      "scenario.route": "mio",
+      "scenario.score": 10,
+      "scenario.hasNotebook": true,
+    });
+  });
+
+  it("runs DSL v2 add from a missing initial value", () => {
+    const document = compileSource(`scene start:
+  add scenario.score += 1
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const add = stepRuntime(document, scene.state);
+
+    expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 1 });
+    expect(add.state.variables).toEqual({ "scenario.score": 1 });
+  });
+
+  it("runs DSL v2 add from an existing numeric value", () => {
+    const document = compileSource(`scene start:
+  set scenario.score = 10
+  add scenario.score += -1
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const add = stepRuntime(document, set.state);
+
+    expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 9 });
+    expect(add.state.variables).toEqual({ "scenario.score": 9 });
+  });
+
+  it("returns a runtime error when DSL v2 add targets a non-number value", () => {
+    const document = compileSource(`scene start:
+  set scenario.score = "ten"
+  add scenario.score += 1
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const add = stepRuntime(document, set.state);
+
+    expect(add.event).toEqual({
+      type: "error",
+      code: "state_add_non_number",
+      message: 'Cannot add to "scenario.score" because the current value is not a number.',
+    });
+    expect(add.state.variables).toEqual({ "scenario.score": "ten" });
+  });
+
+  it("runs DSL v2 set and add inside a body choice", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Score":
+      set scenario.route = "mio"
+      add scenario.score += 2
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const set = stepRuntime(document, resolved.state);
+    const add = stepRuntime(document, set.state);
+
+    expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.route", value: "mio" });
+    expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 2 });
+    expect(add.state.variables).toEqual({
+      "scenario.route": "mio",
+      "scenario.score": 2,
+    });
+  });
+
+  it("preserves DSL v2 variables after snapshot restore", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  add scenario.score += 2
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const add = stepRuntime(document, set.state);
+    const restored = restoreRuntimeState(createRuntimeSnapshot(add.state));
+
+    expect(restored.variables).toEqual({
+      "scenario.route": "mio",
+      "scenario.score": 2,
+    });
+  });
 });

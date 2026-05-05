@@ -1,4 +1,4 @@
-import type { SourceLocation, SourceRange, TextLine } from "../ast.js";
+import type { SourceLocation, SourceRange, TextLine, TzrArgument, TzrValue } from "../ast.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostic.js";
 import type {
   BodyChoiceInstruction,
@@ -22,10 +22,15 @@ import type {
   TzrV2NarrationStatement,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SetStatement,
+  TzrV2AddStatement,
   TzrV2TextBlockItem,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
+  TzrV2ValueExpression,
 } from "./ast.js";
+
+const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
 
 export interface TzrV2CompileOptions {}
 
@@ -245,6 +250,12 @@ class TzrV2Compiler {
         case "ChoiceStatement":
           instructions.push(this.buildBodyChoiceInstruction(statement));
           break;
+        case "SetStatement":
+          instructions.push(...this.buildSetInstruction(statement));
+          break;
+        case "AddStatement":
+          instructions.push(this.buildAddInstruction(statement));
+          break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
           break;
@@ -298,6 +309,61 @@ class TzrV2Compiler {
     return {
       type: "SceneJumpInstruction",
       sceneId,
+      loc,
+    };
+  }
+
+  private buildSetInstruction(statement: TzrV2SetStatement): readonly CommandInstruction[] {
+    const value = this.compileSetValue(statement.value);
+    if (value === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: "set",
+        args: [
+          this.namedArgument("name", { type: "StringValue", value: statement.target.path, loc: statement.target.loc }, statement.target.loc),
+          this.namedArgument("value", value, statement.value.loc),
+        ],
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildAddInstruction(statement: TzrV2AddStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: DSL_V2_ADD_COMMAND_NAME,
+      args: [
+        this.namedArgument("name", { type: "StringValue", value: statement.target.path, loc: statement.target.loc }, statement.target.loc),
+        this.namedArgument("by", { type: "NumberValue", value: statement.value.value, loc: statement.value.loc }, statement.value.loc),
+      ],
+      loc: statement.loc,
+    };
+  }
+
+  private compileSetValue(value: TzrV2ValueExpression): TzrValue | undefined {
+    switch (value.type) {
+      case "StringValue":
+      case "NumberValue":
+      case "BooleanValue":
+        return value;
+      case "NullValue":
+        this.addError(value.loc.start, "set null value is not compile-supported yet.");
+        return undefined;
+      case "VariableReferenceValue":
+        this.addError(value.loc.start, "set variable reference value is not compile-supported yet.");
+        return undefined;
+    }
+  }
+
+  private namedArgument(name: string, value: TzrValue, loc: SourceRange): TzrArgument {
+    return {
+      type: "NamedArgument",
+      name,
+      value,
       loc,
     };
   }

@@ -9,6 +9,8 @@ import {
 } from "./runtime-args.js";
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
 
+export const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
+
 export function stepCommandInstruction(
   document: RuntimeDocument,
   state: RuntimeState,
@@ -90,6 +92,38 @@ export function stepCommandInstruction(
         label: jumpLabel,
         instructionIndex: target.statementIndex,
       },
+    };
+  }
+
+  if (name === DSL_V2_ADD_COMMAND_NAME) {
+    const variableName = getNamedString(args, "name");
+    const by = getNamedNumber(args, "by");
+    if (variableName === undefined || by === undefined) {
+      return unsupportedCommand(nextState);
+    }
+
+    const current = nextState.variables[variableName];
+    if (current !== undefined && typeof current !== "number") {
+      return {
+        state: nextState,
+        event: {
+          type: "error",
+          code: "state_add_non_number",
+          message: `Cannot add to "${variableName}" because the current value is not a number.`,
+        },
+      };
+    }
+
+    const value = (current ?? 0) + by;
+    return {
+      state: {
+        ...nextState,
+        variables: {
+          ...nextState.variables,
+          [variableName]: value,
+        },
+      },
+      event: { type: "state", command: "add", name: variableName, value },
     };
   }
 

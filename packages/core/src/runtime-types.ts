@@ -161,7 +161,7 @@ export interface StopRuntimeEvent {
   readonly type: "stop";
 }
 
-export type StateCommandName = "set" | "inc" | "dec" | "flag" | "unflag";
+export type StateCommandName = "set" | "add" | "inc" | "dec" | "flag" | "unflag";
 
 export interface StateRuntimeEvent {
   readonly type: "state";
@@ -219,7 +219,7 @@ export interface UnsupportedRuntimeEvent {
   readonly instructionType: string;
 }
 
-export type RuntimeErrorCode = "choice_not_pending" | "choice_index_out_of_range";
+export type RuntimeErrorCode = "choice_not_pending" | "choice_index_out_of_range" | "state_add_non_number";
 
 export interface RuntimeErrorEvent {
   readonly type: "error";
