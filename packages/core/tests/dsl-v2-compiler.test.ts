@@ -108,6 +108,32 @@ scene later:
     });
   });
 
+  it("maintains scene indexes after body instructions are inserted", () => {
+    const document = compileSource(`scene start:
+  narration:
+    First.
+  jump later
+scene later:
+  narration:
+    Later.
+scene ending:
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "NarrationInstruction", lines: [{ text: "First." }] },
+      { type: "SceneJumpInstruction", sceneId: "later" },
+      { type: "SceneInstruction", id: "later" },
+      { type: "NarrationInstruction", lines: [{ text: "Later." }] },
+      { type: "SceneInstruction", id: "ending" },
+    ]);
+    expect(document.scenes).toMatchObject({
+      start: { statementIndex: 0 },
+      later: { statementIndex: 3 },
+      ending: { statementIndex: 5 },
+    });
+  });
+
   it("compiles end into a stop command instruction", () => {
     const document = compileSource(`scene start:
   end
@@ -181,11 +207,28 @@ character mio name="Mio"
     expect(document.instructions[1]).toMatchObject({ type: "DialogueInstruction", speaker: "mio" });
   });
 
-  it("rejects scene-target jump until runtime support exists", () => {
-    expect(expectCompileFailure(`scene start:
+  it("compiles scene-target jump into SceneJumpInstruction", () => {
+    const document = compileSource(`scene start:
   jump later
 scene later:
-`)).toContain("Scene-target jump runtime support is not implemented yet.");
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "SceneJumpInstruction", sceneId: "later" },
+      { type: "SceneInstruction", id: "later" },
+    ]);
+  });
+
+  it("compiles jump to a later scene", () => {
+    const document = compileSource(`scene start:
+  jump later
+scene middle:
+scene later:
+`);
+
+    expect(document.instructions[1]).toMatchObject({ type: "SceneJumpInstruction", sceneId: "later" });
+    expect(document.scenes.later).toMatchObject({ statementIndex: 3 });
   });
 
   it("rejects unsupported if statements after preserving nested validation", () => {

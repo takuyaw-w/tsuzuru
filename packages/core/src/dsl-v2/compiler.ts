@@ -6,6 +6,7 @@ import type {
   DialogueInstruction,
   NarrationInstruction,
   RuntimeDocument,
+  SceneJumpInstruction,
   SceneInstruction,
   TzrInstruction,
 } from "../ir.js";
@@ -236,9 +237,7 @@ class TzrV2Compiler {
           instructions.push(this.buildStopInstruction(statement.loc));
           break;
         case "JumpStatement":
-          if (this.scenes.has(statement.target)) {
-            this.addError(statement.loc.start, "Scene-target jump runtime support is not implemented yet.");
-          }
+          instructions.push(this.buildSceneJumpInstruction(statement.target, statement.loc));
           break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
@@ -285,6 +284,14 @@ class TzrV2Compiler {
       type: "CommandInstruction",
       name: "stop",
       args: [],
+      loc,
+    };
+  }
+
+  private buildSceneJumpInstruction(sceneId: string, loc: SourceRange): SceneJumpInstruction {
+    return {
+      type: "SceneJumpInstruction",
+      sceneId,
       loc,
     };
   }

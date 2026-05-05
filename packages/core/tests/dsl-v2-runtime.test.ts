@@ -25,15 +25,6 @@ function compileSource(source: string): CompiledTzrV2Document {
   return compiled.document;
 }
 
-function expectCompileFailure(source: string): string[] {
-  const compiled = compileTzrV2(parseSource(source));
-  expect(compiled.ok).toBe(false);
-  if (compiled.ok) {
-    throw new Error("expected compiler failure");
-  }
-  return compiled.errors.map((error) => error.message);
-}
-
 describe("DSL v2 compiled document runtime compatibility", () => {
   it("creates an initial runtime state from a compiled DSL v2 document", () => {
     const document = compileSource(`scene start:
@@ -110,10 +101,45 @@ scene start:
     expect(stop.state.isStopped).toBe(true);
   });
 
-  it("keeps scene-target jump rejected until runtime support exists", () => {
-    expect(expectCompileFailure(`scene start:
+  it("runs DSL v2 scene jump to a later scene", () => {
+    const document = compileSource(`scene start:
   jump later
 scene later:
-`)).toContain("Scene-target jump runtime support is not implemented yet.");
+  narration:
+    Later.
+`);
+
+    const sceneStart = stepRuntime(document, createInitialRuntimeState(document));
+    const jump = stepRuntime(document, sceneStart.state);
+    const sceneLater = stepRuntime(document, jump.state);
+    const narration = stepRuntime(document, sceneLater.state);
+
+    expect(sceneStart.event).toEqual({ type: "scene", id: "start" });
+    expect(jump.event).toEqual({
+      type: "jump",
+      sceneId: "later",
+      instructionIndex: 2,
+    });
+    expect(sceneLater.event).toEqual({ type: "scene", id: "later" });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Later." }],
+    });
+  });
+
+  it("does not use labels for DSL v2 scene jumps", () => {
+    const document = compileSource(`scene start:
+  jump later
+scene later:
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const jump = stepRuntime(document, scene.state);
+
+    expect(document.labels).toEqual({});
+    expect(jump.event).toEqual({
+      type: "jump",
+      sceneId: "later",
+      instructionIndex: 2,
+    });
   });
 });

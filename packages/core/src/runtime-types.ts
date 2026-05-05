@@ -155,9 +155,17 @@ export interface StateRuntimeEvent {
   readonly value: RuntimeValue;
 }
 
-export interface JumpRuntimeEvent {
+export type JumpRuntimeEvent = LabelJumpRuntimeEvent | SceneJumpRuntimeEvent;
+
+export interface LabelJumpRuntimeEvent {
   readonly type: "jump";
   readonly label: string;
+  readonly instructionIndex: number;
+}
+
+export interface SceneJumpRuntimeEvent {
+  readonly type: "jump";
+  readonly sceneId: string;
   readonly instructionIndex: number;
 }
 

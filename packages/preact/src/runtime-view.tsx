@@ -86,7 +86,7 @@ export function RuntimeView({
     case "state":
       return <RuntimeStatusMessage label={`${event.command}: ${event.name} = ${String(event.value)}`} />;
     case "jump":
-      return <RuntimeStatusMessage label={`Jump: #${event.label}`} />;
+      return <RuntimeStatusMessage label={"label" in event ? `Jump: #${event.label}` : `Jump scene: ${event.sceneId}`} />;
     case "if":
       return <RuntimeStatusMessage label={`If: ${event.result ? "true" : "false"} (${event.branch})`} />;
   }

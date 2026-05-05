@@ -55,6 +55,7 @@ export type {
   MacroInstruction,
   NarrationInstruction,
   RuntimeDocument,
+  SceneJumpInstruction,
   SceneInstruction,
   TzrInstruction,
 } from "./ir.js";
@@ -187,6 +188,7 @@ export type {
   RuntimeEvent,
   RuntimeFlags,
   RuntimeInitialStateOptions,
+  LabelJumpRuntimeEvent,
   RuntimePendingChoice,
   RuntimePendingWait,
   RuntimePluginDefinition,
@@ -201,6 +203,7 @@ export type {
   RuntimeStepOptions,
   RuntimeValue,
   RuntimeVariables,
+  SceneJumpRuntimeEvent,
   SceneRuntimeEvent,
   StateCommandName,
   StateRuntimeEvent,

@@ -1923,6 +1923,7 @@ $bad()
           return [
             { type: "SceneInstruction", id: "generated", loc: call.loc },
             { type: "LabelInstruction", id: "generated", loc: call.loc },
+            { type: "SceneJumpInstruction", sceneId: "generated", loc: call.loc },
             {
               type: "IfInstruction",
               condition: 'flag("x")',
@@ -1957,6 +1958,13 @@ $bad()
         line: 2,
         column: 1,
         message: 'Macro "$bad" returned forbidden instruction "LabelInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "SceneJumpInstruction".',
         sourceLine: "$bad()",
       },
       {

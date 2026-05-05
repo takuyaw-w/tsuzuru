@@ -812,6 +812,7 @@ function isForbiddenMacroInstruction(instruction: TzrInstruction): boolean {
   return (
     instruction.type === "SceneInstruction" ||
     instruction.type === "LabelInstruction" ||
+    instruction.type === "SceneJumpInstruction" ||
     instruction.type === "IfInstruction" ||
     instruction.type === "ChoiceInstruction" ||
     instruction.type === "MacroInstruction"

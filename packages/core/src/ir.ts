@@ -11,6 +11,7 @@ import type {
 export type TzrInstruction =
   | SceneInstruction
   | LabelInstruction
+  | SceneJumpInstruction
   | NarrationInstruction
   | DialogueInstruction
   | CommandInstruction
@@ -27,6 +28,12 @@ export interface SceneInstruction {
 export interface LabelInstruction {
   readonly type: "LabelInstruction";
   readonly id: string;
+  readonly loc: SourceRange;
+}
+
+export interface SceneJumpInstruction {
+  readonly type: "SceneJumpInstruction";
+  readonly sceneId: string;
   readonly loc: SourceRange;
 }
 
