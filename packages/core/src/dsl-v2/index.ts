@@ -84,6 +84,11 @@ export type {
   TzrV2HideStatement,
   TzrV2ShowStatement,
   TzrV2StopBgmStatement,
+  TzrV2SystemUnlockId,
+  TzrV2SystemUnlockIdentifierId,
+  TzrV2SystemUnlockKind,
+  TzrV2SystemUnlockStatement,
+  TzrV2SystemUnlockStringId,
 } from "./ast.js";
 export { parseTzrV2ConditionExpression } from "./condition-parser.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";
