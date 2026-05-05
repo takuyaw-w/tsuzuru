@@ -379,6 +379,25 @@ describe("RuntimeMessageLayer", () => {
     expect(node.props.onChoice).toBe(onChoice);
   });
 
+  it("maps targetless body choice items", () => {
+    const node = expectVNode<ChoiceLayerProps>(
+      RuntimeMessageLayer({
+        event: {
+          type: "choice",
+          question: "Choose",
+          items: [
+            { id: "openNotebook", text: "Open notebook" },
+            { id: "leave", text: "Leave" },
+          ],
+        },
+      }),
+    );
+
+    expect(node.type).toBe(ChoiceLayer);
+    expect(node.props.question).toBe("Choose");
+    expect(node.props.choices).toEqual([{ text: "Open notebook" }, { text: "Leave" }]);
+  });
+
   it("maps waitClick and page", () => {
     const onContinue = vi.fn();
     const waitClick = expectVNode<StatusLayerProps>(

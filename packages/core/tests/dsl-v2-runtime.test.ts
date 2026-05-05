@@ -345,6 +345,11 @@ scene leave:
         { id: "leave", text: "Leave" },
       ],
     });
+    if (choice.event.type !== "choice") {
+      throw new Error("expected choice event");
+    }
+    expect(choice.event.items[0]).not.toHaveProperty("body");
+    expect(choice.event.items[1]).not.toHaveProperty("body");
     expect(choice.state.pendingChoice).toMatchObject({
       kind: "body",
       items: [
@@ -385,6 +390,7 @@ scene leave:
       sceneId: "notebook",
       instructionIndex: 3,
     });
+    expect(jump.state.branchFrames).toEqual([]);
   });
 
   it("resolves the second visible DSL v2 conditional choice item to the correct body", () => {
@@ -417,6 +423,34 @@ scene leave:
       type: "jump",
       sceneId: "leave",
       instructionIndex: 5,
+    });
+    expect(jump.state.branchFrames).toEqual([]);
+  });
+
+  it("filters DSL v2 conditional choice items with logical and / or / not conditions", () => {
+    const document = compileSource(`scene start:
+  set scenario.a = false
+  set scenario.b = true
+  choice "Choose":
+    "Logical" id=logical if not scenario.a and (scenario.b or scenario.c):
+      narration:
+        Logical.
+    "Fallback" id=fallback:
+      narration:
+        Fallback.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const a = stepRuntime(document, scene.state);
+    const b = stepRuntime(document, a.state);
+    const choice = stepRuntime(document, b.state);
+
+    expect(choice.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [
+        { id: "logical", text: "Logical" },
+        { id: "fallback", text: "Fallback" },
+      ],
     });
   });
 
@@ -493,6 +527,151 @@ scene leave:
     expect(narration.event).toMatchObject({
       type: "narration",
       lines: [{ text: "Leave." }],
+    });
+  });
+
+  it("resolves the first visible filtered DSL v2 pending body choice after snapshot restore", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      narration:
+        Open.
+    "Use key" id=useKey if scenario.hasKey:
+      narration:
+        Key.
+    "Leave" id=leave:
+      narration:
+        Leave.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const restored = restoreRuntimeState(JSON.parse(JSON.stringify(createRuntimeSnapshot(choice.state))));
+    const resolved = resolveChoice(document, restored, 0);
+    const narration = stepRuntime(document, resolved.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 0,
+      id: "openNotebook",
+      text: "Open notebook",
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Open." }],
+    });
+  });
+
+  it("clones filtered DSL v2 pending body choice bodies in snapshots", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Choose":
+    "Open notebook" id=openNotebook if scenario.hasNotebook:
+      narration:
+        Open.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const instruction = document.instructions[2];
+
+    expect(instruction?.type).toBe("BodyChoiceInstruction");
+    if (instruction?.type !== "BodyChoiceInstruction") {
+      throw new Error("expected body choice instruction");
+    }
+
+    const originalBody = instruction.items[0]?.body;
+    const snapshot = createRuntimeSnapshot(choice.state);
+    const restored = restoreRuntimeState(snapshot);
+
+    expect(snapshot.pendingChoice?.kind).toBe("body");
+    if (snapshot.pendingChoice?.kind !== "body") {
+      throw new Error("expected body pending choice snapshot");
+    }
+    expect(restored.pendingChoice?.kind).toBe("body");
+    if (restored.pendingChoice?.kind !== "body") {
+      throw new Error("expected restored body pending choice");
+    }
+    expect(snapshot.pendingChoice.items[0]?.body).not.toBe(originalBody);
+    expect(snapshot.pendingChoice.items[0]?.body[0]).not.toBe(originalBody?.[0]);
+    expect(restored.pendingChoice.items[0]?.body).not.toBe(originalBody);
+    expect(restored.pendingChoice.items[0]?.body[0]).not.toBe(originalBody?.[0]);
+  });
+
+  it("resumes parent flow after a filtered DSL v2 body choice branch completes", () => {
+    const document = compileSource(`scene start:
+  set scenario.canTalk = true
+  choice "Choose":
+    "Talk" id=talk if scenario.canTalk:
+      narration:
+        Talk.
+  narration:
+    After.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, set.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const talk = stepRuntime(document, resolved.state);
+    const instruction = document.instructions[2];
+    const activeBranchSnapshot = createRuntimeSnapshot(talk.state);
+    const activeBranchRestored = restoreRuntimeState(activeBranchSnapshot);
+    const after = stepRuntime(document, talk.state);
+
+    expect(instruction?.type).toBe("BodyChoiceInstruction");
+    if (instruction?.type !== "BodyChoiceInstruction") {
+      throw new Error("expected body choice instruction");
+    }
+    expect(activeBranchSnapshot.branchFrames[0]?.instructions).not.toBe(instruction.items[0]?.body);
+    expect(activeBranchSnapshot.branchFrames[0]?.instructions[0]).not.toBe(instruction.items[0]?.body[0]);
+    expect(activeBranchRestored.branchFrames[0]?.instructions).not.toBe(activeBranchSnapshot.branchFrames[0]?.instructions);
+    expect(talk.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Talk." }],
+    });
+    expect(after.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "After." }],
+    });
+    expect(after.state.branchFrames).toEqual([]);
+  });
+
+  it("runs nested filtered DSL v2 body choices", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  choice "Outer":
+    "Open" id=open if scenario.hasNotebook:
+      choice "Inner":
+        "Read" id=read if scenario.hasNotebook:
+          narration:
+            Read.
+        "Close" id=close:
+          narration:
+            Close.
+    "Leave" id=leave:
+      narration:
+        Leave.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const outerChoice = stepRuntime(document, set.state);
+    const outerResolved = resolveChoice(document, outerChoice.state, 0);
+    const innerChoice = stepRuntime(document, outerResolved.state);
+    const innerResolved = resolveChoice(document, innerChoice.state, 0);
+    const narration = stepRuntime(document, innerResolved.state);
+
+    expect(innerChoice.event).toEqual({
+      type: "choice",
+      question: "Inner",
+      items: [
+        { id: "read", text: "Read" },
+        { id: "close", text: "Close" },
+      ],
+    });
+    expect(narration.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Read." }],
     });
   });
 
@@ -579,6 +758,36 @@ scene leave:
     expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.route", value: "mio" });
     expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 2 });
     expect(add.state.variables).toEqual({
+      "scenario.route": "mio",
+      "scenario.score": 2,
+    });
+  });
+
+  it("runs DSL v2 set and add inside a selected filtered body choice", () => {
+    const document = compileSource(`scene start:
+  set scenario.canScore = true
+  choice "Choose":
+    "Score" id=score if scenario.canScore:
+      set scenario.route = "mio"
+      add scenario.score += 2
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const canScore = stepRuntime(document, scene.state);
+    const choice = stepRuntime(document, canScore.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const set = stepRuntime(document, resolved.state);
+    const add = stepRuntime(document, set.state);
+
+    expect(resolved.event).toEqual({
+      type: "choiceResolve",
+      itemIndex: 0,
+      id: "score",
+      text: "Score",
+    });
+    expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.route", value: "mio" });
+    expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 2 });
+    expect(add.state.variables).toEqual({
+      "scenario.canScore": true,
       "scenario.route": "mio",
       "scenario.score": 2,
     });

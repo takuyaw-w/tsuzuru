@@ -1,3 +1,4 @@
+import type { TzrInstruction } from "./ir.js";
 import type { RuntimePendingChoice, RuntimeSnapshot, RuntimeState } from "./runtime-types.js";
 
 export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
@@ -8,7 +9,7 @@ export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
     flags: { ...state.flags },
     plugins: clonePluginStates(state.plugins),
     branchFrames: state.branchFrames.map((frame) => ({
-      instructions: frame.instructions,
+      instructions: cloneInstructions(frame.instructions),
       instructionIndex: frame.instructionIndex,
     })),
     pendingChoice: clonePendingChoice(state.pendingChoice),
@@ -25,7 +26,7 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
     flags: { ...snapshot.flags },
     plugins: clonePluginStates(snapshot.plugins ?? {}),
     branchFrames: snapshot.branchFrames.map((frame) => ({
-      instructions: frame.instructions,
+      instructions: cloneInstructions(frame.instructions),
       instructionIndex: frame.instructionIndex,
     })),
     pendingChoice: clonePendingChoice(snapshot.pendingChoice),
@@ -48,7 +49,7 @@ function clonePendingChoice(pendingChoice: RuntimePendingChoice | null): Runtime
     return {
       kind: "body",
       question: pendingChoice.question,
-      items: pendingChoice.items.map((item) => ({ ...item })),
+      items: pendingChoice.items.map((item) => ({ ...item, body: cloneInstructions(item.body) })),
     };
   }
 
@@ -56,4 +57,8 @@ function clonePendingChoice(pendingChoice: RuntimePendingChoice | null): Runtime
     question: pendingChoice.question,
     items: pendingChoice.items.map((item) => ({ ...item })),
   };
+}
+
+function cloneInstructions(instructions: readonly TzrInstruction[]): readonly TzrInstruction[] {
+  return JSON.parse(JSON.stringify(instructions)) as readonly TzrInstruction[];
 }

@@ -848,4 +848,15 @@ describe("RuntimeView", () => {
     expect(props.onClick).toBeUndefined();
     expect(props.className).toBe("tzr-runtime-view tzr-runtime-view--choice");
   });
+
+  it("formats choiceResolve as a status message", () => {
+    const view = expectVNode(
+      RuntimeView({
+        event: { type: "choiceResolve", itemIndex: 0, text: "Open notebook", id: "openNotebook" },
+      }),
+    );
+    const props = view.props as Readonly<Record<string, unknown>>;
+
+    expect(props.label).toBe("Choice: Open notebook");
+  });
 });
