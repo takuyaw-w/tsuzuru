@@ -120,16 +120,16 @@ describe("std-audio commands", () => {
 
   it("throws on invalid runtime arguments after legacy compile-time validation removal", () => {
     expect(() => runStdAudioCommands(command("startBgm", [positionalString("")]))).toThrow(
-      "Invalid @startBgm runtime arguments. Compile with stdAudioPluginCommands first.",
+      "Invalid @startBgm runtime arguments. Expected validated std audio command arguments.",
     );
     expect(() => runStdAudioCommands(command("stopBgm", [positionalString("main_theme")]))).toThrow(
-      "Invalid @stopBgm runtime arguments. Compile with stdAudioPluginCommands first.",
+      "Invalid @stopBgm runtime arguments. Expected validated std audio command arguments.",
     );
     expect(() => runStdAudioCommands(command("se", [positionalString("")]))).toThrow(
-      "Invalid @se runtime arguments. Compile with stdAudioPluginCommands first.",
+      "Invalid @se runtime arguments. Expected validated std audio command arguments.",
     );
     expect(() => runStdAudioCommands(command("voice", [positionalString("")]))).toThrow(
-      "Invalid @voice runtime arguments. Compile with stdAudioPluginCommands first.",
+      "Invalid @voice runtime arguments. Expected validated std audio command arguments.",
     );
   });
 });

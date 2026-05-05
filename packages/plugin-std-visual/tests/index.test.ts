@@ -94,10 +94,10 @@ describe("std-visual commands", () => {
 
   it("throws on invalid runtime arguments after legacy compile-time validation removal", () => {
     expect(() => runStdVisualCommands(command("bg", [positionalString("")]))).toThrow(
-      "Invalid @bg runtime arguments. Compile with stdVisualPluginCommands first.",
+      "Invalid @bg runtime arguments. Expected validated std visual command arguments.",
     );
     expect(() => runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")]))).toThrow(
-      "Invalid @show runtime arguments. Compile with stdVisualPluginCommands first.",
+      "Invalid @show runtime arguments. Expected validated std visual command arguments.",
     );
   });
 });

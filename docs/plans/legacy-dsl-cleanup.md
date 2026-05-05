@@ -16,6 +16,16 @@ Entry-point status:
 - Legacy parser/compiler/API/tests/examples have been removed.
 - Shared runtime/IR/value/plugin command infrastructure remains.
 
+Post-cleanup audit status after `4ed8d972bf90f6dedf741ae0217f2fa3b45e37a2`:
+
+- Root `@tsuzuru/core` exports no longer expose `parseTzr`, `compileTzr`, `CompiledTzrDocument`, legacy AST types, `evaluateCondition`, or macro API.
+- `parseTzrV2`, `compileTzrV2`, `CompiledTzrV2Document`, `TzrV2*` types, `RuntimeDocument`, runtime APIs, and plugin command metadata/runtime handler types remain exported.
+- `RuntimeDocument.labels` is not used by the current runtime for DSL v2 scene jumps or body choices. It remains for now because `CompiledTzrV2Document` still extends `RuntimeDocument`, existing tests/fixtures include `labels: {}`, and removing it is a public type-shape cleanup. TODO: remove or make this field optional in a focused RuntimeDocument follow-up.
+- `RuntimeState.flags` plus low-level `inc`, `dec`, `flag`, and `unflag` command handlers remain intentionally. DSL v2 authoring currently uses `set` and `add`; docs should not present flag commands as current DSL v2 syntax.
+- The legacy `compileTzr({ pluginCommands })` validation path is gone. `definePluginCommand` and std plugin command maps remain as metadata. TODO: decide the DSL v2 plugin command validation policy before arbitrary plugin-authored DSL v2 commands are supported.
+- The only runnable example package is `examples/dsl-v2-basic`. Deleted example references should remain only inside historical plans/decisions.
+- Historical references in `AGENTS.md`, `TODOS.md`, `docs/decisions/*`, old roadmap/plans, `docs/dsl.md`, and `docs/macro-api.md` are retained as project history or removed-feature reference, not as current API documentation.
+
 ## Cleanup result
 
 Removed legacy-only implementation:

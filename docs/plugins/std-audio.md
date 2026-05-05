@@ -1,7 +1,7 @@
 # std-audio plugin
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
-> the legacy `compileTzr({ pluginCommands })` validation example is historical
+> the legacy `compileTzr({ pluginCommands })` validation path is historical
 > because `compileTzr` was removed. The current runnable integration is
 > [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
 
@@ -31,16 +31,7 @@ const runtimeState = createInitialRuntimeState(document, {
 });
 ```
 
-`.tzr` 内で std-audio command を使う場合は、compile 時に command schema も登録します。
-
-```ts
-import { compileTzr } from "@tsuzuru/core";
-import { stdAudioPluginCommands } from "@tsuzuru/plugin-std-audio";
-
-const compiled = compileTzr(parsed.document, {
-  pluginCommands: stdAudioPluginCommands,
-});
-```
+DSL v2 compiler は、対応済みの `bgm` / `stopBgm` / `se` / `voice` statement を runtime `CommandInstruction` に変換します。legacy `compileTzr({ pluginCommands })` registry は削除済みで、DSL v2 の任意 plugin command validation policy は未決です。
 
 runtime 実行時は std-audio command handler を渡します。
 
@@ -95,12 +86,12 @@ const audio = getStdAudioState(runtimeState);
 
 ## Commands
 
-### `@startBgm(assetId)`
+### `bgm assetId`
 
 現在の BGM を設定します。
 
 ```txt
-@startBgm("main_theme")
+bgm main_theme
 ```
 
 仕様:
@@ -116,12 +107,12 @@ const audio = getStdAudioState(runtimeState);
 bgm: { assetId: "main_theme" }
 ```
 
-### `@stopBgm()`
+### `stopBgm`
 
 現在の BGM を停止します。
 
 ```txt
-@stopBgm()
+stopBgm
 ```
 
 仕様:
@@ -129,8 +120,6 @@ bgm: { assetId: "main_theme" }
 - `bgm` を `null` にする
 - BGM 未設定でも no-op
 - BGM 未設定時に warning は出さない
-- 引数なし command でも `()` が必須
-- parentheses を省略した bare form は許可しない
 - `seEvents` / `voiceEvents` / `nextSeSequence` / `nextVoiceSequence` には影響しない
 
 実行後の state:
@@ -139,12 +128,12 @@ bgm: { assetId: "main_theme" }
 bgm: null
 ```
 
-### `@se(assetId)`
+### `se assetId`
 
 SE を一回再生する event を追加します。
 
 ```txt
-@se("click")
+se click
 ```
 
 仕様:
@@ -178,12 +167,12 @@ for (const event of audio.seEvents) {
 }
 ```
 
-### `@voice(assetId)`
+### `voice assetId`
 
 Voice を一回再生する event を追加します。
 
 ```txt
-@voice("alice_001")
+voice alice_001
 ```
 
 仕様:
@@ -217,37 +206,37 @@ for (const event of audio.voiceEvents) {
 }
 ```
 
-`@voice` は一回性 event です。v0.2 初期では、`@stopVoice` や current voice state は提供しません。再生中の voice を停止してから次の voice を再生するか、重ねるか、無視するかは renderer / app 側が決めます。
+`voice` は一回性 event です。v0.2 初期では、`stopVoice` や current voice state は提供しません。再生中の voice を停止してから次の voice を再生するか、重ねるか、無視するかは renderer / app 側が決めます。
 
 ## Validation Behavior
 
-`@startBgm` / `@se` / `@voice` の `assetId` は非空文字列である必要があります。
+`bgm` / `se` / `voice` の `assetId` は非空文字列である必要があります。
 
 ```txt
-@startBgm("")
-@se("")
-@voice("")
+bgm ""
+se ""
+voice ""
 ```
 
-これらは schema validation error です。
+これらは validation error です。
 
-`@stopBgm()` は引数なしのみ有効です。次のような引数付き形式は schema validation error です。
+`stopBgm` は引数なしのみ有効です。次のような引数付き形式は validation error です。
 
 ```txt
-@stopBgm("main_theme")
+stopBgm "main_theme"
 ```
 
 v0.2 初期では、未対応の追加引数を許可しません。
 
 ```txt
-@startBgm("main_theme", volume=0.8)
-@se("click", volume=0.8)
-@voice("alice_001", volume=0.8)
+bgm main_theme volume=0.8
+se click volume=0.8
+voice alice_001 volume=0.8
 ```
 
-これらは schema validation error です。未知 option は無視しません。
+これらは validation error です。未知 option は無視しません。
 
-plugin command は `@name(...)` 形式で書きます。parentheses を省略した bare form は許可しません。
+runtime では、これらの statement は `startBgm` / `stopBgm` / `se` / `voice` の `CommandInstruction` として handler に渡されます。
 
 ## Save / Snapshot Behavior
 

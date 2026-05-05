@@ -1,7 +1,7 @@
 # std-visual plugin
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
-> the legacy `compileTzr({ pluginCommands })` validation example is historical
+> the legacy `compileTzr({ pluginCommands })` validation path is historical
 > because `compileTzr` was removed. The current runnable integration is
 > [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
 
@@ -24,16 +24,7 @@ const runtimeState = createInitialRuntimeState(document, {
 });
 ```
 
-`.tzr` 内で std-visual command を使う場合は、compile 時に command schema も登録します。
-
-```ts
-import { compileTzr } from "@tsuzuru/core";
-import { stdVisualPluginCommands } from "@tsuzuru/plugin-std-visual";
-
-const compiled = compileTzr(parsed.document, {
-  pluginCommands: stdVisualPluginCommands,
-});
-```
+DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。legacy `compileTzr({ pluginCommands })` registry は削除済みで、DSL v2 の任意 plugin command validation policy は未決です。
 
 runtime 実行時は std-visual command handler を渡します。
 
@@ -86,15 +77,15 @@ const visual = getStdVisualState(runtimeState);
 
 ## Commands
 
-### `@bg(assetId)`
+### `bg assetId`
 
 現在の背景を設定します。
 
 ```txt
-@bg("classroom")
+bg classroom
 ```
 
-`assetId` は非空文字列である必要があります。`@bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。
+`assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。
 
 実行後の state:
 
@@ -104,13 +95,13 @@ background: { assetId: "classroom" }
 
 v0.2 初期では、transition / duration は扱いません。背景を消すための clear background command もまだありません。
 
-### `@show(assetId, position?: "left" | "center" | "right")`
+### `show assetId at position`
 
 sprite を表示、または既存 sprite の位置を更新します。
 
 ```txt
-@show("alice_smile")
-@show("bob_normal", position="left")
+show alice_smile
+show bob_normal at left
 ```
 
 `assetId` は非空文字列である必要があります。`position` は `"left" | "center" | "right"` のいずれかです。省略時は `"center"` になります。
@@ -126,11 +117,11 @@ sprites: {
 
 `sprites` の key は `assetId` です。sprite object 内に `assetId` は重複して保存しません。
 
-同じ `assetId` に対して `@show` を再実行すると、その sprite の state を上書きします。
+同じ `assetId` に対して `show` を再実行すると、その sprite の state を上書きします。
 
 ```txt
-@show("alice_smile", position="left")
-@show("alice_smile", position="right")
+show alice_smile at left
+show alice_smile at right
 ```
 
 結果:
@@ -145,12 +136,12 @@ sprites: {
 
 v0.2 初期では、sprite の `order` / `zIndex` は扱いません。
 
-### `@hide(assetId)`
+### `hide assetId`
 
 `assetId` を指定して sprite を非表示にします。
 
 ```txt
-@hide("alice_smile")
+hide alice_smile
 ```
 
 対象 sprite が存在する場合、`sprites` から削除されます。
@@ -165,29 +156,29 @@ delete runtimeState.plugins.stdVisual.sprites[assetId]
 plugin.stdVisual.hideTargetNotFound
 ```
 
-`@hide("")` のような空文字 `assetId` は validation error です。missing target の warning は、非空文字列の `assetId` が実行時点で表示されていない場合だけ発生します。
+空文字 `assetId` は validation error です。missing target の warning は、非空文字列の `assetId` が実行時点で表示されていない場合だけ発生します。
 
 ## Validation Behavior
 
-`@bg` / `@show` / `@hide` の `assetId` は非空文字列である必要があります。
+`bg` / `show` / `hide` の `assetId` は非空文字列である必要があります。
 
 ```txt
-@bg("")
-@show("")
-@hide("")
+bg ""
+show ""
+hide ""
 ```
 
-これらは schema validation error です。
+これらは validation error です。
 
-`@show` の `position` に `"left" | "center" | "right"` 以外を指定した場合も schema validation error です。
+`show` の `position` に `"left" | "center" | "right"` 以外を指定した場合も validation error です。
 
 ```txt
-@show("alice", position="top")
+show alice at top
 ```
 
 必須引数がない場合や、許可されていない余分な引数を渡した場合も validation error です。
 
-一方、`@hide("missing")` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
+一方、`hide missing` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
 
 ## Design Boundaries
 

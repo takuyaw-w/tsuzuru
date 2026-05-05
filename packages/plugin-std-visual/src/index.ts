@@ -144,7 +144,7 @@ function withStdVisualState(state: RuntimeState, stdVisual: StdVisualState): Run
 function getRequiredPositionalString(instruction: CommandInstruction, index: number): string {
   const argument = instruction.args[index];
   if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue" || argument.value.value.length === 0) {
-    throw new Error(`Invalid @${instruction.name} runtime arguments. Compile with stdVisualPluginCommands first.`);
+    throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std visual command arguments.`);
   }
   return argument.value.value;
 }
@@ -155,7 +155,7 @@ function getNamedSpritePosition(instruction: CommandInstruction, name: string): 
     return undefined;
   }
   if (argument.value.type !== "StringValue" || !isStdVisualSpritePosition(argument.value.value)) {
-    throw new Error(`Invalid @${instruction.name} runtime arguments. Compile with stdVisualPluginCommands first.`);
+    throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std visual command arguments.`);
   }
   return argument.value.value;
 }

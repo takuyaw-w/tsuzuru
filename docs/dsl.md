@@ -5,13 +5,13 @@
 > `feature/new-dsl`. Use [`docs/design/design/dsl-v2.md`](design/design/dsl-v2.md)
 > and [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/) for the current DSL.
 
-This document defines the currently implemented `.tzr` syntax and compiler surface for `@tsuzuru/core`.
+This document preserves the removed legacy `.tzr` syntax and compiler surface for historical reference. It is not the current `@tsuzuru/core` DSL.
 
 ## Scope
 
 The parser is line-oriented and produces an AST only. A separate compiler pass performs same-file structural validation, macro expansion, command registration checks, and command argument validation. Runtime execution and rendering remain separate.
 
-Supported in the current parser:
+Supported in the removed legacy parser:
 
 - `#scene("id")`
 - `#label("id")`
@@ -24,7 +24,7 @@ Supported in the current parser:
 - choice blocks with `? Question` and `- "Text" -> #label`
 - conditional blocks with `@if(...)`, `@else`, and `@endif`
 
-Implemented outside the parser:
+Implemented outside the legacy parser:
 
 - runtime execution in `@tsuzuru/core`
 - Preact runtime view helpers in `@tsuzuru/preact`
@@ -40,7 +40,7 @@ Not supported in v0.1:
 - Vite plugin behavior
 - `create-tsuzuru`
 
-In Vite projects, load `.tzr` files as raw text with `?raw` or by another host-owned file loading path, then pass the source string to `parseTzr`. `@tsuzuru/vite` is deferred to post-v0.1.
+Historical Vite guidance was to load `.tzr` files as raw text with `?raw` or by another host-owned file loading path, then pass the source string to `parseTzr`. That API was removed; current examples use `parseTzrV2`.
 
 ## Files
 
@@ -86,7 +86,7 @@ Invalid:
 
 The parser records declarations only. Duplicate labels and missing jump targets are compiler concerns.
 
-The current compiler reports duplicate scene ids and duplicate label ids in the same document.
+The removed legacy compiler reported duplicate scene ids and duplicate label ids in the same document.
 
 ## Narration
 
@@ -127,15 +127,15 @@ The parser accepts positional and named arguments. Supported values are:
 - booleans: `true`, `false`
 - identifiers: `center`
 
-Unknown command names are not parse errors. They are compiler errors unless the command is core-owned or registered as a plugin command.
+Unknown command names were not parse errors. They were compiler errors unless the command was core-owned or registered as a plugin command.
 
-Core-owned command names are registered by `@tsuzuru/core`:
+Legacy core-owned command names were registered by `@tsuzuru/core`:
 
 - flow: `jump`, `stop`, `wait`
 - text flow: `waitClick`, `page`
 - state: `set`, `inc`, `dec`, `flag`, `unflag`
 
-The current compiler validates core command arguments:
+The removed legacy compiler validated core command arguments:
 
 ```txt
 @jump("#label")                 # one positional string
@@ -150,7 +150,7 @@ The current compiler validates core command arguments:
 @unflag("met_haruka")           # one positional string
 ```
 
-Plugin commands must be registered through `compileTzr({ pluginCommands })`. A plugin command may also define an argument schema. See `docs/plugin-api.md`.
+Historically, plugin commands were registered through `compileTzr({ pluginCommands })`. That validation path was removed with the legacy compiler. See `docs/plugin-api.md` for the remaining plugin metadata/runtime handler surface.
 
 ## Macro Calls
 

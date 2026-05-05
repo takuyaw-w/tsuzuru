@@ -4,9 +4,9 @@
 > `compileTzr` macro expansion path were removed during DSL v2 cleanup. DSL v2
 > currently has no macro syntax or macro expansion API.
 
-This document describes the currently implemented macro surface in `@tsuzuru/core`.
+This document preserves the removed legacy macro surface for historical reference. It is not a current `@tsuzuru/core` API.
 
-Macros are compile-time presentation shorthand. They are written in TypeScript and called from `.tzr` files with `$name(...)`. Scenario files do not define macros and do not execute JavaScript or TypeScript.
+Legacy macros were compile-time presentation shorthand. They were written in TypeScript and called from `.tzr` files with `$name(...)`. Scenario files did not define macros and did not execute JavaScript or TypeScript.
 
 ## Macro Calls
 
@@ -16,13 +16,13 @@ Macro calls use `$` and share the same argument syntax as runtime commands.
 $enter("haruka", "smile", "center")
 ```
 
-The parser stores a macro call as a `MacroStatement` in the AST. During compilation, `compileTzr` converts that statement to a `MacroInstruction`, looks up a registered macro in `options.macros`, expands it, and places the returned instructions into the compiled IR.
+The removed legacy parser stored a macro call as a `MacroStatement` in the AST. During compilation, `compileTzr` converted that statement to a `MacroInstruction`, looked up a registered macro in `options.macros`, expanded it, and placed the returned instructions into the compiled IR.
 
-`MacroInstruction` is a compiler-only instruction. A successful compilation removes macro calls from the compiled IR.
+`MacroInstruction` was a compiler-only instruction. A successful compilation removed macro calls from the compiled IR.
 
-## Registration
+## Historical Registration
 
-Register macros through `compileTzr`:
+Historically, macros were registered through `compileTzr`:
 
 ```ts
 import type { CommandInstruction, MacroDefinition } from "@tsuzuru/core";

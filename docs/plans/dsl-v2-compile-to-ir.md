@@ -1,5 +1,12 @@
 # DSL v2 -> IR compile strategy plan
 
+> Status: historical implementation plan. This document predates the legacy DSL
+> cleanup commit `4ed8d972bf90f6dedf741ae0217f2fa3b45e37a2`. References to
+> `parseTzr`, `compileTzr`, `CompiledTzrDocument`, legacy labels, legacy choices,
+> or macro expansion describe the old baseline and are not current public API.
+> Current cleanup status is tracked in
+> [`docs/plans/legacy-dsl-cleanup.md`](legacy-dsl-cleanup.md).
+
 このドキュメントは `feature/new-dsl` 時点の DSL v2 parser / AST を、既存の runtime instruction model へ接続するための実装前設計メモである。
 
 これは計画書であり、DSL v2 -> IR compiler の実装仕様を確定する正式な利用者向け仕様ではない。
@@ -1486,4 +1493,3 @@ Recommended first implementation task:
 - validate title/character/scene declarations
 - emit no runtime behavior beyond metadata/index construction
 - add focused `dsl-v2-compiler.test.ts`
-

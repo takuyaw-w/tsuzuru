@@ -5,46 +5,44 @@
 > the old DSL compiler. DSL v2 currently emits std visual/audio runtime commands
 > directly for the supported subset.
 
-This document describes the currently implemented plugin command surface in `@tsuzuru/core`.
+This document describes the currently implemented plugin command metadata and runtime handler surface in `@tsuzuru/core`.
 
-Plugins extend runtime presentation behavior by registering command names that may appear in `.tzr` files. Core still owns scenario flow, state, choices, conditionals, save/load, and execution control.
+Plugins extend runtime presentation behavior by handling command names emitted by the DSL v2 compiler. Core still owns scenario flow, state, choices, conditionals, save/load, and execution control.
 
-## Command Registration
+## Command Metadata
 
-Register plugin-owned commands through `compileTzr`:
+Plugin command metadata remains available through `definePluginCommand`. The legacy compiler path that consumed `pluginCommands` was removed with `compileTzr`, so this metadata is not currently a DSL v2 compile-time validation registry.
 
 ```ts
-import { compileTzr, definePluginCommand } from "@tsuzuru/core";
+import { definePluginCommand } from "@tsuzuru/core";
 
-const result = compileTzr(document, {
-  pluginCommands: {
-    bg: definePluginCommand("bg", {
-      kind: "positional",
-      arguments: [{ type: "string" }],
-    }),
-    show: definePluginCommand("show", {
-      kind: "named",
-      arguments: [
-        { name: "character", type: "string" },
-        { name: "pose", type: "string", optional: true },
-        { name: "at", type: ["string", "identifier"], optional: true },
-      ],
-    }),
-  },
-});
+export const stdVisualPluginCommands = {
+  bg: definePluginCommand("bg", {
+    kind: "positional",
+    arguments: [{ type: "string" }],
+  }),
+  show: definePluginCommand("show", {
+    kind: "named",
+    arguments: [
+      { name: "character", type: "string" },
+      { name: "pose", type: "string", optional: true },
+      { name: "at", type: ["string", "identifier"], optional: true },
+    ],
+  }),
+};
 ```
 
-The registry key must match `definition.name`. A mismatch is a compile-time error, and that entry is not treated as a registered command.
+The registry key should match `definition.name` when a plugin exposes a command map. DSL v2 compile-time validation for plugin command maps is not implemented yet.
 
 ```ts
-pluginCommands: {
+const pluginCommands = {
   bg: { name: "show" }, // invalid
-}
+};
 ```
 
 ## Argument Schemas
 
-Plugin commands may omit `args`. In that case, the compiler only checks that the command name is registered.
+Plugin commands may omit `args`. This means the metadata defines only the command name until a future compiler or tooling validation policy consumes the schema.
 
 Supported schema kinds:
 
@@ -64,6 +62,9 @@ Supported value types:
 Arguments are required by default. Add `optional: true` for optional arguments.
 
 ## Positional Commands
+
+The examples in this section use the removed legacy `@command(...)` notation only
+to show argument shapes. They are not current DSL v2 authoring syntax.
 
 ```ts
 bg: definePluginCommand("bg", {
@@ -118,22 +119,14 @@ Invalid:
 
 ## Runtime Boundary
 
-The compiler validates plugin command names and argument shapes. Runtime behavior is handled by runtime plugin command handlers and UI layers.
+Runtime behavior is handled by runtime plugin command handlers and UI layers. DSL v2 currently emits std visual/audio commands for the supported subset; arbitrary plugin command validation remains a follow-up design task.
 
 Plugin commands should not own core flow control. Keep these commands core-owned:
 
 ```txt
-@jump(...)
-@if(...)
-@else
-@endif
-@set(...)
-@inc(...)
-@dec(...)
-@flag(...)
-@unflag(...)
-@waitClick()
-@page()
-@stop()
-@wait(...)
+jump / scene jump
+if / elif / else
+choice
+set / add
+waitClick / page / stop / wait
 ```
