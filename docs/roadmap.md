@@ -1,5 +1,13 @@
 # Tsuzuru Roadmap
 
+> Status: partially historical. The old v0.1 scope sections are retained as
+> pre-DSL-v2-cleanup history. Entries that mention old parser/compiler
+> semantics, old DSL syntax, removed macro API, or removed example names are not
+> current feature guidance. Use
+> [`design/design/dsl-v2.md`](design/design/dsl-v2.md) and
+> [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md) for the current
+> DSL direction.
+
 This document defines Tsuzuru's product scope by milestone.
 
 `TODOS.md` is the operational task list.  
@@ -17,7 +25,7 @@ Tsuzuru should provide:
 - static validation
 - predictable runtime behavior
 - TypeScript-based plugins
-- TypeScript-based macros
+- future TypeScript-based reusable extensions if macro support is reintroduced
 - Preact-based UI customization
 - static web app distribution
 
@@ -31,13 +39,16 @@ Keep extension logic in TypeScript.
 
 ## v0.1 Goal
 
-v0.1 is complete when a small visual novel can be written in `.tzr`, compiled by `@tsuzuru/core`, rendered by `@tsuzuru/preact`, and verified through examples.
+> Historical note: this v0.1 section describes the pre-DSL-v2-cleanup milestone.
+> It is not the current supported DSL/API list.
+
+The historical v0.1 goal was complete when a small visual novel could be written in `.tzr`, compiled by `@tsuzuru/core`, rendered by `@tsuzuru/preact`, and verified through examples.
 
 This v0.1 scope has been completed and stabilization checks have passed. This marks the planned v0.1 scope as complete, but does not mean Tsuzuru is production ready or comparable to mature visual novel engines.
 
-## v0.1 Scope
+## Historical v0.1 Scope
 
-v0.1 includes:
+The pre-cleanup v0.1 scope included:
 
 - `.tzr` parser
 - AST definitions
@@ -74,9 +85,9 @@ v0.1 includes:
 - basic docs
 - root README quickstart
 
-## v0.1 DSL Scope
+## Historical v0.1 DSL Scope
 
-The `.tzr` DSL supports:
+The removed legacy `.tzr` DSL supported:
 
 ```txt
 #scene("id")
@@ -110,7 +121,7 @@ Same-file labels are validated.
 
 Cross-file target shape may be accepted, but cross-file existence validation is not required for v0.1 unless explicitly re-scoped.
 
-## v0.1 Core Commands
+## Historical v0.1 Core Commands
 
 Core-owned commands include:
 
@@ -131,7 +142,7 @@ Core-owned commands affect scenario flow, runtime state, save/load behavior, or 
 
 They should not be moved into plugin ownership.
 
-## v0.1 Plugin Scope
+## Historical v0.1 Plugin Scope
 
 v0.1 plugins support command registration and validation.
 
@@ -157,9 +168,9 @@ v0.1 plugin goals:
 
 Plugins must not own core flow control.
 
-## v0.1 Macro Scope
+## Historical v0.1 Macro Scope
 
-v0.1 macros are compile-time presentation shorthand.
+The removed legacy macro API treated macros as compile-time presentation shorthand.
 
 Macro calls use:
 
@@ -186,7 +197,7 @@ For v0.1, macros must not generate:
 
 Macro argument schema validation is not required for v0.1 unless explicitly re-scoped.
 
-## v0.1 Preact Scope
+## Historical v0.1 Preact Scope
 
 `@tsuzuru/preact` should provide:
 
@@ -204,9 +215,9 @@ Macro argument schema validation is not required for v0.1 unless explicitly re-s
 
 It should not become a full game UI framework in v0.1.
 
-## v0.1 Example Scope
+## Historical v0.1 Example Scope
 
-Examples should demonstrate the current architecture.
+The removed legacy examples demonstrated the pre-cleanup architecture.
 
 `examples/basic` should demonstrate core usage.
 
@@ -236,7 +247,7 @@ The example scenario should ideally include:
 - plugin command
 - save/load-friendly flow
 
-## v0.1 Documentation Scope
+## Historical v0.1 Documentation Scope
 
 v0.1 documentation should include:
 
@@ -331,7 +342,7 @@ Potential scope:
 
 This is not part of v0.1 unless explicitly re-scoped.
 
-For v0.1, project creation is manual. Users should follow the root README quickstart or copy the `examples/preact-basic` structure when creating a Vite + Preact project.
+For v0.1, project creation is manual. Users should follow the root README quickstart or use `examples/dsl-v2-basic` as the current runnable Vite + Preact reference.
 
 ## Vite Integration
 
@@ -341,7 +352,7 @@ Possible package:
 @tsuzuru/vite
 ```
 
-This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`.
+This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`, then compile it with `compileTzr`.
 
 Potential scope:
 
@@ -427,7 +438,7 @@ v0.1 readiness requires:
 - `pnpm typecheck` passes
 - `pnpm --filter @tsuzuru/core build` passes
 - `pnpm --filter @tsuzuru/preact build` passes
-- `pnpm --filter @tsuzuru/example-preact-basic build` passes
+- `pnpm --filter @tsuzuru/example-dsl-v2-basic build` passes
 - examples work from a clean checkout
 - public exports are reviewed
 - README quickstart is accurate

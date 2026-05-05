@@ -89,8 +89,8 @@ export function RuntimeMessageLayer({
     case "end":
       return <StatusLayer label="End" {...(className !== undefined ? { className } : {})} />;
     case "scene":
-    case "label":
     case "jump":
+    case "choiceResolve":
     case "if":
     case "state":
     case "pluginCommand":
@@ -100,16 +100,16 @@ export function RuntimeMessageLayer({
   }
 }
 
-type TransientRuntimeEvent = Extract<RuntimeEvent, { readonly type: "scene" | "label" | "jump" | "if" | "state" | "pluginCommand" }>;
+type TransientRuntimeEvent = Extract<RuntimeEvent, { readonly type: "scene" | "jump" | "choiceResolve" | "if" | "state" | "pluginCommand" }>;
 
 function formatTransientEvent(event: TransientRuntimeEvent): string {
   switch (event.type) {
     case "scene":
       return `Scene: ${event.id}`;
-    case "label":
-      return `Label: ${event.id}`;
     case "jump":
-      return `Jump: #${event.label}`;
+      return `Jump scene: ${event.sceneId}`;
+    case "choiceResolve":
+      return `Choice: ${event.text}`;
     case "if":
       return `If: ${String(event.result)} (${event.branch})`;
     case "state":

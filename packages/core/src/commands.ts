@@ -1,5 +1,4 @@
 export const CORE_COMMAND_NAMES = [
-  "jump",
   "waitClick",
   "page",
   "stop",
@@ -19,7 +18,6 @@ export interface CoreCommandDefinition {
 }
 
 export const CORE_COMMANDS: readonly CoreCommandDefinition[] = [
-  { name: "jump", category: "flow" },
   { name: "waitClick", category: "text" },
   { name: "page", category: "text" },
   { name: "stop", category: "flow" },

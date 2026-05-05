@@ -1,6 +1,13 @@
 # Tsuzuru Architecture
 
-This document describes the current architecture of Tsuzuru.
+> Status: partially historical. This document still contains legacy syntax and
+> legacy AST references. The current supported DSL path is DSL v2
+> (`parseTzr` / `compileTzr`), and the cleanup result is tracked
+> in [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md).
+> Legacy examples named `examples/basic` or `examples/preact-basic` were removed.
+
+This document describes Tsuzuru architecture notes. Sections that still mention
+the old DSL or removed examples are historical, not current API guidance.
 
 Tsuzuru is a web-first visual novel engine built around a constrained `.tzr` scenario DSL, a TypeScript core runtime, and a Preact adapter.
 
@@ -11,9 +18,9 @@ The main pipeline is:
 ```txt
 .tzr source
   -> parseTzr
-  -> AST
+  -> DSL v2 AST
   -> compileTzr
-  -> compiled IR
+  -> RuntimeDocument / compiled v2 IR
   -> runtime state
   -> runtime events
   -> Preact adapter
@@ -39,8 +46,7 @@ packages/
   preact/
 
 examples/
-  basic/
-  preact-basic/
+  dsl-v2-basic/
 ```
 
 Expected future package candidates:
@@ -68,8 +74,7 @@ Responsibilities:
 - IR generation
 - core command definitions
 - command validation
-- macro expansion
-- plugin command registration and validation
+- plugin command metadata and runtime dispatch
 - jump target validation
 - condition evaluation
 - runtime state
@@ -569,13 +574,11 @@ The example should remain small and easy to inspect.
 Allowed dependency direction:
 
 ```txt
-examples/preact-basic
+examples/dsl-v2-basic
   -> @tsuzuru/preact
-  -> @tsuzuru/core
-```
-
-```txt
-examples/basic
+  -> @tsuzuru/standard-ui-preact
+  -> @tsuzuru/plugin-std-visual
+  -> @tsuzuru/plugin-std-audio
   -> @tsuzuru/core
 ```
 
@@ -719,10 +722,8 @@ pnpm --filter @tsuzuru/preact build
 Example checks:
 
 ```sh
-pnpm --filter @tsuzuru/example-basic build
-pnpm --filter @tsuzuru/example-basic start
-pnpm --filter @tsuzuru/example-preact-basic build
-pnpm --filter @tsuzuru/example-preact-basic typecheck
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-dsl-v2-basic typecheck
 ```
 
 Run broader checks when changing public APIs, runtime semantics, DSL behavior, or example behavior.

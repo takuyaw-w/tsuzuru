@@ -365,8 +365,8 @@ describe("RuntimeMessageLayer", () => {
           type: "choice",
           question: "What do you do?",
           items: [
-            { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
-            { text: "Go", targetRaw: "#go", targetLabel: "go" },
+            { id: "stay", text: "Stay" },
+            { id: "go", text: "Go" },
           ],
         },
         onChoice,
@@ -377,6 +377,25 @@ describe("RuntimeMessageLayer", () => {
     expect(node.props.question).toBe("What do you do?");
     expect(node.props.choices).toEqual([{ text: "Stay" }, { text: "Go" }]);
     expect(node.props.onChoice).toBe(onChoice);
+  });
+
+  it("maps targetless body choice items", () => {
+    const node = expectVNode<ChoiceLayerProps>(
+      RuntimeMessageLayer({
+        event: {
+          type: "choice",
+          question: "Choose",
+          items: [
+            { id: "openNotebook", text: "Open notebook" },
+            { id: "leave", text: "Leave" },
+          ],
+        },
+      }),
+    );
+
+    expect(node.type).toBe(ChoiceLayer);
+    expect(node.props.question).toBe("Choose");
+    expect(node.props.choices).toEqual([{ text: "Open notebook" }, { text: "Leave" }]);
   });
 
   it("maps waitClick and page", () => {
@@ -397,7 +416,7 @@ describe("RuntimeMessageLayer", () => {
   it("maps error, unsupported, stop, and end", () => {
     const events: readonly [RuntimeEvent, string][] = [
       [{ type: "error", code: "choice_not_pending", message: "Choice is not pending." }, "Choice is not pending."],
-      [{ type: "unsupported", instructionType: "MacroInstruction" }, "Unsupported instruction: MacroInstruction"],
+      [{ type: "unsupported", instructionType: "CommandInstruction" }, "Unsupported instruction: CommandInstruction"],
       [{ type: "stop" }, "Stopped"],
       [{ type: "end" }, "End"],
     ];
@@ -419,8 +438,8 @@ describe("RuntimeMessageLayer", () => {
   it("hides transient events by default", () => {
     const events: readonly RuntimeEvent[] = [
       { type: "scene", id: "prologue" },
-      { type: "label", id: "start" },
-      { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "jump", sceneId: "later", instructionIndex: 20 },
+      { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "if", result: true, branch: "then" },
       { type: "state", command: "flag", name: "met_haruka", value: true },
       { type: "pluginCommand", name: "bg" },
@@ -434,8 +453,8 @@ describe("RuntimeMessageLayer", () => {
   it("shows transient events when showTransientStatus=true", () => {
     const events: readonly [RuntimeEvent, string][] = [
       [{ type: "scene", id: "prologue" }, "Scene: prologue"],
-      [{ type: "label", id: "start" }, "Label: start"],
-      [{ type: "jump", label: "after_choice", instructionIndex: 12 }, "Jump: #after_choice"],
+      [{ type: "jump", sceneId: "later", instructionIndex: 20 }, "Jump scene: later"],
+      [{ type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" }, "Choice: Stay"],
       [{ type: "if", result: false, branch: "else" }, "If: false (else)"],
       [{ type: "state", command: "set", name: "route", value: "haruka" }, "set: route = haruka"],
       [{ type: "pluginCommand", name: "bg" }, "Plugin command: bg"],

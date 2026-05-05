@@ -9,7 +9,7 @@ import {
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
-  type CompiledTzrDocument,
+  type RuntimeDocument,
   type RuntimeBlockReason,
   type RuntimeEvent,
   type RuntimeInitialStateOptions,
@@ -49,7 +49,7 @@ export interface UseRuntimeResult {
   readonly autoStepError: string | null;
 }
 
-export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOptions = {}): UseRuntimeResult {
+export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions = {}): UseRuntimeResult {
   const pluginsRef = useRef(options.plugins);
   pluginsRef.current = options.plugins;
   const [state, setState] = useState<RuntimeState>(() => createInitialState(document, options.plugins));
@@ -254,9 +254,9 @@ export function useRuntime(document: CompiledTzrDocument, options: UseRuntimeOpt
 export function isAutoSteppableRuntimeEvent(event: RuntimeEvent): boolean {
   switch (event.type) {
     case "scene":
-    case "label":
     case "state":
     case "jump":
+    case "choiceResolve":
       return true;
     case "if":
       return event.event === undefined || isAutoSteppableRuntimeEvent(event.event);
@@ -300,9 +300,9 @@ export function getRenderableRuntimeEvent(event: RuntimeEvent): RuntimeEvent | n
     case "if":
       return event.event === undefined ? null : getRenderableRuntimeEvent(event.event);
     case "scene":
-    case "label":
     case "state":
     case "jump":
+    case "choiceResolve":
     case "pluginCommand":
       return null;
     default:
@@ -328,7 +328,7 @@ function assertNever(value: never): never {
 }
 
 function createInitialState(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   plugins: RuntimeInitialStateOptions["plugins"],
 ): RuntimeState {
   return createInitialRuntimeState(document, plugins === undefined ? {} : { plugins });

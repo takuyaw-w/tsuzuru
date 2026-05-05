@@ -71,8 +71,6 @@ export function RuntimeView({
       return <RuntimeStatusMessage label={`Waiting ${event.durationMs}ms`} />;
     case "scene":
       return <RuntimeStatusMessage label={`Scene: ${event.id}`} />;
-    case "label":
-      return <RuntimeStatusMessage label={`Label: ${event.id}`} />;
     case "pluginCommand":
       return <RuntimeStatusMessage label={`Plugin command: ${event.name}`} />;
     case "unsupported":
@@ -86,7 +84,9 @@ export function RuntimeView({
     case "state":
       return <RuntimeStatusMessage label={`${event.command}: ${event.name} = ${String(event.value)}`} />;
     case "jump":
-      return <RuntimeStatusMessage label={`Jump: #${event.label}`} />;
+      return <RuntimeStatusMessage label={`Jump scene: ${event.sceneId}`} />;
+    case "choiceResolve":
+      return <RuntimeStatusMessage label={`Choice: ${event.text}`} />;
     case "if":
       return <RuntimeStatusMessage label={`If: ${event.result ? "true" : "false"} (${event.branch})`} />;
   }

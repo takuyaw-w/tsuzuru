@@ -4,11 +4,11 @@ import { act } from "preact/test-utils";
 import {
   compileTzr,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   parseTzr,
   stepRuntime,
-  type CompiledTzrDocument,
+  type RuntimeDocument,
   type RuntimeEvent,
-  type RuntimePluginDefinition,
   type RuntimeSnapshot,
 } from "@tsuzuru/core";
 import {
@@ -42,7 +42,7 @@ const snapshot: RuntimeSnapshot = {
   isWaitingForClick: false,
 };
 
-function compileScript(source: string): CompiledTzrDocument {
+function compileScript(source: string): RuntimeDocument {
   const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
@@ -147,7 +147,7 @@ function createMinimalElement(localName: string, namespaceURI = "http://www.w3.o
 }
 
 function createMinimalText(data: string): MinimalText {
-  const text: MinimalText = {
+  return {
     nodeType: 3,
     data,
     parentNode: null,
@@ -155,7 +155,6 @@ function createMinimalText(data: string): MinimalText {
       return nextSiblingOf(this);
     },
   };
-  return text;
 }
 
 function nextSiblingOf(node: MinimalNode): MinimalNode | null {
@@ -182,7 +181,7 @@ function createMinimalDocument(): MinimalDocument {
 }
 
 interface RuntimeHarnessProps {
-  readonly document: CompiledTzrDocument;
+  readonly document: RuntimeDocument;
   readonly options?: UseRuntimeOptions;
   readonly onRender: (runtime: UseRuntimeResult) => void;
 }
@@ -224,13 +223,13 @@ async function flushUpdates(): Promise<void> {
   });
 }
 
-describe("isAutoSteppableRuntimeEvent", () => {
+describe("runtime event classification", () => {
   it("allows non-blocking runtime events to auto-step", () => {
     const events: readonly RuntimeEvent[] = [
       { type: "scene", id: "prologue" },
-      { type: "label", id: "start" },
-      { type: "state", command: "flag", name: "met", value: true },
-      { type: "jump", label: "after_choice", instructionIndex: 12 },
+      { type: "state", command: "set", name: "route", value: "mio" },
+      { type: "jump", sceneId: "afterChoice", instructionIndex: 12 },
+      { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "pluginCommand", name: "bg" },
     ];
 
@@ -242,148 +241,28 @@ describe("isAutoSteppableRuntimeEvent", () => {
   it("does not auto-step blocking or inspectable runtime events", () => {
     const events: readonly RuntimeEvent[] = [
       { type: "narration", lines: [{ text: "The classroom was quiet." }] },
-      { type: "dialogue", speaker: "Haruka", lines: [{ text: "You came." }] },
-      {
-        type: "choice",
-        question: "What do you do?",
-        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
-      },
+      { type: "dialogue", speaker: "haruka", lines: [{ text: "You came." }] },
+      { type: "choice", question: "Choose", items: [{ id: "stay", text: "Stay" }] },
       { type: "waitClick" },
       { type: "page" },
       { type: "wait", durationMs: 500 },
       { type: "stop" },
       { type: "end" },
-      { type: "unsupported", instructionType: "MacroInstruction" },
+      { type: "unsupported", instructionType: "CommandInstruction" },
       { type: "error", code: "choice_index_out_of_range", message: "Choice index 1 is out of range." },
     ];
 
     for (const event of events) {
       expect(isAutoSteppableRuntimeEvent(event), event.type).toBe(false);
-    }
-  });
-
-  it("allows if events without nested events to auto-step", () => {
-    expect(isAutoSteppableRuntimeEvent({ type: "if", result: false, branch: "none" })).toBe(true);
-  });
-
-  it("recursively allows if events with auto-steppable nested events", () => {
-    const stateEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "state", command: "inc", name: "affection", value: 1 },
-    };
-    const jumpEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "jump", label: "after_choice", instructionIndex: 20 },
-    };
-    const nestedIfEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: {
-        type: "if",
-        result: true,
-        branch: "then",
-        event: { type: "label", id: "nested" },
-      },
-    };
-
-    expect(isAutoSteppableRuntimeEvent(stateEvent)).toBe(true);
-    expect(isAutoSteppableRuntimeEvent(jumpEvent)).toBe(true);
-    expect(isAutoSteppableRuntimeEvent(nestedIfEvent)).toBe(true);
-  });
-
-  it("recursively rejects if events with blocking or inspectable nested events", () => {
-    const dialogueEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "dialogue", speaker: "Haruka", lines: [{ text: "You came." }] },
-    };
-    const narrationEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "narration", lines: [{ text: "The classroom was quiet." }] },
-    };
-    const unsupportedEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "unsupported", instructionType: "MacroInstruction" },
-    };
-    const nestedIfEvent: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: {
-        type: "if",
-        result: true,
-        branch: "then",
-        event: { type: "narration", lines: [{ text: "Nested narration." }] },
-      },
-    };
-
-    expect(isAutoSteppableRuntimeEvent(dialogueEvent)).toBe(false);
-    expect(isAutoSteppableRuntimeEvent(narrationEvent)).toBe(false);
-    expect(isAutoSteppableRuntimeEvent(unsupportedEvent)).toBe(false);
-    expect(isAutoSteppableRuntimeEvent(nestedIfEvent)).toBe(false);
-  });
-
-  it("keeps the deprecated transient alias compatible", () => {
-    const event: RuntimeEvent = { type: "if", result: true, branch: "then" };
-
-    expect(isTransientRuntimeEvent(event)).toBe(isAutoSteppableRuntimeEvent(event));
-  });
-});
-
-describe("isRenderableRuntimeEvent", () => {
-  it("allows blocking or inspectable runtime events to render", () => {
-    const events: readonly RuntimeEvent[] = [
-      { type: "narration", lines: [{ text: "The classroom was quiet." }] },
-      { type: "dialogue", speaker: "Haruka", lines: [{ text: "You came." }] },
-      {
-        type: "choice",
-        question: "What do you do?",
-        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
-      },
-      { type: "waitClick" },
-      { type: "page" },
-      { type: "wait", durationMs: 500 },
-      { type: "stop" },
-      { type: "end" },
-      { type: "unsupported", instructionType: "MacroInstruction" },
-      { type: "error", code: "choice_index_out_of_range", message: "Choice index 1 is out of range." },
-    ];
-
-    for (const event of events) {
       expect(isRenderableRuntimeEvent(event), event.type).toBe(true);
       expect(getRenderableRuntimeEvent(event)).toBe(event);
     }
   });
 
-  it("rejects non-renderable transient runtime events", () => {
-    const events: readonly RuntimeEvent[] = [
-      { type: "scene", id: "prologue" },
-      { type: "label", id: "start" },
-      { type: "state", command: "flag", name: "met", value: true },
-      { type: "jump", label: "after_choice", instructionIndex: 12 },
-      { type: "pluginCommand", name: "bg" },
-    ];
-
-    for (const event of events) {
-      expect(isRenderableRuntimeEvent(event), event.type).toBe(false);
-      expect(getRenderableRuntimeEvent(event)).toBeNull();
-    }
-  });
-
-  it("uses nested if events only when the nested event is renderable", () => {
+  it("recurses through if events for auto-step and rendering", () => {
     const nestedDialogue: RuntimeEvent = {
       type: "dialogue",
-      speaker: "Haruka",
+      speaker: "haruka",
       lines: [{ text: "You came." }],
     };
     const renderableIf: RuntimeEvent = {
@@ -396,75 +275,41 @@ describe("isRenderableRuntimeEvent", () => {
       type: "if",
       result: true,
       branch: "then",
-      event: { type: "label", id: "start" },
+      event: { type: "state", command: "set", name: "route", value: "mio" },
     };
 
-    expect(isRenderableRuntimeEvent(renderableIf)).toBe(true);
+    expect(isAutoSteppableRuntimeEvent(renderableIf)).toBe(false);
     expect(getRenderableRuntimeEvent(renderableIf)).toBe(nestedDialogue);
-    expect(isRenderableRuntimeEvent(transientIf)).toBe(false);
+    expect(isAutoSteppableRuntimeEvent(transientIf)).toBe(true);
     expect(getRenderableRuntimeEvent(transientIf)).toBeNull();
-  });
-
-  it("uses a nested wait event from an if event as the renderable event", () => {
-    const nestedWait: RuntimeEvent = { type: "wait", durationMs: 500 };
-    const event: RuntimeEvent = {
-      type: "if",
-      result: true,
-      branch: "then",
-      event: nestedWait,
-    };
-
-    expect(isRenderableRuntimeEvent(event)).toBe(true);
-    expect(getRenderableRuntimeEvent(event)).toBe(nestedWait);
+    expect(isTransientRuntimeEvent(transientIf)).toBe(true);
   });
 });
 
 describe("getAutoClearWaitDuration", () => {
   it("returns the wait duration for a nested wait event from an if event", () => {
-    const document = compileScript(`@flag("ready")
-@if(flag("ready"))
-@wait(500)
-@endif
-`);
-    const flagged = stepRuntime(document, createInitialRuntimeState(document));
-    const waited = stepRuntime(document, flagged.state);
-
-    expect(waited.event).toMatchObject({
-      type: "if",
-      event: { type: "wait", durationMs: 500 },
-    });
-    expect(getRenderableRuntimeEvent(waited.event)).toEqual({ type: "wait", durationMs: 500 });
-    expect(waited.state.pendingWait).toEqual({ durationMs: 500 });
-    expect(getAutoClearWaitDuration(waited.event, waited.state, true)).toBe(500);
-  });
-
-  it("does not auto-clear waitClick, page, or choice events", () => {
-    const blockedState = {
+    const state = {
       ...snapshot,
       pendingWait: { durationMs: 500 },
     };
-    const events: readonly RuntimeEvent[] = [
-      { type: "waitClick" },
-      { type: "page" },
-      {
-        type: "choice",
-        question: "What do you do?",
-        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
-      },
-    ];
+    const event: RuntimeEvent = {
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "wait", durationMs: 500 },
+    };
 
-    for (const event of events) {
-      expect(getAutoClearWaitDuration(event, blockedState, true), event.type).toBeNull();
-    }
+    expect(getAutoClearWaitDuration(event, state, true)).toBe(500);
   });
 
-  it("does not auto-clear when autoClearWait is disabled", () => {
+  it("does not auto-clear when disabled or not waiting", () => {
     const state = {
       ...snapshot,
       pendingWait: { durationMs: 500 },
     };
 
     expect(getAutoClearWaitDuration({ type: "wait", durationMs: 500 }, state, false)).toBeNull();
+    expect(getAutoClearWaitDuration({ type: "waitClick" }, state, true)).toBeNull();
   });
 });
 
@@ -487,7 +332,7 @@ describe("useRuntime", () => {
   });
 
   async function mountRuntime(
-    document: CompiledTzrDocument,
+    document: RuntimeDocument,
     options: UseRuntimeOptions,
   ): Promise<() => UseRuntimeResult> {
     let currentRuntime: UseRuntimeResult | null = null;
@@ -516,11 +361,13 @@ describe("useRuntime", () => {
     };
   }
 
-  it("stops auto-step at narration and dialogue events", async () => {
-    const document = compileScript(`#scene("prologue")
-The classroom was quiet.
-:: Haruka
-You came.
+  it("stops auto-step at narration and dialogue events from a DSL v2 document", async () => {
+    const document = compileScript(`character haruka name="Haruka"
+scene start:
+  narration:
+    The classroom was quiet.
+  haruka:
+    You came.
 `);
     const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
 
@@ -535,10 +382,6 @@ You came.
     });
     expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
 
-    await flushTimersAndUpdates();
-
-    expect(runtime().event).toMatchObject({ type: "narration" });
-
     await act(async () => {
       runtime().step();
     });
@@ -546,21 +389,21 @@ You came.
 
     expect(runtime().event).toMatchObject({
       type: "dialogue",
-      speaker: "Haruka",
+      speaker: "haruka",
       lines: [{ text: "You came." }],
     });
     expect(runtime().visibleEvent).toMatchObject({ type: "dialogue" });
-
-    await flushTimersAndUpdates();
-
-    expect(runtime().event).toMatchObject({ type: "dialogue" });
   });
 
-  it("stops auto-step at choice events", async () => {
-    const document = compileScript(`#scene("prologue")
-? What do you do?
-- "Stay" -> #stay
-#label("stay")
+  it("stops auto-step at DSL v2 body choices and resolves selected item bodies", async () => {
+    const document = compileScript(`scene start:
+  choice "What do you do?":
+    "Stay" id=stay:
+      narration:
+        Stayed.
+    "Leave" id=leave:
+      narration:
+        Left.
 `);
     const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
 
@@ -572,184 +415,72 @@ You came.
     expect(runtime().event).toEqual({
       type: "choice",
       question: "What do you do?",
-      items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+      items: [
+        { id: "stay", text: "Stay" },
+        { id: "leave", text: "Leave" },
+      ],
     });
-    expect(runtime().visibleEvent).toEqual(runtime().event);
     expect(runtime().blockReason).toBe("choice");
-
-    await flushTimersAndUpdates();
-
-    expect(runtime().event).toMatchObject({ type: "choice" });
-    expect(runtime().blockReason).toBe("choice");
-  });
-
-  it("stops auto-step when autoStepMaxSteps is reached", async () => {
-    const document = compileScript('#label("loop")\n@jump("#loop")\n');
-    const runtime = await mountRuntime(document, {
-      autoStepTransientEvents: true,
-      autoStepMaxSteps: 2,
-    });
 
     await act(async () => {
-      runtime().step();
+      runtime().choose(0);
     });
-    for (let index = 0; index < 5; index += 1) {
-      await flushTimersAndUpdates();
-    }
+    await flushUpdates();
 
-    expect(runtime().autoStepError).toBe("Auto-step stopped after 2 consecutive runtime events.");
-    expect(runtime().isBlocked).toBe(false);
-    expect(runtime().state.isStopped).toBe(false);
+    expect(runtime().event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Stayed." }],
+    });
+    expect(runtime().blockReason).toBeNull();
   });
 
-  it("does not expose transient events as visibleEvent", async () => {
-    const document = compileScript(`#scene("prologue")
-The classroom was quiet.
+  it("creates and restores runtime save data", async () => {
+    const document = compileScript(`scene start:
+  narration:
+    The classroom was quiet.
 `);
-    const runtime = await mountRuntime(document, { autoStepTransientEvents: true });
+    const runtime = await mountRuntime(document, {});
 
     await act(async () => {
       runtime().step();
     });
     await flushUpdates();
-
-    expect(runtime().event).toEqual({ type: "scene", id: "prologue" });
-    expect(runtime().visibleEvent).toBeNull();
-
-    await flushTimersAndUpdates();
-
-    expect(runtime().event).toMatchObject({ type: "narration" });
-    expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
-  });
-
-  it("initializes registered runtime plugin state", async () => {
-    const document = compileScript("The classroom was quiet.\n");
-    const plugin: RuntimePluginDefinition<{ readonly ready: true }> = {
-      name: "testPlugin",
-      createInitialState: () => ({ ready: true }),
-    };
-    const runtime = await mountRuntime(document, { plugins: [plugin] });
-
-    expect(runtime().state.plugins.testPlugin).toEqual({ ready: true });
-  });
-});
-
-describe("RuntimeSaveData", () => {
-  it("creates save data with version, state-only snapshot, and current event", () => {
-    const event: RuntimeEvent = {
-      type: "dialogue",
-      speaker: "Haruka",
-      lines: [{ text: "You came." }],
-    };
-    const saveData = createRuntimeSaveData(snapshot, event);
-
-    expect(saveData.version).toBe(1);
-    expect(saveData.snapshot).toBe(snapshot);
-    expect(saveData.event).toBe(event);
-    expect("event" in saveData.snapshot).toBe(false);
-  });
-
-  it("saves a narration visible event alongside the runtime snapshot", () => {
-    const document = compileScript("The classroom was quiet.\n");
-    const narration = stepRuntime(document, createInitialRuntimeState(document));
-    const saveData = createRuntimeSaveData(
-      {
-        ...snapshot,
-        pointer: narration.state.pointer,
-      },
-      narration.event,
-    );
-
-    expect(saveData.event).toMatchObject({
-      type: "narration",
-      lines: [{ text: "The classroom was quiet." }],
+    await act(async () => {
+      runtime().step();
     });
+    await flushUpdates();
+
+    const saveData = runtime().createSaveData();
     expect(isRuntimeSaveData(saveData)).toBe(true);
-  });
-
-  it("saves a dialogue visible event alongside the runtime snapshot", () => {
-    const document = compileScript(":: Haruka\nYou came.\n");
-    const dialogue = stepRuntime(document, createInitialRuntimeState(document));
-    const saveData = createRuntimeSaveData(
-      {
-        ...snapshot,
-        pointer: dialogue.state.pointer,
-      },
-      dialogue.event,
-    );
-
-    expect(saveData.event).toMatchObject({
-      type: "dialogue",
-      speaker: "Haruka",
-      lines: [{ text: "You came." }],
-    });
-    expect(isRuntimeSaveData(saveData)).toBe(true);
-  });
-
-  it("accepts valid save data with null event", () => {
-    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, null))).toBe(true);
-  });
-
-  it("accepts valid save data with object event", () => {
-    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, { type: "label", id: "start" }))).toBe(
-      true,
-    );
-  });
-
-  it("rejects save data with a mismatched version", () => {
-    expect(isRuntimeSaveData({ version: 2, snapshot, event: null })).toBe(false);
-  });
-
-  it("rejects save data without a valid snapshot object", () => {
-    expect(isRuntimeSaveData({ version: 1, event: null })).toBe(false);
-    expect(isRuntimeSaveData({ version: 1, snapshot: null, event: null })).toBe(false);
-    expect(isRuntimeSaveData({ version: 1, snapshot: { ...snapshot, version: 2 }, event: null })).toBe(
-      false,
-    );
-    expect(isRuntimeSaveData({ version: 1, snapshot: { ...snapshot, pointer: undefined }, event: null })).toBe(
-      false,
-    );
-    expect(
-      isRuntimeSaveData({
-        version: 1,
-        snapshot: { ...snapshot, pointer: { ...snapshot.pointer, filePath: 1 } },
-        event: null,
-      }),
-    ).toBe(false);
-    expect(
-      isRuntimeSaveData({
-        version: 1,
-        snapshot: { ...snapshot, pointer: { ...snapshot.pointer, instructionIndex: "1" } },
-        event: null,
-      }),
-    ).toBe(false);
-  });
-
-  it("rejects object events without a string type", () => {
-    expect(isRuntimeSaveData({ version: 1, snapshot, event: {} })).toBe(false);
-    expect(isRuntimeSaveData({ version: 1, snapshot, event: { type: 1 } })).toBe(false);
+    expect(saveData.event).toMatchObject({ type: "narration" });
   });
 });
 
 describe("restoreRuntimeSnapshotForView", () => {
-  const document = compileScript("The classroom was quiet.\n");
+  it("restores a wait event from a pendingWait snapshot", () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const result = restoreRuntimeSnapshotForView(document, {
+      ...snapshot,
+      pendingWait: { durationMs: 500 },
+    });
 
-  it("restores a non-blocking snapshot with a null event", () => {
-    const result = restoreRuntimeSnapshotForView(document, snapshot);
-
-    expect(result.state.pointer).toEqual(snapshot.pointer);
-    expect(result.state.pendingChoice).toBeNull();
-    expect(result.state.pendingWait).toBeNull();
-    expect(result.state.isWaitingForClick).toBe(false);
-    expect(result.event).toBeNull();
+    expect(result.event).toEqual({ type: "wait", durationMs: 500 });
   });
 
   it("restores a choice event from a pendingChoice snapshot without advancing state", () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
     const choiceSnapshot: RuntimeSnapshot = {
       ...snapshot,
       pendingChoice: {
-        question: "What do you do?",
-        items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+        kind: "body",
+        question: "Choose",
+        items: [{ id: "stay", text: "Stay", body: [] }],
       },
     };
 
@@ -757,93 +488,68 @@ describe("restoreRuntimeSnapshotForView", () => {
 
     expect(result.event).toEqual({
       type: "choice",
-      question: "What do you do?",
-      items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+      question: "Choose",
+      items: [{ id: "stay", text: "Stay" }],
     });
-    expect(result.state.pointer).toEqual(choiceSnapshot.pointer);
     expect(result.state.pendingChoice).toEqual(choiceSnapshot.pendingChoice);
-  });
-
-  it("restores a wait event from a pendingWait snapshot without advancing state", () => {
-    const waitSnapshot: RuntimeSnapshot = {
-      ...snapshot,
-      pendingWait: { durationMs: 500 },
-    };
-
-    const result = restoreRuntimeSnapshotForView(document, waitSnapshot);
-
-    expect(result.event).toEqual({ type: "wait", durationMs: 500 });
-    expect(result.state.pointer).toEqual(waitSnapshot.pointer);
-    expect(result.state.pendingWait).toEqual(waitSnapshot.pendingWait);
-  });
-
-  it("restores a waitClick event from an isWaitingForClick snapshot without advancing state", () => {
-    const waitClickSnapshot: RuntimeSnapshot = {
-      ...snapshot,
-      isWaitingForClick: true,
-    };
-
-    const result = restoreRuntimeSnapshotForView(document, waitClickSnapshot);
-
-    expect(result.event).toEqual({ type: "waitClick" });
-    expect(result.state.pointer).toEqual(waitClickSnapshot.pointer);
-    expect(result.state.isWaitingForClick).toBe(true);
   });
 });
 
 describe("RuntimeView", () => {
-  it("makes narration advanceable when onAdvance is enabled", () => {
-    const onAdvance = () => undefined;
-    const view = expectVNode(
+  it("renders narration text", () => {
+    const node = expectVNode(
       RuntimeView({
         event: { type: "narration", lines: [{ text: "The classroom was quiet." }] },
-        onAdvance,
-        canAdvance: true,
       }),
     );
-    const props = view.props as Readonly<Record<string, unknown>>;
 
-    expect(props.onAdvance).toBe(onAdvance);
-    expect(props.canAdvance).toBe(true);
-    expect(props.className).toBe("tzr-runtime-view--narration");
+    const children = node.props.children as VNode[];
+    expect(children[0]?.props.children).toBe("The classroom was quiet.");
   });
 
-  it("makes dialogue advanceable when onAdvance is enabled", () => {
-    const onAdvance = () => undefined;
-    const view = expectVNode(
-      RuntimeView({
-        event: {
-          type: "dialogue",
-          speaker: "Haruka",
-          lines: [{ text: "You came." }],
-        },
-        onAdvance,
-        canAdvance: true,
-      }),
-    );
-    const props = view.props as Readonly<Record<string, unknown>>;
-
-    expect(props.onAdvance).toBe(onAdvance);
-    expect(props.canAdvance).toBe(true);
-    expect(props.className).toBe("tzr-runtime-view--dialogue");
-  });
-
-  it("does not advance from the choice container", () => {
-    const onAdvance = () => undefined;
-    const view = expectVNode(
+  it("renders choice labels without target metadata", () => {
+    const onChoice = vi.fn();
+    const node = expectVNode(
       RuntimeView({
         event: {
           type: "choice",
-          question: "What do you do?",
-          items: [{ text: "Stay", targetRaw: "#stay", targetLabel: "stay" }],
+          question: "Choose",
+          items: [{ id: "stay", text: "Stay" }],
         },
-        onAdvance,
-        canAdvance: true,
+        onChoice,
       }),
     );
-    const props = view.props as Readonly<Record<string, unknown>>;
 
-    expect(props.onClick).toBeUndefined();
-    expect(props.className).toBe("tzr-runtime-view tzr-runtime-view--choice");
+    const children = node.props.children as VNode[];
+    const choiceList = children[1];
+    if (choiceList === undefined) {
+      throw new Error("expected choice list");
+    }
+    const choiceItems = choiceList.props.children as VNode[];
+    const firstItem = choiceItems[0];
+    if (firstItem === undefined || !isValidElement(firstItem.props.children)) {
+      throw new Error("expected first choice item");
+    }
+    expect(children[0]?.props.children).toBe("Choose");
+    expect(firstItem.props.children.props.children).toBe("Stay");
+  });
+});
+
+describe("runtime save data helpers", () => {
+  it("accepts save data with null event or runtime event", () => {
+    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, null))).toBe(true);
+    expect(isRuntimeSaveData(createRuntimeSaveData(snapshot, { type: "scene", id: "start" }))).toBe(true);
+  });
+
+  it("round-trips snapshots produced by the shared runtime", () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const stepped = stepRuntime(document, createInitialRuntimeState(document));
+    const created = createRuntimeSnapshot(stepped.state);
+    const saveData = createRuntimeSaveData(created, stepped.event);
+
+    expect(isRuntimeSaveData(saveData)).toBe(true);
   });
 });

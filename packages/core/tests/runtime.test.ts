@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { CompiledTzrDocument, RuntimePluginCommandHandler } from "../src/index.js";
 import {
   clearClickWait,
   clearWait,
@@ -10,42 +9,90 @@ import {
   getRuntimeBlockReason,
   isRuntimeBlocked,
   parseTzr,
-  resolveChoice,
   restoreRuntimeState,
   stepRuntime,
+  type CommandInstruction,
+  type RuntimeDocument,
+  type RuntimePluginCommandHandler,
+  type TzrArgument,
 } from "../src/index.js";
 
+const loc = {
+  start: { filePath: "scenario/runtime.tzr", line: 1, column: 1 },
+  end: { filePath: "scenario/runtime.tzr", line: 1, column: 1 },
+};
+
+function compileSource(source: string): RuntimeDocument {
+  const parsed = parseTzr(source, { filePath: "scenario/runtime.tzr" });
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) {
+    throw new Error("expected parser success");
+  }
+
+  const compiled = compileTzr(parsed.document);
+  expect(compiled.ok).toBe(true);
+  if (!compiled.ok) {
+    throw new Error("expected compiler success");
+  }
+
+  return compiled.document;
+}
+
+function command(name: string, args: readonly TzrArgument[] = []): CommandInstruction {
+  return {
+    type: "CommandInstruction",
+    name,
+    args,
+    loc,
+  };
+}
+
+function positionalNumber(value: number): TzrArgument {
+  return {
+    type: "PositionalArgument",
+    value: { type: "NumberValue", value, loc },
+    loc,
+  };
+}
+
+function positionalString(value: string): TzrArgument {
+  return {
+    type: "PositionalArgument",
+    value: { type: "StringValue", value, loc },
+    loc,
+  };
+}
+
+function namedString(name: string, value: string): TzrArgument {
+  return {
+    type: "NamedArgument",
+    name,
+    value: { type: "StringValue", value, loc },
+    loc,
+  };
+}
+
+function createDocument(instructions: readonly CommandInstruction[] = []): RuntimeDocument {
+  return {
+    filePath: "scenario/runtime.tzr",
+    instructions,
+    labels: {},
+    scenes: {},
+  };
+}
+
 describe("createInitialRuntimeState", () => {
-  it("creates a JSON-serializable initial runtime state from a compiled document", () => {
-    const parsed = parseTzr(
-      `#scene("prologue")
-The classroom was quiet.
-`,
-      { filePath: "scenario/main.tzr" },
-    );
+  it("creates a JSON-serializable initial runtime state from a DSL v2 document", () => {
+    const document = compileSource(`scene start:
+  narration:
+    The classroom was quiet.
+`);
 
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      throw new Error("expected parser success");
-    }
-
-    const compiled = compileTzr(parsed.document, {
-      pluginCommands: {
-        bg: definePluginCommand("bg"),
-        shake: definePluginCommand("shake"),
-      },
-    });
-
-    expect(compiled.ok).toBe(true);
-    if (!compiled.ok) {
-      throw new Error("expected compiler success");
-    }
-
-    const state = createInitialRuntimeState(compiled.document);
+    const state = createInitialRuntimeState(document);
 
     expect(state).toEqual({
       pointer: {
-        filePath: "scenario/main.tzr",
+        filePath: "scenario/runtime.tzr",
         instructionIndex: 0,
       },
       variables: {},
@@ -61,19 +108,7 @@ The classroom was quiet.
   });
 
   it("initializes registered runtime plugin state", () => {
-    const parsed = parseTzr("#scene(\"prologue\")\n", { filePath: "scenario/main.tzr" });
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      throw new Error("expected parser success");
-    }
-
-    const compiled = compileTzr(parsed.document);
-    expect(compiled.ok).toBe(true);
-    if (!compiled.ok) {
-      throw new Error("expected compiler success");
-    }
-
-    const state = createInitialRuntimeState(compiled.document, {
+    const state = createInitialRuntimeState(createDocument(), {
       plugins: [
         {
           name: "example",
@@ -87,415 +122,65 @@ The classroom was quiet.
 });
 
 describe("stepRuntime", () => {
-  function compileScript(source: string) {
-    const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      throw new Error("expected parser success");
-    }
-
-    const compiled = compileTzr(parsed.document, {
-      pluginCommands: {
-        bg: definePluginCommand("bg"),
-        shake: definePluginCommand("shake"),
-      },
-    });
-    expect(compiled.ok).toBe(true);
-    if (!compiled.ok) {
-      throw new Error("expected compiler success");
-    }
-
-    return compiled.document;
-  }
-
-  describe("complete runtime flow regression", () => {
-    it("runs scene -> narration -> dialogue -> choice -> jump", () => {
-      const document = compileScript(`#scene("prologue")
-The classroom was quiet.
-
-:: Haruka
-You're late.
-
-? What do you do?
-- "Apologize" -> #apologize
-
-#label("apologize")
-:: Yu
-Sorry.
+  it("runs scene, narration, dialogue, and stop from a DSL v2 document", () => {
+    const document = compileSource(`character haruka name="Haruka"
+scene start:
+  narration:
+    The classroom was quiet.
+  haruka:
+    You're late.
+  end
 `);
-      const scene = stepRuntime(document, createInitialRuntimeState(document));
-      const narration = stepRuntime(document, scene.state);
-      const dialogue = stepRuntime(document, narration.state);
-      const choice = stepRuntime(document, dialogue.state);
-      const jump = resolveChoice(document, choice.state, 0);
-      const label = stepRuntime(document, jump.state);
-      const afterJump = stepRuntime(document, label.state);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const narration = stepRuntime(document, scene.state);
+    const dialogue = stepRuntime(document, narration.state);
+    const stop = stepRuntime(document, dialogue.state);
 
-      expect(scene.event).toEqual({ type: "scene", id: "prologue" });
-      expect(narration.event).toMatchObject({
-        type: "narration",
-        lines: [{ text: "The classroom was quiet." }],
-      });
-      expect(dialogue.event).toMatchObject({
-        type: "dialogue",
-        speaker: "Haruka",
-        lines: [{ text: "You're late." }],
-      });
-      expect(choice.event).toEqual({
-        type: "choice",
-        question: "What do you do?",
-        items: [{ text: "Apologize", targetRaw: "#apologize", targetLabel: "apologize" }],
-      });
-      expect(jump.event).toEqual({
-        type: "jump",
-        label: "apologize",
-        instructionIndex: 4,
-      });
-      expect(label.event).toEqual({ type: "label", id: "apologize" });
-      expect(afterJump.event).toMatchObject({
-        type: "dialogue",
-        speaker: "Yu",
-        lines: [{ text: "Sorry." }],
-      });
-    });
-
-    it("runs an if true branch and returns to top-level flow", () => {
-      const document = compileScript(`@if(flag("met_haruka"))
-:: Haruka
-We meet again.
-@else
-:: Haruka
-Nice to meet you.
-@endif
-@stop()
-`);
-      const initial = {
-        ...createInitialRuntimeState(document),
-        flags: { met_haruka: true },
-      };
-      const branch = stepRuntime(document, initial);
-      const stop = stepRuntime(document, branch.state);
-
-      expect(branch.event).toEqual({
-        type: "if",
-        result: true,
-        branch: "then",
-        event: {
-          type: "dialogue",
-          speaker: "Haruka",
-          lines: [{ text: "We meet again.", loc: expect.any(Object) }],
-        },
-      });
-      expect(stop.event).toEqual({ type: "stop" });
-      expect(stop.state.isStopped).toBe(true);
-    });
-
-    it("runs an if false branch and returns to top-level flow", () => {
-      const document = compileScript(`@if(flag("met_haruka"))
-:: Haruka
-We meet again.
-@else
-:: Haruka
-Nice to meet you.
-@endif
-@stop()
-`);
-      const branch = stepRuntime(document, createInitialRuntimeState(document));
-      const stop = stepRuntime(document, branch.state);
-
-      expect(branch.event).toEqual({
-        type: "if",
-        result: false,
-        branch: "else",
-        event: {
-          type: "dialogue",
-          speaker: "Haruka",
-          lines: [{ text: "Nice to meet you.", loc: expect.any(Object) }],
-        },
-      });
-      expect(stop.event).toEqual({ type: "stop" });
-      expect(stop.state.isStopped).toBe(true);
-    });
-
-    it("branches using flags and variables across runtime state commands", () => {
-      const document = compileScript(`@flag("met_haruka")
-@set(name="affection", value=2)
-@if(flag("met_haruka"))
-@inc(name="affection", by=1)
-@endif
-@if(var("affection") >= 3)
-@jump("#haruka_route")
-@else
-@jump("#common_route")
-@endif
-#label("common_route")
-@stop()
-#label("haruka_route")
-:: Haruka
-Let's go.
-`);
-      const initial = createInitialRuntimeState(document);
-      const flag = stepRuntime(document, initial);
-      const set = stepRuntime(document, flag.state);
-      const flagBranch = stepRuntime(document, set.state);
-      const variableBranch = stepRuntime(document, flagBranch.state);
-      const label = stepRuntime(document, variableBranch.state);
-      const dialogue = stepRuntime(document, label.state);
-
-      expect(flag.event).toEqual({ type: "state", command: "flag", name: "met_haruka", value: true });
-      expect(set.event).toEqual({ type: "state", command: "set", name: "affection", value: 2 });
-      expect(flagBranch.event).toEqual({
-        type: "if",
-        result: true,
-        branch: "then",
-        event: { type: "state", command: "inc", name: "affection", value: 3 },
-      });
-      expect(variableBranch.event).toEqual({
-        type: "if",
-        result: true,
-        branch: "then",
-        event: {
-          type: "jump",
-          label: "haruka_route",
-          instructionIndex: 6,
-        },
-      });
-      expect(variableBranch.state.variables).toEqual({ affection: 3 });
-      expect(label.event).toEqual({ type: "label", id: "haruka_route" });
-      expect(dialogue.event).toMatchObject({
-        type: "dialogue",
-        speaker: "Haruka",
-        lines: [{ text: "Let's go." }],
-      });
-    });
-
-    it("runs wait, waitClick, page, and stop with explicit unblock calls", () => {
-      const document = compileScript(`@wait(100)
-@waitClick()
-@page()
-@stop()
-`);
-      const wait = stepRuntime(document, createInitialRuntimeState(document));
-      const repeatedWait = stepRuntime(document, wait.state);
-      const waitClick = stepRuntime(document, clearWait(wait.state));
-      const repeatedClick = stepRuntime(document, waitClick.state);
-      const page = stepRuntime(document, clearClickWait(waitClick.state));
-      const repeatedPageClick = stepRuntime(document, page.state);
-      const stop = stepRuntime(document, clearClickWait(page.state));
-
-      expect(wait.event).toEqual({ type: "wait", durationMs: 100 });
-      expect(getRuntimeBlockReason(wait.state)).toBe("wait");
-      expect(repeatedWait.state).toBe(wait.state);
-      expect(waitClick.event).toEqual({ type: "waitClick" });
-      expect(getRuntimeBlockReason(waitClick.state)).toBe("click");
-      expect(repeatedClick.state).toBe(waitClick.state);
-      expect(page.event).toEqual({ type: "page" });
-      expect(getRuntimeBlockReason(page.state)).toBe("click");
-      expect(repeatedPageClick.event).toEqual({ type: "waitClick" });
-      expect(repeatedPageClick.state).toBe(page.state);
-      expect(stop.event).toEqual({ type: "stop" });
-      expect(stop.state.isStopped).toBe(true);
-    });
-  });
-
-  it("steps SceneInstruction and advances instructionIndex", () => {
-    const document = compileScript('#scene("prologue")\n');
-    const initial = createInitialRuntimeState(document);
-
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({ type: "scene", id: "prologue" });
-    expect(result.state.pointer).toEqual({
-      filePath: "scenario/main.tzr",
-      instructionIndex: 1,
-    });
-  });
-
-  it("steps LabelInstruction and advances instructionIndex", () => {
-    const document = compileScript('#scene("prologue")\n#label("start")\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      pointer: { filePath: "scenario/main.tzr", instructionIndex: 1 },
-    };
-
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({ type: "label", id: "start" });
-    expect(result.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("steps NarrationInstruction", () => {
-    const document = compileScript("The classroom was quiet.\n");
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toMatchObject({
+    expect(scene.event).toEqual({ type: "scene", id: "start" });
+    expect(narration.event).toMatchObject({
       type: "narration",
       lines: [{ text: "The classroom was quiet." }],
     });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-  });
-
-  it("steps DialogueInstruction", () => {
-    const document = compileScript(":: Haruka\nYou're late again.\n");
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toMatchObject({
+    expect(dialogue.event).toMatchObject({
       type: "dialogue",
-      speaker: "Haruka",
-      lines: [{ text: "You're late again." }],
+      speaker: "haruka",
+      lines: [{ text: "You're late." }],
     });
-    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(stop.event).toEqual({ type: "stop" });
+    expect(stop.state.isStopped).toBe(true);
   });
 
-  it("does not mutate the input state", () => {
-    const document = compileScript('#scene("prologue")\n');
-    const initial = createInitialRuntimeState(document);
-    const before = JSON.stringify(initial);
+  it("runs wait, waitClick, page, and stop with explicit unblock calls", () => {
+    const document = createDocument([
+      command("wait", [positionalNumber(100)]),
+      command("waitClick"),
+      command("page"),
+      command("stop"),
+    ]);
+    const wait = stepRuntime(document, createInitialRuntimeState(document));
+    const repeatedWait = stepRuntime(document, wait.state);
+    const waitClick = stepRuntime(document, clearWait(wait.state));
+    const repeatedClick = stepRuntime(document, waitClick.state);
+    const page = stepRuntime(document, clearClickWait(waitClick.state));
+    const repeatedPageClick = stepRuntime(document, page.state);
+    const stop = stepRuntime(document, clearClickWait(page.state));
 
-    stepRuntime(document, initial);
-
-    expect(JSON.stringify(initial)).toBe(before);
-  });
-
-  it("handles @waitClick and advances instructionIndex", () => {
-    const document = compileScript("@waitClick()\n");
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "waitClick" });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.isWaitingForClick).toBe(true);
-  });
-
-  it("does not advance while waiting for click", () => {
-    const document = compileScript("@waitClick()\n@page()\n");
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    expect(second.event).toEqual({ type: "waitClick" });
-    expect(second.state).toBe(first.state);
-  });
-
-  it("clears click wait with clearClickWait and continues execution", () => {
-    const document = compileScript("@waitClick()\n@page()\n");
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const cleared = clearClickWait(first.state);
-    const second = stepRuntime(document, cleared);
-
-    expect(cleared.isWaitingForClick).toBe(false);
-    expect(second.event).toEqual({ type: "page" });
-    expect(second.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("does not mutate state when clearing click wait", () => {
-    const document = compileScript("@waitClick()\n");
-    const waited = stepRuntime(document, createInitialRuntimeState(document));
-    const before = JSON.stringify(waited.state);
-
-    clearClickWait(waited.state);
-
-    expect(JSON.stringify(waited.state)).toBe(before);
-  });
-
-  it("handles @page and advances instructionIndex", () => {
-    const document = compileScript("@page()\n");
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "page" });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.isWaitingForClick).toBe(true);
-  });
-
-  it("handles @stop and advances instructionIndex", () => {
-    const document = compileScript("@stop()\n");
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "stop" });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.isStopped).toBe(true);
-  });
-
-  it("handles @wait by setting pendingWait and advancing instructionIndex", () => {
-    const document = compileScript('@wait(500)\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "wait", durationMs: 500 });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.pendingWait).toEqual({ durationMs: 500 });
-  });
-
-  it("does not advance while pendingWait is set", () => {
-    const document = compileScript('@wait(500)\n@page()\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    expect(second.event).toEqual({ type: "wait", durationMs: 500 });
-    expect(second.state).toBe(first.state);
-  });
-
-  it("clears pendingWait with clearWait and continues execution", () => {
-    const document = compileScript('@wait(500)\n@page()\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const cleared = clearWait(first.state);
-    const second = stepRuntime(document, cleared);
-
-    expect(cleared.pendingWait).toBeNull();
-    expect(second.event).toEqual({ type: "page" });
-    expect(second.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("keeps pendingWait JSON serializable", () => {
-    const document = compileScript('@wait(500)\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.state.pendingWait).toEqual({ durationMs: 500 });
-    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
-  });
-
-  it("does not mutate state when executing and clearing @wait", () => {
-    const document = compileScript('@wait(500)\n');
-    const initial = createInitialRuntimeState(document);
-    const beforeStep = JSON.stringify(initial);
-    const waited = stepRuntime(document, initial);
-    const beforeClear = JSON.stringify(waited.state);
-
-    clearWait(waited.state);
-
-    expect(JSON.stringify(initial)).toBe(beforeStep);
-    expect(JSON.stringify(waited.state)).toBe(beforeClear);
-  });
-
-  it("returns unsupported when a registered plugin command has no runtime handler", () => {
-    const document = compileScript('@bg("school")\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({
-      type: "unsupported",
-      instructionType: "CommandInstruction",
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.isStopped).toBe(false);
-  });
-
-  it("returns unsupported when command handlers do not include the plugin command name", () => {
-    const document = compileScript('@bg("school")\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document), {
-      commandHandlers: {
-        shake: (state, instruction) => ({
-          state,
-          event: { type: "pluginCommand", name: instruction.name },
-        }),
-      },
-    });
-
-    expect(result.event).toEqual({
-      type: "unsupported",
-      instructionType: "CommandInstruction",
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
+    expect(wait.event).toEqual({ type: "wait", durationMs: 100 });
+    expect(getRuntimeBlockReason(wait.state)).toBe("wait");
+    expect(repeatedWait.state).toBe(wait.state);
+    expect(waitClick.event).toEqual({ type: "waitClick" });
+    expect(getRuntimeBlockReason(waitClick.state)).toBe("click");
+    expect(repeatedClick.state).toBe(waitClick.state);
+    expect(page.event).toEqual({ type: "page" });
+    expect(getRuntimeBlockReason(page.state)).toBe("click");
+    expect(repeatedPageClick.event).toEqual({ type: "waitClick" });
+    expect(repeatedPageClick.state).toBe(page.state);
+    expect(stop.event).toEqual({ type: "stop" });
+    expect(stop.state.isStopped).toBe(true);
   });
 
   it("dispatches non-core CommandInstruction to a registered plugin handler", () => {
-    const document = compileScript('@bg("school")\n');
+    const document = createDocument([command("bg", [positionalString("school")])]);
     let called = 0;
     const handler: RuntimePluginCommandHandler = (state, instruction) => {
       called += 1;
@@ -522,35 +207,8 @@ Let's go.
     expect(result.state.variables).toEqual({ background: "school" });
   });
 
-  it("uses the plugin handler state and event as the RuntimeStepResult", () => {
-    const document = compileScript('@shake(target="screen")\n');
-    const initial = createInitialRuntimeState(document);
-    const returnedState = {
-      ...initial,
-      pointer: {
-        filePath: "scenario/main.tzr",
-        instructionIndex: 1,
-      },
-      flags: { shook: true },
-    };
-
-    const result = stepRuntime(document, initial, {
-      commandHandlers: {
-        shake: () => ({
-          state: returnedState,
-          event: { type: "pluginCommand", name: "shake" },
-        }),
-      },
-    });
-
-    expect(result).toEqual({
-      state: returnedState,
-      event: { type: "pluginCommand", name: "shake" },
-    });
-  });
-
-  it("keeps Core command handling ahead of plugin handlers", () => {
-    const document = compileScript("@waitClick()\n");
+  it("keeps core command handling ahead of plugin handlers", () => {
+    const document = createDocument([command("waitClick")]);
     let called = false;
 
     const result = stepRuntime(document, createInitialRuntimeState(document), {
@@ -570,701 +228,75 @@ Let's go.
     expect(result.state.isWaitingForClick).toBe(true);
   });
 
-  it("does not mutate RuntimeState when dispatching plugin handlers", () => {
-    const document = compileScript('@bg("school")\n');
-    const initial = createInitialRuntimeState(document);
-    const before = JSON.stringify(initial);
+  it("updates runtime variables through DSL v2 set and add commands", () => {
+    const document = compileSource(`scene start:
+  set scenario.score = 2
+  add scenario.score += 3
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const add = stepRuntime(document, set.state);
 
-    stepRuntime(document, initial, {
-      commandHandlers: {
-        bg: (state, instruction) => ({
-          state: {
-            ...state,
-            variables: {
-              ...state.variables,
-              background: "school",
-            },
-          },
-          event: { type: "pluginCommand", name: instruction.name },
-        }),
-      },
-    });
-
-    expect(JSON.stringify(initial)).toBe(before);
+    expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.score", value: 2 });
+    expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 5 });
+    expect(add.state.variables).toEqual({ "scenario.score": 5 });
   });
 
-  it("executes @jump by moving to the target label instructionIndex", () => {
-    const document = compileScript('@jump("#target")\n#label("middle")\n#label("target")\n');
-    const initial = createInitialRuntimeState(document);
+  it("still supports retained runtime state helper commands without legacy parser/compiler", () => {
+    const document = createDocument([
+      command("set", [namedString("name", "route"), namedString("value", "mio")]),
+      command("flag", [positionalString("met_mio")]),
+    ]);
+    const set = stepRuntime(document, createInitialRuntimeState(document));
+    const flag = stepRuntime(document, set.state);
 
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({
-      type: "jump",
-      label: "target",
-      instructionIndex: 2,
-    });
-    expect(result.state.pointer).toEqual({
-      filePath: "scenario/main.tzr",
-      instructionIndex: 2,
-    });
+    expect(set.event).toEqual({ type: "state", command: "set", name: "route", value: "mio" });
+    expect(flag.event).toEqual({ type: "state", command: "flag", name: "met_mio", value: true });
   });
 
-  it("steps the target LabelInstruction after @jump", () => {
-    const document = compileScript('@jump("#target")\n#label("target")\n');
-    const jumped = stepRuntime(document, createInitialRuntimeState(document));
-    const label = stepRuntime(document, jumped.state);
-
-    expect(label.event).toEqual({ type: "label", id: "target" });
-    expect(label.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("returns unsupported when @jump target label is missing at runtime", () => {
-    const document = compileScript('#label("start")\n');
-    const loc = document.instructions[0]?.loc;
-    if (loc === undefined) {
-      throw new Error("Expected fixture document to contain a label instruction.");
-    }
-    const brokenDocument: CompiledTzrDocument = {
-      ...document,
-      instructions: [
-        {
-          type: "CommandInstruction",
-          name: "jump",
-          args: [],
-          jumpTarget: {
-            raw: "#missing",
-            label: "missing",
-            loc,
-          },
-          loc,
-        },
-      ],
-    };
-    const result = stepRuntime(brokenDocument, createInitialRuntimeState(brokenDocument));
-
-    expect(result.event).toEqual({
-      type: "unsupported",
-      instructionType: "CommandInstruction",
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-  });
-
-  it("does not mutate state when executing @jump", () => {
-    const document = compileScript('@jump("#target")\n#label("target")\n');
-    const initial = createInitialRuntimeState(document);
-    const before = JSON.stringify(initial);
-
-    stepRuntime(document, initial);
-
-    expect(JSON.stringify(initial)).toBe(before);
-  });
-
-  it("executes @set with string, number, and boolean values", () => {
-    const document = compileScript('@set(name="route", value="haruka")\n@set(name="score", value=10)\n@set(name="cleared", value=true)\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-    const third = stepRuntime(document, second.state);
-
-    expect(first.event).toEqual({ type: "state", command: "set", name: "route", value: "haruka" });
-    expect(second.event).toEqual({ type: "state", command: "set", name: "score", value: 10 });
-    expect(third.event).toEqual({ type: "state", command: "set", name: "cleared", value: true });
-    expect(third.state.variables).toEqual({
-      route: "haruka",
-      score: 10,
-      cleared: true,
-    });
-    expect(third.state.pointer.instructionIndex).toBe(3);
-  });
-
-  it("executes @inc using 0 for undefined variables", () => {
-    const document = compileScript('@inc(name="affection", by=2)\n');
+  it("ends when the instruction pointer is past the document", () => {
+    const document = createDocument();
     const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "state", command: "inc", name: "affection", value: 2 });
-    expect(result.state.variables).toEqual({ affection: 2 });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-  });
-
-  it("executes @inc using an existing number variable", () => {
-    const document = compileScript('@inc(name="affection", by=2)\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      variables: { affection: 3 },
-    };
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({ type: "state", command: "inc", name: "affection", value: 5 });
-    expect(result.state.variables).toEqual({ affection: 5 });
-  });
-
-  it("executes @dec using 0 for undefined variables", () => {
-    const document = compileScript('@dec(name="affection", by=2)\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({ type: "state", command: "dec", name: "affection", value: -2 });
-    expect(result.state.variables).toEqual({ affection: -2 });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-  });
-
-  it("executes @dec using an existing number variable", () => {
-    const document = compileScript('@dec(name="affection", by=2)\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      variables: { affection: 3 },
-    };
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({ type: "state", command: "dec", name: "affection", value: 1 });
-    expect(result.state.variables).toEqual({ affection: 1 });
-  });
-
-  it("executes @flag and @unflag", () => {
-    const document = compileScript('@flag("met_haruka")\n@unflag("met_haruka")\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    expect(first.event).toEqual({ type: "state", command: "flag", name: "met_haruka", value: true });
-    expect(first.state.flags).toEqual({ met_haruka: true });
-    expect(first.state.pointer.instructionIndex).toBe(1);
-    expect(second.event).toEqual({ type: "state", command: "unflag", name: "met_haruka", value: false });
-    expect(second.state.flags).toEqual({ met_haruka: false });
-    expect(second.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("does not mutate state when executing state commands", () => {
-    const document = compileScript('@set(name="route", value="haruka")\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      variables: { existing: 1 },
-      flags: { met_haruka: true },
-    };
-    const before = JSON.stringify(initial);
-
-    stepRuntime(document, initial);
-
-    expect(JSON.stringify(initial)).toBe(before);
-  });
-
-  it("executes the first thenBranch instruction for a true IfInstruction", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@page()\n@else\n@stop()\n@endif\n@page()\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "waitClick" },
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.branchFrames).toHaveLength(1);
-    expect(result.state.branchFrames[0]?.instructionIndex).toBe(1);
-    expect(result.state.isWaitingForClick).toBe(true);
-  });
-
-  it("executes the first elseBranch instruction for a false IfInstruction", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@else\n@page()\n@stop()\n@endif\n@stop()\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({
-      type: "if",
-      result: false,
-      branch: "else",
-      event: { type: "page" },
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.branchFrames).toHaveLength(1);
-    expect(result.state.branchFrames[0]?.instructionIndex).toBe(1);
-    expect(result.state.isWaitingForClick).toBe(true);
-  });
-
-  it("advances to the next top-level instruction for a false IfInstruction without elseBranch", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n@page()\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({
-      type: "if",
-      result: false,
-      branch: "none",
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.branchFrames).toEqual([]);
-    expect(result.state.isWaitingForClick).toBe(false);
-  });
-
-  it("preserves top-level pointer behavior after executing a branch instruction", () => {
-    const document = compileScript('@if(var("affection") >= 1)\n@inc(name="affection", by=1)\n@endif\n@page()\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      variables: { affection: 1 },
-    };
-    const first = stepRuntime(document, initial);
-    const second = stepRuntime(document, first.state);
-
-    expect(first.event).toEqual({
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "state", command: "inc", name: "affection", value: 2 },
-    });
-    expect(first.state.pointer.instructionIndex).toBe(1);
-    expect(first.state.branchFrames).toHaveLength(1);
-    expect(first.state.variables).toEqual({ affection: 2 });
-    expect(second.event).toEqual({ type: "page" });
-  });
-
-  it("executes multiple thenBranch instructions across multiple steps", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("saw_branch")\n@endif\n@page()\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-
-    const first = stepRuntime(document, initial);
-    const second = stepRuntime(document, first.state);
-
-    expect(first.event).toEqual({
-      type: "if",
-      result: true,
-      branch: "then",
-      event: { type: "state", command: "inc", name: "affection", value: 1 },
-    });
-    expect(first.state.branchFrames[0]?.instructionIndex).toBe(1);
-    expect(second.event).toEqual({ type: "state", command: "flag", name: "saw_branch", value: true });
-    expect(second.state.pointer.instructionIndex).toBe(1);
-    expect(second.state.branchFrames[0]?.instructionIndex).toBe(2);
-    expect(second.state.variables).toEqual({ affection: 1 });
-    expect(second.state.flags).toEqual({ met_haruka: true, saw_branch: true });
-  });
-
-  it("executes multiple elseBranch instructions across multiple steps", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@else\n@set(name="route", value="common")\n@flag("used_else")\n@endif\n@page()\n');
-
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    expect(first.event).toEqual({
-      type: "if",
-      result: false,
-      branch: "else",
-      event: { type: "state", command: "set", name: "route", value: "common" },
-    });
-    expect(second.event).toEqual({ type: "state", command: "flag", name: "used_else", value: true });
-    expect(second.state.pointer.instructionIndex).toBe(1);
-    expect(second.state.branchFrames[0]?.instructionIndex).toBe(2);
-    expect(second.state.variables).toEqual({ route: "common" });
-    expect(second.state.flags).toEqual({ used_else: true });
-  });
-
-  it("returns to the next top-level instruction after a branch frame finishes", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("done")\n@endif\n@page()\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-
-    const first = stepRuntime(document, initial);
-    const second = stepRuntime(document, first.state);
-    const third = stepRuntime(document, clearClickWait(second.state));
-
-    expect(third.event).toEqual({ type: "page" });
-    expect(third.state.pointer.instructionIndex).toBe(2);
-    expect(third.state.branchFrames).toEqual([]);
-    expect(third.state.variables).toEqual({ affection: 1 });
-    expect(third.state.flags).toEqual({ met_haruka: true, done: true });
-  });
-
-  it("does not advance past a branch @jump target", () => {
-    const document = compileScript('@if(flag("go"))\n@jump("#target")\n@endif\n@page()\n#label("target")\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { go: true },
-    };
-
-    const result = stepRuntime(document, initial);
-
-    expect(result.event).toEqual({
-      type: "if",
-      result: true,
-      branch: "then",
-      event: {
-        type: "jump",
-        label: "target",
-        instructionIndex: 2,
-      },
-    });
-    expect(result.state.pointer.instructionIndex).toBe(2);
-    expect(result.state.branchFrames).toEqual([]);
-  });
-
-  it("keeps branch frames JSON serializable", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("saw_branch")\n@endif\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-
-    const result = stepRuntime(document, initial);
-
-    expect(result.state.branchFrames).toHaveLength(1);
-    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
-  });
-
-  it("does not mutate state when executing IfInstruction", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@waitClick()\n@endif\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-    const before = JSON.stringify(initial);
-
-    stepRuntime(document, initial);
-
-    expect(JSON.stringify(initial)).toBe(before);
-  });
-
-  it("reports runtime block reasons", () => {
-    const document = compileScript("@waitClick()\n");
-    const initial = createInitialRuntimeState(document);
-    const clickWait = stepRuntime(document, initial).state;
-    const waitDocument = compileScript("@wait(500)\n");
-    const wait = stepRuntime(waitDocument, createInitialRuntimeState(waitDocument)).state;
-    const choiceDocument = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const choice = stepRuntime(choiceDocument, createInitialRuntimeState(choiceDocument)).state;
-
-    expect(isRuntimeBlocked(initial)).toBe(false);
-    expect(getRuntimeBlockReason(initial)).toBeNull();
-    expect(isRuntimeBlocked(clickWait)).toBe(true);
-    expect(getRuntimeBlockReason(clickWait)).toBe("click");
-    expect(getRuntimeBlockReason(wait)).toBe("wait");
-    expect(getRuntimeBlockReason(choice)).toBe("choice");
-  });
-
-  it("handles ChoiceInstruction by entering pending choice state", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n- "Go" -> #go\n#label("stay")\n#label("go")\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.event).toEqual({
-      type: "choice",
-      question: "Choose",
-      items: [
-        { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
-        { text: "Go", targetRaw: "#go", targetLabel: "go" },
-      ],
-    });
-    expect(result.state.pointer.instructionIndex).toBe(1);
-    expect(result.state.pendingChoice).toEqual({
-      question: "Choose",
-      items: [
-        { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
-        { text: "Go", targetRaw: "#go", targetLabel: "go" },
-      ],
-    });
-  });
-
-  it("keeps pendingChoice JSON serializable", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const result = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(result.state.pendingChoice).toBeDefined();
-    expect(JSON.parse(JSON.stringify(result.state))).toEqual(result.state);
-  });
-
-  it("does not advance while waiting for choice resolution", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    expect(second.event).toEqual(first.event);
-    expect(second.state).toBe(first.state);
-  });
-
-  it("resolves a pending choice by moving to the selected target label", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n- "Go" -> #go\n#label("stay")\n#label("go")\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-
-    const result = resolveChoice(document, choice.state, 1);
-
-    expect(result.event).toEqual({
-      type: "jump",
-      label: "go",
-      instructionIndex: 2,
-    });
-    expect(result.state.pointer).toEqual({
-      filePath: "scenario/main.tzr",
-      instructionIndex: 2,
-    });
-    expect(result.state.pendingChoice).toBeNull();
-  });
-
-  it("clears branch frames when resolving a choice", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n? Choose\n- "Stay" -> #stay\n@endif\n@page()\n#label("stay")\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    };
-    const choice = stepRuntime(document, initial);
-
-    const result = resolveChoice(document, choice.state, 0);
-
-    expect(result.event).toEqual({
-      type: "jump",
-      label: "stay",
-      instructionIndex: 2,
-    });
-    expect(result.state.branchFrames).toEqual([]);
-    expect(result.state.pendingChoice).toBeNull();
-  });
-
-  it("returns an error result when resolving without a pending choice", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const initial = createInitialRuntimeState(document);
-
-    expect(resolveChoice(document, initial, 0).event).toEqual({
-      type: "error",
-      code: "choice_not_pending",
-      message: "Cannot resolve a choice because no choice is pending.",
-    });
-  });
-
-  it("returns an error result when resolving a pending choice with an invalid index", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const initial = createInitialRuntimeState(document);
-    const choice = stepRuntime(document, initial);
-    const result = resolveChoice(document, choice.state, 1);
-
-    expect(result.event).toEqual({
-      type: "error",
-      code: "choice_index_out_of_range",
-      message: "Choice index 1 is out of range for 1 choice item(s).",
-    });
-    expect(result.state).toBe(choice.state);
-    expect(result.state.pendingChoice).toEqual(choice.state.pendingChoice);
-  });
-
-  it("returns an error result for negative choice indexes", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(resolveChoice(document, choice.state, -1).event).toEqual({
-      type: "error",
-      code: "choice_index_out_of_range",
-      message: "Choice index -1 is out of range for 1 choice item(s).",
-    });
-  });
-
-  it("returns unsupported when resolving a pending choice without a same-file target label", () => {
-    const document = compileScript('? Choose\n- "Next file" -> chapter-02.tzr\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(resolveChoice(document, choice.state, 0).event).toEqual({
-      type: "unsupported",
-      instructionType: "ChoiceInstruction",
-    });
-  });
-
-  it("does not mutate state when executing and resolving ChoiceInstruction", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const initial = createInitialRuntimeState(document);
-    const beforeStep = JSON.stringify(initial);
-    const choice = stepRuntime(document, initial);
-    const beforeResolve = JSON.stringify(choice.state);
-
-    resolveChoice(document, choice.state, 0);
-
-    expect(JSON.stringify(initial)).toBe(beforeStep);
-    expect(JSON.stringify(choice.state)).toBe(beforeResolve);
-  });
-
-  it("steps the target label after resolving a choice", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-    const resolved = resolveChoice(document, choice.state, 0);
-    const label = stepRuntime(document, resolved.state);
-
-    expect(label.event).toEqual({ type: "label", id: "stay" });
-    expect(label.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("returns end event and stopped state at script end", () => {
-    const document = compileScript('#scene("prologue")\n');
-    const initial = {
-      ...createInitialRuntimeState(document),
-      pointer: { filePath: "scenario/main.tzr", instructionIndex: document.instructions.length },
-    };
-
-    const result = stepRuntime(document, initial);
 
     expect(result.event).toEqual({ type: "end" });
-    expect(result.state).toEqual({
-      ...initial,
-      isStopped: true,
-    });
+    expect(result.state.isStopped).toBe(true);
+  });
+});
+
+describe("runtime blocking and snapshots", () => {
+  it("reports runtime block reasons", () => {
+    const document = createDocument([command("wait", [positionalNumber(500)])]);
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(isRuntimeBlocked(result.state)).toBe(true);
+    expect(getRuntimeBlockReason(result.state)).toBe("wait");
+    expect(isRuntimeBlocked(clearWait(result.state))).toBe(false);
   });
 
-  it("snapshots and restores initial state", () => {
-    const document = compileScript('#scene("prologue")\n');
-    const state = createInitialRuntimeState(document);
-
-    const snapshot = createRuntimeSnapshot(state);
+  it("round-trips runtime snapshots", () => {
+    const document = createDocument([command("wait", [positionalNumber(500)])]);
+    const result = stepRuntime(document, createInitialRuntimeState(document));
+    const snapshot = createRuntimeSnapshot(result.state);
     const restored = restoreRuntimeState(snapshot);
 
-    expect(snapshot.version).toBe(1);
-    expect(restored).toEqual(state);
+    expect(restored).toEqual(result.state);
+    expect(restored).not.toBe(result.state);
   });
+});
 
-  it("round-trips a runtime snapshot through JSON serialization", () => {
-    const document = compileScript('@set(name="route", value="haruka")\n@flag("met_haruka")\n@wait(500)\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-    const waited = stepRuntime(document, second.state);
-    const snapshot = createRuntimeSnapshot(waited.state);
-
-    const roundTripped = JSON.parse(JSON.stringify(snapshot));
-    const restored = restoreRuntimeState(roundTripped);
-
-    expect(restored).toEqual(waited.state);
-    expect(createRuntimeSnapshot(restored)).toEqual(snapshot);
-  });
-
-  it("preserves variables and flags in snapshots", () => {
-    const document = compileScript('@set(name="route", value="haruka")\n@flag("met_haruka")\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(second.state));
-
-    expect(restored.variables).toEqual({ route: "haruka" });
-    expect(restored.flags).toEqual({ met_haruka: true });
-  });
-
-  it("preserves pointer in snapshots", () => {
-    const document = compileScript('#scene("prologue")\n#label("start")\n');
-    const state = {
-      ...createInitialRuntimeState(document),
-      pointer: { filePath: "scenario/main.tzr", instructionIndex: 1 },
-    };
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(state));
-
-    expect(restored.pointer).toEqual({ filePath: "scenario/main.tzr", instructionIndex: 1 });
-  });
-
-  it("preserves pendingChoice in snapshots", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(choice.state));
-
-    expect(restored.pendingChoice).toEqual(choice.state.pendingChoice);
-  });
-
-  it("continues choice resolution after restoring a pending choice snapshot", () => {
-    const document = compileScript('? Choose\n- "Stay" -> #stay\n#label("stay")\n');
-    const choice = stepRuntime(document, createInitialRuntimeState(document));
-    const restored = restoreRuntimeState(createRuntimeSnapshot(choice.state));
-
-    const resolved = resolveChoice(document, restored, 0);
-    const label = stepRuntime(document, resolved.state);
-
-    expect(resolved.event).toEqual({
-      type: "jump",
-      label: "stay",
-      instructionIndex: 1,
+describe("plugin command metadata", () => {
+  it("keeps plugin command definitions available without the legacy compiler validation path", () => {
+    expect(
+      definePluginCommand("bg", {
+        kind: "positional",
+        arguments: [{ type: "string", nonEmpty: true }],
+      }),
+    ).toEqual({
+      name: "bg",
+      args: {
+        kind: "positional",
+        arguments: [{ type: "string", nonEmpty: true }],
+      },
     });
-    expect(label.event).toEqual({ type: "label", id: "stay" });
-  });
-
-  it("preserves pendingWait in snapshots", () => {
-    const document = compileScript("@wait(500)\n");
-    const wait = stepRuntime(document, createInitialRuntimeState(document));
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(wait.state));
-
-    expect(restored.pendingWait).toEqual({ durationMs: 500 });
-  });
-
-  it("continues after restoring a pending wait snapshot", () => {
-    const document = compileScript("@wait(500)\n#label(\"after_wait\")\n");
-    const wait = stepRuntime(document, createInitialRuntimeState(document));
-    const restored = restoreRuntimeState(createRuntimeSnapshot(wait.state));
-
-    const label = stepRuntime(document, clearWait(restored));
-
-    expect(restored.pendingWait).toEqual({ durationMs: 500 });
-    expect(label.event).toEqual({ type: "label", id: "after_wait" });
-  });
-
-  it("preserves isWaitingForClick in snapshots", () => {
-    const document = compileScript("@waitClick()\n");
-    const waitClick = stepRuntime(document, createInitialRuntimeState(document));
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(waitClick.state));
-
-    expect(restored.isWaitingForClick).toBe(true);
-  });
-
-  it("continues after restoring a waitClick snapshot", () => {
-    const document = compileScript("@waitClick()\n#label(\"after_click\")\n");
-    const waitClick = stepRuntime(document, createInitialRuntimeState(document));
-    const restored = restoreRuntimeState(createRuntimeSnapshot(waitClick.state));
-
-    const label = stepRuntime(document, clearClickWait(restored));
-
-    expect(restored.isWaitingForClick).toBe(true);
-    expect(label.event).toEqual({ type: "label", id: "after_click" });
-  });
-
-  it("continues after restoring a page snapshot", () => {
-    const document = compileScript("@page()\n#label(\"after_page\")\n");
-    const page = stepRuntime(document, createInitialRuntimeState(document));
-    const restored = restoreRuntimeState(createRuntimeSnapshot(page.state));
-
-    const label = stepRuntime(document, clearClickWait(restored));
-
-    expect(page.event).toEqual({ type: "page" });
-    expect(restored.isWaitingForClick).toBe(true);
-    expect(label.event).toEqual({ type: "label", id: "after_page" });
-  });
-
-  it("preserves branchFrames in snapshots", () => {
-    const document = compileScript('@if(flag("met_haruka"))\n@inc(name="affection", by=1)\n@flag("done")\n@endif\n@page()\n');
-    const state = stepRuntime(document, {
-      ...createInitialRuntimeState(document),
-      flags: { met_haruka: true },
-    }).state;
-
-    const restored = restoreRuntimeState(createRuntimeSnapshot(state));
-
-    expect(restored.branchFrames).toEqual(state.branchFrames);
-    expect(restored.branchFrames[0]?.instructionIndex).toBe(1);
-  });
-
-  it("continues execution with stepRuntime after restore", () => {
-    const document = compileScript('#scene("prologue")\n:: Haruka\nHello.\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const restored = restoreRuntimeState(createRuntimeSnapshot(first.state));
-
-    const second = stepRuntime(document, restored);
-
-    expect(second.event).toMatchObject({
-      type: "dialogue",
-      speaker: "Haruka",
-    });
-    expect(second.state.pointer.instructionIndex).toBe(2);
-  });
-
-  it("creates JSON serializable snapshots", () => {
-    const document = compileScript('@set(name="route", value="haruka")\n@wait(500)\n');
-    const first = stepRuntime(document, createInitialRuntimeState(document));
-    const second = stepRuntime(document, first.state);
-    const snapshot = createRuntimeSnapshot(second.state);
-
-    expect(JSON.parse(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 });

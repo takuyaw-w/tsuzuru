@@ -6,32 +6,34 @@ Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノ�
 
 ## 現在のステータス
 
-Tsuzuru は v0.1 scope complete / stabilization complete の状態です。
+Tsuzuru は現在、`feature/new-dsl` ブランチで DSL v2 へ移行中です。
 
-v0.1 で予定していたコア設計、最小機能、examples、README / docs、quality gates は完了確認済みです。ただし、production ready な完成製品ではなく、v0.1 範囲を固定した初期実装です。
+DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。
+
+旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
+
+このリポジトリは production ready な完成製品ではなく、初期実装と DSL v2 移行を進めている段階です。
 
 実装済みの主な要素:
 
-- `.tzr` パーサー
-- compiler
+- DSL v2 parser / AST
+- DSL v2 compiler for a practical runnable subset
 - runtime
 - runtime event
-- choice / jump / if
-- variables / flags
-- plugin command registration / validation
-- macro expansion
+- scene jump / body choice / if
+- variables
+- plugin command metadata / runtime dispatch
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
-- Preact basic example
-- basic save/load example
-- DSL / runtime / plugin / macro docs
+- DSL v2 basic example
+- DSL v2 design notes
+- legacy cleanup plan
 
 未実装または post-v0.1 候補:
 
 - `create-tsuzuru`
 - `@tsuzuru/vite`
 - cross-file jump existence validation
-- macro argument schema validation
 - save data migration / compatibility metadata
 - GUI editor
 - TyranoScript / KAG / Ren'Py 互換
@@ -62,7 +64,7 @@ runtime behavior、rendering、plugins、reusable logic は TypeScript に置く
 @if(calcSomething())
 ```
 
-代わりに、シナリオ側では制約された DSL を使い、拡張は TypeScript plugin / macro として実装します。
+代わりに、シナリオ側では制約された DSL を使い、拡張は TypeScript plugin と runtime handler として実装します。macro API は削除済みで、DSL v2 の current feature ではありません。
 
 ## パッケージ構成
 
@@ -74,10 +76,11 @@ packages/
   preact/
 
 examples/
-  basic/
-  preact-basic/
+  dsl-v2-basic/
 
 docs/
+  design/
+  plans/
   decisions/
 ```
 
@@ -88,15 +91,14 @@ Tsuzuru の中核パッケージです。
 主な責務:
 
 - `.tzr` parser
-- AST
+- DSL v2 AST
 - compiler
 - IR
 - runtime
-- condition evaluation
-- jump / choice
-- variables / flags
-- plugin command validation
-- macro expansion
+- DSL v2 condition evaluation
+- scene jump / body choice
+- variables
+- plugin command metadata / runtime dispatch
 - runtime snapshot / restore
 
 `@tsuzuru/core` は Preact、DOM、CSS、Vite、browser storage に依存しません。
@@ -121,78 +123,58 @@ Preact 向け adapter です。
 
 ## Quickstart
 
-v0.1 では `create-tsuzuru` は作りません。project creation path は manual setup と既存 examples です。clean checkout から現在の実装を試すには、リポジトリルートで以下を実行します。
+DSL v2 の current runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
 
 ```sh
-pnpm install
-pnpm --filter @tsuzuru/example-basic start
-pnpm --filter @tsuzuru/example-preact-basic dev
+pnpm install --frozen-lockfile
+pnpm --filter @tsuzuru/example-dsl-v2-basic dev
 ```
 
-`examples/basic` は Node 上で `@tsuzuru/core` の parse / compile / runtime 実行を確認します。`examples/preact-basic` は Vite + Preact で `useRuntime`、`RuntimeView`、choice、wait、plugin command、localStorage save/load を確認します。
+ビルド確認:
 
-新規プロジェクトを作る場合は、v0.1 では `examples/preact-basic` の構成を参考に手動で Vite + Preact project を作り、`@tsuzuru/core` と `@tsuzuru/preact` を組み込んでください。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。`npm create tsuzuru` と `@tsuzuru/vite` は post-v0.1 候補です。
+```sh
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
+```
 
-## DSL の例
+`examples/dsl-v2-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`.tzr` は以下のような構文です。
+`create-tsuzuru` と `@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
+
+## DSL v2 の例
+
+DSL v2 は indentation-based なシナリオ構文です。
 
 ```txt
-#scene("prologue")
+character mio name="美緒"
 
-@bg("school_evening")
+scene start:
+  bg station
+  bgm daily_theme
+  show mio_smile at center
 
-The classroom was unusually quiet.
+  mio:
+    遅いよ。
 
-:: Haruka
-You're late again.
+  choice "どうする？":
+    "手帳を見る" if scenario.hasNotebook:
+      jump notebook
 
-:: Yu
-I made it, so it's fine.
-
-? What do you do?
-- "Apologize" -> #apologize
-- "Make a joke" -> #joke
-
-#label("apologize")
-
-:: Yu
-Sorry. I'll come earlier tomorrow.
-
-@inc(name="haruka_affection", by=1)
-@jump("#after_choice")
-
-#label("joke")
-
-:: Yu
-This was a perfectly calculated arrival.
-
-@dec(name="haruka_affection", by=1)
-@jump("#after_choice")
-
-#label("after_choice")
-
-@if(var("haruka_affection") >= 1)
-:: Haruka
-At least you apologized.
-@else
-:: Haruka
-You never change.
-@endif
+    "立ち去る":
+      jump leave
 ```
 
-主な記号の意味:
+API surface:
 
-| 記号 | 意味 |
-|---|---|
-| `#scene(...)` | scene declaration |
-| `#label(...)` | jump target |
-| `:: Speaker` | speaker block |
-| `@command(...)` | runtime command |
-| `$macro(...)` | compile-time macro |
-| `?` | choice block |
-| `- "Text" -> target` | choice item |
-| `@if` / `@else` / `@endif` | conditional block |
+- DSL v2: `parseTzr` / `compileTzr`
+- Legacy implementation previously behind these names: removed
+
+関連ドキュメント:
+
+- [DSL v2 basic example](examples/dsl-v2-basic/)
+- [DSL v2 design notes](docs/design/design/dsl-v2.md)
+- [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
+
+Legacy DSL の `#scene(...)`, `#label(...)`, `@command(...)`, `$macro(...)`, `@if` / `@else` / `@endif` 構文は current supported path ではありません。旧 parser/compiler/API/tests/examples は削除済みで、DSL v2 を使用してください。
 
 ## 開発環境
 
@@ -232,44 +214,24 @@ pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/preact build
 ```
 
-### Basic Example
-
-実行:
-
-```sh
-pnpm --filter @tsuzuru/example-basic start
-```
-
-ビルド:
-
-```sh
-pnpm --filter @tsuzuru/example-basic build
-```
-
-型チェック:
-
-```sh
-pnpm --filter @tsuzuru/example-basic typecheck
-```
-
-### Preact Example
+### DSL v2 Example
 
 開発サーバー:
 
 ```sh
-pnpm --filter @tsuzuru/example-preact-basic dev
+pnpm --filter @tsuzuru/example-dsl-v2-basic dev
 ```
 
 ビルド:
 
 ```sh
-pnpm --filter @tsuzuru/example-preact-basic build
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
 ```
 
 型チェック:
 
 ```sh
-pnpm --filter @tsuzuru/example-preact-basic typecheck
+pnpm --filter @tsuzuru/example-dsl-v2-basic typecheck
 ```
 
 ## ドキュメント
@@ -278,12 +240,12 @@ pnpm --filter @tsuzuru/example-preact-basic typecheck
 
 ```txt
 docs/
-  dsl.md
+  design/design/dsl-v2.md
   runtime.md
   plugin-api.md
-  macro-api.md
   architecture.md
   roadmap.md
+  plans/legacy-dsl-cleanup.md
   decisions/
 ```
 
@@ -298,55 +260,30 @@ docs/decisions/
   0003-macro-vs-plugin.md
 ```
 
-## Plugin と Macro
-
-Tsuzuru では plugin と macro を明確に分けます。
-
-```txt
-plugin = runtime command extension
-macro  = compile-time presentation shorthand
-```
-
-### Plugin
+## Plugin
 
 Plugin は runtime behavior を拡張します。
 
 例:
 
 ```txt
-@bg("school_evening")
-@show(character="haruka", pose="smile", at="center")
-@shake(target="screen", duration=300)
+bg school_evening
+show haruka_smile at center
+bgm daily_theme
 ```
 
-Plugin command は compiler で登録・検証され、runtime で handler に dispatch されます。
-
-### Macro
-
-Macro は compile-time shorthand です。
-
-例:
-
-```txt
-$enter("haruka", "smile", "center")
-```
-
-Macro は compile 時に通常の command instruction へ展開され、runtime IR には残りません。
-
-v0.1 では、macro が jump / choice / if などの narrative flow を隠すことは避けます。
+std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。legacy compiler の `pluginCommands` validation path は削除済みです。
 
 ## v0.1 の範囲
 
 v0.1 では、以下を目標にします。
 
 - `.tzr` で小規模なノベルゲームシナリオを書ける
-- `@tsuzuru/core` で parse / compile / runtime 実行できる
+- `@tsuzuru/core` で DSL v2 parse / compile / runtime 実行できる
 - compile 時に主要な DSL エラーを検出できる
-- plugin command を登録・検証できる
-- macro を compile-time に展開できる
+- std visual/audio command を runtime handler に dispatch できる
 - Preact で runtime を表示・操作できる
-- save/load を example で確認できる
-- examples が clean checkout から動く
+- DSL v2 example が clean checkout から動く
 - README / docs が実装と一致している
 
 ## v0.1 に含めないもの
@@ -359,6 +296,7 @@ v0.1 では、以下を目標にします。
 - KAG / KS compatibility
 - Ren'Py compatibility
 - arbitrary JavaScript / TypeScript inside `.tzr`
+- macro API
 - scenario-local macro definitions
 - `create-tsuzuru`
 - `@tsuzuru/vite`

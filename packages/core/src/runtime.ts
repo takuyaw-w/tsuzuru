@@ -1,11 +1,17 @@
-import type { CompiledTzrDocument, TzrInstruction } from "./ir.js";
+import type { RuntimeDocument, TzrInstruction } from "./ir.js";
 import { stepCommandInstruction, unsupportedInstruction } from "./runtime-commands.js";
-import { choiceEvent, stepChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
+import {
+  choiceEvent,
+  stepBodyChoiceInstruction,
+  stepIfInstruction,
+  waitEvent,
+} from "./runtime-control.js";
 import {
   advanceActiveBranchFrame,
   getActiveBranchFrame,
   popActiveBranchFrame,
   popFinishedBranchFrames,
+  pushBranchFrame,
 } from "./runtime-frames.js";
 import type {
   RuntimeBlockReason,
@@ -21,7 +27,7 @@ export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 
 export function createInitialRuntimeState(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   options: RuntimeInitialStateOptions = {},
 ): RuntimeState {
   return {
@@ -50,7 +56,7 @@ function createInitialPluginStates(options: RuntimeInitialStateOptions): Runtime
 }
 
 export function stepRuntime(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   options: RuntimeStepOptions = {},
 ): RuntimeStepResult {
@@ -101,7 +107,7 @@ export function stepRuntime(
 }
 
 function stepInstruction(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   instruction: TzrInstruction,
   nextState: RuntimeState,
@@ -113,11 +119,8 @@ function stepInstruction(
         state: nextState,
         event: { type: "scene", id: instruction.id },
       };
-    case "LabelInstruction":
-      return {
-        state: nextState,
-        event: { type: "label", id: instruction.id },
-      };
+    case "SceneJumpInstruction":
+      return stepSceneJumpInstruction(document, state, nextState, instruction.sceneId);
     case "NarrationInstruction":
       return {
         state: nextState,
@@ -132,18 +135,44 @@ function stepInstruction(
       return stepCommandInstruction(document, state, nextState, instruction, options);
     case "IfInstruction":
       return stepIfInstruction(document, state, nextState, instruction, options, stepInstruction);
-    case "MacroInstruction":
-      return {
-        state: nextState,
-        event: { type: "unsupported", instructionType: instruction.type },
-      };
-    case "ChoiceInstruction":
-      return stepChoiceInstruction(nextState, instruction);
+    case "BodyChoiceInstruction":
+      return stepBodyChoiceInstruction(nextState, instruction);
   }
 }
 
+function stepSceneJumpInstruction(
+  document: RuntimeDocument,
+  state: RuntimeState,
+  nextState: RuntimeState,
+  sceneId: string,
+): RuntimeStepResult {
+  const target = document.scenes?.[sceneId];
+  if (target === undefined) {
+    return unsupportedInstruction(nextState, "SceneJumpInstruction");
+  }
+
+  return {
+    state: {
+      ...state,
+      branchFrames: [],
+      pendingChoice: null,
+      pendingWait: null,
+      isWaitingForClick: false,
+      pointer: {
+        filePath: document.filePath,
+        instructionIndex: target.statementIndex,
+      },
+    },
+    event: {
+      type: "jump",
+      sceneId,
+      instructionIndex: target.statementIndex,
+    },
+  };
+}
+
 export function resolveChoice(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   itemIndex: number,
 ): RuntimeStepResult {
@@ -151,40 +180,44 @@ export function resolveChoice(
     return runtimeError(state, "choice_not_pending", "Cannot resolve a choice because no choice is pending.");
   }
 
-  const item = state.pendingChoice.items[itemIndex];
+  const pendingChoice = state.pendingChoice;
+  const item = pendingChoice.items[itemIndex];
   if (item === undefined) {
     return runtimeError(
       state,
       "choice_index_out_of_range",
-      `Choice index ${itemIndex} is out of range for ${state.pendingChoice.items.length} choice item(s).`,
+      `Choice index ${itemIndex} is out of range for ${pendingChoice.items.length} choice item(s).`,
     );
   }
 
-  if (item?.targetLabel === undefined) {
-    return unsupportedInstruction(state, "ChoiceInstruction");
-  }
+  if (pendingChoice.kind === "body") {
+    const bodyItem = pendingChoice.items[itemIndex];
+    if (bodyItem === undefined) {
+      return runtimeError(
+        state,
+        "choice_index_out_of_range",
+        `Choice index ${itemIndex} is out of range for ${pendingChoice.items.length} choice item(s).`,
+      );
+    }
 
-  const target = document.labels[item.targetLabel];
-  if (target === undefined) {
-    return unsupportedInstruction(state, "ChoiceInstruction");
-  }
-
-  return {
-    state: {
-      ...state,
-      pointer: {
-        filePath: document.filePath,
-        instructionIndex: target.statementIndex,
+    return {
+      state: pushBranchFrame(
+        {
+          ...state,
+          pendingChoice: null,
+        },
+        bodyItem.body,
+      ),
+      event: {
+        type: "choiceResolve",
+        itemIndex,
+        text: bodyItem.text,
+        ...(bodyItem.id === undefined ? {} : { id: bodyItem.id }),
       },
-      branchFrames: [],
-      pendingChoice: null,
-    },
-    event: {
-      type: "jump",
-      label: item.targetLabel,
-      instructionIndex: target.statementIndex,
-    },
-  };
+    };
+  }
+
+  return unsupportedInstruction(state, "BodyChoiceInstruction");
 }
 
 function runtimeError(state: RuntimeState, code: RuntimeErrorCode, message: string): RuntimeStepResult {
@@ -233,7 +266,7 @@ export function getRuntimeBlockReason(state: RuntimeState): RuntimeBlockReason |
   return null;
 }
 
-function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState): RuntimeState {
+function advanceInstruction(document: RuntimeDocument, state: RuntimeState): RuntimeState {
   const instructionIndex = state.pointer.instructionIndex + 1;
   return {
     ...state,

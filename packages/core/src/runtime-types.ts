@@ -29,14 +29,20 @@ export interface RuntimeInitialStateOptions {
 }
 
 export interface RuntimeChoiceItem {
+  readonly id?: string;
   readonly text: string;
-  readonly targetRaw: string;
-  readonly targetLabel?: string;
 }
 
-export interface RuntimePendingChoice {
+export type RuntimePendingChoice = RuntimePendingBodyChoice;
+
+export interface RuntimePendingBodyChoice {
+  readonly kind: "body";
   readonly question: string;
-  readonly items: readonly RuntimeChoiceItem[];
+  readonly items: readonly RuntimePendingBodyChoiceItem[];
+}
+
+export interface RuntimePendingBodyChoiceItem extends RuntimeChoiceItem {
+  readonly body: readonly TzrInstruction[];
 }
 
 export interface RuntimePendingWait {
@@ -97,7 +103,6 @@ export interface RuntimePluginCommandContext {
 
 export type RuntimeEvent =
   | SceneRuntimeEvent
-  | LabelRuntimeEvent
   | NarrationRuntimeEvent
   | DialogueRuntimeEvent
   | WaitClickRuntimeEvent
@@ -105,6 +110,7 @@ export type RuntimeEvent =
   | StopRuntimeEvent
   | StateRuntimeEvent
   | JumpRuntimeEvent
+  | ChoiceResolveRuntimeEvent
   | IfRuntimeEvent
   | ChoiceRuntimeEvent
   | WaitRuntimeEvent
@@ -115,11 +121,6 @@ export type RuntimeEvent =
 
 export interface SceneRuntimeEvent {
   readonly type: "scene";
-  readonly id: string;
-}
-
-export interface LabelRuntimeEvent {
-  readonly type: "label";
   readonly id: string;
 }
 
@@ -146,7 +147,7 @@ export interface StopRuntimeEvent {
   readonly type: "stop";
 }
 
-export type StateCommandName = "set" | "inc" | "dec" | "flag" | "unflag";
+export type StateCommandName = "set" | "add" | "inc" | "dec" | "flag" | "unflag";
 
 export interface StateRuntimeEvent {
   readonly type: "state";
@@ -155,16 +156,26 @@ export interface StateRuntimeEvent {
   readonly value: RuntimeValue;
 }
 
-export interface JumpRuntimeEvent {
+export type JumpRuntimeEvent = SceneJumpRuntimeEvent;
+
+export interface SceneJumpRuntimeEvent {
   readonly type: "jump";
-  readonly label: string;
+  readonly sceneId: string;
   readonly instructionIndex: number;
+}
+
+export interface ChoiceResolveRuntimeEvent {
+  readonly type: "choiceResolve";
+  readonly itemIndex: number;
+  readonly text: string;
+  readonly id?: string;
 }
 
 export interface IfRuntimeEvent {
   readonly type: "if";
   readonly result: boolean;
-  readonly branch: "then" | "else" | "none";
+  readonly branch: "then" | "elif" | "else" | "none";
+  readonly branchIndex?: number;
   readonly event?: RuntimeEvent;
 }
 
@@ -189,7 +200,13 @@ export interface UnsupportedRuntimeEvent {
   readonly instructionType: string;
 }
 
-export type RuntimeErrorCode = "choice_not_pending" | "choice_index_out_of_range";
+export type RuntimeErrorCode =
+  | "choice_not_pending"
+  | "choice_index_out_of_range"
+  | "choice_no_available_items"
+  | "state_add_non_number"
+  | "condition_invalid_numeric_comparison"
+  | "condition_system_reference_unsupported";
 
 export interface RuntimeErrorEvent {
   readonly type: "error";

@@ -1,25 +1,30 @@
 # Tsuzuru Runtime
 
-This document describes the currently implemented runtime surface in `@tsuzuru/core`.
+> Status: DSL v2-first. The runtime still provides shared execution, snapshot,
+> plugin dispatch, and command primitives, but legacy label jumps and old
+> target-label choices were removed. DSL v2 uses scene jumps, body choices, and
+> the current `IfInstruction`.
+
+This document describes the currently implemented DSL v2 runtime surface in `@tsuzuru/core`.
 
 ## Role
 
-The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, flags, jumps, conditional execution, plugin command dispatch, and minimal snapshot creation.
+The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, DSL v2 scene jumps, conditional execution, plugin command dispatch, and minimal snapshot creation. `RuntimeState.flags` and the `inc` / `dec` / `flag` / `unflag` command handlers remain as low-level runtime primitives, but they are not current DSL v2 authoring syntax.
 
 The core runtime does not render UI and does not manage real time. It has no dependency on `setTimeout`, DOM APIs, Preact, browser storage, asset loading, or plugin lifecycle code. A host or UI layer observes runtime events and calls the appropriate resume or resolve function.
 
 ## Input
 
-Runtime execution uses a `CompiledTzrDocument`.
+Runtime execution uses a `RuntimeDocument`. DSL v2 compilation returns a `CompiledTzrDocument`, which extends that runtime document shape.
 
 ```ts
 const state = createInitialRuntimeState(compiledDocument);
 const result = stepRuntime(compiledDocument, state);
 ```
 
-The runtime reads `document.instructions`, `document.labels`, and `document.filePath`. Cross-file runtime jumps are not implemented.
+The runtime reads `document.instructions`, `document.scenes`, and `document.filePath`. DSL v2 scene jumps resolve through `document.scenes`.
 
-For v0.1, compile-time jump validation is limited to target shape and same-file label existence within one `CompiledTzrDocument`. Cross-file target existence validation is deferred to post-v0.1 and belongs with a project graph, file resolver, or Vite/project loading layer rather than the single-document runtime.
+`RuntimeDocument.labels` still exists as an empty compatibility field on DSL v2 compiled documents, but the current runtime does not use it for DSL v2 scene jumps or body choices. Cross-file runtime jumps are not implemented.
 
 ## RuntimeState
 
@@ -28,9 +33,9 @@ For v0.1, compile-time jump validation is limited to target shape and same-file 
 Important fields:
 
 - `pointer`: current top-level file path and instruction index
-- `variables`: runtime values set by `@set`, `@inc`, and `@dec`
-- `flags`: boolean flags set by `@flag` and `@unflag`
-- `branchFrames`: active nested instruction lists for `@if` branches
+- `variables`: runtime values set by DSL v2 `set` and `add`
+- `flags`: retained low-level boolean flag map, not current DSL v2 authoring syntax
+- `branchFrames`: active nested instruction lists for DSL v2 `if` branches and body choices
 - `pendingChoice`: active choice waiting for host resolution, or `null`
 - `pendingWait`: active timed wait request, or `null`
 - `isStopped`: set by `@stop()` or script end
@@ -73,16 +78,15 @@ If a branch frame is active, `stepRuntime` executes the next branch instruction 
 Current `RuntimeEvent` variants:
 
 - `scene`: emitted for `SceneInstruction`
-- `label`: emitted for `LabelInstruction`
 - `narration`: emitted for narration text
 - `dialogue`: emitted for speaker dialogue
 - `waitClick`: emitted for `@waitClick()` and repeated while click wait is active
 - `page`: emitted for `@page()`
 - `stop`: emitted for `@stop()`
-- `state`: emitted for `@set`, `@inc`, `@dec`, `@flag`, and `@unflag`
-- `jump`: emitted for `@jump("#label")` and `resolveChoice`
+- `state`: emitted for DSL v2 `set` and `add`; also emitted by retained low-level `inc`, `dec`, `flag`, and `unflag` handlers
+- `jump`: emitted for `SceneJumpInstruction`
 - `if`: emitted when evaluating an `IfInstruction`
-- `choice`: emitted for `ChoiceInstruction` and repeated while a choice is pending
+- `choice`: emitted for `BodyChoiceInstruction` and repeated while a choice is pending
 - `wait`: emitted for `@wait(ms)` and repeated while timed wait is pending
 - `pluginCommand`: emitted by plugin command handlers
 - `unsupported`: emitted for unsupported instruction or command handling
@@ -125,7 +129,7 @@ const nextState = clearWait(state);
 
 ## Choices
 
-A `ChoiceInstruction` advances the top-level pointer and sets `pendingChoice`.
+A `BodyChoiceInstruction` advances the top-level pointer and sets `pendingChoice`.
 
 `choice` events include the question and items:
 
@@ -134,18 +138,18 @@ A `ChoiceInstruction` advances the top-level pointer and sets `pendingChoice`.
   type: "choice",
   question: "Choose",
   items: [
-    { text: "Stay", targetRaw: "#stay", targetLabel: "stay" }
+    { text: "手帳を見る" }
   ]
 }
 ```
 
 While `pendingChoice` is set, `stepRuntime` repeats the same choice event and does not advance.
 
-Choices are resolved only with `resolveChoice(document, state, itemIndex)`. For same-file label targets, this moves the pointer to the target label, clears `pendingChoice`, clears branch frames, and emits `jump`.
+Choices are resolved only with `resolveChoice(document, state, itemIndex)`. For DSL v2 body choices, this clears `pendingChoice`, pushes the selected item body onto `branchFrames`, and emits `choiceResolve`.
 
 If no choice is pending or `itemIndex` is outside the pending choice items, `resolveChoice` returns an `error` event and the original state. It does not throw and does not silently ignore the invalid index.
 
-Cross-file choice targets are not handled by the runtime yet.
+Scene jumps from inside a selected body are handled by the normal `SceneJumpInstruction` path. Cross-file choice targets are not part of the current DSL v2 runtime model.
 
 ## Blocking Helpers
 
@@ -168,11 +172,11 @@ Cross-file choice targets are not handled by the runtime yet.
 
 Runtime state commands are core-owned.
 
-`@set(name="route", value="haruka")` stores a string, number, or boolean value.
+DSL v2 `set scenario.route = "mio"` stores a string, number, boolean, or null value in `variables`.
 
-`@inc(name="affection", by=1)` and `@dec(name="affection", by=1)` update numeric variables. Missing variables are treated as `0`.
+DSL v2 `add scenario.affection += 1` updates numeric variables. Missing variables are treated as `0`, and adding to an existing non-number value emits a runtime `error`.
 
-`@flag("met_haruka")` stores `true`; `@unflag("met_haruka")` stores `false`.
+The legacy-shaped `inc`, `dec`, `flag`, and `unflag` command handlers remain available only as low-level runtime primitives for manually constructed `CommandInstruction` values. They are not current DSL v2 syntax.
 
 Each state command emits a `state` event.
 
@@ -187,61 +191,31 @@ Each state command emits a `state` event.
 }
 ```
 
-When an `IfInstruction` selects a non-empty branch, the runtime pushes a frame and immediately executes the first instruction in that branch. Subsequent calls to `stepRuntime` continue executing the frame until it reaches the end. Then the frame is popped and execution returns to the already-advanced top-level pointer.
+When an `IfInstruction` or selected body choice has a non-empty branch, the runtime pushes a frame and immediately executes the first instruction in that branch. Subsequent calls to `stepRuntime` continue executing the frame until it reaches the end. Then the frame is popped and execution returns to the already-advanced top-level pointer.
 
 For v0.1, branch frames are included directly in snapshots.
 
 ## If, Jump, and Choice Model
 
-`IfInstruction` evaluates its compiled `conditionExpression` with `evaluateCondition`.
+`IfInstruction` and conditional body choice items evaluate DSL v2 condition expressions with the DSL v2 condition evaluator.
 
 - true: push and execute `thenBranch`
 - false with `elseBranch`: push and execute `elseBranch`
 - false without `elseBranch`: advance to the next top-level instruction
 
-`@jump("#label")` resolves against `CompiledTzrDocument.labels`. It moves `pointer.instructionIndex` to the label's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
+`SceneJumpInstruction` resolves against `RuntimeDocument.scenes`. It moves `pointer.instructionIndex` to the scene's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
 
-Cross-file jump targets may be parsed and compiled, but the current runtime does not load another document or resolve labels outside the current compiled document.
+Cross-file jump targets are not implemented in the current runtime.
 
-Choices produce a blocked `pendingChoice` state and are resolved separately by `resolveChoice`.
+Body choices produce a blocked `pendingChoice` state and are resolved separately by `resolveChoice`.
 
 ## Plugin Command Dispatch
 
-Plugin commands must be registered at compile time. Core commands are always available, but non-core commands such as `@bg(...)` or `@show(...)` are compile-time errors unless they are listed in `compileTzr` options.
+DSL v2 compiles its supported std visual/audio statements to shared `CommandInstruction` values. Runtime dispatch uses command handlers supplied to `stepRuntime`.
 
-Plugin command definitions may include argument schemas. The compiler validates:
+The legacy compiler's `pluginCommands` validation path was removed with the old DSL compiler. `definePluginCommand` and plugin command schema metadata remain exported for std plugins and future validation policy work, but the current DSL v2 compiler does not accept a plugin command registry.
 
-- plugin command registration
-- registry key and definition name consistency
-- plugin command schema definitions
-- plugin command arguments when a schema is registered
-
-Example:
-
-```ts
-import { compileTzr, definePluginCommand } from "@tsuzuru/core";
-
-const compiled = compileTzr(parsed.document, {
-  pluginCommands: {
-    bg: definePluginCommand("bg", {
-      kind: "positional",
-      arguments: [{ type: "string" }],
-    }),
-    show: definePluginCommand("show", {
-      kind: "named",
-      arguments: [
-        { name: "character", type: "string" },
-        { name: "pose", type: "string", optional: true },
-        { name: "at", type: ["string", "identifier"], optional: true },
-      ],
-    }),
-  },
-});
-```
-
-The registry key must match the definition name. For example, `bg: definePluginCommand("bg", ...)` is valid, but registering `bg` with a definition named `show` is a compile-time error.
-
-Runtime handlers should use the same command names as the compile-time registry. Runtime dispatch assumes plugin commands have already passed compiler validation.
+Runtime handlers should use the same command names emitted by the compiler.
 
 `stepRuntime` accepts optional command handlers:
 
@@ -299,7 +273,7 @@ One important constraint is `branchFrames`. Current branch frames include the br
 }
 ```
 
-This is straightforward to restore because the runtime can resume branch execution without re-resolving anything from `CompiledTzrDocument`. It also fits the current implementation, where active branches are represented as instruction lists.
+This is straightforward to restore because the runtime can resume branch execution without re-resolving anything from `RuntimeDocument`. It also fits the current implementation, where active branches are represented as instruction lists.
 
 The tradeoffs are:
 
@@ -308,6 +282,6 @@ The tradeoffs are:
 
 `RuntimeSaveData` does not include scenario identity, scenario version, or migration metadata in v0.1. Save data compatibility is not guaranteed if the scenario document, compiled instruction order, runtime model, or event shape changes after saving.
 
-A future snapshot format may store a scenario identity, scenario version, migration version, branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `CompiledTzrDocument`.
+A future snapshot format may store a scenario identity, scenario version, migration version, branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `RuntimeDocument`.
 
 Migration, compatibility handling, compression, and encryption are outside the current runtime API. Snapshots also do not write to storage. LocalStorage, IndexedDB, and save slot management are host/UI layer responsibilities.

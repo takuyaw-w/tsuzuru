@@ -1,5 +1,9 @@
 # Tsuzuru v0.1 TODO
 
+> Status: historical v0.1 checklist. It predates the DSL v2 cleanup and still
+> mentions removed legacy parser/compiler/macro work. Use README and
+> `docs/plans/legacy-dsl-cleanup.md` for current DSL status.
+
 Codex は作業前に必ず `AGENTS.md` を読むこと。
 `AGENTS.md` の設計方針、アーキテクチャ境界、Testing Policy、Documentation Requirements を優先すること。
 

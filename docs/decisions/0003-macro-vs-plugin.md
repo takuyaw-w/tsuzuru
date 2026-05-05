@@ -4,6 +4,11 @@
 
 Accepted
 
+> Current implementation note: the public macro API and legacy macro expansion
+> path were removed during DSL v2 cleanup. This ADR is retained as historical
+> rationale for the plugin/macro boundary and should be revisited if macro
+> support is reintroduced.
+
 ## Context
 
 Tsuzuru has two extension mechanisms:
@@ -486,7 +491,7 @@ Even then, prefer explicit DSL constructs over hidden macro control flow.
 - `docs/architecture.md`
 - `docs/dsl.md`
 - `docs/plugin-api.md`
-- `docs/macro-api.md`
+- `docs/plans/legacy-dsl-cleanup.md`
 - `docs/runtime.md`
 - `docs/roadmap.md`
 - `docs/decisions/0001-dsl-is-not-js.md`

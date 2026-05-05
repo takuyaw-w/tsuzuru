@@ -1,21 +1,13 @@
-import type {
-  ChoiceItem,
-  ConditionExpression,
-  JumpTarget,
-  SourceRange,
-  TextLine,
-  TzrArgument,
-  TzrStatement,
-} from "./ast.js";
+import type { SourceRange, TextLine, TzrArgument } from "./ast.js";
+import type { TzrConditionExpression } from "./scenario-ast.js";
 
 export type TzrInstruction =
   | SceneInstruction
-  | LabelInstruction
+  | SceneJumpInstruction
   | NarrationInstruction
   | DialogueInstruction
   | CommandInstruction
-  | MacroInstruction
-  | ChoiceInstruction
+  | BodyChoiceInstruction
   | IfInstruction;
 
 export interface SceneInstruction {
@@ -24,9 +16,9 @@ export interface SceneInstruction {
   readonly loc: SourceRange;
 }
 
-export interface LabelInstruction {
-  readonly type: "LabelInstruction";
-  readonly id: string;
+export interface SceneJumpInstruction {
+  readonly type: "SceneJumpInstruction";
+  readonly sceneId: string;
   readonly loc: SourceRange;
 }
 
@@ -47,30 +39,36 @@ export interface CommandInstruction {
   readonly type: "CommandInstruction";
   readonly name: string;
   readonly args: readonly TzrArgument[];
-  readonly jumpTarget?: JumpTarget;
   readonly loc: SourceRange;
 }
 
-export interface MacroInstruction {
-  readonly type: "MacroInstruction";
-  readonly name: string;
-  readonly args: readonly TzrArgument[];
-  readonly loc: SourceRange;
-}
-
-export interface ChoiceInstruction {
-  readonly type: "ChoiceInstruction";
+export interface BodyChoiceInstruction {
+  readonly type: "BodyChoiceInstruction";
   readonly question: string;
-  readonly items: readonly ChoiceItem[];
+  readonly items: readonly BodyChoiceInstructionItem[];
+  readonly loc: SourceRange;
+}
+
+export interface BodyChoiceInstructionItem {
+  readonly label: string;
+  readonly id?: string;
+  readonly condition?: TzrConditionExpression;
+  readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 
 export interface IfInstruction {
   readonly type: "IfInstruction";
-  readonly condition: string;
-  readonly conditionExpression: ConditionExpression;
+  readonly condition: TzrConditionExpression;
   readonly thenBranch: readonly TzrInstruction[];
+  readonly elifBranches: readonly ElifInstructionBranch[];
   readonly elseBranch?: readonly TzrInstruction[];
+  readonly loc: SourceRange;
+}
+
+export interface ElifInstructionBranch {
+  readonly condition: TzrConditionExpression;
+  readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 
@@ -80,11 +78,9 @@ export interface DeclarationIndexEntry {
   readonly loc: SourceRange;
 }
 
-export interface CompiledTzrDocument {
-  readonly type: "CompiledTzrDocument";
+export interface RuntimeDocument {
   readonly filePath: string;
-  readonly body: readonly TzrStatement[];
   readonly instructions: readonly TzrInstruction[];
   readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
-  readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly scenes?: Readonly<Record<string, DeclarationIndexEntry>>;
 }
