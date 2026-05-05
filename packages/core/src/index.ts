@@ -63,6 +63,8 @@ export type { ParseResult } from "./parser.js";
 export { parseTzr } from "./parser.js";
 export type {
   TzrV2CharacterDeclaration,
+  TzrV2ChoiceItem,
+  TzrV2ChoiceStatement,
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2EndStatement,

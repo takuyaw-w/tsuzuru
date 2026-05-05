@@ -2,6 +2,8 @@ import type { SourceLocation, SourceRange } from "../ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
 import type {
   TzrV2CharacterDeclaration,
+  TzrV2ChoiceItem,
+  TzrV2ChoiceStatement,
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2EndStatement,
@@ -53,6 +55,11 @@ interface ParsedInlineContent {
 interface ParsedInlineMarkup {
   readonly node: TzrV2InlineTextSpan | TzrV2InlineDelaySpan | TzrV2InlineWaitEvent | TzrV2InlineSeEvent | TzrV2InlineVoiceEvent;
   readonly nextIndex: number;
+}
+
+interface ParsedChoiceItemHeader {
+  readonly label: string;
+  readonly id?: string;
 }
 
 interface InlineRawAttribute {
@@ -237,7 +244,15 @@ class TzrV2Parser {
   }
 
   private collectSceneBody(): readonly TzrV2SceneStatement[] {
+    return this.collectSceneStatements(1, "Scene statements must be indented 2 spaces.");
+  }
+
+  private collectSceneStatements(
+    expectedIndentLevel: number,
+    indentationMessage: string,
+  ): readonly TzrV2SceneStatement[] {
     const body: TzrV2SceneStatement[] = [];
+    const expectedIndent = expectedIndentLevel * 2;
 
     while (!this.isAtEnd()) {
       const line = this.currentRequired();
@@ -247,7 +262,7 @@ class TzrV2Parser {
       }
 
       const indent = this.validateIndent(line);
-      if (indent === 0) {
+      if (indent < expectedIndent) {
         break;
       }
 
@@ -256,14 +271,13 @@ class TzrV2Parser {
         continue;
       }
 
-      const indentLevel = indent / 2;
-      if (indentLevel !== 1) {
-        this.addError(line, 1, "Scene statements must be indented 2 spaces.");
+      if (indent !== expectedIndent) {
+        this.addError(line, 1, indentationMessage);
         this.cursor += 1;
         continue;
       }
 
-      const statement = this.parseSceneStatement(line);
+      const statement = this.parseSceneStatement(line, expectedIndentLevel);
       if (statement !== undefined) {
         body.push(statement);
       }
@@ -272,12 +286,13 @@ class TzrV2Parser {
     return body;
   }
 
-  private parseSceneStatement(line: SourceLine): TzrV2SceneStatement | undefined {
-    const source = line.code.slice(2).trimEnd();
-    const statementColumn = 3;
+  private parseSceneStatement(line: SourceLine, indentLevel: number): TzrV2SceneStatement | undefined {
+    const sourceIndent = indentLevel * 2;
+    const source = line.code.slice(sourceIndent).trimEnd();
+    const statementColumn = sourceIndent + 1;
 
     if (source === "narration:") {
-      return this.parseNarrationStatement(line);
+      return this.parseNarrationStatement(line, indentLevel);
     }
     if (source === "narration") {
       this.addError(line, statementColumn, "narration block must end with `:`.");
@@ -285,7 +300,10 @@ class TzrV2Parser {
       return undefined;
     }
     if (source.startsWith("say ")) {
-      return this.parseExplicitSayStatement(line, source, statementColumn);
+      return this.parseExplicitSayStatement(line, source, statementColumn, indentLevel);
+    }
+    if (source === "choice" || source === "choice:" || source.startsWith("choice ")) {
+      return this.parseChoiceStatement(line, source, statementColumn, indentLevel);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -299,7 +317,7 @@ class TzrV2Parser {
       return undefined;
     }
     if (/^\S+:$/.test(source)) {
-      return this.parseShorthandDialogueStatement(line, source, statementColumn);
+      return this.parseShorthandDialogueStatement(line, source, statementColumn, indentLevel);
     }
 
     this.addError(line, statementColumn, "Unsupported DSL v2 scene body statement.");
@@ -307,17 +325,18 @@ class TzrV2Parser {
     return undefined;
   }
 
-  private parseNarrationStatement(header: SourceLine): TzrV2NarrationStatement {
+  private parseNarrationStatement(header: SourceLine, indentLevel: number): TzrV2NarrationStatement {
     const headerLoc = this.lineRange(header);
+    const statementColumn = indentLevel * 2 + 1;
     this.cursor += 1;
-    const textBlock = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, indentLevel);
     const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
       type: "NarrationStatement",
       ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
       lines,
-      loc: { start: this.location(header.line, 3), end },
+      loc: { start: this.location(header.line, statementColumn), end },
     };
   }
 
@@ -325,6 +344,7 @@ class TzrV2Parser {
     header: SourceLine,
     source: string,
     statementColumn: number,
+    indentLevel: number,
   ): TzrV2DialogueStatement | undefined {
     const match = /^say\s+(\S+):$/.exec(source);
     if (match === null) {
@@ -342,7 +362,7 @@ class TzrV2Parser {
 
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
-    const textBlock = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, indentLevel);
     const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
@@ -359,6 +379,7 @@ class TzrV2Parser {
     header: SourceLine,
     source: string,
     statementColumn: number,
+    indentLevel: number,
   ): TzrV2DialogueStatement | undefined {
     const speaker = source.slice(0, -1).trim();
     const speakerColumn = header.code.indexOf(speaker) + 1;
@@ -369,7 +390,7 @@ class TzrV2Parser {
 
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
-    const textBlock = this.collectTextBlock(header, 1);
+    const textBlock = this.collectTextBlock(header, indentLevel);
     const lines = textBlock.lines;
     const end = lines.at(-1)?.loc.end ?? headerLoc.end;
     return {
@@ -380,6 +401,208 @@ class TzrV2Parser {
       lines,
       loc: { start: this.location(header.line, statementColumn), end },
     };
+  }
+
+  private parseChoiceStatement(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+    indentLevel: number,
+  ): TzrV2ChoiceStatement | undefined {
+    if (source === "choice" || source === "choice:") {
+      this.addError(header, statementColumn, "choice question is required.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (!source.endsWith(":")) {
+      this.addError(header, statementColumn, "choice header must end with `:`.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const questionSource = source.slice("choice".length, -1).trim();
+    const questionColumn = header.code.indexOf(questionSource) + 1;
+    if (questionSource.length === 0) {
+      this.addError(header, statementColumn, "choice question is required.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (!questionSource.startsWith('"')) {
+      this.addError(header, questionColumn, "choice question must be a double-quoted string.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const question = this.parseStringLiteral(header, questionSource, questionColumn);
+    this.cursor += 1;
+    const items = this.collectChoiceItems(header, indentLevel);
+    const end = items.at(-1)?.loc.end ?? this.lineRange(header).end;
+
+    if (question === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "ChoiceStatement",
+      question,
+      items,
+      loc: { start: this.location(header.line, statementColumn), end },
+    };
+  }
+
+  private collectChoiceItems(header: SourceLine, choiceIndentLevel: number): readonly TzrV2ChoiceItem[] {
+    const items: TzrV2ChoiceItem[] = [];
+    const seenIds = new Set<string>();
+    const itemIndentLevel = choiceIndentLevel + 1;
+    const expectedItemIndent = itemIndentLevel * 2;
+
+    while (!this.isAtEnd()) {
+      const line = this.currentRequired();
+      if (this.isIgnorable(line)) {
+        this.cursor += 1;
+        continue;
+      }
+
+      const indent = this.validateIndent(line);
+      if (indent <= choiceIndentLevel * 2) {
+        break;
+      }
+      if (indent % 2 !== 0) {
+        this.cursor += 1;
+        continue;
+      }
+      if (indent !== expectedItemIndent) {
+        this.addError(line, 1, `Choice items must be indented ${expectedItemIndent} spaces.`);
+        this.cursor += 1;
+        continue;
+      }
+
+      const item = this.parseChoiceItem(line, itemIndentLevel);
+      if (item === undefined) {
+        continue;
+      }
+      if (item.id !== undefined) {
+        if (seenIds.has(item.id)) {
+          this.addError(line, expectedItemIndent + 1, `Duplicate choice item id "${item.id}".`);
+        } else {
+          seenIds.add(item.id);
+        }
+      }
+      items.push(item);
+    }
+
+    if (items.length === 0) {
+      this.addError(header, firstContentColumn(header), "choice must include at least one item.");
+    }
+
+    return items;
+  }
+
+  private parseChoiceItem(header: SourceLine, itemIndentLevel: number): TzrV2ChoiceItem | undefined {
+    const sourceIndent = itemIndentLevel * 2;
+    const source = header.code.slice(sourceIndent).trimEnd();
+    const sourceColumn = sourceIndent + 1;
+    const parsedHeader = this.parseChoiceItemHeader(header, source, sourceColumn);
+    this.cursor += 1;
+    const bodyIndentLevel = itemIndentLevel + 1;
+    const body = this.collectSceneStatements(
+      bodyIndentLevel,
+      `Choice item body statements must be indented ${bodyIndentLevel * 2} spaces.`,
+    );
+    const end = body.at(-1)?.loc.end ?? this.lineRange(header).end;
+
+    if (body.length === 0) {
+      this.addError(header, sourceColumn, "Choice item body must include at least one statement.");
+    }
+    if (parsedHeader === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "ChoiceItem",
+      label: parsedHeader.label,
+      ...(parsedHeader.id === undefined ? {} : { id: parsedHeader.id }),
+      body,
+      loc: { start: this.location(header.line, sourceColumn), end },
+    };
+  }
+
+  private parseChoiceItemHeader(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): ParsedChoiceItemHeader | undefined {
+    if (!source.endsWith(":")) {
+      this.addError(line, sourceColumn, "choice item must end with `:`.");
+      return undefined;
+    }
+
+    const headerSource = source.slice(0, -1).trimEnd();
+    if (!headerSource.startsWith('"')) {
+      this.addError(line, sourceColumn, "choice item label must be a double-quoted string.");
+      return undefined;
+    }
+
+    const labelEndIndex = this.findStringLiteralEnd(headerSource);
+    if (labelEndIndex === undefined) {
+      this.addError(line, sourceColumn, "choice item label must be a double-quoted string.");
+      return undefined;
+    }
+
+    const labelSource = headerSource.slice(0, labelEndIndex + 1);
+    const label = this.parseStringLiteral(line, labelSource, sourceColumn);
+    if (label === undefined) {
+      return undefined;
+    }
+
+    const afterLabel = headerSource.slice(labelEndIndex + 1);
+    const restStart = afterLabel.search(/\S/);
+    const rest = restStart === -1 ? "" : afterLabel.slice(restStart);
+    const restColumn = sourceColumn + labelEndIndex + 1 + Math.max(restStart, 0);
+    if (rest.length === 0) {
+      return { label };
+    }
+
+    const conditionalIndex = rest.search(/\bif\b/);
+    if (conditionalIndex !== -1) {
+      const conditionalColumn = restColumn + conditionalIndex;
+      this.addError(line, conditionalColumn, "Conditional choice items are not implemented yet.");
+      return undefined;
+    }
+
+    const idMatch = /^id=(\S+)$/.exec(rest);
+    if (idMatch === null) {
+      this.addError(line, restColumn, 'choice item must use `"label":` or `"label" id=id:` syntax.');
+      return undefined;
+    }
+
+    const id = idMatch[1] ?? "";
+    const idColumn = restColumn + rest.indexOf(id);
+    if (!isValidTzrV2Identifier(id)) {
+      this.addError(line, idColumn, `Invalid choice item id "${id}".`);
+      return undefined;
+    }
+
+    return { label, id };
+  }
+
+  private findStringLiteralEnd(source: string): number | undefined {
+    let escaped = false;
+    for (let index = 1; index < source.length; index += 1) {
+      const char = source[index] ?? "";
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        return index;
+      }
+    }
+    return undefined;
   }
 
   private parseJumpStatement(line: SourceLine, source: string, statementColumn: number): TzrV2JumpStatement | undefined {

@@ -696,7 +696,7 @@ scene commonRoute:
   });
 
   it("rejects unsupported scene body statements", () => {
-    expect(expectParseFailure('scene start:\n  choice "Question":\n')).toContain(
+    expect(expectParseFailure("scene start:\n  unsupported statement\n")).toContain(
       "Unsupported DSL v2 scene body statement.",
     );
   });

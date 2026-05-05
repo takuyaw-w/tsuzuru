@@ -45,6 +45,7 @@ export interface TzrV2SceneDeclaration {
 export type TzrV2SceneStatement =
   | TzrV2NarrationStatement
   | TzrV2DialogueStatement
+  | TzrV2ChoiceStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -61,6 +62,21 @@ export interface TzrV2DialogueStatement {
   readonly meta?: TzrV2TextBlockMeta;
   readonly lines: readonly TzrV2TextBlockItem[];
   readonly explicit: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ChoiceStatement {
+  readonly type: "ChoiceStatement";
+  readonly question: string;
+  readonly items: readonly TzrV2ChoiceItem[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ChoiceItem {
+  readonly type: "ChoiceItem";
+  readonly label: string;
+  readonly id?: string;
+  readonly body: readonly TzrV2SceneStatement[];
   readonly loc: SourceRange;
 }
 
