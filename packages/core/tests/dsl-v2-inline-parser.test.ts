@@ -137,6 +137,10 @@ describe("parseTzrV2 inline markup", () => {
       text: "",
       inline: [{ type: "InlineSeEvent", assetId: { type: "InlineStringAssetId", value: "door-open" } }],
     });
+    expect(parseSingleTextLine("{se assetId=$system.se.doorOpen}")).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineSeEvent", assetId: { type: "InlineVariableAssetId", path: "system.se.doorOpen" } }],
+    });
   });
 
   it("parses voice events", () => {
@@ -154,6 +158,10 @@ describe("parseTzrV2 inline markup", () => {
     expect(parseSingleTextLine("{voice assetId=$scenario.currentVoice}")).toMatchObject({
       text: "",
       inline: [{ type: "InlineVoiceEvent", assetId: { type: "InlineVariableAssetId", path: "scenario.currentVoice" } }],
+    });
+    expect(parseSingleTextLine('{voice assetId="mio-001"}')).toMatchObject({
+      text: "",
+      inline: [{ type: "InlineVoiceEvent", assetId: { type: "InlineStringAssetId", value: "mio-001" } }],
     });
   });
 
@@ -305,6 +313,7 @@ describe("parseTzrV2 inline markup", () => {
 
   it("rejects invalid text span attributes", () => {
     expect(expectInlineFailure("{text|赤}")).toContain("{text} requires at least one attribute.");
+    expect(expectInlineFailure("{text mood=angry|赤}")).toContain('Unknown {text} attribute "mood".');
     expect(expectInlineFailure("{text color=red|赤}")).toContain("Invalid {text} color value.");
     expect(expectInlineFailure("{text color=rgb(255,0,0)|赤}")).toContain("Invalid {text} color value.");
     expect(expectInlineFailure("{text bold=yes|赤}")).toContain("Invalid {text} bold value.");
@@ -317,6 +326,7 @@ describe("parseTzrV2 inline markup", () => {
   it("rejects invalid delay attributes", () => {
     expect(expectInlineFailure("{delay|速い}")).toContain("{delay} requires ms.");
     expect(expectInlineFailure("{delay foo=1|速い}")).toContain('Unknown {delay} attribute "foo".');
+    expect(expectInlineFailure("{delay ms=20 ms=30|速い}")).toContain('Duplicate {delay} attribute "ms".');
     expect(expectInlineFailure("{delay ms=-1|速い}")).toContain("Invalid {delay} ms value.");
     expect(expectInlineFailure('{delay ms="20"|速い}')).toContain("Invalid {delay} ms value.");
   });
@@ -327,7 +337,9 @@ describe("parseTzrV2 inline markup", () => {
     expect(expectInlineFailure('{wait ms="500"}')).toContain("Invalid {wait} ms value.");
     expect(expectInlineFailure("{wait foo=500}")).toContain('Unknown {wait} attribute "foo".');
     expect(expectInlineFailure("{wait ms=500 extra=1}")).toContain('Unknown {wait} attribute "extra".');
+    expect(expectInlineFailure("{wait ms=500 ms=600}")).toContain('Duplicate {wait} attribute "ms".');
     expect(expectInlineFailure("{wait ms=500|text}")).toContain("{wait} does not support text ranges.");
+    expect(expectInlineFailure("{wait ms=500")).toContain("Inline event markup must be closed with `}`.");
   });
 
   it("rejects invalid se event attributes", () => {
@@ -336,11 +348,15 @@ describe("parseTzrV2 inline markup", () => {
     expect(expectInlineFailure("{se id=doorOpen}")).toContain('Unknown {se} attribute "id".');
     expect(expectInlineFailure('{se assetId=""}')).toContain("{se} assetId must not be empty.");
     expect(expectInlineFailure("{se assetId=doorOpen volume=80}")).toContain('Unknown {se} attribute "volume".');
+    expect(expectInlineFailure("{se assetId=doorOpen assetId=doorClose}")).toContain(
+      'Duplicate {se} attribute "assetId".',
+    );
     expect(expectInlineFailure("{se assetId=door-open.part}")).toContain("Invalid {se} assetId value.");
     expect(expectInlineFailure("{se assetId=$}")).toContain("Invalid {se} variable assetId.");
     expect(expectInlineFailure("{se assetId=$scenario.}")).toContain("Invalid {se} variable assetId.");
     expect(expectInlineFailure("{se assetId=$scenario..voice}")).toContain("Invalid {se} variable assetId.");
     expect(expectInlineFailure("{se assetId=doorOpen|text}")).toContain("{se} does not support text ranges.");
+    expect(expectInlineFailure("{se assetId=doorOpen")).toContain("Inline event markup must be closed with `}`.");
   });
 
   it("rejects invalid voice event attributes", () => {
@@ -350,6 +366,9 @@ describe("parseTzrV2 inline markup", () => {
     expect(expectInlineFailure('{voice assetId=""}')).toContain("{voice} assetId must not be empty.");
     expect(expectInlineFailure("{voice assetId=mio_001 volume=80}")).toContain(
       'Unknown {voice} attribute "volume".',
+    );
+    expect(expectInlineFailure("{voice assetId=mio_001 assetId=mio_002}")).toContain(
+      'Duplicate {voice} attribute "assetId".',
     );
     expect(expectInlineFailure("{voice assetId=door-open.part}")).toContain("Invalid {voice} assetId value.");
     expect(expectInlineFailure("{voice assetId=$}")).toContain("Invalid {voice} variable assetId.");

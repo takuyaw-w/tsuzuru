@@ -520,6 +520,40 @@ scene commonRoute:
     });
   });
 
+  it("accepts :meta shorthand color and boolean false values", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    :meta
+      color=#f55
+      bold=false
+      delay=70
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [
+        {
+          type: "DialogueStatement",
+          meta: {
+            attributes: [
+              { type: "TextBlockColorMetaAttribute", name: "color", value: "#f55" },
+              { type: "TextBlockBooleanMetaAttribute", name: "bold", value: false },
+              { type: "TextBlockNumberMetaAttribute", name: "delay", value: 70 },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
   it("does not carry :meta to the next text block", () => {
     const result = parseTzrV2(
       `scene start:
