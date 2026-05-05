@@ -55,6 +55,10 @@ export type TzrV2SceneStatement =
   | TzrV2AddStatement
   | TzrV2CallStatement
   | TzrV2WaitStatement
+  | TzrV2BgStatement
+  | TzrV2ShowStatement
+  | TzrV2HideStatement
+  | TzrV2ClearVisualStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -197,6 +201,60 @@ export type TzrV2ArgumentValue =
 export interface TzrV2IdentifierValue {
   readonly type: "IdentifierValue";
   readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2BgStatement {
+  readonly type: "BgStatement";
+  readonly assetRef: TzrV2VisualAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ShowStatement {
+  readonly type: "ShowStatement";
+  readonly assetRef: TzrV2VisualAssetRef;
+  readonly placement: TzrV2VisualPlacement;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2HideStatement {
+  readonly type: "HideStatement";
+  readonly assetRef: TzrV2VisualAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ClearVisualStatement {
+  readonly type: "ClearVisualStatement";
+  readonly target: "sprites" | "bg";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2VisualAssetRef = TzrV2VisualIdentifierAssetRef | TzrV2VisualStringAssetRef;
+
+export interface TzrV2VisualIdentifierAssetRef {
+  readonly type: "VisualIdentifierAssetRef";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2VisualStringAssetRef {
+  readonly type: "VisualStringAssetRef";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export type TzrV2VisualPlacement = TzrV2VisualNamedPlacement | TzrV2VisualCoordinatePlacement;
+
+export interface TzrV2VisualNamedPlacement {
+  readonly type: "VisualNamedPlacement";
+  readonly value: "left" | "center" | "right";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2VisualCoordinatePlacement {
+  readonly type: "VisualCoordinatePlacement";
+  readonly x: number;
+  readonly y: number;
   readonly loc: SourceRange;
 }
 

@@ -1,11 +1,13 @@
 export type {
   TzrV2AddStatement,
   TzrV2ArgumentValue,
+  TzrV2BgStatement,
   TzrV2BooleanValue,
   TzrV2CallStatement,
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
+  TzrV2ClearVisualStatement,
   TzrV2ConditionBinaryExpression,
   TzrV2ConditionBooleanLiteral,
   TzrV2ConditionComparisonExpression,
@@ -64,7 +66,15 @@ export type {
   TzrV2TopLevelDeclaration,
   TzrV2ValueExpression,
   TzrV2VariableReferenceValue,
+  TzrV2VisualAssetRef,
+  TzrV2VisualCoordinatePlacement,
+  TzrV2VisualIdentifierAssetRef,
+  TzrV2VisualNamedPlacement,
+  TzrV2VisualPlacement,
+  TzrV2VisualStringAssetRef,
   TzrV2WaitStatement,
+  TzrV2HideStatement,
+  TzrV2ShowStatement,
 } from "./ast.js";
 export { parseTzrV2ConditionExpression } from "./condition-parser.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";
