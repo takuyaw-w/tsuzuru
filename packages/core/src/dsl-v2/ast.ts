@@ -38,13 +38,43 @@ export interface TzrV2SceneDeclaration {
   readonly type: "SceneDeclaration";
   readonly id: string;
   readonly title?: string;
-  readonly body: readonly TzrV2SceneBodyLine[];
+  readonly body: readonly TzrV2SceneStatement[];
   readonly loc: SourceRange;
 }
 
-export interface TzrV2SceneBodyLine {
-  readonly type: "SceneBodyLine";
+export type TzrV2SceneStatement =
+  | TzrV2NarrationStatement
+  | TzrV2DialogueStatement
+  | TzrV2JumpStatement
+  | TzrV2EndStatement;
+
+export interface TzrV2NarrationStatement {
+  readonly type: "NarrationStatement";
+  readonly lines: readonly TzrV2TextLine[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2DialogueStatement {
+  readonly type: "DialogueStatement";
+  readonly speaker: string;
+  readonly lines: readonly TzrV2TextLine[];
+  readonly explicit: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2JumpStatement {
+  readonly type: "JumpStatement";
+  readonly target: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2EndStatement {
+  readonly type: "EndStatement";
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2TextLine {
+  readonly type: "TextLine";
   readonly text: string;
-  readonly indentLevel: number;
   readonly loc: SourceRange;
 }

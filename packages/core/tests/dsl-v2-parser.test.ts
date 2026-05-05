@@ -69,6 +69,7 @@ describe("parseTzrV2", () => {
     const result = parseTzrV2(
       `scene start:
   narration:
+    Rain blurred the platform edge.
 scene next:
 `,
       { filePath: "scenario/v2.tzr" },
@@ -80,17 +81,16 @@ scene next:
     }
     expect(result.document.declarations[0]).toMatchObject({
       type: "SceneDeclaration",
-      body: [{ type: "SceneBodyLine", text: "narration:", indentLevel: 1 }],
+      body: [{ type: "NarrationStatement", lines: [{ text: "Rain blurred the platform edge." }] }],
     });
     expect(result.document.declarations[1]).toMatchObject({ type: "SceneDeclaration", id: "next" });
   });
 
-  it("recognizes nested scene body lines without compiling them", () => {
+  it("parses a narration block", () => {
     const result = parseTzrV2(
       `scene start:
-  choice "Question":
-    "A":
-      jump routeA
+  narration:
+    Rain blurred the platform edge.
 `,
       { filePath: "scenario/v2.tzr" },
     );
@@ -102,11 +102,117 @@ scene next:
     expect(result.document.declarations[0]).toMatchObject({
       type: "SceneDeclaration",
       body: [
-        { type: "SceneBodyLine", text: 'choice "Question":', indentLevel: 1 },
-        { type: "SceneBodyLine", text: '"A":', indentLevel: 2 },
-        { type: "SceneBodyLine", text: "jump routeA", indentLevel: 3 },
+        {
+          type: "NarrationStatement",
+          lines: [{ type: "TextLine", text: "Rain blurred the platform edge." }],
+        },
       ],
     });
+  });
+
+  it("parses an explicit say block", () => {
+    const result = parseTzrV2(
+      `scene start:
+  say mio:
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", speaker: "mio", explicit: true, lines: [{ text: "You're late." }] }],
+    });
+  });
+
+  it("parses character dialogue shorthand", () => {
+    const result = parseTzrV2(
+      `scene start:
+  mio:
+    You're late.
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "DialogueStatement", speaker: "mio", explicit: false, lines: [{ text: "You're late." }] }],
+    });
+  });
+
+  it("parses a jump statement", () => {
+    const result = parseTzrV2("scene start:\n  jump commonRoute\n", { filePath: "scenario/v2.tzr" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "JumpStatement", target: "commonRoute" }],
+    });
+  });
+
+  it("parses an end statement", () => {
+    const result = parseTzrV2("scene start:\n  end\n", { filePath: "scenario/v2.tzr" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "SceneDeclaration",
+      body: [{ type: "EndStatement" }],
+    });
+  });
+
+  it("parses a small scene containing narration, dialogue, jump, and end", () => {
+    const result = parseTzrV2(
+      `scene start:
+  narration:
+    Rain blurred the platform edge.
+  mio:
+    You're late.
+  jump commonRoute
+scene commonRoute:
+  say mio:
+    Let's go.
+  end
+`,
+      { filePath: "scenario/v2.tzr" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations).toMatchObject([
+      {
+        type: "SceneDeclaration",
+        id: "start",
+        body: [
+          { type: "NarrationStatement" },
+          { type: "DialogueStatement", speaker: "mio", explicit: false },
+          { type: "JumpStatement", target: "commonRoute" },
+        ],
+      },
+      {
+        type: "SceneDeclaration",
+        id: "commonRoute",
+        body: [
+          { type: "DialogueStatement", speaker: "mio", explicit: true },
+          { type: "EndStatement" },
+        ],
+      },
+    ]);
   });
 
   it("rejects unknown top-level declaration names that share known prefixes", () => {
@@ -141,6 +247,53 @@ scene next:
 
   it("rejects odd scene body indentation", () => {
     expect(expectParseFailure("scene start:\n   narration:\n")).toContain("Indentation must use 2 spaces per level.");
+  });
+
+  it("rejects narration without a colon", () => {
+    expect(expectParseFailure("scene start:\n  narration\n")).toContain("narration block must end with `:`.");
+  });
+
+  it("rejects say without a colon", () => {
+    expect(expectParseFailure("scene start:\n  say mio\n")).toContain("say block must use `say speaker:` syntax.");
+  });
+
+  it("rejects invalid explicit say speaker", () => {
+    expect(expectParseFailure('scene start:\n  say "Mio":\n')).toContain('Invalid identifier ""Mio"".');
+    expect(expectParseFailure("scene start:\n  say 1st:\n")).toContain('Invalid identifier "1st".');
+  });
+
+  it("rejects invalid shorthand speaker", () => {
+    expect(expectParseFailure("scene start:\n  1st:\n")).toContain('Invalid identifier "1st".');
+  });
+
+  it("rejects quoted jump targets", () => {
+    expect(expectParseFailure('scene start:\n  jump "commonRoute"\n')).toContain('Invalid identifier ""commonRoute"".');
+  });
+
+  it("rejects dynamic jump targets", () => {
+    expect(expectParseFailure("scene start:\n  jump $scenario.nextScene\n")).toContain(
+      'Invalid identifier "$scenario.nextScene".',
+    );
+  });
+
+  it("rejects jump without a target", () => {
+    expect(expectParseFailure("scene start:\n  jump\n")).toContain("jump target is required.");
+  });
+
+  it("rejects end with arguments", () => {
+    expect(expectParseFailure("scene start:\n  end now\n")).toContain("end statement must not have arguments.");
+  });
+
+  it("rejects unsupported scene body statements", () => {
+    expect(expectParseFailure('scene start:\n  choice "Question":\n')).toContain(
+      "Unsupported DSL v2 scene body statement.",
+    );
+  });
+
+  it("rejects malformed text block indentation", () => {
+    expect(expectParseFailure("scene start:\n  narration:\n      Too deep.\n")).toContain(
+      "Text block lines must be indented 4 spaces.",
+    );
   });
 
   it("rejects an unterminated block comment", () => {

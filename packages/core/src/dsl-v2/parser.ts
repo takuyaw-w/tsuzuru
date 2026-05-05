@@ -2,11 +2,16 @@ import type { SourceLocation, SourceRange } from "../ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
 import type {
   TzrV2CharacterDeclaration,
+  TzrV2DialogueStatement,
   TzrV2Document,
+  TzrV2EndStatement,
+  TzrV2JumpStatement,
+  TzrV2NarrationStatement,
   TzrV2ParseOptions,
   TzrV2ParseResult,
-  TzrV2SceneBodyLine,
   TzrV2SceneDeclaration,
+  TzrV2SceneStatement,
+  TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
 } from "./ast.js";
@@ -194,8 +199,8 @@ class TzrV2Parser {
     };
   }
 
-  private collectSceneBody(): readonly TzrV2SceneBodyLine[] {
-    const body: TzrV2SceneBodyLine[] = [];
+  private collectSceneBody(): readonly TzrV2SceneStatement[] {
+    const body: TzrV2SceneStatement[] = [];
 
     while (!this.isAtEnd()) {
       const line = this.currentRequired();
@@ -215,25 +220,197 @@ class TzrV2Parser {
       }
 
       const indentLevel = indent / 2;
-      if (indentLevel < 1) {
-        this.addError(line, 1, "Scene body lines must be indented.");
+      if (indentLevel !== 1) {
+        this.addError(line, 1, "Scene statements must be indented 2 spaces.");
         this.cursor += 1;
         continue;
       }
 
-      body.push({
-        type: "SceneBodyLine",
-        text: line.code.slice(indent).trimEnd(),
-        indentLevel,
+      const statement = this.parseSceneStatement(line);
+      if (statement !== undefined) {
+        body.push(statement);
+      }
+    }
+
+    return body;
+  }
+
+  private parseSceneStatement(line: SourceLine): TzrV2SceneStatement | undefined {
+    const source = line.code.slice(2).trimEnd();
+    const statementColumn = 3;
+
+    if (source === "narration:") {
+      return this.parseNarrationStatement(line);
+    }
+    if (source === "narration") {
+      this.addError(line, statementColumn, "narration block must end with `:`.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (source.startsWith("say ")) {
+      return this.parseExplicitSayStatement(line, source, statementColumn);
+    }
+    if (source.startsWith("jump")) {
+      return this.parseJumpStatement(line, source, statementColumn);
+    }
+    if (source.startsWith("end")) {
+      return this.parseEndStatement(line, source, statementColumn);
+    }
+    if (/^\S+:$/.test(source)) {
+      return this.parseShorthandDialogueStatement(line, source, statementColumn);
+    }
+
+    this.addError(line, statementColumn, "Unsupported DSL v2 scene body statement.");
+    this.cursor += 1;
+    return undefined;
+  }
+
+  private parseNarrationStatement(header: SourceLine): TzrV2NarrationStatement {
+    const headerLoc = this.lineRange(header);
+    this.cursor += 1;
+    const lines = this.collectTextBlock(header, 1);
+    const end = lines.at(-1)?.loc.end ?? headerLoc.end;
+    return {
+      type: "NarrationStatement",
+      lines,
+      loc: { start: this.location(header.line, 3), end },
+    };
+  }
+
+  private parseExplicitSayStatement(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2DialogueStatement | undefined {
+    const match = /^say\s+(\S+):$/.exec(source);
+    if (match === null) {
+      this.addError(header, statementColumn, "say block must use `say speaker:` syntax.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const speaker = match[1] ?? "";
+    const speakerColumn = header.code.indexOf(speaker) + 1;
+    if (!this.validateIdentifier(speaker, header, speakerColumn)) {
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const headerLoc = this.lineRange(header);
+    this.cursor += 1;
+    const lines = this.collectTextBlock(header, 1);
+    const end = lines.at(-1)?.loc.end ?? headerLoc.end;
+    return {
+      type: "DialogueStatement",
+      speaker,
+      explicit: true,
+      lines,
+      loc: { start: this.location(header.line, statementColumn), end },
+    };
+  }
+
+  private parseShorthandDialogueStatement(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrV2DialogueStatement | undefined {
+    const speaker = source.slice(0, -1).trim();
+    const speakerColumn = header.code.indexOf(speaker) + 1;
+    if (!this.validateIdentifier(speaker, header, speakerColumn)) {
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const headerLoc = this.lineRange(header);
+    this.cursor += 1;
+    const lines = this.collectTextBlock(header, 1);
+    const end = lines.at(-1)?.loc.end ?? headerLoc.end;
+    return {
+      type: "DialogueStatement",
+      speaker,
+      explicit: false,
+      lines,
+      loc: { start: this.location(header.line, statementColumn), end },
+    };
+  }
+
+  private parseJumpStatement(line: SourceLine, source: string, statementColumn: number): TzrV2JumpStatement | undefined {
+    const match = /^jump(?:\s+(.+))?$/.exec(source);
+    if (match === null) {
+      this.addError(line, statementColumn, "jump statement must use `jump target` syntax.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const target = (match[1] ?? "").trim();
+    if (target.length === 0) {
+      this.addError(line, statementColumn, "jump target is required.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (!this.validateIdentifier(target, line, line.code.indexOf(target) + 1)) {
+      this.cursor += 1;
+      return undefined;
+    }
+
+    this.cursor += 1;
+    return {
+      type: "JumpStatement",
+      target,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseEndStatement(line: SourceLine, source: string, statementColumn: number): TzrV2EndStatement | undefined {
+    if (source !== "end") {
+      this.addError(line, statementColumn, "end statement must not have arguments.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    this.cursor += 1;
+    return {
+      type: "EndStatement",
+      loc: this.lineRange(line),
+    };
+  }
+
+  private collectTextBlock(header: SourceLine, headerIndentLevel: number): readonly TzrV2TextLine[] {
+    const lines: TzrV2TextLine[] = [];
+    const expectedIndent = (headerIndentLevel + 1) * 2;
+
+    while (!this.isAtEnd()) {
+      const line = this.currentRequired();
+      if (this.isIgnorable(line)) {
+        break;
+      }
+
+      const indent = this.validateIndent(line);
+      if (indent <= headerIndentLevel * 2) {
+        break;
+      }
+      if (indent !== expectedIndent) {
+        this.addError(line, 1, `Text block lines must be indented ${expectedIndent} spaces.`);
+        this.cursor += 1;
+        continue;
+      }
+
+      lines.push({
+        type: "TextLine",
+        text: line.code.slice(expectedIndent).trimEnd(),
         loc: {
-          start: this.location(line.line, indent + 1),
+          start: this.location(line.line, expectedIndent + 1),
           end: this.location(line.line, line.code.length + 1),
         },
       });
       this.cursor += 1;
     }
 
-    return body;
+    if (lines.length === 0) {
+      this.addError(header, firstContentColumn(header), "Text block must include at least one indented text line.");
+    }
+
+    return lines;
   }
 
   private parseStringLiteral(line: SourceLine, source: string, column: number): string | undefined {
