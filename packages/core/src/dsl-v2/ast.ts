@@ -51,6 +51,8 @@ export type TzrV2SceneStatement =
   | TzrV2DialogueStatement
   | TzrV2ChoiceStatement
   | TzrV2IfStatement
+  | TzrV2SetStatement
+  | TzrV2AddStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -99,6 +101,65 @@ export interface TzrV2ElifBranch {
   readonly type: "ElifBranch";
   readonly condition: TzrV2ConditionExpression;
   readonly body: readonly TzrV2SceneStatement[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2SetStatement {
+  readonly type: "SetStatement";
+  readonly target: TzrV2StatePath;
+  readonly value: TzrV2ValueExpression;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2AddStatement {
+  readonly type: "AddStatement";
+  readonly target: TzrV2StatePath;
+  readonly value: TzrV2NumberValue;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2StatePath {
+  readonly type: "StatePath";
+  readonly path: string;
+  readonly root: "scenario";
+  readonly loc: SourceRange;
+}
+
+export type TzrV2ValueExpression =
+  | TzrV2StringValue
+  | TzrV2NumberValue
+  | TzrV2BooleanValue
+  | TzrV2NullValue
+  | TzrV2VariableReferenceValue;
+
+export interface TzrV2StringValue {
+  readonly type: "StringValue";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2NumberValue {
+  readonly type: "NumberValue";
+  readonly value: number;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2BooleanValue {
+  readonly type: "BooleanValue";
+  readonly value: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2NullValue {
+  readonly type: "NullValue";
+  readonly value: null;
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2VariableReferenceValue {
+  readonly type: "VariableReferenceValue";
+  readonly path: string;
+  readonly root: "scenario" | "system";
   readonly loc: SourceRange;
 }
 

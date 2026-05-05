@@ -1,6 +1,8 @@
 import type { SourceLocation, SourceRange } from "../ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
 import type {
+  TzrV2AddStatement,
+  TzrV2BooleanValue,
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
@@ -20,16 +22,23 @@ import type {
   TzrV2InlineWaitEvent,
   TzrV2JumpStatement,
   TzrV2NarrationStatement,
+  TzrV2NullValue,
+  TzrV2NumberValue,
   TzrV2ParseOptions,
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SetStatement,
+  TzrV2StatePath,
+  TzrV2StringValue,
   TzrV2TextBlockItem,
   TzrV2TextBlockMeta,
   TzrV2TextBlockMetaAttribute,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
+  TzrV2ValueExpression,
+  TzrV2VariableReferenceValue,
 } from "./ast.js";
 import { parseTzrV2ConditionExpression } from "./condition-parser.js";
 
@@ -71,6 +80,8 @@ interface ParsedConditionBranchHeader {
   readonly condition: TzrV2ConditionExpression;
 }
 
+type StateStatementKeyword = "set" | "add";
+
 interface InlineRawAttribute {
   readonly key: string;
   readonly value: string;
@@ -81,6 +92,7 @@ interface InlineRawAttribute {
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+const NUMBER_LITERAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 
 export function parseTzrV2(source: string, options: TzrV2ParseOptions = {}): TzrV2ParseResult {
   const filePath = options.filePath ?? "<anonymous>";
@@ -326,6 +338,12 @@ class TzrV2Parser {
       this.addError(line, statementColumn, "else must follow an if statement.");
       this.cursor += 1;
       return undefined;
+    }
+    if (source === "set" || source.startsWith("set ")) {
+      return this.parseSetStatement(line, source, statementColumn);
+    }
+    if (source === "add" || source.startsWith("add ")) {
+      return this.parseAddStatement(line, source, statementColumn);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -868,6 +886,252 @@ class TzrV2Parser {
       }
       this.cursor += 1;
     }
+  }
+
+  private parseSetStatement(line: SourceLine, source: string, statementColumn: number): TzrV2SetStatement | undefined {
+    const parsed = this.parseStateStatementParts(line, source, "set", statementColumn);
+    this.cursor += 1;
+    if (parsed === undefined) {
+      return undefined;
+    }
+
+    const value = this.parseSetValue(line, parsed.valueSource, parsed.valueColumn);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "SetStatement",
+      target: parsed.target,
+      value,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseAddStatement(line: SourceLine, source: string, statementColumn: number): TzrV2AddStatement | undefined {
+    const parsed = this.parseStateStatementParts(line, source, "add", statementColumn);
+    this.cursor += 1;
+    if (parsed === undefined) {
+      return undefined;
+    }
+
+    const value = this.parseAddValue(line, parsed.valueSource, parsed.valueColumn);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "AddStatement",
+      target: parsed.target,
+      value,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseStateStatementParts(
+    line: SourceLine,
+    source: string,
+    keyword: StateStatementKeyword,
+    statementColumn: number,
+  ):
+    | {
+        readonly target: TzrV2StatePath;
+        readonly valueSource: string;
+        readonly valueColumn: number;
+      }
+    | undefined {
+    const rest = source.slice(keyword.length).trim();
+    if (rest.length === 0) {
+      this.addError(line, statementColumn, `${keyword} target is required.`);
+      return undefined;
+    }
+
+    const restColumn = statementColumn + source.indexOf(rest);
+    const plusEqualsIndex = rest.indexOf("+=");
+    const equalsIndex = rest.indexOf("=");
+    if (keyword === "set" && plusEqualsIndex !== -1) {
+      this.addError(line, restColumn + plusEqualsIndex, "set statement must use `=`, not `+=`.");
+      return undefined;
+    }
+    if (keyword === "add" && plusEqualsIndex === -1 && equalsIndex !== -1) {
+      this.addError(line, restColumn + equalsIndex, "add statement must use `+=`, not `=`.");
+      return undefined;
+    }
+
+    const operatorIndex = keyword === "set" ? equalsIndex : plusEqualsIndex;
+    const operator = keyword === "set" ? "=" : "+=";
+    if (operatorIndex === -1) {
+      this.addError(line, statementColumn, `${keyword} statement must include \`${operator}\`.`);
+      return undefined;
+    }
+
+    const targetSource = rest.slice(0, operatorIndex).trim();
+    if (targetSource.length === 0) {
+      this.addError(line, statementColumn, `${keyword} target is required.`);
+      return undefined;
+    }
+    const targetColumn = restColumn + rest.indexOf(targetSource);
+    const target = this.parseStatePath(line, targetSource, targetColumn, keyword);
+    if (target === undefined) {
+      return undefined;
+    }
+
+    const valueStart = operatorIndex + operator.length;
+    const valueRest = rest.slice(valueStart);
+    const valueOffset = valueRest.search(/\S/);
+    if (valueOffset === -1) {
+      this.addError(line, restColumn + valueStart, `${keyword} value is required.`);
+      return undefined;
+    }
+
+    return {
+      target,
+      valueSource: valueRest.slice(valueOffset).trimEnd(),
+      valueColumn: restColumn + valueStart + valueOffset,
+    };
+  }
+
+  private parseStatePath(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: StateStatementKeyword,
+  ): TzrV2StatePath | undefined {
+    const parts = source.split(".");
+    if (!isValidTzrV2DottedIdentifier(source) || parts.length < 2) {
+      this.addError(line, sourceColumn, `Invalid ${keyword} target dotted identifier.`);
+      return undefined;
+    }
+
+    const root = parts[0];
+    if (root === "system") {
+      this.addError(line, sourceColumn, `${keyword} cannot target system.*.`);
+      return undefined;
+    }
+    if (root !== "scenario") {
+      this.addError(line, sourceColumn, `${keyword} target must start with scenario.`);
+      return undefined;
+    }
+
+    return {
+      type: "StatePath",
+      path: source,
+      root,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseSetValue(line: SourceLine, source: string, sourceColumn: number): TzrV2ValueExpression | undefined {
+    const loc = {
+      start: this.location(line.line, sourceColumn),
+      end: this.location(line.line, sourceColumn + source.length),
+    };
+
+    if (source.startsWith("'") || source.startsWith("`") || source.startsWith('"')) {
+      return this.parseStringValue(line, source, sourceColumn);
+    }
+    if (source.startsWith("$")) {
+      return this.parseVariableReferenceValue(line, source, sourceColumn);
+    }
+    if (NUMBER_LITERAL_PATTERN.test(source)) {
+      return { type: "NumberValue", value: Number(source), loc } satisfies TzrV2NumberValue;
+    }
+    if (source === "true" || source === "false") {
+      return { type: "BooleanValue", value: source === "true", loc } satisfies TzrV2BooleanValue;
+    }
+    if (source === "null") {
+      return { type: "NullValue", value: null, loc } satisfies TzrV2NullValue;
+    }
+
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), "set statement must not have extra trailing tokens.");
+      return undefined;
+    }
+
+    this.addError(line, sourceColumn, "Invalid set value.");
+    return undefined;
+  }
+
+  private parseStringValue(line: SourceLine, source: string, sourceColumn: number): TzrV2StringValue | undefined {
+    const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
+    if (literalEnd !== undefined) {
+      const trailing = source.slice(literalEnd + 1);
+      if (trailing.trim().length > 0) {
+        this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), "set statement must not have extra trailing tokens.");
+        return undefined;
+      }
+    }
+
+    const value = this.parseStringLiteral(line, source, sourceColumn);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StringValue",
+      value,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseVariableReferenceValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+  ): TzrV2VariableReferenceValue | undefined {
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), "set statement must not have extra trailing tokens.");
+      return undefined;
+    }
+
+    const path = source.slice(1);
+    const parts = path.split(".");
+    if (!isValidTzrV2DottedIdentifier(path) || parts.length < 2) {
+      this.addError(line, sourceColumn, "Invalid set variable reference.");
+      return undefined;
+    }
+
+    const root = parts[0];
+    if (root !== "scenario" && root !== "system") {
+      this.addError(line, sourceColumn, `Invalid set variable reference root "${root}".`);
+      return undefined;
+    }
+
+    return {
+      type: "VariableReferenceValue",
+      path,
+      root,
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
+  }
+
+  private parseAddValue(line: SourceLine, source: string, sourceColumn: number): TzrV2NumberValue | undefined {
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), "add statement must not have extra trailing tokens.");
+      return undefined;
+    }
+    if (!NUMBER_LITERAL_PATTERN.test(source)) {
+      this.addError(line, sourceColumn, "add value must be a number literal.");
+      return undefined;
+    }
+
+    return {
+      type: "NumberValue",
+      value: Number(source),
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
+    };
   }
 
   private findStringLiteralEnd(source: string): number | undefined {

@@ -1,4 +1,6 @@
 export type {
+  TzrV2AddStatement,
+  TzrV2BooleanValue,
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
@@ -35,10 +37,15 @@ export type {
   TzrV2InlineWaitEvent,
   TzrV2JumpStatement,
   TzrV2NarrationStatement,
+  TzrV2NullValue,
+  TzrV2NumberValue,
   TzrV2ParseOptions,
   TzrV2ParseResult,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2SetStatement,
+  TzrV2StatePath,
+  TzrV2StringValue,
   TzrV2TextBlockBooleanMetaAttribute,
   TzrV2TextBlockColorMetaAttribute,
   TzrV2TextBlockItem,
@@ -51,6 +58,8 @@ export type {
   TzrV2TextPageBreak,
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
+  TzrV2ValueExpression,
+  TzrV2VariableReferenceValue,
 } from "./ast.js";
 export { parseTzrV2ConditionExpression } from "./condition-parser.js";
 export { isValidTzrV2DottedIdentifier, isValidTzrV2Identifier, parseTzrV2 } from "./parser.js";
