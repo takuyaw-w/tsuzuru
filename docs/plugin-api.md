@@ -1,5 +1,10 @@
 # Plugin API
 
+> Status: partially historical. Plugin command metadata and runtime handlers
+> remain, but legacy `compileTzr({ pluginCommands })` validation was removed with
+> the old DSL compiler. DSL v2 currently emits std visual/audio runtime commands
+> directly for the supported subset.
+
 This document describes the currently implemented plugin command surface in `@tsuzuru/core`.
 
 Plugins extend runtime presentation behavior by registering command names that may appear in `.tzr` files. Core still owns scenario flow, state, choices, conditionals, save/load, and execution control.

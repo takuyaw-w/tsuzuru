@@ -31,17 +31,9 @@ export interface RuntimeInitialStateOptions {
 export interface RuntimeChoiceItem {
   readonly id?: string;
   readonly text: string;
-  readonly targetRaw?: string;
-  readonly targetLabel?: string;
 }
 
-export type RuntimePendingChoice = RuntimePendingTargetChoice | RuntimePendingBodyChoice;
-
-export interface RuntimePendingTargetChoice {
-  readonly kind?: "target";
-  readonly question: string;
-  readonly items: readonly RuntimeChoiceItem[];
-}
+export type RuntimePendingChoice = RuntimePendingBodyChoice;
 
 export interface RuntimePendingBodyChoice {
   readonly kind: "body";
@@ -111,7 +103,6 @@ export interface RuntimePluginCommandContext {
 
 export type RuntimeEvent =
   | SceneRuntimeEvent
-  | LabelRuntimeEvent
   | NarrationRuntimeEvent
   | DialogueRuntimeEvent
   | WaitClickRuntimeEvent
@@ -130,11 +121,6 @@ export type RuntimeEvent =
 
 export interface SceneRuntimeEvent {
   readonly type: "scene";
-  readonly id: string;
-}
-
-export interface LabelRuntimeEvent {
-  readonly type: "label";
   readonly id: string;
 }
 
@@ -170,13 +156,7 @@ export interface StateRuntimeEvent {
   readonly value: RuntimeValue;
 }
 
-export type JumpRuntimeEvent = LabelJumpRuntimeEvent | SceneJumpRuntimeEvent;
-
-export interface LabelJumpRuntimeEvent {
-  readonly type: "jump";
-  readonly label: string;
-  readonly instructionIndex: number;
-}
+export type JumpRuntimeEvent = SceneJumpRuntimeEvent;
 
 export interface SceneJumpRuntimeEvent {
   readonly type: "jump";

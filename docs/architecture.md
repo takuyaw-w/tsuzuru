@@ -1,5 +1,10 @@
 # Tsuzuru Architecture
 
+> Status: partially historical. This document still contains legacy
+> `parseTzr` / `compileTzr` and legacy AST references. The current supported DSL
+> path is DSL v2 (`parseTzrV2` / `compileTzrV2`), and the cleanup result is tracked
+> in [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md).
+
 This document describes the current architecture of Tsuzuru.
 
 Tsuzuru is a web-first visual novel engine built around a constrained `.tzr` scenario DSL, a TypeScript core runtime, and a Preact adapter.

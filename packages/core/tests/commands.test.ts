@@ -4,7 +4,6 @@ import { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "../src/ind
 describe("core command registry", () => {
   it("defines the v0.1 core-owned command names", () => {
     expect(CORE_COMMAND_NAMES).toEqual([
-      "jump",
       "waitClick",
       "page",
       "stop",
@@ -19,7 +18,6 @@ describe("core command registry", () => {
 
   it("classifies core commands by ownership category", () => {
     expect(CORE_COMMANDS).toEqual([
-      { name: "jump", category: "flow" },
       { name: "waitClick", category: "text" },
       { name: "page", category: "text" },
       { name: "stop", category: "flow" },
@@ -33,7 +31,7 @@ describe("core command registry", () => {
   });
 
   it("checks whether a command name is core-owned", () => {
-    expect(isCoreCommandName("jump")).toBe(true);
+    expect(isCoreCommandName("jump")).toBe(false);
     expect(isCoreCommandName("waitClick")).toBe(true);
     expect(isCoreCommandName("bg")).toBe(false);
     expect(isCoreCommandName("enter")).toBe(false);

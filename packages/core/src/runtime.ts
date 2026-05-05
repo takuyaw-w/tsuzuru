@@ -3,8 +3,6 @@ import { stepCommandInstruction, unsupportedInstruction } from "./runtime-comman
 import {
   choiceEvent,
   stepBodyChoiceInstruction,
-  stepChoiceInstruction,
-  stepIfInstruction,
   stepV2IfInstruction,
   waitEvent,
 } from "./runtime-control.js";
@@ -121,11 +119,6 @@ function stepInstruction(
         state: nextState,
         event: { type: "scene", id: instruction.id },
       };
-    case "LabelInstruction":
-      return {
-        state: nextState,
-        event: { type: "label", id: instruction.id },
-      };
     case "SceneJumpInstruction":
       return stepSceneJumpInstruction(document, state, nextState, instruction.sceneId);
     case "NarrationInstruction":
@@ -140,17 +133,8 @@ function stepInstruction(
       };
     case "CommandInstruction":
       return stepCommandInstruction(document, state, nextState, instruction, options);
-    case "IfInstruction":
-      return stepIfInstruction(document, state, nextState, instruction, options, stepInstruction);
     case "V2IfInstruction":
       return stepV2IfInstruction(document, state, nextState, instruction, options, stepInstruction);
-    case "MacroInstruction":
-      return {
-        state: nextState,
-        event: { type: "unsupported", instructionType: instruction.type },
-      };
-    case "ChoiceInstruction":
-      return stepChoiceInstruction(nextState, instruction);
     case "BodyChoiceInstruction":
       return stepBodyChoiceInstruction(nextState, instruction);
   }
@@ -233,31 +217,7 @@ export function resolveChoice(
     };
   }
 
-  if (item?.targetLabel === undefined) {
-    return unsupportedInstruction(state, "ChoiceInstruction");
-  }
-
-  const target = document.labels[item.targetLabel];
-  if (target === undefined) {
-    return unsupportedInstruction(state, "ChoiceInstruction");
-  }
-
-  return {
-    state: {
-      ...state,
-      pointer: {
-        filePath: document.filePath,
-        instructionIndex: target.statementIndex,
-      },
-      branchFrames: [],
-      pendingChoice: null,
-    },
-    event: {
-      type: "jump",
-      label: item.targetLabel,
-      instructionIndex: target.statementIndex,
-    },
-  };
+  return unsupportedInstruction(state, "BodyChoiceInstruction");
 }
 
 function runtimeError(state: RuntimeState, code: RuntimeErrorCode, message: string): RuntimeStepResult {

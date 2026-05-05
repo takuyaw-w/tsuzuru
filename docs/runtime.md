@@ -1,5 +1,10 @@
 # Tsuzuru Runtime
 
+> Status: DSL v2-first. The runtime still provides shared execution, snapshot,
+> plugin dispatch, and command primitives, but legacy label jumps,
+> `ChoiceInstruction`, `IfInstruction`, and `CompiledTzrDocument` were removed.
+> DSL v2 uses scene jumps, body choices, and `V2IfInstruction`.
+
 This document describes the currently implemented runtime surface in `@tsuzuru/core`.
 
 ## Role

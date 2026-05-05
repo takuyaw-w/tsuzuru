@@ -2,16 +2,17 @@
 
 ## Status
 
-Draft.
+Current supported DSL path on `feature/new-dsl`, still experimental.
 
 This document defines the current design direction for Tsuzuru DSL v2.
 
-DSL v2 is not a small extension of the current DSL. It is a new scenario authoring syntax candidate that should be implemented experimentally while keeping the existing runtime, AST, plugin architecture, and internal instruction model reusable.
+DSL v2 is not a small extension of the old DSL. It is the current scenario authoring syntax path on this branch and is implemented experimentally while keeping the existing runtime, plugin architecture, and shared instruction model reusable.
 
 Current implementation note:
 
 - Parser and AST support are implemented under `packages/core/src/dsl-v2/`.
 - Experimental `parseTzrV2` / `compileTzrV2` APIs are exported from `@tsuzuru/core`.
+- Legacy `parseTzr` / `compileTzr`, legacy AST, legacy compiler, and macro API were removed during the DSL v2 cleanup.
 - A runnable example exists at [`examples/dsl-v2-basic`](../../../examples/dsl-v2-basic/).
 - Compile/runtime support covers a practical subset including scenes, narration, dialogue, scene jumps, choices, conditional choices, `if`, state updates, `end`, and std visual/audio sugar.
 - Some syntax remains parser-only, draft-only, or unsupported at runtime.

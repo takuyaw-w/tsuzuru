@@ -1,5 +1,11 @@
 # Tsuzuru Roadmap
 
+> Status: partially historical. Entries that mention legacy `parseTzr` /
+> `compileTzr` or old DSL syntax predate the DSL v2 cleanup. Use
+> [`design/design/dsl-v2.md`](design/design/dsl-v2.md) and
+> [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md) for the current
+> DSL direction.
+
 This document defines Tsuzuru's product scope by milestone.
 
 `TODOS.md` is the operational task list.  

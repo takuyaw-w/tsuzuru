@@ -1,5 +1,10 @@
 # std-audio plugin
 
+> Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
+> the legacy `compileTzr({ pluginCommands })` validation example is historical
+> because `compileTzr` was removed. The current runnable integration is
+> [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
+
 `@tsuzuru/plugin-std-audio` は、Tsuzuru 公式の standard audio plugin です。
 
 この plugin は、BGM state と SE / Voice の一回性 event を renderer / app 非依存の runtime state として管理します。

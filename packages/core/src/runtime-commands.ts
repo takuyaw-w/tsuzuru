@@ -64,37 +64,6 @@ export function stepCommandInstruction(
     };
   }
 
-  if (name === "jump") {
-    const jumpLabel = instruction.jumpTarget?.label;
-    if (jumpLabel === undefined) {
-      return unsupportedCommand(nextState);
-    }
-
-    const target = document.labels[jumpLabel];
-    if (target === undefined) {
-      return unsupportedCommand(nextState);
-    }
-
-    return {
-      state: {
-        ...state,
-        branchFrames: [],
-        pendingChoice: null,
-        pendingWait: null,
-        isWaitingForClick: false,
-        pointer: {
-          filePath: document.filePath,
-          instructionIndex: target.statementIndex,
-        },
-      },
-      event: {
-        type: "jump",
-        label: jumpLabel,
-        instructionIndex: target.statementIndex,
-      },
-    };
-  }
-
   if (name === DSL_V2_ADD_COMMAND_NAME) {
     const variableName = getNamedString(args, "name");
     const by = getNamedNumber(args, "by");

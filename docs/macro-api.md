@@ -1,5 +1,9 @@
 # Macro API
 
+> Status: historical legacy API reference. The public macro API and legacy
+> `compileTzr` macro expansion path were removed during DSL v2 cleanup. DSL v2
+> currently has no macro syntax or macro expansion API.
+
 This document describes the currently implemented macro surface in `@tsuzuru/core`.
 
 Macros are compile-time presentation shorthand. They are written in TypeScript and called from `.tzr` files with `$name(...)`. Scenario files do not define macros and do not execute JavaScript or TypeScript.

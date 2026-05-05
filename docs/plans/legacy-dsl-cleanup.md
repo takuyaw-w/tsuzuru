@@ -1,19 +1,73 @@
 # Legacy DSL cleanup plan
 
-This document inventories the current legacy DSL surface before deleting,
-moving, or reorganizing old DSL files. It is a planning document only.
+This document first inventoried the legacy DSL surface before deleting,
+moving, or reorganizing old DSL files. It now also records the cleanup result.
 
 Inventory context:
 
 - Branch: `feature/new-dsl`
 - Checked HEAD before this plan: `e076985ea41f1c8b37159048856db2689340ffb4`
-- Existing public exports are intentionally unchanged by this plan.
-- No legacy files should be deleted or moved until a later release decision.
+- Cleanup commit context: removal performed after `6d530d82b9b8edbfe6a92a34765c4307e80ca03f` on `feature/new-dsl`.
+- The old inventory below is historical context; the cleanup result is the current source of truth.
 
 Entry-point status:
 
-- `README.md` now points new work on this branch to DSL v2 as the recommended direction.
-- Legacy cleanup/removal has still not been performed.
+- `README.md` now presents DSL v2 as the current supported DSL path.
+- Legacy parser/compiler/API/tests/examples have been removed.
+- Shared runtime/IR/value/plugin command infrastructure remains.
+
+## Cleanup result
+
+Removed legacy-only implementation:
+
+- `packages/core/src/parser.ts`
+- `packages/core/src/compiler.ts`
+- `packages/core/src/condition.ts`
+- `packages/core/src/macro.ts`
+- legacy AST document/statement/condition/jump types from `packages/core/src/ast.ts`
+- legacy IR/runtime support for `LabelInstruction`, `ChoiceInstruction`, `IfInstruction`, `MacroInstruction`, label jumps, and target-label choices
+- public exports for `parseTzr`, `compileTzr`, `ParseResult`, `CompileResult`, `CompileOptions`, legacy AST types, `CompiledTzrDocument`, legacy IR types, `evaluateCondition`, and macro API
+
+Removed legacy-only tests:
+
+- `packages/core/tests/parser.test.ts`
+- `packages/core/tests/compiler.test.ts`
+- `packages/core/tests/condition.test.ts`
+
+Reworked shared tests:
+
+- `packages/core/tests/runtime.test.ts` now uses DSL v2 or manual `RuntimeDocument` fixtures.
+- `packages/preact/tests/use-runtime.test.ts` now uses DSL v2 compiled documents and body choices.
+- std visual/audio plugin tests now exercise runtime handlers with manual `CommandInstruction` fixtures.
+- standard UI tests no longer expect label-jump or `MacroInstruction` events.
+
+Removed legacy-only examples:
+
+- `examples/basic`
+- `examples/preact-basic`
+- `examples/preact-std-visual`
+- `examples/preact-std-audio`
+- `examples/standard-ui-preact`
+
+Kept current example:
+
+- `examples/dsl-v2-basic`
+
+Kept shared files/types because DSL v2/runtime still depend on them:
+
+- `packages/core/src/ast.ts`: `SourceLocation`, `SourceRange`, `TextLine`, `TzrArgument`, `TzrValue`, and shared argument/value variants.
+- `packages/core/src/ir.ts`: `RuntimeDocument`, `TzrInstruction`, `SceneInstruction`, `SceneJumpInstruction`, `NarrationInstruction`, `DialogueInstruction`, `CommandInstruction`, `BodyChoiceInstruction`, `V2IfInstruction`, and declaration index metadata.
+- `packages/core/src/runtime.ts`, `runtime-control.ts`, `runtime-commands.ts`, `runtime-types.ts`, `runtime-snapshot.ts`, `runtime-args.ts`, and `runtime-frames.ts`.
+- `packages/core/src/diagnostic.ts`, used by DSL v2 parser/compiler.
+- `packages/core/src/commands.ts`, still used by runtime command dispatch.
+- `packages/core/src/plugin-command.ts`, extracted from the legacy compiler to keep `definePluginCommand` and plugin command metadata available for std plugins.
+
+Remaining legacy-shaped elements retained intentionally:
+
+- `RuntimeDocument.labels` remains as an empty shared field because `CompiledTzrV2Document` still extends `RuntimeDocument` and existing runtime document shape includes labels.
+- `RuntimeState.flags` and runtime helper commands `inc`, `dec`, `flag`, and `unflag` remain as low-risk runtime primitives. DSL v2 does not currently parse these as supported authoring syntax.
+- Several docs are marked historical rather than fully rewritten in this cleanup.
+- Plugin command schema metadata remains, but legacy compile-time plugin command validation was removed with `compileTzr`. DSL v2 plugin validation policy is a follow-up decision.
 
 ## 1. Current legacy DSL inventory
 

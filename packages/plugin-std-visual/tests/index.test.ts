@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { compileTzr, createInitialRuntimeState, parseTzr, stepRuntime } from "@tsuzuru/core";
+import {
+  createInitialRuntimeState,
+  stepRuntime,
+  type CommandInstruction,
+  type RuntimeDocument,
+  type TzrArgument,
+} from "@tsuzuru/core";
 import {
   createStdVisualCommandHandlers,
   createStdVisualPlugin,
   getStdVisualState,
   stdVisualPluginCommands,
 } from "../src/index.js";
+
+const loc = {
+  start: { filePath: "scenario/std-visual.tzr", line: 1, column: 1 },
+  end: { filePath: "scenario/std-visual.tzr", line: 1, column: 1 },
+};
 
 describe("createStdVisualPlugin", () => {
   it("initializes runtimeState.plugins.stdVisual", () => {
@@ -33,61 +44,43 @@ describe("createStdVisualPlugin", () => {
 });
 
 describe("std-visual commands", () => {
-  it("sets the background with @bg", () => {
-    const result = runStdVisualScript('@bg("classroom")\n');
-
-    expect(getStdVisualState(result.state).background).toEqual({ assetId: "classroom" });
+  it("keeps plugin command metadata available for DSL v2 integrations", () => {
+    expect(Object.keys(stdVisualPluginCommands)).toEqual(["bg", "show", "hide"]);
+    expect(stdVisualPluginCommands.bg?.name).toBe("bg");
+    expect(stdVisualPluginCommands.show?.name).toBe("show");
+    expect(stdVisualPluginCommands.hide?.name).toBe("hide");
   });
 
-  it("overwrites the previous background when @bg runs again", () => {
-    const result = runStdVisualScript(`@bg("classroom")
-@bg("street")
-`);
+  it("sets and overwrites the background with bg commands", () => {
+    const result = runStdVisualCommands(command("bg", [positionalString("classroom")]), command("bg", [positionalString("street")]));
 
     expect(getStdVisualState(result.state).background).toEqual({ assetId: "street" });
   });
 
-  it("shows a sprite at center by default", () => {
-    const result = runStdVisualScript('@show("alice_smile")\n');
-
-    expect(getStdVisualState(result.state).sprites.alice_smile).toEqual({ position: "center" });
-  });
-
-  it("shows a sprite at a named position", () => {
-    const result = runStdVisualScript('@show("alice_smile", position="left")\n');
-
-    expect(getStdVisualState(result.state).sprites.alice_smile).toEqual({ position: "left" });
-  });
-
-  it("updates an existing sprite when @show runs for the same asset", () => {
-    const result = runStdVisualScript(`@show("alice_smile", position="left")
-@show("alice_smile", position="right")
-`);
-
-    expect(getStdVisualState(result.state).sprites.alice_smile).toEqual({ position: "right" });
-  });
-
-  it("allows multiple sprites to share the same position", () => {
-    const result = runStdVisualScript(`@show("alice_smile", position="left")
-@show("yu_smile", position="left")
-`);
+  it("shows sprites at default and named positions", () => {
+    const result = runStdVisualCommands(
+      command("show", [positionalString("alice_smile")]),
+      command("show", [positionalString("yu_smile"), namedString("position", "left")]),
+    );
 
     expect(getStdVisualState(result.state).sprites).toEqual({
-      alice_smile: { position: "left" },
+      alice_smile: { position: "center" },
       yu_smile: { position: "left" },
     });
   });
 
-  it("hides an existing sprite", () => {
-    const result = runStdVisualScript(`@show("alice_smile")
-@hide("alice_smile")
-`);
+  it("updates and hides sprites", () => {
+    const result = runStdVisualCommands(
+      command("show", [positionalString("alice_smile"), namedString("position", "left")]),
+      command("show", [positionalString("alice_smile"), namedString("position", "right")]),
+      command("hide", [positionalString("alice_smile")]),
+    );
 
     expect(getStdVisualState(result.state).sprites).toEqual({});
   });
 
   it("emits a runtime warning when hiding a missing sprite", () => {
-    const result = runStdVisualScript('@hide("missing")\n');
+    const result = runStdVisualCommands(command("hide", [positionalString("missing")]));
 
     expect(getStdVisualState(result.state).sprites).toEqual({});
     expect(result.diagnostics).toEqual([
@@ -99,78 +92,60 @@ describe("std-visual commands", () => {
     ]);
   });
 
-  it("rejects empty asset ids", () => {
-    const compiled = compileStdVisualScript(`@bg("")
-@show("")
-@hide("")
-`);
-
-    expect(compiled.ok).toBe(false);
-    if (compiled.ok) {
-      throw new Error("expected compiler failure");
-    }
-    expect(compiled.errors.map((error) => error.message)).toEqual([
-      "@bg positional argument 1 must be a non-empty string.",
-      "@show positional argument 1 must be a non-empty string.",
-      "@hide positional argument 1 must be a non-empty string.",
-    ]);
-  });
-
-  it("rejects invalid sprite positions", () => {
-    const compiled = compileStdVisualScript('@show("alice", position="top")\n');
-
-    expect(compiled.ok).toBe(false);
-    if (compiled.ok) {
-      throw new Error("expected compiler failure");
-    }
-    expect(compiled.errors.map((error) => error.message)).toEqual([
-      '@show argument "position" must be one of "left", "center", or "right".',
-    ]);
+  it("throws on invalid runtime arguments after legacy compile-time validation removal", () => {
+    expect(() => runStdVisualCommands(command("bg", [positionalString("")]))).toThrow(
+      "Invalid @bg runtime arguments. Compile with stdVisualPluginCommands first.",
+    );
+    expect(() => runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")]))).toThrow(
+      "Invalid @show runtime arguments. Compile with stdVisualPluginCommands first.",
+    );
   });
 });
 
-function createDocument() {
-  const parsed = parseTzr("#scene(\"main\")\n", { filePath: "scenario/main.tzr" });
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) {
-    throw new Error("expected parser success");
-  }
-
-  const compiled = compileTzr(parsed.document);
-  expect(compiled.ok).toBe(true);
-  if (!compiled.ok) {
-    throw new Error("expected compiler success");
-  }
-
-  return compiled.document;
+function createDocument(instructions: readonly CommandInstruction[] = []): RuntimeDocument {
+  return {
+    filePath: "scenario/std-visual.tzr",
+    instructions,
+    labels: {},
+    scenes: {},
+  };
 }
 
-function compileStdVisualScript(source: string) {
-  const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) {
-    throw new Error("expected parser success");
-  }
-
-  return compileTzr(parsed.document, {
-    pluginCommands: stdVisualPluginCommands,
-  });
+function command(name: string, args: readonly TzrArgument[]): CommandInstruction {
+  return {
+    type: "CommandInstruction",
+    name,
+    args,
+    loc,
+  };
 }
 
-function runStdVisualScript(source: string) {
-  const compiled = compileStdVisualScript(source);
-  expect(compiled.ok).toBe(true);
-  if (!compiled.ok) {
-    throw new Error("expected compiler success");
-  }
+function positionalString(value: string): TzrArgument {
+  return {
+    type: "PositionalArgument",
+    value: { type: "StringValue", value, loc },
+    loc,
+  };
+}
 
+function namedString(name: string, value: string): TzrArgument {
+  return {
+    type: "NamedArgument",
+    name,
+    value: { type: "StringValue", value, loc },
+    loc,
+  };
+}
+
+function runStdVisualCommands(...instructions: readonly CommandInstruction[]) {
+  const document = createDocument(instructions);
   const diagnostics: Array<{ readonly severity: "warning"; readonly code: string; readonly message: string }> = [];
-  let state = createInitialRuntimeState(compiled.document, {
+  let state = createInitialRuntimeState(document, {
     plugins: [createStdVisualPlugin()],
   });
 
-  for (let index = 0; index < compiled.document.instructions.length; index += 1) {
-    const result = stepRuntime(compiled.document, state, {
+  for (const _instruction of instructions) {
+    const result = stepRuntime(document, state, {
       commandHandlers: createStdVisualCommandHandlers(),
       onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     });

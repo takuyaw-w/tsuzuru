@@ -1,5 +1,10 @@
 # Tsuzuru DSL
 
+> Status: historical legacy DSL reference. The legacy `parseTzr` / `compileTzr`
+> path and `#scene(...)` / `#label(...)` / `@command(...)` syntax were removed on
+> `feature/new-dsl`. Use [`docs/design/design/dsl-v2.md`](design/design/dsl-v2.md)
+> and [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/) for the current DSL.
+
 This document defines the currently implemented `.tzr` syntax and compiler surface for `@tsuzuru/core`.
 
 ## Scope

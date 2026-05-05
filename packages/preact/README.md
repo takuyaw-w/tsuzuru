@@ -30,7 +30,7 @@ export function App({ event, onChoice, onContinue, onAdvance }: AppProps) {
 }
 ```
 
-`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, label, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button. In v0.1, `waitClick` and `page` do not advance from message-area clicks. Narration and dialogue can call `onAdvance()` when their display area is clicked and `canAdvance` is true. `RuntimeView` is a UI-layer convenience component; host applications decide whether advancing is currently allowed by passing or withholding callbacks.
+`RuntimeView` renders minimal output for narration, dialogue, choice, wait, scene, scene jump, plugin command, unsupported, and end events. Choice buttons call `onChoice(itemIndex)`. `waitClick` and `page` events call `onContinue()` from their continue button. In v0.1, `waitClick` and `page` do not advance from message-area clicks. Narration and dialogue can call `onAdvance()` when their display area is clicked and `canAdvance` is true. `RuntimeView` is a UI-layer convenience component; host applications decide whether advancing is currently allowed by passing or withholding callbacks.
 
 `RuntimeView` is intentionally not a full game UI framework. It does not own layout systems, themes, menus, save slots, backlog, skip/auto mode UI, asset loading, audio controls, config screens, or other game shell features. Those belong in host applications, userland components, or future separate packages.
 
@@ -40,10 +40,10 @@ export function App({ event, onChoice, onContinue, onAdvance }: AppProps) {
 
 ```tsx
 import { RuntimeView, useRuntime } from "@tsuzuru/preact";
-import type { CompiledTzrDocument } from "@tsuzuru/core";
+import type { RuntimeDocument } from "@tsuzuru/core";
 
 interface AppProps {
-  document: CompiledTzrDocument;
+  document: RuntimeDocument;
 }
 
 export function App({ document }: AppProps) {
@@ -74,7 +74,7 @@ export function App({ document }: AppProps) {
 
 The hook returns `state`, `event`, `visibleEvent`, `step`, `continueClick`, `choose`, `reset`, `createSnapshot`, `restoreSnapshot`, `createSaveData`, `restoreSaveData`, `blockReason`, `isBlocked`, and `autoStepError`. `event` is the latest runtime event. `visibleEvent` is the latest event intended for UI rendering. When `autoClearWait` is enabled, `wait` events are cleared with `setTimeout` and the runtime advances after the wait duration.
 
-`useRuntime(document)` still works without options. When using runtime plugins, pass plugin definitions through `plugins` and pass matching runtime command handlers through `commandHandlers`. `plugins` receives plugin factory return values such as `createStdVisualPlugin()`. For std-visual commands like `@bg`, `@show`, and `@hide`, also pass `createStdVisualCommandHandlers()`. Hosts that want runtime warnings can pass `onDiagnostic`.
+`useRuntime(document)` still works without options. When using runtime plugins, pass plugin definitions through `plugins` and pass matching runtime command handlers through `commandHandlers`. `plugins` receives plugin factory return values such as `createStdVisualPlugin()`. For std-visual commands emitted by DSL v2, such as `bg`, `show`, and `hide`, also pass `createStdVisualCommandHandlers()`. Hosts that want runtime warnings can pass `onDiagnostic`.
 
 ```tsx
 import { useRuntime } from "@tsuzuru/preact";
@@ -92,17 +92,17 @@ const runtime = useRuntime(document, {
 });
 ```
 
-`autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `label`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
+`autoStepTransientEvents` defaults to `false`. When enabled, auto-steppable, non-blocking runtime events advance automatically one browser tick at a time. `scene`, `state`, `jump`, and `pluginCommand` are currently auto-steppable. Blocking or inspectable events such as narration, dialogue, choice, waitClick, page, wait, stop, end, and unsupported are not skipped.
 
-Host applications that want to avoid flicker from auto-stepped transient events should pass `visibleEvent` to `RuntimeView`. Passing `event` directly is still useful for debug views because `RuntimeView` can render status output for scene, label, state, jump, if, and pluginCommand events.
+Host applications that want to avoid flicker from auto-stepped transient events should pass `visibleEvent` to `RuntimeView`. Passing `event` directly is still useful for debug views because `RuntimeView` can render status output for scene, state, jump, if, and pluginCommand events.
 
 `if` events are auto-steppable only when their nested event is also auto-steppable. For example, an `if` event that immediately produces a nested `state` or `jump` event advances automatically, but an `if` event that produces nested narration, dialogue, choice, wait, stop, end, or unsupported output stops so the host can render or inspect it.
 
-`autoStepMaxSteps` defaults to `1000`. It limits consecutive automatic steps so a label/jump loop cannot keep scheduling timers forever. When the limit is reached, auto-step stops and `autoStepError` contains a message.
+`autoStepMaxSteps` defaults to `1000`. It limits consecutive automatic steps so a scene jump loop cannot keep scheduling timers forever. When the limit is reached, auto-step stops and `autoStepError` contains a message.
 
 `RuntimeSnapshot` is state-only data created from `RuntimeState`. It does not include `RuntimeEvent`, which remains a transient rendering signal. `createSnapshot()` and `restoreSnapshot(snapshot)` are low-level APIs for state persistence. When restoring a state-only snapshot, `restoreSnapshot` can recover blocking events such as choice, wait, or waitClick from the restored state, but it cannot recover a non-blocking narration or dialogue event that was visible when the snapshot was created.
 
-For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. It does not include scenario identity, scenario version, or migration metadata in v0.1, and save data compatibility is not guaranteed if scenario files or runtime/event shapes change after saving. `createSaveData()` stores `visibleEvent`, not the latest transient runtime event, so auto-stepped scene, label, state, jump, if, and pluginCommand events do not become the restored screen. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
+For save/load that should restore the current screen, use `createSaveData()` and `restoreSaveData(saveData)`. `RuntimeSaveData` contains `{ version, snapshot, event }`, so it keeps the state-only `RuntimeSnapshot` separate from the current renderable event. It does not include scenario identity, scenario version, or migration metadata in v0.1, and save data compatibility is not guaranteed if scenario files or runtime/event shapes change after saving. `createSaveData()` stores `visibleEvent`, not the latest transient runtime event, so auto-stepped scene, state, jump, if, and pluginCommand events do not become the restored screen. Host applications own where save data is stored, such as `localStorage`, IndexedDB, or a remote save service.
 
 `isRuntimeSaveData(value)` provides v0.1 lightweight validation for host-owned save data. It checks the save data version, basic snapshot pointer shape, and current event type shape, but it is not a full schema validator for every runtime event. Because data loaded from `localStorage` or another host store may be stale or corrupted, pass parsed data through `isRuntimeSaveData` before calling `restoreSaveData`. `restoreSaveData` assumes the value has already been accepted as `RuntimeSaveData`.
 

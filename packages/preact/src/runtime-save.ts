@@ -2,7 +2,7 @@ import {
   getRuntimeBlockReason,
   restoreRuntimeState,
   stepRuntime,
-  type CompiledTzrDocument,
+  type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
   type RuntimeState,
@@ -21,7 +21,7 @@ export interface RestoreSnapshotResult {
 }
 
 export function restoreRuntimeSnapshotForView(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   snapshot: RuntimeSnapshot,
   stepOptions: RuntimeStepOptions = {},
 ): RestoreSnapshotResult {

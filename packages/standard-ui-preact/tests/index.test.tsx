@@ -365,8 +365,8 @@ describe("RuntimeMessageLayer", () => {
           type: "choice",
           question: "What do you do?",
           items: [
-            { text: "Stay", targetRaw: "#stay", targetLabel: "stay" },
-            { text: "Go", targetRaw: "#go", targetLabel: "go" },
+            { id: "stay", text: "Stay" },
+            { id: "go", text: "Go" },
           ],
         },
         onChoice,
@@ -416,7 +416,7 @@ describe("RuntimeMessageLayer", () => {
   it("maps error, unsupported, stop, and end", () => {
     const events: readonly [RuntimeEvent, string][] = [
       [{ type: "error", code: "choice_not_pending", message: "Choice is not pending." }, "Choice is not pending."],
-      [{ type: "unsupported", instructionType: "MacroInstruction" }, "Unsupported instruction: MacroInstruction"],
+      [{ type: "unsupported", instructionType: "CommandInstruction" }, "Unsupported instruction: CommandInstruction"],
       [{ type: "stop" }, "Stopped"],
       [{ type: "end" }, "End"],
     ];
@@ -438,8 +438,6 @@ describe("RuntimeMessageLayer", () => {
   it("hides transient events by default", () => {
     const events: readonly RuntimeEvent[] = [
       { type: "scene", id: "prologue" },
-      { type: "label", id: "start" },
-      { type: "jump", label: "after_choice", instructionIndex: 12 },
       { type: "jump", sceneId: "later", instructionIndex: 20 },
       { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "if", result: true, branch: "then" },
@@ -455,8 +453,6 @@ describe("RuntimeMessageLayer", () => {
   it("shows transient events when showTransientStatus=true", () => {
     const events: readonly [RuntimeEvent, string][] = [
       [{ type: "scene", id: "prologue" }, "Scene: prologue"],
-      [{ type: "label", id: "start" }, "Label: start"],
-      [{ type: "jump", label: "after_choice", instructionIndex: 12 }, "Jump: #after_choice"],
       [{ type: "jump", sceneId: "later", instructionIndex: 20 }, "Jump scene: later"],
       [{ type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" }, "Choice: Stay"],
       [{ type: "if", result: false, branch: "else" }, "If: false (else)"],

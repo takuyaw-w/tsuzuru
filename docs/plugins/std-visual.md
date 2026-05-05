@@ -1,5 +1,10 @@
 # std-visual plugin
 
+> Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
+> the legacy `compileTzr({ pluginCommands })` validation example is historical
+> because `compileTzr` was removed. The current runnable integration is
+> [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
+
 `@tsuzuru/plugin-std-visual` は、Tsuzuru 公式の標準 visual plugin です。
 
 この plugin は、背景や sprite の表示状態を renderer 非依存の runtime state として管理します。DOM や Preact component は描画せず、`assetId` から実際の画像 path への解決も行いません。

@@ -1,36 +1,17 @@
 export type {
   BooleanValue,
-  ChoiceBlock,
-  ChoiceItem,
-  CommandStatement,
-  ComparisonOperator,
-  ConditionExpression,
-  FlagCondition,
   IdentifierValue,
-  IfBlock,
-  JumpTarget,
-  LabelDeclaration,
-  MacroStatement,
   NamedArgument,
-  NarrationBlock,
   NumberValue,
-  NotCondition,
   PositionalArgument,
-  SceneDeclaration,
   SourceLocation,
   SourceRange,
-  SpeakerBlock,
   StringValue,
   TextLine,
   TzrArgument,
-  TzrDocument,
-  TzrStatement,
   TzrValue,
-  VariableComparisonCondition,
 } from "./ast.js";
 export type {
-  CompileOptions,
-  CompileResult,
   PluginCommandArgumentDefinition,
   PluginCommandArgumentSchema,
   PluginCommandDefinition,
@@ -38,23 +19,17 @@ export type {
   PluginCommandNamedArgumentDefinition,
   PluginCommandPositionalArgumentDefinition,
   PluginCommandValueType,
-} from "./compiler.js";
-export { compileTzr, definePluginCommand } from "./compiler.js";
-export { evaluateCondition } from "./condition.js";
+} from "./plugin-command.js";
+export { definePluginCommand } from "./plugin-command.js";
 export type { CoreCommandDefinition, CoreCommandName } from "./commands.js";
 export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands.js";
 export type { Diagnostic, ParseDiagnostic } from "./diagnostic.js";
 export type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
-  ChoiceInstruction,
   CommandInstruction,
-  CompiledTzrDocument,
   DeclarationIndexEntry,
   DialogueInstruction,
-  IfInstruction,
-  LabelInstruction,
-  MacroInstruction,
   NarrationInstruction,
   RuntimeDocument,
   SceneJumpInstruction,
@@ -63,10 +38,6 @@ export type {
   V2ElifInstructionBranch,
   V2IfInstruction,
 } from "./ir.js";
-export type { MacroContext, MacroDefinition, MacroEntry, MacroExpandFunction, MacroMap } from "./macro.js";
-export { expandMacro } from "./macro.js";
-export type { ParseResult } from "./parser.js";
-export { parseTzr } from "./parser.js";
 export type {
   CompiledTzrV2Document,
   TzrV2AddStatement,
@@ -179,7 +150,6 @@ export type {
   EndRuntimeEvent,
   IfRuntimeEvent,
   JumpRuntimeEvent,
-  LabelRuntimeEvent,
   NarrationRuntimeEvent,
   PageRuntimeEvent,
   RuntimeBranchFrame,
@@ -193,11 +163,9 @@ export type {
   RuntimeEvent,
   RuntimeFlags,
   RuntimeInitialStateOptions,
-  LabelJumpRuntimeEvent,
   RuntimePendingChoice,
   RuntimePendingBodyChoice,
   RuntimePendingBodyChoiceItem,
-  RuntimePendingTargetChoice,
   RuntimePendingWait,
   RuntimePluginDefinition,
   RuntimePluginCommandEvent,

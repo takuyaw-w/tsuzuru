@@ -1,11 +1,7 @@
-import type { ChoiceItem } from "./ast.js";
-import { evaluateCondition } from "./condition.js";
 import { evaluateTzrV2Condition, type TzrV2ConditionEvaluationError } from "./dsl-v2/condition-evaluator.js";
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
-  ChoiceInstruction,
-  IfInstruction,
   RuntimeDocument,
   TzrInstruction,
   V2IfInstruction,
@@ -14,8 +10,8 @@ import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {
   ChoiceRuntimeEvent,
   IfRuntimeEvent,
-  RuntimePendingBodyChoiceItem,
   RuntimeChoiceItem,
+  RuntimePendingBodyChoiceItem,
   RuntimePendingChoice,
   RuntimePendingWait,
   RuntimeState,
@@ -31,60 +27,6 @@ export type RuntimeInstructionStepper = (
   nextState: RuntimeState,
   options: RuntimeStepOptions,
 ) => RuntimeStepResult;
-
-export function stepIfInstruction(
-  document: RuntimeDocument,
-  state: RuntimeState,
-  nextState: RuntimeState,
-  instruction: IfInstruction,
-  options: RuntimeStepOptions,
-  stepInstruction: RuntimeInstructionStepper,
-): RuntimeStepResult {
-  const result = evaluateCondition(instruction.conditionExpression, state);
-  const branch = result ? instruction.thenBranch : instruction.elseBranch;
-  const branchName = result ? "then" : branch === undefined ? "none" : "else";
-
-  if (branch === undefined || branch.length === 0) {
-    return {
-      state: nextState,
-      event: {
-        type: "if",
-        result,
-        branch: branchName,
-      },
-    };
-  }
-
-  const branchState = pushBranchFrame(nextState, branch);
-  const branchInstruction = branch[0];
-  if (branchInstruction === undefined) {
-    return {
-      state: nextState,
-      event: {
-        type: "if",
-        result,
-        branch: branchName,
-      },
-    };
-  }
-  const branchResult = stepInstruction(
-    document,
-    branchState,
-    branchInstruction,
-    advanceActiveBranchFrame(branchState),
-    options,
-  );
-
-  return {
-    state: branchResult.state,
-    event: {
-      type: "if",
-      result,
-      branch: branchName,
-      event: branchResult.event,
-    },
-  };
-}
 
 export function stepV2IfInstruction(
   document: RuntimeDocument,
@@ -140,21 +82,6 @@ export function stepV2IfInstruction(
   };
 }
 
-export function stepChoiceInstruction(state: RuntimeState, instruction: ChoiceInstruction): RuntimeStepResult {
-  const pendingChoice: RuntimePendingChoice = {
-    question: instruction.question,
-    items: instruction.items.map(choiceItemToRuntimeChoiceItem),
-  };
-
-  return {
-    state: {
-      ...state,
-      pendingChoice,
-    },
-    event: choiceEvent(pendingChoice),
-  };
-}
-
 export function stepBodyChoiceInstruction(state: RuntimeState, instruction: BodyChoiceInstruction): RuntimeStepResult {
   const visibleItems = filterBodyChoiceItems(state, instruction);
   if (!visibleItems.ok) {
@@ -191,14 +118,6 @@ export function stepBodyChoiceInstruction(state: RuntimeState, instruction: Body
       pendingChoice,
     },
     event: choiceEvent(pendingChoice),
-  };
-}
-
-function choiceItemToRuntimeChoiceItem(item: ChoiceItem): RuntimeChoiceItem {
-  return {
-    text: item.text,
-    targetRaw: item.target.raw,
-    ...(item.target.label === undefined ? {} : { targetLabel: item.target.label }),
   };
 }
 
@@ -249,12 +168,10 @@ export function choiceEvent(pendingChoice: RuntimePendingChoice): ChoiceRuntimeE
   };
 }
 
-function toChoiceEventItem(item: RuntimeChoiceItem): RuntimeChoiceItem {
+function toChoiceEventItem(item: RuntimePendingBodyChoiceItem): RuntimeChoiceItem {
   return {
     ...(item.id === undefined ? {} : { id: item.id }),
     text: item.text,
-    ...(item.targetRaw === undefined ? {} : { targetRaw: item.targetRaw }),
-    ...(item.targetLabel === undefined ? {} : { targetLabel: item.targetLabel }),
   };
 }
 

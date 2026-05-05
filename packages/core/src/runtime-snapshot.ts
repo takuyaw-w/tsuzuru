@@ -45,17 +45,10 @@ function clonePendingChoice(pendingChoice: RuntimePendingChoice | null): Runtime
     return null;
   }
 
-  if (pendingChoice.kind === "body") {
-    return {
-      kind: "body",
-      question: pendingChoice.question,
-      items: pendingChoice.items.map((item) => ({ ...item, body: cloneInstructions(item.body) })),
-    };
-  }
-
   return {
+    kind: "body",
     question: pendingChoice.question,
-    items: pendingChoice.items.map((item) => ({ ...item })),
+    items: pendingChoice.items.map((item) => ({ ...item, body: cloneInstructions(item.body) })),
   };
 }
 
