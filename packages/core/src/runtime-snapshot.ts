@@ -60,5 +60,27 @@ function clonePendingChoice(pendingChoice: RuntimePendingChoice | null): Runtime
 }
 
 function cloneInstructions(instructions: readonly TzrInstruction[]): readonly TzrInstruction[] {
-  return JSON.parse(JSON.stringify(instructions)) as readonly TzrInstruction[];
+  return clonePlainData(instructions);
+}
+
+function clonePlainData<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => clonePlainData(item)) as T;
+  }
+
+  if (isObjectRecord(value)) {
+    const cloned: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value)) {
+      if (child !== undefined) {
+        cloned[key] = clonePlainData(child);
+      }
+    }
+    return cloned as T;
+  }
+
+  return value;
+}
+
+function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }

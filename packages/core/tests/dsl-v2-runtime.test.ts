@@ -515,6 +515,7 @@ scene leave:
     const restored = restoreRuntimeState(JSON.parse(JSON.stringify(createRuntimeSnapshot(choice.state))));
     const resolved = resolveChoice(document, restored, 1);
     const narration = stepRuntime(document, resolved.state);
+    const restoredChoice = stepRuntime(document, restored);
 
     expect(restored.pendingChoice).toMatchObject({
       kind: "body",
@@ -524,6 +525,19 @@ scene leave:
         { id: "leave", text: "Leave", body: [{ type: "NarrationInstruction" }] },
       ],
     });
+    expect(restoredChoice.event).toEqual({
+      type: "choice",
+      question: "Choose",
+      items: [
+        { id: "openNotebook", text: "Open notebook" },
+        { id: "leave", text: "Leave" },
+      ],
+    });
+    if (restoredChoice.event.type !== "choice") {
+      throw new Error("expected restored choice event");
+    }
+    expect(restoredChoice.event.items[0]).not.toHaveProperty("body");
+    expect(restoredChoice.event.items[1]).not.toHaveProperty("body");
     expect(narration.event).toMatchObject({
       type: "narration",
       lines: [{ text: "Leave." }],
@@ -597,6 +611,8 @@ scene leave:
     expect(snapshot.pendingChoice.items[0]?.body[0]).not.toBe(originalBody?.[0]);
     expect(restored.pendingChoice.items[0]?.body).not.toBe(originalBody);
     expect(restored.pendingChoice.items[0]?.body[0]).not.toBe(originalBody?.[0]);
+    expect(restored.pendingChoice.items[0]?.body).not.toBe(snapshot.pendingChoice.items[0]?.body);
+    expect(restored.pendingChoice.items[0]?.body[0]).not.toBe(snapshot.pendingChoice.items[0]?.body[0]);
   });
 
   it("resumes parent flow after a filtered DSL v2 body choice branch completes", () => {
@@ -626,6 +642,46 @@ scene leave:
     expect(activeBranchSnapshot.branchFrames[0]?.instructions).not.toBe(instruction.items[0]?.body);
     expect(activeBranchSnapshot.branchFrames[0]?.instructions[0]).not.toBe(instruction.items[0]?.body[0]);
     expect(activeBranchRestored.branchFrames[0]?.instructions).not.toBe(activeBranchSnapshot.branchFrames[0]?.instructions);
+    expect(talk.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Talk." }],
+    });
+    expect(after.event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "After." }],
+    });
+    expect(after.state.branchFrames).toEqual([]);
+  });
+
+  it("restores an active DSL v2 body choice branch from a JSON snapshot without sharing instructions", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Talk" id=talk:
+      narration:
+        Talk.
+  narration:
+    After.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const choice = stepRuntime(document, scene.state);
+    const resolved = resolveChoice(document, choice.state, 0);
+    const instruction = document.instructions[1];
+
+    expect(instruction?.type).toBe("BodyChoiceInstruction");
+    if (instruction?.type !== "BodyChoiceInstruction") {
+      throw new Error("expected body choice instruction");
+    }
+
+    const snapshot = createRuntimeSnapshot(resolved.state);
+    const parsedSnapshot = JSON.parse(JSON.stringify(snapshot));
+    const restored = restoreRuntimeState(parsedSnapshot);
+    const talk = stepRuntime(document, restored);
+    const after = stepRuntime(document, talk.state);
+
+    expect(snapshot.branchFrames[0]?.instructions).not.toBe(instruction.items[0]?.body);
+    expect(snapshot.branchFrames[0]?.instructions[0]).not.toBe(instruction.items[0]?.body[0]);
+    expect(restored.branchFrames[0]?.instructions).not.toBe(snapshot.branchFrames[0]?.instructions);
+    expect(restored.branchFrames[0]?.instructions[0]).not.toBe(snapshot.branchFrames[0]?.instructions[0]);
     expect(talk.event).toMatchObject({
       type: "narration",
       lines: [{ text: "Talk." }],
