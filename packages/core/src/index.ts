@@ -60,6 +60,8 @@ export type {
   SceneJumpInstruction,
   SceneInstruction,
   TzrInstruction,
+  V2ElifInstructionBranch,
+  V2IfInstruction,
 } from "./ir.js";
 export type { MacroContext, MacroDefinition, MacroEntry, MacroExpandFunction, MacroMap } from "./macro.js";
 export { expandMacro } from "./macro.js";

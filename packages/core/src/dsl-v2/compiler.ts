@@ -11,11 +11,14 @@ import type {
   SceneJumpInstruction,
   SceneInstruction,
   TzrInstruction,
+  V2ElifInstructionBranch,
+  V2IfInstruction,
 } from "../ir.js";
 import type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
+  TzrV2ConditionExpression,
   TzrV2DialogueStatement,
   TzrV2Document,
   TzrV2IfStatement,
@@ -174,8 +177,10 @@ class TzrV2Compiler {
   }
 
   private validateIfStatement(statement: TzrV2IfStatement): void {
+    this.validateSupportedCondition(statement.condition);
     this.validateSceneStatements(statement.thenBranch);
     for (const branch of statement.elifBranches) {
+      this.validateSupportedCondition(branch.condition);
       this.validateSceneStatements(branch.body);
     }
     if (statement.elseBranch !== undefined) {
@@ -198,6 +203,29 @@ class TzrV2Compiler {
   private validateJumpTarget(target: string, location: SourceLocation): void {
     if (!this.scenes.has(target)) {
       this.addError(location, `Unknown scene "${target}".`);
+    }
+  }
+
+  private validateSupportedCondition(expression: TzrV2ConditionExpression): void {
+    switch (expression.type) {
+      case "ConditionReference":
+        if (expression.root === "system") {
+          this.addError(expression.loc.start, "system condition references are not compile-supported yet.");
+        }
+        break;
+      case "ConditionStringLiteral":
+      case "ConditionNumberLiteral":
+      case "ConditionBooleanLiteral":
+      case "ConditionNullLiteral":
+        break;
+      case "ConditionUnaryExpression":
+        this.validateSupportedCondition(expression.expression);
+        break;
+      case "ConditionBinaryExpression":
+      case "ConditionComparisonExpression":
+        this.validateSupportedCondition(expression.left);
+        this.validateSupportedCondition(expression.right);
+        break;
     }
   }
 
@@ -249,6 +277,9 @@ class TzrV2Compiler {
           break;
         case "ChoiceStatement":
           instructions.push(this.buildBodyChoiceInstruction(statement));
+          break;
+        case "IfStatement":
+          instructions.push(this.buildV2IfInstruction(statement));
           break;
         case "SetStatement":
           instructions.push(...this.buildSetInstruction(statement));
@@ -310,6 +341,23 @@ class TzrV2Compiler {
       type: "SceneJumpInstruction",
       sceneId,
       loc,
+    };
+  }
+
+  private buildV2IfInstruction(statement: TzrV2IfStatement): V2IfInstruction {
+    return {
+      type: "V2IfInstruction",
+      condition: statement.condition,
+      thenBranch: this.buildSceneBodyInstructions(statement.thenBranch),
+      elifBranches: statement.elifBranches.map(
+        (branch): V2ElifInstructionBranch => ({
+          condition: branch.condition,
+          body: this.buildSceneBodyInstructions(branch.body),
+          loc: branch.loc,
+        }),
+      ),
+      ...(statement.elseBranch === undefined ? {} : { elseBranch: this.buildSceneBodyInstructions(statement.elseBranch) }),
+      loc: statement.loc,
     };
   }
 

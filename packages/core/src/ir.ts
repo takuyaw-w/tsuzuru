@@ -7,6 +7,7 @@ import type {
   TzrArgument,
   TzrStatement,
 } from "./ast.js";
+import type { TzrV2ConditionExpression } from "./dsl-v2/ast.js";
 
 export type TzrInstruction =
   | SceneInstruction
@@ -18,7 +19,8 @@ export type TzrInstruction =
   | MacroInstruction
   | ChoiceInstruction
   | BodyChoiceInstruction
-  | IfInstruction;
+  | IfInstruction
+  | V2IfInstruction;
 
 export interface SceneInstruction {
   readonly type: "SceneInstruction";
@@ -93,6 +95,21 @@ export interface IfInstruction {
   readonly conditionExpression: ConditionExpression;
   readonly thenBranch: readonly TzrInstruction[];
   readonly elseBranch?: readonly TzrInstruction[];
+  readonly loc: SourceRange;
+}
+
+export interface V2IfInstruction {
+  readonly type: "V2IfInstruction";
+  readonly condition: TzrV2ConditionExpression;
+  readonly thenBranch: readonly TzrInstruction[];
+  readonly elifBranches: readonly V2ElifInstructionBranch[];
+  readonly elseBranch?: readonly TzrInstruction[];
+  readonly loc: SourceRange;
+}
+
+export interface V2ElifInstructionBranch {
+  readonly condition: TzrV2ConditionExpression;
+  readonly body: readonly TzrInstruction[];
   readonly loc: SourceRange;
 }
 

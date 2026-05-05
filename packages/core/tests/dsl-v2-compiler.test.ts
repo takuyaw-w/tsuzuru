@@ -231,13 +231,81 @@ scene later:
     expect(document.scenes.later).toMatchObject({ statementIndex: 3 });
   });
 
-  it("rejects unsupported if statements after preserving nested validation", () => {
-    expect(expectCompileFailure(`character mio name="Mio"
-scene start:
+  it("compiles simple if statements into V2IfInstruction", () => {
+    const document = compileSource(`scene start:
   if scenario.hasNotebook:
-    mio:
-      Hello.
-`)).toContain('DSL v2 statement "IfStatement" is not compile-supported yet.');
+    narration:
+      Open it.
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      condition: { type: "ConditionReference", path: "scenario.hasNotebook" },
+      thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Open it." }] }],
+      elifBranches: [],
+    });
+  });
+
+  it("compiles if / else statements into V2IfInstruction", () => {
+    const document = compileSource(`scene start:
+  if scenario.hasNotebook:
+    narration:
+      Open it.
+  else:
+    narration:
+      Leave it.
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Open it." }] }],
+      elseBranch: [{ type: "NarrationInstruction", lines: [{ text: "Leave it." }] }],
+    });
+  });
+
+  it("compiles if / elif / else statements into V2IfInstruction", () => {
+    const document = compileSource(`scene start:
+  if scenario.route.a:
+    narration:
+      Route A.
+  elif scenario.route.b:
+    narration:
+      Route B.
+  else:
+    narration:
+      Common.
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Route A." }] }],
+      elifBranches: [
+        {
+          condition: { type: "ConditionReference", path: "scenario.route.b" },
+          body: [{ type: "NarrationInstruction", lines: [{ text: "Route B." }] }],
+        },
+      ],
+      elseBranch: [{ type: "NarrationInstruction", lines: [{ text: "Common." }] }],
+    });
+  });
+
+  it("compiles nested if statements", () => {
+    const document = compileSource(`scene start:
+  if scenario.outer:
+    if scenario.inner:
+      narration:
+        Nested.
+`);
+
+    const instruction = document.instructions[1];
+    expect(instruction).toMatchObject({ type: "V2IfInstruction" });
+    if (instruction?.type !== "V2IfInstruction") {
+      throw new Error("expected V2IfInstruction");
+    }
+    expect(instruction.thenBranch[0]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [{ type: "NarrationInstruction", lines: [{ text: "Nested." }] }],
+    });
   });
 
   it("compiles unconditional choice into BodyChoiceInstruction", () => {
@@ -399,12 +467,35 @@ scene start:
     });
   });
 
-  it("keeps set and add inside if blocked by unsupported if compilation", () => {
-    expect(expectCompileFailure(`scene start:
+  it("compiles set and add inside if branch bodies", () => {
+    const document = compileSource(`scene start:
   if scenario.hasNotebook:
     set scenario.route = "mio"
     add scenario.score += 1
-`)).toContain('DSL v2 statement "IfStatement" is not compile-supported yet.');
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [
+        { type: "CommandInstruction", name: "set" },
+        { type: "CommandInstruction", name: "__tsuzuru_v2_add" },
+      ],
+    });
+  });
+
+  it("rejects system condition references for now", () => {
+    expect(expectCompileFailure(`scene start:
+  if system.endings.trueEnd.unlocked:
+    narration:
+      True end.
+`)).toContain("system condition references are not compile-supported yet.");
+  });
+
+  it("rejects unsupported statements inside if branch bodies", () => {
+    expect(expectCompileFailure(`scene start:
+  if scenario.hasNotebook:
+    call screen.open(id=notebook)
+`)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
   it("rejects conditional choice items for now", () => {

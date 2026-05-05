@@ -194,7 +194,8 @@ export interface ChoiceResolveRuntimeEvent {
 export interface IfRuntimeEvent {
   readonly type: "if";
   readonly result: boolean;
-  readonly branch: "then" | "else" | "none";
+  readonly branch: "then" | "elif" | "else" | "none";
+  readonly branchIndex?: number;
   readonly event?: RuntimeEvent;
 }
 
@@ -219,7 +220,12 @@ export interface UnsupportedRuntimeEvent {
   readonly instructionType: string;
 }
 
-export type RuntimeErrorCode = "choice_not_pending" | "choice_index_out_of_range" | "state_add_non_number";
+export type RuntimeErrorCode =
+  | "choice_not_pending"
+  | "choice_index_out_of_range"
+  | "state_add_non_number"
+  | "condition_invalid_numeric_comparison"
+  | "condition_system_reference_unsupported";
 
 export interface RuntimeErrorEvent {
   readonly type: "error";

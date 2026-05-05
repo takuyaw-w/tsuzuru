@@ -420,4 +420,232 @@ scene later:
       "scenario.score": 2,
     });
   });
+
+  it("runs a DSL v2 if true branch from a scenario boolean variable", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  if scenario.hasNotebook:
+    narration:
+      Open it.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, set.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Open it." }] },
+    });
+  });
+
+  it("runs a DSL v2 if false else branch", () => {
+    const document = compileSource(`scene start:
+  if scenario.hasNotebook:
+    narration:
+      Open it.
+  else:
+    narration:
+      Leave it.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const branch = stepRuntime(document, scene.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: false,
+      branch: "else",
+      event: { type: "narration", lines: [{ text: "Leave it." }] },
+    });
+  });
+
+  it("runs a DSL v2 elif branch", () => {
+    const document = compileSource(`scene start:
+  set scenario.score = 2
+  if scenario.score > 3:
+    narration:
+      High.
+  elif scenario.score >= 2:
+    narration:
+      Middle.
+  else:
+    narration:
+      Low.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, set.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "elif",
+      branchIndex: 0,
+      event: { type: "narration", lines: [{ text: "Middle." }] },
+    });
+  });
+
+  it("runs nested DSL v2 if statements", () => {
+    const document = compileSource(`scene start:
+  set scenario.outer = true
+  set scenario.inner = true
+  if scenario.outer:
+    if scenario.inner:
+      narration:
+        Nested.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const outerSet = stepRuntime(document, scene.state);
+    const innerSet = stepRuntime(document, outerSet.state);
+    const branch = stepRuntime(document, innerSet.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "if",
+        result: true,
+        branch: "then",
+        event: { type: "narration", lines: [{ text: "Nested." }] },
+      },
+    });
+  });
+
+  it("runs DSL v2 numeric comparison after set and add", () => {
+    const document = compileSource(`scene start:
+  set scenario.score = 1
+  add scenario.score += 2
+  if scenario.score >= 3:
+    narration:
+      Enough.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const add = stepRuntime(document, set.state);
+    const branch = stepRuntime(document, add.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Enough." }] },
+    });
+  });
+
+  it("runs DSL v2 string equality", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  if scenario.route == "mio":
+    narration:
+      Mio route.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, set.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Mio route." }] },
+    });
+  });
+
+  it("runs DSL v2 boolean equality", () => {
+    const document = compileSource(`scene start:
+  set scenario.hasNotebook = true
+  if scenario.hasNotebook == true:
+    narration:
+      True.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, set.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "True." }] },
+    });
+  });
+
+  it("treats a missing DSL v2 scenario value as null for null comparison", () => {
+    const document = compileSource(`scene start:
+  if scenario.currentCg == null:
+    narration:
+      Missing.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const branch = stepRuntime(document, scene.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Missing." }] },
+    });
+  });
+
+  it("treats a missing bare DSL v2 scenario reference as false", () => {
+    const document = compileSource(`scene start:
+  if scenario.hasNotebook:
+    narration:
+      Open it.
+  else:
+    narration:
+      Leave it.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const branch = stepRuntime(document, scene.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: false,
+      branch: "else",
+      event: { type: "narration", lines: [{ text: "Leave it." }] },
+    });
+  });
+
+  it("runs DSL v2 logical and / or / not conditions", () => {
+    const document = compileSource(`scene start:
+  set scenario.a = false
+  set scenario.b = true
+  if not scenario.a and scenario.b:
+    narration:
+      Logical.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const a = stepRuntime(document, scene.state);
+    const b = stepRuntime(document, a.state);
+    const branch = stepRuntime(document, b.state);
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Logical." }] },
+    });
+  });
+
+  it("returns a runtime error for invalid DSL v2 numeric comparisons", () => {
+    const document = compileSource(`scene start:
+  set scenario.route = "mio"
+  if scenario.route > 1:
+    narration:
+      Invalid.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const branch = stepRuntime(document, set.state);
+
+    expect(branch.event).toEqual({
+      type: "error",
+      code: "condition_invalid_numeric_comparison",
+      message: 'Cannot evaluate condition operator ">" because both operands must be numbers.',
+    });
+    expect(branch.state.variables).toEqual({ "scenario.route": "mio" });
+  });
 });

@@ -1,9 +1,19 @@
 import type { ChoiceItem } from "./ast.js";
 import { evaluateCondition } from "./condition.js";
-import type { BodyChoiceInstruction, BodyChoiceInstructionItem, ChoiceInstruction, IfInstruction, RuntimeDocument, TzrInstruction } from "./ir.js";
+import { evaluateTzrV2Condition, type TzrV2ConditionEvaluationError } from "./dsl-v2/condition-evaluator.js";
+import type {
+  BodyChoiceInstruction,
+  BodyChoiceInstructionItem,
+  ChoiceInstruction,
+  IfInstruction,
+  RuntimeDocument,
+  TzrInstruction,
+  V2IfInstruction,
+} from "./ir.js";
 import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {
   ChoiceRuntimeEvent,
+  IfRuntimeEvent,
   RuntimePendingBodyChoiceItem,
   RuntimeChoiceItem,
   RuntimePendingChoice,
@@ -71,6 +81,60 @@ export function stepIfInstruction(
       type: "if",
       result,
       branch: branchName,
+      event: branchResult.event,
+    },
+  };
+}
+
+export function stepV2IfInstruction(
+  document: RuntimeDocument,
+  state: RuntimeState,
+  nextState: RuntimeState,
+  instruction: V2IfInstruction,
+  options: RuntimeStepOptions,
+  stepInstruction: RuntimeInstructionStepper,
+): RuntimeStepResult {
+  const selected = selectV2IfBranch(instruction, state);
+  if (!selected.ok) {
+    return {
+      state: nextState,
+      event: {
+        type: "error",
+        code: selected.error.code,
+        message: selected.error.message,
+      },
+    };
+  }
+
+  const { branch, branchIndex, instructions, result } = selected;
+  if (instructions === undefined || instructions.length === 0) {
+    return {
+      state: nextState,
+      event: v2IfEvent(result, branch, branchIndex),
+    };
+  }
+
+  const branchState = pushBranchFrame(nextState, instructions);
+  const branchInstruction = instructions[0];
+  if (branchInstruction === undefined) {
+    return {
+      state: nextState,
+      event: v2IfEvent(result, branch, branchIndex),
+    };
+  }
+
+  const branchResult = stepInstruction(
+    document,
+    branchState,
+    branchInstruction,
+    advanceActiveBranchFrame(branchState),
+    options,
+  );
+
+  return {
+    state: branchResult.state,
+    event: {
+      ...v2IfEvent(result, branch, branchIndex),
       event: branchResult.event,
     },
   };
@@ -144,5 +208,73 @@ export function waitEvent(pendingWait: RuntimePendingWait): WaitRuntimeEvent {
   return {
     type: "wait",
     durationMs: pendingWait.durationMs,
+  };
+}
+
+type V2IfBranchSelection =
+  | {
+      readonly ok: true;
+      readonly result: boolean;
+      readonly branch: IfRuntimeEvent["branch"];
+      readonly branchIndex?: number;
+      readonly instructions?: readonly TzrInstruction[];
+    }
+  | {
+      readonly ok: false;
+      readonly error: TzrV2ConditionEvaluationError;
+    };
+
+function selectV2IfBranch(instruction: V2IfInstruction, state: RuntimeState): V2IfBranchSelection {
+  const thenResult = evaluateTzrV2Condition(instruction.condition, state);
+  if (!thenResult.ok) {
+    return thenResult;
+  }
+  if (thenResult.value) {
+    return {
+      ok: true,
+      result: true,
+      branch: "then",
+      instructions: instruction.thenBranch,
+    };
+  }
+
+  for (const [branchIndex, branch] of instruction.elifBranches.entries()) {
+    const elifResult = evaluateTzrV2Condition(branch.condition, state);
+    if (!elifResult.ok) {
+      return elifResult;
+    }
+    if (elifResult.value) {
+      return {
+        ok: true,
+        result: true,
+        branch: "elif",
+        branchIndex,
+        instructions: branch.body,
+      };
+    }
+  }
+
+  if (instruction.elseBranch !== undefined) {
+    return {
+      ok: true,
+      result: false,
+      branch: "else",
+      instructions: instruction.elseBranch,
+    };
+  }
+
+  return {
+    ok: true,
+    result: false,
+    branch: "none",
+  };
+}
+
+function v2IfEvent(result: boolean, branch: IfRuntimeEvent["branch"], branchIndex?: number): IfRuntimeEvent {
+  return {
+    type: "if",
+    result,
+    branch,
+    ...(branchIndex === undefined ? {} : { branchIndex }),
   };
 }

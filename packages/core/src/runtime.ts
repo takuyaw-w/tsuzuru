@@ -1,6 +1,13 @@
 import type { RuntimeDocument, TzrInstruction } from "./ir.js";
 import { stepCommandInstruction, unsupportedInstruction } from "./runtime-commands.js";
-import { choiceEvent, stepBodyChoiceInstruction, stepChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
+import {
+  choiceEvent,
+  stepBodyChoiceInstruction,
+  stepChoiceInstruction,
+  stepIfInstruction,
+  stepV2IfInstruction,
+  waitEvent,
+} from "./runtime-control.js";
 import {
   advanceActiveBranchFrame,
   getActiveBranchFrame,
@@ -135,6 +142,8 @@ function stepInstruction(
       return stepCommandInstruction(document, state, nextState, instruction, options);
     case "IfInstruction":
       return stepIfInstruction(document, state, nextState, instruction, options, stepInstruction);
+    case "V2IfInstruction":
+      return stepV2IfInstruction(document, state, nextState, instruction, options, stepInstruction);
     case "MacroInstruction":
       return {
         state: nextState,

@@ -1935,6 +1935,18 @@ $bad()
               thenBranch: [],
               loc: call.loc,
             },
+            {
+              type: "V2IfInstruction",
+              condition: {
+                type: "ConditionReference",
+                path: "scenario.x",
+                root: "scenario",
+                loc: call.loc,
+              },
+              thenBranch: [],
+              elifBranches: [],
+              loc: call.loc,
+            },
             { type: "ChoiceInstruction", question: "Choose", items: [], loc: call.loc },
             { type: "BodyChoiceInstruction", question: "Choose", items: [], loc: call.loc },
           ];
@@ -1973,6 +1985,13 @@ $bad()
         line: 2,
         column: 1,
         message: 'Macro "$bad" returned forbidden instruction "IfInstruction".',
+        sourceLine: "$bad()",
+      },
+      {
+        filePath: "scenario/main.tzr",
+        line: 2,
+        column: 1,
+        message: 'Macro "$bad" returned forbidden instruction "V2IfInstruction".',
         sourceLine: "$bad()",
       },
       {
