@@ -6,7 +6,10 @@ import type {
   TzrV2ChoiceStatement,
   TzrV2DialogueStatement,
   TzrV2Document,
+  TzrV2ConditionExpression,
+  TzrV2ElifBranch,
   TzrV2EndStatement,
+  TzrV2IfStatement,
   TzrV2InlineAssetId,
   TzrV2InlineDelaySpan,
   TzrV2InlineNode,
@@ -28,6 +31,7 @@ import type {
   TzrV2TitleDeclaration,
   TzrV2TopLevelDeclaration,
 } from "./ast.js";
+import { parseTzrV2ConditionExpression } from "./condition-parser.js";
 
 interface SourceLine {
   readonly original: string;
@@ -60,6 +64,10 @@ interface ParsedInlineMarkup {
 interface ParsedChoiceItemHeader {
   readonly label: string;
   readonly id?: string;
+}
+
+interface ParsedConditionBranchHeader {
+  readonly condition: TzrV2ConditionExpression;
 }
 
 interface InlineRawAttribute {
@@ -304,6 +312,19 @@ class TzrV2Parser {
     }
     if (source === "choice" || source === "choice:" || source.startsWith("choice ")) {
       return this.parseChoiceStatement(line, source, statementColumn, indentLevel);
+    }
+    if (source === "if" || source === "if:" || source.startsWith("if ")) {
+      return this.parseIfStatement(line, source, statementColumn, indentLevel);
+    }
+    if (source === "elif" || source === "elif:" || source.startsWith("elif ")) {
+      this.addError(line, statementColumn, "elif must follow an if statement.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (source === "else" || source === "else:" || source.startsWith("else ")) {
+      this.addError(line, statementColumn, "else must follow an if statement.");
+      this.cursor += 1;
+      return undefined;
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -584,6 +605,224 @@ class TzrV2Parser {
     }
 
     return { label, id };
+  }
+
+  private parseIfStatement(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+    indentLevel: number,
+  ): TzrV2IfStatement | undefined {
+    const parsedHeader = this.parseConditionBranchHeader(header, source, "if", statementColumn);
+    const headerRange = this.lineRange(header);
+    this.cursor += 1;
+
+    const bodyIndentLevel = indentLevel + 1;
+    const thenBranch = this.collectSceneStatements(
+      bodyIndentLevel,
+      `If branch body statements must be indented ${bodyIndentLevel * 2} spaces.`,
+    );
+    if (thenBranch.length === 0) {
+      this.addError(header, statementColumn, "If branch body must include at least one statement.");
+    }
+
+    const elifBranches: TzrV2ElifBranch[] = [];
+    let elseBranch: readonly TzrV2SceneStatement[] | undefined;
+    let sawElse = false;
+    let end = thenBranch.at(-1)?.loc.end ?? headerRange.end;
+
+    while (!this.isAtEnd()) {
+      const line = this.currentRequired();
+      if (this.isIgnorable(line)) {
+        this.cursor += 1;
+        continue;
+      }
+
+      const indent = this.validateIndent(line);
+      const continuationSource = line.code.slice(indent).trimEnd();
+      if (!isIfChainContinuationSource(continuationSource)) {
+        break;
+      }
+
+      const expectedIndent = indentLevel * 2;
+      if (indent !== expectedIndent) {
+        const parentIndent = Math.max(0, (indentLevel - 1) * 2);
+        if (indent <= parentIndent) {
+          break;
+        }
+        this.addError(line, firstContentColumn(line), "if / elif / else branch headers must align with the owning if statement.");
+        this.skipIndentedBlock(indent);
+        continue;
+      }
+
+      const continuationColumn = expectedIndent + 1;
+      if (continuationSource === "elif" || continuationSource === "elif:" || continuationSource.startsWith("elif ")) {
+        if (sawElse) {
+          this.addError(line, continuationColumn, "elif cannot appear after else.");
+          this.skipIndentedBlock(indent);
+          continue;
+        }
+
+        const branch = this.parseElifBranch(line, continuationSource, continuationColumn, indentLevel);
+        if (branch !== undefined) {
+          elifBranches.push(branch);
+          end = branch.loc.end;
+        }
+        continue;
+      }
+
+      if (sawElse) {
+        this.addError(line, continuationColumn, "Duplicate else branch.");
+        this.skipIndentedBlock(indent);
+        continue;
+      }
+
+      const parsedElse = this.parseElseBranch(line, continuationSource, continuationColumn, indentLevel);
+      sawElse = true;
+      if (parsedElse !== undefined) {
+        elseBranch = parsedElse.body;
+        end = parsedElse.end;
+      }
+    }
+
+    if (parsedHeader === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "IfStatement",
+      condition: parsedHeader.condition,
+      thenBranch,
+      elifBranches,
+      ...(elseBranch === undefined ? {} : { elseBranch }),
+      loc: { start: this.location(header.line, statementColumn), end },
+    };
+  }
+
+  private parseElifBranch(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+    indentLevel: number,
+  ): TzrV2ElifBranch | undefined {
+    const parsedHeader = this.parseConditionBranchHeader(header, source, "elif", statementColumn);
+    const headerRange = this.lineRange(header);
+    this.cursor += 1;
+
+    const bodyIndentLevel = indentLevel + 1;
+    const body = this.collectSceneStatements(
+      bodyIndentLevel,
+      `Elif branch body statements must be indented ${bodyIndentLevel * 2} spaces.`,
+    );
+    if (body.length === 0) {
+      this.addError(header, statementColumn, "Elif branch body must include at least one statement.");
+    }
+
+    if (parsedHeader === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "ElifBranch",
+      condition: parsedHeader.condition,
+      body,
+      loc: { start: this.location(header.line, statementColumn), end: body.at(-1)?.loc.end ?? headerRange.end },
+    };
+  }
+
+  private parseElseBranch(
+    header: SourceLine,
+    source: string,
+    statementColumn: number,
+    indentLevel: number,
+  ): { readonly body: readonly TzrV2SceneStatement[]; readonly end: SourceLocation } | undefined {
+    const validHeader = this.validateElseHeader(header, source, statementColumn);
+    const headerRange = this.lineRange(header);
+    this.cursor += 1;
+
+    const bodyIndentLevel = indentLevel + 1;
+    const body = this.collectSceneStatements(
+      bodyIndentLevel,
+      `Else branch body statements must be indented ${bodyIndentLevel * 2} spaces.`,
+    );
+    if (body.length === 0) {
+      this.addError(header, statementColumn, "Else branch body must include at least one statement.");
+    }
+
+    if (!validHeader) {
+      return undefined;
+    }
+
+    return {
+      body,
+      end: body.at(-1)?.loc.end ?? headerRange.end,
+    };
+  }
+
+  private parseConditionBranchHeader(
+    line: SourceLine,
+    source: string,
+    keyword: "if" | "elif",
+    statementColumn: number,
+  ): ParsedConditionBranchHeader | undefined {
+    if (source === keyword || source === `${keyword}:`) {
+      this.addError(line, statementColumn, `${keyword} condition is required.`);
+      return undefined;
+    }
+    if (!source.endsWith(":")) {
+      this.addError(line, statementColumn, `${keyword} header must end with \`:\`.`);
+      return undefined;
+    }
+
+    const conditionSource = source.slice(keyword.length, -1).trim();
+    if (conditionSource.length === 0) {
+      this.addError(line, statementColumn, `${keyword} condition is required.`);
+      return undefined;
+    }
+
+    const conditionColumn = statementColumn + source.indexOf(conditionSource);
+    const result = parseTzrV2ConditionExpression(conditionSource, { filePath: this.filePath });
+    if (!result.ok) {
+      for (const error of result.errors) {
+        this.addError(
+          line,
+          conditionColumn + error.column - 1,
+          `Invalid ${keyword} condition: ${error.message}`,
+        );
+      }
+      return undefined;
+    }
+
+    return { condition: result.expression };
+  }
+
+  private validateElseHeader(line: SourceLine, source: string, statementColumn: number): boolean {
+    if (source === "else:") {
+      return true;
+    }
+    if (source === "else") {
+      this.addError(line, statementColumn, "else block must end with `:`.");
+      return false;
+    }
+
+    this.addError(line, statementColumn, "else must not have a condition or arguments.");
+    return false;
+  }
+
+  private skipIndentedBlock(headerIndent: number): void {
+    this.cursor += 1;
+    while (!this.isAtEnd()) {
+      const line = this.currentRequired();
+      if (this.isIgnorable(line)) {
+        this.cursor += 1;
+        continue;
+      }
+      const indent = this.validateIndent(line);
+      if (indent <= headerIndent) {
+        break;
+      }
+      this.cursor += 1;
+    }
   }
 
   private findStringLiteralEnd(source: string): number | undefined {
@@ -1650,6 +1889,17 @@ function stripComments(sourceLines: readonly string[], filePath: string): Commen
 function firstContentColumn(line: SourceLine): number {
   const match = /\S/.exec(line.code);
   return match === null ? 1 : match.index + 1;
+}
+
+function isIfChainContinuationSource(source: string): boolean {
+  return (
+    source === "elif" ||
+    source === "elif:" ||
+    source.startsWith("elif ") ||
+    source === "else" ||
+    source === "else:" ||
+    source.startsWith("else ")
+  );
 }
 
 function countIndent(text: string): number {

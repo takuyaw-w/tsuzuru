@@ -50,6 +50,7 @@ export type TzrV2SceneStatement =
   | TzrV2NarrationStatement
   | TzrV2DialogueStatement
   | TzrV2ChoiceStatement
+  | TzrV2IfStatement
   | TzrV2JumpStatement
   | TzrV2EndStatement;
 
@@ -80,6 +81,22 @@ export interface TzrV2ChoiceItem {
   readonly type: "ChoiceItem";
   readonly label: string;
   readonly id?: string;
+  readonly body: readonly TzrV2SceneStatement[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2IfStatement {
+  readonly type: "IfStatement";
+  readonly condition: TzrV2ConditionExpression;
+  readonly thenBranch: readonly TzrV2SceneStatement[];
+  readonly elifBranches: readonly TzrV2ElifBranch[];
+  readonly elseBranch?: readonly TzrV2SceneStatement[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrV2ElifBranch {
+  readonly type: "ElifBranch";
+  readonly condition: TzrV2ConditionExpression;
   readonly body: readonly TzrV2SceneStatement[];
   readonly loc: SourceRange;
 }
