@@ -64,6 +64,7 @@ interface ParsedInlineMarkup {
 interface ParsedChoiceItemHeader {
   readonly label: string;
   readonly id?: string;
+  readonly condition?: TzrV2ConditionExpression;
 }
 
 interface ParsedConditionBranchHeader {
@@ -543,6 +544,7 @@ class TzrV2Parser {
       type: "ChoiceItem",
       label: parsedHeader.label,
       ...(parsedHeader.id === undefined ? {} : { id: parsedHeader.id }),
+      ...(parsedHeader.condition === undefined ? {} : { condition: parsedHeader.condition }),
       body,
       loc: { start: this.location(header.line, sourceColumn), end },
     };
@@ -584,14 +586,11 @@ class TzrV2Parser {
       return { label };
     }
 
-    const conditionalIndex = rest.search(/\bif\b/);
-    if (conditionalIndex !== -1) {
-      const conditionalColumn = restColumn + conditionalIndex;
-      this.addError(line, conditionalColumn, "Conditional choice items are not implemented yet.");
-      return undefined;
+    if (rest === "if" || rest.startsWith("if ")) {
+      return this.parseChoiceItemCondition(line, rest, restColumn, { label });
     }
 
-    const idMatch = /^id=(\S+)$/.exec(rest);
+    const idMatch = /^id=(\S*)(?:\s+(.+))?$/.exec(rest);
     if (idMatch === null) {
       this.addError(line, restColumn, 'choice item must use `"label":` or `"label" id=id:` syntax.');
       return undefined;
@@ -604,7 +603,53 @@ class TzrV2Parser {
       return undefined;
     }
 
-    return { label, id };
+    const afterId = idMatch[2]?.trim();
+    if (afterId === undefined || afterId.length === 0) {
+      return { label, id };
+    }
+    if (afterId === "if" || afterId.startsWith("if ")) {
+      const afterIdColumn = restColumn + rest.indexOf(afterId);
+      return this.parseChoiceItemCondition(line, afterId, afterIdColumn, { label, id });
+    }
+
+    this.addError(line, restColumn + rest.indexOf(afterId), 'choice item must use `"label":`, `"label" id=id:`, or `"label" id=id if condition:` syntax.');
+    return undefined;
+  }
+
+  private parseChoiceItemCondition(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    base: { readonly label: string; readonly id?: string },
+  ): ParsedChoiceItemHeader | undefined {
+    const conditionSource = source.slice("if".length).trim();
+    if (conditionSource.length === 0) {
+      this.addError(line, sourceColumn, "choice item condition is required.");
+      return undefined;
+    }
+    if (hasChoiceItemIdToken(conditionSource)) {
+      this.addError(line, sourceColumn + source.indexOf(conditionSource), "choice item id must appear before if.");
+      return undefined;
+    }
+
+    const conditionColumn = sourceColumn + source.indexOf(conditionSource);
+    const result = parseTzrV2ConditionExpression(conditionSource, { filePath: this.filePath });
+    if (!result.ok) {
+      for (const error of result.errors) {
+        this.addError(
+          line,
+          conditionColumn + error.column - 1,
+          `Invalid choice item condition: ${error.message}`,
+        );
+      }
+      return undefined;
+    }
+
+    return {
+      label: base.label,
+      ...(base.id === undefined ? {} : { id: base.id }),
+      condition: result.expression,
+    };
   }
 
   private parseIfStatement(
@@ -1900,6 +1945,33 @@ function isIfChainContinuationSource(source: string): boolean {
     source === "else:" ||
     source.startsWith("else ")
   );
+}
+
+function hasChoiceItemIdToken(source: string): boolean {
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index] ?? "";
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = inString;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) {
+      continue;
+    }
+    if (source.startsWith("id=", index) && (index === 0 || /\s/.test(source[index - 1] ?? ""))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function countIndent(text: string): number {

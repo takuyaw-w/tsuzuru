@@ -81,6 +81,7 @@ export interface TzrV2ChoiceItem {
   readonly type: "ChoiceItem";
   readonly label: string;
   readonly id?: string;
+  readonly condition?: TzrV2ConditionExpression;
   readonly body: readonly TzrV2SceneStatement[];
   readonly loc: SourceRange;
 }

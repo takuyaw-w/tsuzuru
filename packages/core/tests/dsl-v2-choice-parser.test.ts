@@ -83,6 +83,72 @@ describe("parseTzrV2 choice statements", () => {
     expect(choice.items[0]).not.toHaveProperty("id");
   });
 
+  it("parses conditional choice items without ids", () => {
+    const choice = parseSingleChoice(`scene start:
+  choice "どうする？":
+    "手帳を開く" if scenario.inventory.hasNotebook:
+      jump notebook
+`);
+
+    expect(choice.items[0]).toMatchObject({
+      label: "手帳を開く",
+      condition: { type: "ConditionReference", path: "scenario.inventory.hasNotebook" },
+      body: [{ type: "JumpStatement", target: "notebook" }],
+    });
+    expect(choice.items[0]).not.toHaveProperty("id");
+  });
+
+  it("parses conditional choice items with ids", () => {
+    const choice = parseSingleChoice(`scene start:
+  choice "どうする？":
+    "手帳を開く" id=openNotebook if scenario.inventory.hasNotebook:
+      jump notebook
+`);
+
+    expect(choice.items[0]).toMatchObject({
+      label: "手帳を開く",
+      id: "openNotebook",
+      condition: { type: "ConditionReference", path: "scenario.inventory.hasNotebook" },
+    });
+  });
+
+  it("parses unconditional and conditional items in the same choice", () => {
+    const choice = parseSingleChoice(`scene start:
+  choice "どうする？":
+    "手帳を開く" id=openNotebook if scenario.inventory.hasNotebook:
+      jump notebook
+
+    "立ち去る" id=leave:
+      jump hallway
+`);
+
+    expect(choice.items).toMatchObject([
+      { label: "手帳を開く", id: "openNotebook", condition: { path: "scenario.inventory.hasNotebook" } },
+      { label: "立ち去る", id: "leave", body: [{ type: "JumpStatement", target: "hallway" }] },
+    ]);
+    expect(choice.items[1]).not.toHaveProperty("condition");
+  });
+
+  it("preserves condition parser precedence in choice item conditions", () => {
+    const choice = parseSingleChoice(`scene start:
+  choice "どうする？":
+    "手帳を開く" if scenario.a or scenario.b and system.c:
+      jump notebook
+`);
+
+    expect(choice.items[0]?.condition).toMatchObject({
+      type: "ConditionBinaryExpression",
+      operator: "or",
+      left: { type: "ConditionReference", path: "scenario.a" },
+      right: {
+        type: "ConditionBinaryExpression",
+        operator: "and",
+        left: { type: "ConditionReference", path: "scenario.b" },
+        right: { type: "ConditionReference", path: "system.c" },
+      },
+    });
+  });
+
   it("parses choice item bodies containing narration and dialogue", () => {
     const choice = parseSingleChoice(`scene start:
   choice "どう答える？":
@@ -102,6 +168,32 @@ describe("parseTzrV2 choice statements", () => {
       },
       {
         label: "美緒に話す",
+        body: [{ type: "DialogueStatement", speaker: "mio", explicit: true, lines: [{ text: "You're late." }] }],
+      },
+    ]);
+  });
+
+  it("parses conditional choice item bodies containing narration and dialogue", () => {
+    const choice = parseSingleChoice(`scene start:
+  choice "どう答える？":
+    "周囲を見る" if scenario.canLookAround:
+      narration:
+        Rain blurred the platform edge.
+
+    "美緒に話す" if scenario.mio.visible:
+      say mio:
+        You're late.
+`);
+
+    expect(choice.items).toMatchObject([
+      {
+        label: "周囲を見る",
+        condition: { path: "scenario.canLookAround" },
+        body: [{ type: "NarrationStatement", lines: [{ type: "TextLine", text: "Rain blurred the platform edge." }] }],
+      },
+      {
+        label: "美緒に話す",
+        condition: { path: "scenario.mio.visible" },
         body: [{ type: "DialogueStatement", speaker: "mio", explicit: true, lines: [{ text: "You're late." }] }],
       },
     ]);
@@ -178,6 +270,18 @@ describe("parseTzrV2 choice statements", () => {
     ).toContain('Duplicate choice item id "answer".');
   });
 
+  it("rejects duplicate item ids when conditions are present", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Apologize" id=answer if scenario.a:
+      jump apologize
+    "Make excuse" id=answer if scenario.b:
+      jump dodge
+`),
+    ).toContain('Duplicate choice item id "answer".');
+  });
+
   it("rejects choice with no items", () => {
     expect(expectChoiceFailure('scene start:\n  choice "Choose":\n')).toContain("choice must include at least one item.");
   });
@@ -200,13 +304,87 @@ describe("parseTzrV2 choice statements", () => {
     );
   });
 
-  it("rejects conditional choice items", () => {
+  it("rejects id after if", () => {
     expect(
       expectChoiceFailure(`scene start:
   choice "Choose":
-    "Open notebook" id=openNotebook if scenario.inventory.hasNotebook:
+    "Open notebook" if scenario.inventory.hasNotebook id=openNotebook:
       jump notebook
 `),
-    ).toContain("Conditional choice items are not implemented yet.");
+    ).toContain("choice item id must appear before if.");
+  });
+
+  it("rejects missing conditional choice item conditions", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" if:
+      jump notebook
+`),
+    ).toContain("choice item condition is required.");
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" id=openNotebook if:
+      jump notebook
+`),
+    ).toContain("choice item condition is required.");
+  });
+
+  it("rejects invalid conditional choice item conditions", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" if player.inventory.hasNotebook:
+      jump notebook
+`),
+    ).toContain('Invalid choice item condition: Invalid reference root "player".');
+  });
+
+  it("rejects conditional items missing a colon", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" if scenario.inventory.hasNotebook
+      jump notebook
+`),
+    ).toContain("choice item must end with `:`.");
+  });
+
+  it("rejects invalid item ids with conditions", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" id=1st if scenario.inventory.hasNotebook:
+      jump notebook
+`),
+    ).toContain('Invalid choice item id "1st".');
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" id= if scenario.inventory.hasNotebook:
+      jump notebook
+`),
+    ).toContain('Invalid choice item id "".');
+  });
+
+  it("rejects malformed conditional choice item headers", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" enabled if scenario.inventory.hasNotebook:
+      jump notebook
+`),
+    ).toContain('choice item must use `"label":` or `"label" id=id:` syntax.');
+  });
+
+  it("rejects extra trailing tokens after choice item conditions", () => {
+    expect(
+      expectChoiceFailure(`scene start:
+  choice "Choose":
+    "Open notebook" if scenario.inventory.hasNotebook scenario.extra:
+      jump notebook
+`),
+    ).toContain('Invalid choice item condition: Unexpected token "scenario.extra" after condition expression.');
   });
 });
