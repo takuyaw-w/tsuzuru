@@ -80,11 +80,15 @@ export interface DeclarationIndexEntry {
   readonly loc: SourceRange;
 }
 
-export interface CompiledTzrDocument {
-  readonly type: "CompiledTzrDocument";
+export interface RuntimeDocument {
   readonly filePath: string;
-  readonly body: readonly TzrStatement[];
   readonly instructions: readonly TzrInstruction[];
   readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly scenes?: Readonly<Record<string, DeclarationIndexEntry>>;
+}
+
+export interface CompiledTzrDocument extends RuntimeDocument {
+  readonly type: "CompiledTzrDocument";
+  readonly body: readonly TzrStatement[];
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }

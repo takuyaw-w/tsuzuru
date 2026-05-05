@@ -1,5 +1,5 @@
 import { isCoreCommandName } from "./commands.js";
-import type { CommandInstruction, CompiledTzrDocument } from "./ir.js";
+import type { CommandInstruction, RuntimeDocument } from "./ir.js";
 import {
   getNamedNumber,
   getNamedRuntimeValue,
@@ -10,7 +10,7 @@ import {
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
 
 export function stepCommandInstruction(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   nextState: RuntimeState,
   instruction: CommandInstruction,

@@ -1,4 +1,4 @@
-import type { CompiledTzrDocument, TzrInstruction } from "./ir.js";
+import type { RuntimeDocument, TzrInstruction } from "./ir.js";
 import { stepCommandInstruction, unsupportedInstruction } from "./runtime-commands.js";
 import { choiceEvent, stepChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
 import {
@@ -21,7 +21,7 @@ export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 
 export function createInitialRuntimeState(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   options: RuntimeInitialStateOptions = {},
 ): RuntimeState {
   return {
@@ -50,7 +50,7 @@ function createInitialPluginStates(options: RuntimeInitialStateOptions): Runtime
 }
 
 export function stepRuntime(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   options: RuntimeStepOptions = {},
 ): RuntimeStepResult {
@@ -101,7 +101,7 @@ export function stepRuntime(
 }
 
 function stepInstruction(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   instruction: TzrInstruction,
   nextState: RuntimeState,
@@ -143,7 +143,7 @@ function stepInstruction(
 }
 
 export function resolveChoice(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   itemIndex: number,
 ): RuntimeStepResult {
@@ -233,7 +233,7 @@ export function getRuntimeBlockReason(state: RuntimeState): RuntimeBlockReason |
   return null;
 }
 
-function advanceInstruction(document: CompiledTzrDocument, state: RuntimeState): RuntimeState {
+function advanceInstruction(document: RuntimeDocument, state: RuntimeState): RuntimeState {
   const instructionIndex = state.pointer.instructionIndex + 1;
   return {
     ...state,

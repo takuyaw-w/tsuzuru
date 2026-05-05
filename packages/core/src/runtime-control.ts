@@ -1,6 +1,6 @@
 import type { ChoiceItem } from "./ast.js";
 import { evaluateCondition } from "./condition.js";
-import type { ChoiceInstruction, CompiledTzrDocument, IfInstruction, TzrInstruction } from "./ir.js";
+import type { ChoiceInstruction, IfInstruction, RuntimeDocument, TzrInstruction } from "./ir.js";
 import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {
   ChoiceRuntimeEvent,
@@ -14,7 +14,7 @@ import type {
 } from "./runtime-types.js";
 
 export type RuntimeInstructionStepper = (
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   instruction: TzrInstruction,
   nextState: RuntimeState,
@@ -22,7 +22,7 @@ export type RuntimeInstructionStepper = (
 ) => RuntimeStepResult;
 
 export function stepIfInstruction(
-  document: CompiledTzrDocument,
+  document: RuntimeDocument,
   state: RuntimeState,
   nextState: RuntimeState,
   instruction: IfInstruction,

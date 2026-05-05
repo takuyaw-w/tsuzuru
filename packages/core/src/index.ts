@@ -54,6 +54,7 @@ export type {
   LabelInstruction,
   MacroInstruction,
   NarrationInstruction,
+  RuntimeDocument,
   SceneInstruction,
   TzrInstruction,
 } from "./ir.js";

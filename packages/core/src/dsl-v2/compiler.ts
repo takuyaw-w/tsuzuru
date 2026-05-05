@@ -5,6 +5,7 @@ import type {
   DeclarationIndexEntry,
   DialogueInstruction,
   NarrationInstruction,
+  RuntimeDocument,
   SceneInstruction,
   TzrInstruction,
 } from "../ir.js";
@@ -28,12 +29,11 @@ export type TzrV2CompileResult =
   | { readonly ok: true; readonly document: CompiledTzrV2Document; readonly errors: readonly [] }
   | { readonly ok: false; readonly errors: readonly Diagnostic[] };
 
-export interface CompiledTzrV2Document {
+export interface CompiledTzrV2Document extends RuntimeDocument {
   readonly type: "CompiledTzrV2Document";
-  readonly filePath: string;
   readonly source: TzrV2Document;
   readonly metadata: TzrV2DocumentMetadata;
-  readonly instructions: readonly TzrInstruction[];
+  readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
@@ -201,6 +201,7 @@ class TzrV2Compiler {
       source: this.document,
       metadata: this.buildMetadata(),
       instructions,
+      labels: {},
       scenes: buildSceneIndexes(instructions),
     };
   }
