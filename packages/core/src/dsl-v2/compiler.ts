@@ -18,19 +18,25 @@ import type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
   TzrV2ChoiceStatement,
+  TzrV2BgStatement,
+  TzrV2ClearVisualStatement,
   TzrV2ConditionExpression,
   TzrV2DialogueStatement,
   TzrV2Document,
+  TzrV2HideStatement,
   TzrV2IfStatement,
   TzrV2NarrationStatement,
   TzrV2SceneDeclaration,
   TzrV2SceneStatement,
+  TzrV2ShowStatement,
   TzrV2SetStatement,
   TzrV2AddStatement,
   TzrV2TextBlockItem,
   TzrV2TextLine,
   TzrV2TitleDeclaration,
   TzrV2ValueExpression,
+  TzrV2VisualAssetRef,
+  TzrV2VisualTransition,
 } from "./ast.js";
 
 const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
@@ -290,6 +296,18 @@ class TzrV2Compiler {
         case "AddStatement":
           instructions.push(this.buildAddInstruction(statement));
           break;
+        case "BgStatement":
+          instructions.push(...this.buildBgInstruction(statement));
+          break;
+        case "ShowStatement":
+          instructions.push(...this.buildShowInstruction(statement));
+          break;
+        case "HideStatement":
+          instructions.push(...this.buildHideInstruction(statement));
+          break;
+        case "ClearVisualStatement":
+          this.rejectClearVisualStatement(statement);
+          break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
           break;
@@ -395,6 +413,89 @@ class TzrV2Compiler {
     };
   }
 
+  private buildBgInstruction(statement: TzrV2BgStatement): readonly CommandInstruction[] {
+    if (!this.validateNoVisualTransition(statement.transition)) {
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          this.positionalArgument(
+            this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
+            statement.assetRef.loc,
+          ),
+        ],
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildShowInstruction(statement: TzrV2ShowStatement): readonly CommandInstruction[] {
+    if (!this.validateNoVisualTransition(statement.transition)) {
+      return [];
+    }
+    if (statement.placement.type === "VisualCoordinatePlacement") {
+      this.addError(statement.placement.loc.start, "show coordinate placement is not compile-supported yet.");
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: "show",
+        args: [
+          this.positionalArgument(
+            this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
+            statement.assetRef.loc,
+          ),
+          this.namedArgument("position", this.stringValue(statement.placement.value, statement.placement.loc), statement.placement.loc),
+        ],
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildHideInstruction(statement: TzrV2HideStatement): readonly CommandInstruction[] {
+    if (!this.validateNoVisualTransition(statement.transition)) {
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: "hide",
+        args: [
+          this.positionalArgument(
+            this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
+            statement.assetRef.loc,
+          ),
+        ],
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private rejectClearVisualStatement(statement: TzrV2ClearVisualStatement): void {
+    this.validateNoVisualTransition(statement.transition);
+    this.addError(statement.loc.start, "clear visual statements are not compile-supported yet.");
+  }
+
+  private validateNoVisualTransition(transition: TzrV2VisualTransition | undefined): boolean {
+    if (transition === undefined) {
+      return true;
+    }
+
+    this.addError(transition.loc.start, "visual transitions are not compile-supported yet.");
+    return false;
+  }
+
+  private visualAssetRefValue(assetRef: TzrV2VisualAssetRef): string {
+    return assetRef.value;
+  }
+
   private compileSetValue(value: TzrV2ValueExpression): TzrValue | undefined {
     switch (value.type) {
       case "StringValue":
@@ -410,10 +511,26 @@ class TzrV2Compiler {
     }
   }
 
+  private positionalArgument(value: TzrValue, loc: SourceRange): TzrArgument {
+    return {
+      type: "PositionalArgument",
+      value,
+      loc,
+    };
+  }
+
   private namedArgument(name: string, value: TzrValue, loc: SourceRange): TzrArgument {
     return {
       type: "NamedArgument",
       name,
+      value,
+      loc,
+    };
+  }
+
+  private stringValue(value: string, loc: SourceRange): TzrValue {
+    return {
+      type: "StringValue",
       value,
       loc,
     };

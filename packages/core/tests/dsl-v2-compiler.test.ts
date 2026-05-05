@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileTzrV2, parseTzrV2, type CompiledTzrV2Document } from "../src/index.js";
+import { compileTzrV2, parseTzrV2, type CommandInstruction, type CompiledTzrV2Document } from "../src/index.js";
 
 function parseSource(source: string) {
   const parsed = parseTzrV2(source, { filePath: "scenario/v2.tzr" });
@@ -26,6 +26,19 @@ function expectCompileFailure(source: string): string[] {
     throw new Error("expected compiler failure");
   }
   return compiled.errors.map((error) => error.message);
+}
+
+function expectCommandInstruction(
+  document: CompiledTzrV2Document,
+  instructionIndex: number,
+  name: string,
+): CommandInstruction {
+  const instruction = document.instructions[instructionIndex];
+  expect(instruction).toMatchObject({ type: "CommandInstruction", name });
+  if (instruction?.type !== "CommandInstruction") {
+    throw new Error(`expected ${name} command instruction`);
+  }
+  return instruction;
 }
 
 describe("compileTzrV2", () => {
@@ -429,6 +442,140 @@ scene start:
     ]);
   });
 
+  it("compiles bg identifier to CommandInstruction bg", () => {
+    const document = compileSource(`scene start:
+  bg classroom
+`);
+    const instruction = expectCommandInstruction(document, 1, "bg");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } },
+    ]);
+  });
+
+  it("compiles bg string to CommandInstruction bg", () => {
+    const document = compileSource(`scene start:
+  bg "classroom-bg"
+`);
+    const instruction = expectCommandInstruction(document, 1, "bg");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "classroom-bg" } },
+    ]);
+  });
+
+  it("compiles show identifier at left", () => {
+    const document = compileSource(`scene start:
+  show alice_smile at left
+`);
+    const instruction = expectCommandInstruction(document, 1, "show");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+      { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "left" } },
+    ]);
+  });
+
+  it("compiles show identifier at center", () => {
+    const document = compileSource(`scene start:
+  show alice_smile at center
+`);
+    const instruction = expectCommandInstruction(document, 1, "show");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+      { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "center" } },
+    ]);
+  });
+
+  it("compiles show identifier at right", () => {
+    const document = compileSource(`scene start:
+  show alice_smile at right
+`);
+    const instruction = expectCommandInstruction(document, 1, "show");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+      { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "right" } },
+    ]);
+  });
+
+  it("compiles show string at center", () => {
+    const document = compileSource(`scene start:
+  show "alice-smile" at center
+`);
+    const instruction = expectCommandInstruction(document, 1, "show");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice-smile" } },
+      { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "center" } },
+    ]);
+  });
+
+  it("compiles hide identifier to CommandInstruction hide", () => {
+    const document = compileSource(`scene start:
+  hide alice_smile
+`);
+    const instruction = expectCommandInstruction(document, 1, "hide");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+    ]);
+  });
+
+  it("compiles hide string to CommandInstruction hide", () => {
+    const document = compileSource(`scene start:
+  hide "alice-smile"
+`);
+    const instruction = expectCommandInstruction(document, 1, "hide");
+
+    expect(instruction.args).toMatchObject([
+      { type: "PositionalArgument", value: { type: "StringValue", value: "alice-smile" } },
+    ]);
+  });
+
+  it("compiles visual statements inside body choice branches", () => {
+    const document = compileSource(`scene start:
+  choice "Choose":
+    "Look":
+      bg classroom
+      show alice_smile at right
+      hide alice_smile
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      items: [
+        {
+          label: "Look",
+          body: [
+            { type: "CommandInstruction", name: "bg" },
+            { type: "CommandInstruction", name: "show" },
+            { type: "CommandInstruction", name: "hide" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("compiles visual statements inside if branches", () => {
+    const document = compileSource(`scene start:
+  if scenario.hasNotebook:
+    bg classroom
+    show alice_smile at center
+    hide alice_smile
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "V2IfInstruction",
+      thenBranch: [
+        { type: "CommandInstruction", name: "bg" },
+        { type: "CommandInstruction", name: "show" },
+        { type: "CommandInstruction", name: "hide" },
+      ],
+    });
+  });
+
   it("rejects set null values for now", () => {
     expect(expectCompileFailure(`scene start:
   set scenario.currentCg = null
@@ -566,6 +713,51 @@ scene later:
 `)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
+  it("rejects clear sprites for now", () => {
+    expect(expectCompileFailure(`scene start:
+  clear sprites
+`)).toContain("clear visual statements are not compile-supported yet.");
+  });
+
+  it("rejects clear bg for now", () => {
+    expect(expectCompileFailure(`scene start:
+  clear bg
+`)).toContain("clear visual statements are not compile-supported yet.");
+  });
+
+  it("rejects show coordinate placement for now", () => {
+    expect(expectCompileFailure(`scene start:
+  show alice_smile at x=100 y=200
+`)).toContain("show coordinate placement is not compile-supported yet.");
+  });
+
+  it("rejects bg with transition for now", () => {
+    expect(expectCompileFailure(`scene start:
+  bg classroom with fade(duration=300)
+`)).toContain("visual transitions are not compile-supported yet.");
+  });
+
+  it("rejects show with transition for now", () => {
+    expect(expectCompileFailure(`scene start:
+  show alice_smile at center with dissolve(duration=250)
+`)).toContain("visual transitions are not compile-supported yet.");
+  });
+
+  it("rejects hide with transition for now", () => {
+    expect(expectCompileFailure(`scene start:
+  hide alice_smile with dissolve(duration=250)
+`)).toContain("visual transitions are not compile-supported yet.");
+  });
+
+  it("rejects clear with transition for now", () => {
+    const messages = expectCompileFailure(`scene start:
+  clear sprites with fade(duration=100)
+`);
+
+    expect(messages).toContain("visual transitions are not compile-supported yet.");
+    expect(messages).toContain("clear visual statements are not compile-supported yet.");
+  });
+
   it("rejects duplicate title declarations", () => {
     expect(expectCompileFailure(`title "First"
 title "Second"
@@ -699,14 +891,10 @@ scene start:
 `)).toContain("Inline voice is not compile-supported yet.");
   });
 
-  it("rejects unsupported state, call, wait, visual, audio, and system statements", () => {
+  it("rejects unsupported call, wait, audio, and system statements", () => {
     const cases = [
       { source: "call screen.open(id=notebook)", statement: "CallStatement" },
       { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
-      { source: "bg classroom", statement: "BgStatement" },
-      { source: "show mio.normal at center", statement: "ShowStatement" },
-      { source: "hide mio.normal", statement: "HideStatement" },
-      { source: "clear sprites", statement: "ClearVisualStatement" },
       { source: "bgm daily", statement: "BgmStatement" },
       { source: "stopBgm", statement: "StopBgmStatement" },
       { source: "se doorOpen", statement: "SeStatement" },

@@ -7,7 +7,9 @@ import {
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
+  type CommandInstruction,
   type CompiledTzrV2Document,
+  type RuntimePluginCommandHandler,
 } from "../src/index.js";
 
 function parseSource(source: string) {
@@ -26,6 +28,16 @@ function compileSource(source: string): CompiledTzrV2Document {
     throw new Error("expected compiler success");
   }
   return compiled.document;
+}
+
+function capturePluginCommand(seen: CommandInstruction[]): RuntimePluginCommandHandler {
+  return (state, instruction) => {
+    seen.push(instruction);
+    return {
+      state,
+      event: { type: "pluginCommand", name: instruction.name },
+    };
+  };
 }
 
 describe("DSL v2 compiled document runtime compatibility", () => {
@@ -846,6 +858,60 @@ scene leave:
       "scenario.canScore": true,
       "scenario.route": "mio",
       "scenario.score": 2,
+    });
+  });
+
+  it("dispatches compiled DSL v2 bg through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  bg classroom
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const bg = stepRuntime(document, scene.state, {
+      commandHandlers: { bg: capturePluginCommand(seen) },
+    });
+
+    expect(bg.event).toEqual({ type: "pluginCommand", name: "bg" });
+    expect(seen[0]).toMatchObject({
+      name: "bg",
+      args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } }],
+    });
+  });
+
+  it("dispatches compiled DSL v2 show through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  show alice_smile at left
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const show = stepRuntime(document, scene.state, {
+      commandHandlers: { show: capturePluginCommand(seen) },
+    });
+
+    expect(show.event).toEqual({ type: "pluginCommand", name: "show" });
+    expect(seen[0]).toMatchObject({
+      name: "show",
+      args: [
+        { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+        { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "left" } },
+      ],
+    });
+  });
+
+  it("dispatches compiled DSL v2 hide through plugin command handlers", () => {
+    const document = compileSource(`scene start:
+  hide alice_smile
+`);
+    const seen: CommandInstruction[] = [];
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const hide = stepRuntime(document, scene.state, {
+      commandHandlers: { hide: capturePluginCommand(seen) },
+    });
+
+    expect(hide.event).toEqual({ type: "pluginCommand", name: "hide" });
+    expect(seen[0]).toMatchObject({
+      name: "hide",
+      args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } }],
     });
   });
 
