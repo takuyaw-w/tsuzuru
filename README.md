@@ -6,14 +6,19 @@ Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノ�
 
 ## 現在のステータス
 
-Tsuzuru は v0.1 scope complete / stabilization complete の状態です。
+Tsuzuru は現在、`feature/new-dsl` ブランチで DSL v2 へ移行中です。
 
-v0.1 で予定していたコア設計、最小機能、examples、README / docs、quality gates は完了確認済みです。ただし、production ready な完成製品ではなく、v0.1 範囲を固定した初期実装です。
+DSL v2 は、このブランチで新しく作るシナリオの recommended direction です。`parseTzrV2` / `compileTzrV2` は experimental DSL v2 APIs として公開されており、現在の runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。
+
+旧 DSL の `parseTzr` / `compileTzr` は legacy compatibility APIs として残っています。旧 DSL の削除や整理はまだ行っておらず、方針は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
+
+このリポジトリは production ready な完成製品ではなく、初期実装と DSL v2 移行を進めている段階です。
 
 実装済みの主な要素:
 
-- `.tzr` パーサー
-- compiler
+- legacy `.tzr` parser / compiler
+- DSL v2 parser / AST
+- DSL v2 compiler for a practical runnable subset
 - runtime
 - runtime event
 - choice / jump / if
@@ -22,9 +27,11 @@ v0.1 で予定していたコア設計、最小機能、examples、README / docs
 - macro expansion
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
+- DSL v2 basic example
 - Preact basic example
 - basic save/load example
-- DSL / runtime / plugin / macro docs
+- DSL v2 design notes
+- legacy DSL / runtime / plugin / macro docs
 
 未実装または post-v0.1 候補:
 
@@ -75,9 +82,12 @@ packages/
 
 examples/
   basic/
+  dsl-v2-basic/
   preact-basic/
 
 docs/
+  design/
+  plans/
   decisions/
 ```
 
@@ -121,78 +131,58 @@ Preact 向け adapter です。
 
 ## Quickstart
 
-v0.1 では `create-tsuzuru` は作りません。project creation path は manual setup と既存 examples です。clean checkout から現在の実装を試すには、リポジトリルートで以下を実行します。
+DSL v2 の current runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
 
 ```sh
-pnpm install
-pnpm --filter @tsuzuru/example-basic start
-pnpm --filter @tsuzuru/example-preact-basic dev
+pnpm install --frozen-lockfile
+pnpm --filter @tsuzuru/example-dsl-v2-basic dev
 ```
 
-`examples/basic` は Node 上で `@tsuzuru/core` の parse / compile / runtime 実行を確認します。`examples/preact-basic` は Vite + Preact で `useRuntime`、`RuntimeView`、choice、wait、plugin command、localStorage save/load を確認します。
+ビルド確認:
 
-新規プロジェクトを作る場合は、v0.1 では `examples/preact-basic` の構成を参考に手動で Vite + Preact project を作り、`@tsuzuru/core` と `@tsuzuru/preact` を組み込んでください。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。`npm create tsuzuru` と `@tsuzuru/vite` は post-v0.1 候補です。
+```sh
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
+```
 
-## DSL の例
+`examples/dsl-v2-basic` は `parseTzrV2` / `compileTzrV2` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`.tzr` は以下のような構文です。
+`create-tsuzuru` と `@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
+
+## DSL v2 の例
+
+DSL v2 は indentation-based なシナリオ構文です。
 
 ```txt
-#scene("prologue")
+character mio name="美緒"
 
-@bg("school_evening")
+scene start:
+  bg station
+  bgm daily_theme
+  show mio_smile at center
 
-The classroom was unusually quiet.
+  mio:
+    遅いよ。
 
-:: Haruka
-You're late again.
+  choice "どうする？":
+    "手帳を見る" if scenario.hasNotebook:
+      jump notebook
 
-:: Yu
-I made it, so it's fine.
-
-? What do you do?
-- "Apologize" -> #apologize
-- "Make a joke" -> #joke
-
-#label("apologize")
-
-:: Yu
-Sorry. I'll come earlier tomorrow.
-
-@inc(name="haruka_affection", by=1)
-@jump("#after_choice")
-
-#label("joke")
-
-:: Yu
-This was a perfectly calculated arrival.
-
-@dec(name="haruka_affection", by=1)
-@jump("#after_choice")
-
-#label("after_choice")
-
-@if(var("haruka_affection") >= 1)
-:: Haruka
-At least you apologized.
-@else
-:: Haruka
-You never change.
-@endif
+    "立ち去る":
+      jump leave
 ```
 
-主な記号の意味:
+API surface:
 
-| 記号 | 意味 |
-|---|---|
-| `#scene(...)` | scene declaration |
-| `#label(...)` | jump target |
-| `:: Speaker` | speaker block |
-| `@command(...)` | runtime command |
-| `$macro(...)` | compile-time macro |
-| `?` | choice block |
-| `- "Text" -> target` | choice item |
-| `@if` / `@else` / `@endif` | conditional block |
+- DSL v2: `parseTzrV2` / `compileTzrV2`
+- Legacy DSL compatibility: `parseTzr` / `compileTzr`
+
+関連ドキュメント:
+
+- [DSL v2 basic example](examples/dsl-v2-basic/)
+- [DSL v2 design notes](docs/design/design/dsl-v2.md)
+- [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
+
+Legacy DSL の `#scene(...)`, `#label(...)`, `@command(...)`, `$macro(...)`, `@if` / `@else` / `@endif` 構文は compatibility 用に残っています。新規作業では DSL v2 を優先してください。
 
 ## 開発環境
 
@@ -234,6 +224,8 @@ pnpm --filter @tsuzuru/preact build
 
 ### Basic Example
 
+Legacy DSL compatibility example です。
+
 実行:
 
 ```sh
@@ -253,6 +245,8 @@ pnpm --filter @tsuzuru/example-basic typecheck
 ```
 
 ### Preact Example
+
+Legacy DSL compatibility example です。
 
 開発サーバー:
 

@@ -10,6 +10,11 @@ Inventory context:
 - Existing public exports are intentionally unchanged by this plan.
 - No legacy files should be deleted or moved until a later release decision.
 
+Entry-point status:
+
+- `README.md` now points new work on this branch to DSL v2 as the recommended direction.
+- Legacy cleanup/removal has still not been performed.
+
 ## 1. Current legacy DSL inventory
 
 ### Parser
@@ -359,4 +364,3 @@ Immediate next task after this plan is reviewed:
 - Do not move files yet.
 - Do not rename `parseTzr` / `compileTzr` yet.
 - Do not change runtime/compiler behavior yet.
-
