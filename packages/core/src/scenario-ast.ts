@@ -1,5 +1,5 @@
-import type { SourceRange } from "../ast.js";
-import type { ParseDiagnostic } from "../diagnostic.js";
+import type { SourceRange } from "./ast.js";
+import type { ParseDiagnostic } from "./diagnostic.js";
 
 export type TzrV2ParseResult =
   | { readonly ok: true; readonly document: TzrV2Document; readonly errors: readonly [] }

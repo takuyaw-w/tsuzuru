@@ -1,5 +1,5 @@
 import type { SourceRange, TextLine, TzrArgument } from "./ast.js";
-import type { TzrV2ConditionExpression } from "./dsl-v2/ast.js";
+import type { TzrV2ConditionExpression } from "./scenario-ast.js";
 
 export type TzrInstruction =
   | SceneInstruction

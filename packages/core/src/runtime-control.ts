@@ -1,4 +1,4 @@
-import { evaluateTzrV2Condition, type TzrV2ConditionEvaluationError } from "./dsl-v2/condition-evaluator.js";
+import { evaluateTzrV2Condition, type TzrV2ConditionEvaluationError } from "./condition-evaluator.js";
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,

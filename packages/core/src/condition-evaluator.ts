@@ -2,8 +2,8 @@ import type {
   TzrV2ConditionComparisonExpression,
   TzrV2ConditionExpression,
   TzrV2ConditionReference,
-} from "./ast.js";
-import type { RuntimeErrorCode, RuntimeState, RuntimeValue } from "../runtime-types.js";
+} from "./scenario-ast.js";
+import type { RuntimeErrorCode, RuntimeState, RuntimeValue } from "./runtime-types.js";
 
 export type TzrV2ConditionEvaluationResult =
   | { readonly ok: true; readonly value: boolean }

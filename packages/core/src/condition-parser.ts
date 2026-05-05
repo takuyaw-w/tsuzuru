@@ -1,5 +1,5 @@
-import type { SourceLocation, SourceRange } from "../ast.js";
-import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
+import type { SourceLocation, SourceRange } from "./ast.js";
+import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
   TzrV2ConditionBinaryExpression,
   TzrV2ConditionBooleanLiteral,
@@ -13,7 +13,7 @@ import type {
   TzrV2ConditionStringLiteral,
   TzrV2ConditionUnaryExpression,
   TzrV2ParseOptions,
-} from "./ast.js";
+} from "./scenario-ast.js";
 import { isValidTzrV2DottedIdentifier } from "./parser.js";
 
 type ComparisonOperator = "==" | "!=" | ">=" | "<=" | ">" | "<";

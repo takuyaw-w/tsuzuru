@@ -1149,8 +1149,8 @@ Do not implement scenario versioning as part of first compile work, but keep it 
 
 Likely files:
 
-- `packages/core/src/dsl-v2/compiler.ts`
-- `packages/core/src/dsl-v2/index.ts`
+- `packages/core/src/compiler.ts`
+- `packages/core/src/scenario-ast.ts`
 - `packages/core/src/index.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 
@@ -1174,7 +1174,7 @@ Risk: low.
 
 Likely files:
 
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/src/ir.ts`
 - `packages/core/src/runtime.ts`
 - `packages/core/src/runtime-commands.ts`
@@ -1200,7 +1200,7 @@ Risk: medium, because scene-target jump touches runtime.
 
 Likely files:
 
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 
 Tests:
@@ -1225,7 +1225,7 @@ Likely files:
 - `packages/core/src/runtime-control.ts`
 - `packages/core/src/runtime-types.ts`
 - `packages/core/src/runtime-snapshot.ts`
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 - `packages/core/tests/runtime.test.ts`
 
@@ -1249,10 +1249,10 @@ Risk: high, because choice runtime shape changes.
 
 Likely files:
 
-- `packages/core/src/dsl-v2/condition.ts`
+- `packages/core/src/condition-evaluator.ts`
 - `packages/core/src/ir.ts`
 - `packages/core/src/runtime-control.ts`
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/tests/dsl-v2-condition.test.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 - `packages/core/tests/runtime.test.ts`
@@ -1301,7 +1301,7 @@ Risk: medium.
 
 Likely files:
 
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/src/ir.ts`
 - `packages/core/src/runtime.ts`
 - `packages/core/src/runtime-types.ts`
@@ -1328,7 +1328,7 @@ Risk: high, because wait state is public runtime API.
 
 Likely files:
 
-- `packages/core/src/dsl-v2/compiler.ts`
+- `packages/core/src/compiler.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 - maybe std plugin tests if schemas are extended
 
@@ -1357,8 +1357,8 @@ Risk: low for current plugin subset.
 Likely files:
 
 - `packages/plugin-std-system/src/index.ts` if package is introduced
-- `packages/core/src/dsl-v2/compiler.ts`
-- `packages/core/src/dsl-v2/condition.ts`
+- `packages/core/src/compiler.ts`
+- `packages/core/src/condition-evaluator.ts`
 - `packages/core/tests/dsl-v2-compiler.test.ts`
 - new std-system tests
 
@@ -1488,7 +1488,7 @@ Risk: medium.
 
 Recommended first implementation task:
 
-- create `packages/core/src/dsl-v2/compiler.ts`
+- create `packages/core/src/compiler.ts`
 - implement `compileTzrV2` skeleton
 - validate title/character/scene declarations
 - emit no runtime behavior beyond metadata/index construction

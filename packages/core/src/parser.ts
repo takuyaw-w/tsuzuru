@@ -1,5 +1,5 @@
-import type { SourceLocation, SourceRange } from "../ast.js";
-import { createDiagnostic, type ParseDiagnostic } from "../diagnostic.js";
+import type { SourceLocation, SourceRange } from "./ast.js";
+import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
   TzrV2AddStatement,
   TzrV2ArgumentValue,
@@ -62,7 +62,7 @@ import type {
   TzrV2VoiceStatement,
   TzrV2WaitStatement,
   TzrV2ShowStatement,
-} from "./ast.js";
+} from "./scenario-ast.js";
 import { parseTzrV2ConditionExpression } from "./condition-parser.js";
 
 interface SourceLine {

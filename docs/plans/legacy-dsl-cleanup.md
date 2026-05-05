@@ -15,6 +15,7 @@ Entry-point status:
 - `README.md` now presents DSL v2 as the current supported DSL path.
 - Legacy parser/compiler/API/tests/examples have been removed.
 - Shared runtime/IR/value/plugin command infrastructure remains.
+- DSL v2 implementation files now live directly under `packages/core/src/`: `parser.ts`, `compiler.ts`, `scenario-ast.ts`, `condition-parser.ts`, and `condition-evaluator.ts`. Older references below to legacy parser/compiler files describe the removed implementations before those filenames were reused for the current DSL path.
 
 Post-cleanup audit status after `4ed8d972bf90f6dedf741ae0217f2fa3b45e37a2`:
 
@@ -30,8 +31,8 @@ Post-cleanup audit status after `4ed8d972bf90f6dedf741ae0217f2fa3b45e37a2`:
 
 Removed legacy-only implementation:
 
-- `packages/core/src/parser.ts`
-- `packages/core/src/compiler.ts`
+- legacy parser implementation formerly at `packages/core/src/parser.ts`; the path now contains `parseTzrV2`
+- legacy compiler implementation formerly at `packages/core/src/compiler.ts`; the path now contains `compileTzrV2`
 - `packages/core/src/condition.ts`
 - `packages/core/src/macro.ts`
 - legacy AST document/statement/condition/jump types from `packages/core/src/ast.ts`
@@ -85,7 +86,7 @@ Remaining legacy-shaped elements retained intentionally:
 
 | Item | Classification | Notes |
 |---|---|---|
-| `packages/core/src/parser.ts` | legacy-only | Implements `parseTzr`, `ParseResult`, legacy line parser, `#scene(...)`, `#label(...)`, `:: Speaker`, `@command(...)`, `$macro(...)`, `?` choice, `@if` / `@else` / `@endif`, legacy jump target parsing. |
+| legacy parser implementation formerly at `packages/core/src/parser.ts` | legacy-only | Implemented `parseTzr`, `ParseResult`, legacy line parser, `#scene(...)`, `#label(...)`, `:: Speaker`, `@command(...)`, `$macro(...)`, `?` choice, `@if` / `@else` / `@endif`, legacy jump target parsing. The path is now reused for `parseTzrV2`. |
 | `packages/core/src/diagnostic.ts` | shared runtime/IR | Used by both legacy parser/compiler and DSL v2 parser/compiler for diagnostics. Do not delete with legacy parser. |
 
 ### AST
@@ -94,13 +95,13 @@ Remaining legacy-shaped elements retained intentionally:
 |---|---|---|
 | `packages/core/src/ast.ts` legacy document/statement types | shared public API | `TzrDocument`, `TzrStatement`, `SceneDeclaration`, `LabelDeclaration`, `CommandStatement`, `MacroStatement`, `ChoiceBlock`, `IfBlock`, legacy `ConditionExpression`, and `JumpTarget` are legacy-facing and exported publicly. |
 | `packages/core/src/ast.ts` shared primitives | shared runtime/IR | `SourceLocation`, `SourceRange`, `TextLine`, `TzrArgument`, and `TzrValue` are still used by shared IR, runtime events, DSL v2 AST/compiler, and command args. The file cannot be deleted wholesale without extracting these primitives first. |
-| `packages/core/src/dsl-v2/ast.ts` imports from `../ast.js` | shared runtime/IR | DSL v2 AST currently reuses `SourceRange`; this creates a direct dependency on `ast.ts`. |
+| `packages/core/src/scenario-ast.ts` imports from `./ast.js` | shared runtime/IR | DSL v2 AST currently reuses `SourceRange`; this creates a direct dependency on shared primitives in `ast.ts`. |
 
 ### Compiler
 
 | Item | Classification | Notes |
 |---|---|---|
-| `packages/core/src/compiler.ts` `compileTzr` pipeline | legacy-only | Compiles `TzrDocument` to `CompiledTzrDocument`; validates duplicate labels/scenes, legacy jump and choice targets, core/plugin command args, macro expansion, and forbidden macro results. |
+| legacy compiler implementation formerly at `packages/core/src/compiler.ts` | legacy-only | Compiled `TzrDocument` to `CompiledTzrDocument`; validated duplicate labels/scenes, legacy jump and choice targets, core/plugin command args, macro expansion, and forbidden macro results. The path is now reused for `compileTzrV2`. |
 | `packages/core/src/compiler.ts` plugin command definitions | shared public API | `definePluginCommand`, `PluginCommandDefinition`, `PluginCommandArgumentSchema`, and related types are exported public API and used by plugin docs/tests. DSL v2 does not currently consume `CompileOptions`, so future ownership needs a decision. |
 | `packages/core/src/commands.ts` | shared runtime/IR | Defines core command names and metadata used by legacy compiler and runtime command handling. DSL v2 compiles `set`, `wait`, and related behavior into shared command instructions. |
 
@@ -108,7 +109,7 @@ Remaining legacy-shaped elements retained intentionally:
 
 | Item | Classification | Notes |
 |---|---|---|
-| `packages/core/src/condition.ts` | legacy-only | Evaluates legacy `ConditionExpression` for `IfInstruction`. DSL v2 uses `dsl-v2/condition-parser.ts` and `dsl-v2/condition-evaluator.ts` instead. Keep while legacy `IfInstruction` remains executable. |
+| `packages/core/src/condition.ts` | legacy-only | Evaluated legacy `ConditionExpression` for `IfInstruction`. Removed with the legacy runtime instruction support. DSL v2 uses `condition-parser.ts` and `condition-evaluator.ts` instead. |
 
 ### Macro support
 
@@ -186,12 +187,12 @@ Remaining legacy-shaped elements retained intentionally:
 
 | Item | Classification | Notes |
 |---|---|---|
-| `packages/core/src/dsl-v2/parser.ts` | legacy-independent v2 | Exports `parseTzrV2`; parses indentation-based v2 syntax. |
-| `packages/core/src/dsl-v2/compiler.ts` | legacy-independent v2 plus shared IR | Exports `compileTzrV2`; compiles v2 AST to shared `RuntimeDocument`/`TzrInstruction` shapes. |
-| `packages/core/src/dsl-v2/ast.ts` | v2 AST | Exports `TzrV2Document`, `TzrV2SceneStatement`, condition/value/text/std visual/audio/system statement types. Imports shared `SourceRange`. |
-| `packages/core/src/dsl-v2/condition-parser.ts` | v2 condition parser | Exports `parseTzrV2ConditionExpression`. |
-| `packages/core/src/dsl-v2/condition-evaluator.ts` | v2 condition evaluator | Used by runtime-control for `V2IfInstruction` and conditional body choices. |
-| `packages/core/src/dsl-v2/index.ts` | v2 public surface | Re-exports v2 parser/compiler/AST/condition APIs into root `index.ts`. |
+| `packages/core/src/parser.ts` | legacy-independent v2 | Exports `parseTzrV2`; parses indentation-based v2 syntax. |
+| `packages/core/src/compiler.ts` | legacy-independent v2 plus shared IR | Exports `compileTzrV2`; compiles v2 AST to shared `RuntimeDocument`/`TzrInstruction` shapes. |
+| `packages/core/src/scenario-ast.ts` | v2 AST | Exports `TzrV2Document`, `TzrV2SceneStatement`, condition/value/text/std visual/audio/system statement types. Imports shared `SourceRange`. |
+| `packages/core/src/condition-parser.ts` | v2 condition parser | Exports `parseTzrV2ConditionExpression`. |
+| `packages/core/src/condition-evaluator.ts` | v2 condition evaluator | Used by runtime-control for `V2IfInstruction` and conditional body choices. |
+| `packages/core/src/index.ts` | v2 public surface | Re-exports v2 parser/compiler/AST/condition APIs into root `index.ts`. |
 | `packages/core/tests/dsl-v2-*.test.ts` | v2 tests | Parser, compiler, runtime, conditions, choices, if, state, inline text, std visual/audio/system coverage. |
 | `examples/dsl-v2-basic` | v2 example | Runnable Vite/Preact example using `parseTzrV2`, `compileTzrV2`, manual runtime, scene/narration/dialogue/end, scene jumps, choices, conditional choices, if, set/add, std visual/audio compile output. |
 

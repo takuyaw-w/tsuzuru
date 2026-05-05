@@ -1,5 +1,5 @@
-import type { SourceLocation, SourceRange, TextLine, TzrArgument, TzrValue } from "../ast.js";
-import { createDiagnostic, type Diagnostic } from "../diagnostic.js";
+import type { SourceLocation, SourceRange, TextLine, TzrArgument, TzrValue } from "./ast.js";
+import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
@@ -13,7 +13,7 @@ import type {
   TzrInstruction,
   V2ElifInstructionBranch,
   V2IfInstruction,
-} from "../ir.js";
+} from "./ir.js";
 import type {
   TzrV2CharacterDeclaration,
   TzrV2ChoiceItem,
@@ -42,7 +42,7 @@ import type {
   TzrV2VoiceStatement,
   TzrV2VisualAssetRef,
   TzrV2VisualTransition,
-} from "./ast.js";
+} from "./scenario-ast.js";
 
 const DSL_V2_ADD_COMMAND_NAME = "__tsuzuru_v2_add";
 
