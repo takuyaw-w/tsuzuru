@@ -9,6 +9,9 @@ export function AudioLayer({ runtimeState }: AudioLayerProps) {
   const audioState = getStdAudioState(runtimeState);
   const latestSe = audioState.seEvents.at(-1);
   const latestVoice = audioState.voiceEvents.at(-1);
+  if (audioState.bgm === null && latestSe === undefined && latestVoice === undefined) {
+    return null;
+  }
 
   return (
     <aside className="audio-layer" aria-label="std-audio state">
