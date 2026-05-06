@@ -1,0 +1,33 @@
+{
+  "name": "@tsuzuru/cli",
+  "version": "0.15.0",
+  "type": "module",
+  "bin": {
+    "tsuzuru": "./dist/src/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/config": "workspace:*",
+    "@tsuzuru/core": "workspace:*",
+    "jiti": "^2.7.0",
+    "tinyglobby": "^0.2.16"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
