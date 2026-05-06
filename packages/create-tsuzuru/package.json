@@ -1,14 +1,40 @@
 {
   "name": "create-tsuzuru",
   "version": "0.15.0",
+  "description": "Minimal project generator for Tsuzuru.",
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "bin": {
     "create-tsuzuru": "./dist/src/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
   "files": [
-    "dist",
+    "dist/src/create-project.*",
+    "dist/src/index.*",
+    "dist/src/template.*",
     "templates",
     "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/create-tsuzuru"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/create-tsuzuru#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "create",
+    "scaffold",
+    "vite"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

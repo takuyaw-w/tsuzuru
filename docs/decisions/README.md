@@ -27,17 +27,17 @@ reintroduced.
 
 | ID | Title | Status |
 |---|---|---|
-| 0001 | `.tzr` is not JavaScript | Accepted |
-| 0002 | Core and Preact Boundary | Accepted |
-| 0003 | Macro vs Plugin | Accepted |
-| 0004 | Standard Visual Plugin | Accepted |
-| 0005 | Standard Audio Plugin | Accepted |
-| 0006 | Standard UI Preact | Accepted |
-| 0007 | Standard UI Viewport | Accepted |
-| 0008 | Include-based Multi-file Scenario | Accepted |
-| 0008 | Screen Host | Accepted |
-| 0009 | Tsuzuru Project Config | Accepted |
-| 0010 | create-tsuzuru Package | Accepted |
+| 0001 | [`.tzr` is not JavaScript](0001-dsl-is-not-js.md) | Accepted |
+| 0002 | [Core and Preact Boundary](0002-core-preact-boundary.md) | Accepted |
+| 0003 | [Macro vs Plugin](0003-macro-vs-plugin.md) | Accepted |
+| 0004 | [Standard Visual Plugin](0004-std-visual-plugin.md) | Accepted |
+| 0005 | [Standard Audio Plugin](0005-std-audio-plugin.md) | Accepted |
+| 0006 | [Standard UI Preact Package](0006-standard-ui-preact.md) | Accepted |
+| 0007 | [Standard UI Viewport](0007-standard-ui-viewport.md) | Accepted |
+| 0008 | [Screen Host](0008-screen-host.md) | Accepted |
+| 0009 | [Tsuzuru Project Config](0009-tsuzuru-config.md) | Accepted |
+| 0010 | [create-tsuzuru Package](0010-create-tsuzuru.md) | Accepted |
+| 0011 | [Include-Based Multi-File Scenario](0011-include-based-multi-file-scenario.md) | Accepted |
 
 ## Reading Order
 

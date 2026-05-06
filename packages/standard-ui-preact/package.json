@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/standard-ui-preact",
   "version": "0.15.0",
+  "description": "Reusable Preact UI components for Tsuzuru visual novel screens.",
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -10,8 +12,36 @@
     "./style.css": "./dist/style.css"
   },
   "files": [
-    "dist"
+    "dist/ChoiceLayer.*",
+    "dist/GameShell.*",
+    "dist/MessageWindow.*",
+    "dist/RuntimeMessageLayer.*",
+    "dist/StatusLayer.*",
+    "dist/class-name.*",
+    "dist/game-viewport.*",
+    "dist/index.*",
+    "dist/screen-host.*",
+    "dist/style.css",
+    "dist/useTextReveal.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/standard-ui-preact"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/standard-ui-preact#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "preact",
+    "ui"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json && node scripts/copy-css.mjs",
     "test": "vitest run --dir tests",
