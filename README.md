@@ -272,7 +272,7 @@ show haruka_smile at center
 bgm daily_theme
 ```
 
-std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。legacy compiler の `pluginCommands` validation path は削除済みです。
+std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。`compileTzr(document, { plugins })` に std plugin を渡すと、compiler が plugin command metadata に基づいて command name と argument shape を検証します。
 
 ## v0.1 の範囲
 

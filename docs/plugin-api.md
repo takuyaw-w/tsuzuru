@@ -1,9 +1,8 @@
 # Plugin API
 
-> Status: partially historical. Plugin command metadata and runtime handlers
-> remain, but the old compiler's `pluginCommands` validation path was removed.
-> DSL v2 currently emits std visual/audio runtime commands directly for the
-> supported subset.
+> Status: current for DSL v2. Plugin command metadata can be passed to
+> `compileTzr` for compile-time validation, and runtime handlers still execute
+> the resulting command instructions.
 
 This document describes the currently implemented plugin command metadata and runtime handler surface in `@tsuzuru/core`.
 
@@ -11,7 +10,7 @@ Plugins extend runtime presentation behavior by handling command names emitted b
 
 ## Command Metadata
 
-Plugin command metadata remains available through `definePluginCommand`. The legacy compiler path that consumed `pluginCommands` was removed, so this metadata is not currently a DSL v2 compile-time validation registry.
+Plugin command metadata is defined with `definePluginCommand`. The compiler can consume this metadata through `compileTzr(document, { plugins })` or `compileTzr(document, { pluginCommands })`.
 
 ```ts
 import { definePluginCommand } from "@tsuzuru/core";
@@ -19,20 +18,17 @@ import { definePluginCommand } from "@tsuzuru/core";
 export const stdVisualPluginCommands = {
   bg: definePluginCommand("bg", {
     kind: "positional",
-    arguments: [{ type: "string" }],
+    arguments: [{ type: "string", nonEmpty: true }],
   }),
   show: definePluginCommand("show", {
-    kind: "named",
-    arguments: [
-      { name: "character", type: "string" },
-      { name: "pose", type: "string", optional: true },
-      { name: "at", type: ["string", "identifier"], optional: true },
-    ],
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
   }),
 };
 ```
 
-The registry key should match `definition.name` when a plugin exposes a command map. DSL v2 compile-time validation for plugin command maps is not implemented yet.
+The registry key must match `definition.name` when a plugin exposes a command map. Duplicate command names are compile errors.
 
 ```ts
 const pluginCommands = {
@@ -40,9 +36,19 @@ const pluginCommands = {
 };
 ```
 
+Standard plugins expose metadata on the plugin object returned by `createStdVisualPlugin()` and `createStdAudioPlugin()`:
+
+```ts
+const compiled = compileTzr(document, {
+  plugins: [createStdVisualPlugin(), createStdAudioPlugin()],
+});
+```
+
+Passing metadata enables compile-time validation for emitted plugin commands. If no plugin metadata is passed, current std visual/audio DSL sugar remains compatible and is compiled without plugin command metadata validation.
+
 ## Argument Schemas
 
-Plugin commands may omit `args`. This means the metadata defines only the command name until a future compiler or tooling validation policy consumes the schema.
+Plugin commands may omit `args`. This defines only the command name. When `args` is present, the compiler validates argument shape.
 
 Supported schema kinds:
 
@@ -50,6 +56,7 @@ Supported schema kinds:
 { kind: "none" }
 { kind: "positional", arguments: [...] }
 { kind: "named", arguments: [...] }
+{ kind: "mixed", positional: [...], named: [...] }
 ```
 
 Supported value types:
@@ -61,42 +68,41 @@ Supported value types:
 
 Arguments are required by default. Add `optional: true` for optional arguments.
 
-## Positional Commands
+Use `nonEmpty: true` for required non-empty string values, and `values: [...]` for a fixed set of allowed string or identifier values. Extra positional or named args are rejected by default; metadata can opt into `allowExtraPositional` or `allowExtraNamed`.
 
-The examples in this section use the removed legacy `@command(...)` notation only
-to show argument shapes. They are not current DSL v2 authoring syntax.
+## Positional Commands
 
 ```ts
 bg: definePluginCommand("bg", {
   kind: "positional",
-  arguments: [{ type: "string" }],
+  arguments: [{ type: "string", nonEmpty: true }],
 });
 ```
 
 Valid:
 
 ```txt
-@bg("school_evening")
+bg school_evening
 ```
 
 Invalid:
 
 ```txt
-@bg()
-@bg(123)
-@bg("school_evening", "extra")
-@bg(name="school_evening")
+bg
+bg ""
+bg school evening
 ```
 
 ## Named Commands
 
+Named arguments are currently produced by `call namespace.command(...)` when plugin command validation metadata is provided.
+
 ```ts
-show: definePluginCommand("show", {
+screenOpen: definePluginCommand("screen.open", {
   kind: "named",
   arguments: [
-    { name: "character", type: "string" },
-    { name: "pose", type: "string", optional: true },
-    { name: "at", type: ["string", "identifier"], optional: true },
+    { name: "id", type: "identifier" },
+    { name: "modal", type: "boolean", optional: true },
   ],
 });
 ```
@@ -104,22 +110,20 @@ show: definePluginCommand("show", {
 Valid:
 
 ```txt
-@show(character="haruka", pose="smile", at=center)
+call screen.open(id=notebook, modal=true)
 ```
 
 Invalid:
 
 ```txt
-@show()
-@show(character=haruka)
-@show(character="haruka", extra=true)
-@show(character="haruka", character="yu")
-@show("haruka")
+call screen.open()
+call screen.open(id="notebook")
+call screen.open(id=notebook, extra=true)
 ```
 
 ## Runtime Boundary
 
-Runtime behavior is handled by runtime plugin command handlers and UI layers. DSL v2 currently emits std visual/audio commands for the supported subset; arbitrary plugin command validation remains a follow-up design task.
+Runtime behavior is handled by runtime plugin command handlers and UI layers. Compile-time plugin command validation checks command names and argument shape, but it does not load assets, check file existence, render images, or play audio.
 
 Plugin commands should not own core flow control. Keep these commands core-owned:
 
@@ -130,3 +134,5 @@ choice
 set / add
 waitClick / page / stop / wait
 ```
+
+Macro, preset, and stage syntax remain out of scope.

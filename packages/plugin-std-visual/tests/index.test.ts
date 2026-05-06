@@ -20,10 +20,12 @@ const loc = {
 
 describe("createStdVisualPlugin", () => {
   it("initializes runtimeState.plugins.stdVisual", () => {
+    const plugin = createStdVisualPlugin();
     const state = createInitialRuntimeState(createDocument(), {
-      plugins: [createStdVisualPlugin()],
+      plugins: [plugin],
     });
 
+    expect(plugin.commands).toBe(stdVisualPluginCommands);
     expect(state.plugins.stdVisual).toEqual({
       background: null,
       sprites: {},
@@ -46,9 +48,22 @@ describe("createStdVisualPlugin", () => {
 describe("std-visual commands", () => {
   it("keeps plugin command metadata available for DSL v2 integrations", () => {
     expect(Object.keys(stdVisualPluginCommands)).toEqual(["bg", "show", "hide"]);
-    expect(stdVisualPluginCommands.bg?.name).toBe("bg");
-    expect(stdVisualPluginCommands.show?.name).toBe("show");
-    expect(stdVisualPluginCommands.hide?.name).toBe("hide");
+    expect(stdVisualPluginCommands.bg).toEqual({
+      name: "bg",
+      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+    });
+    expect(stdVisualPluginCommands.show).toEqual({
+      name: "show",
+      args: {
+        kind: "mixed",
+        positional: [{ type: "string", nonEmpty: true }],
+        named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
+      },
+    });
+    expect(stdVisualPluginCommands.hide).toEqual({
+      name: "hide",
+      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+    });
   });
 
   it("sets and overwrites the background with bg commands", () => {

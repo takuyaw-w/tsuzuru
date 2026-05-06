@@ -1,5 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { type CommandInstruction, type CompiledTzrDocument, compileTzr, parseTzr } from "../src/index.js";
+import {
+  type CommandInstruction,
+  type CompiledTzrDocument,
+  compileTzr,
+  definePluginCommand,
+  parseTzr,
+  type TzrCompileOptions,
+} from "../src/index.js";
+
+const stdVisualPluginCommands = {
+  bg: definePluginCommand("bg", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  show: definePluginCommand("show", {
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
+  }),
+  hide: definePluginCommand("hide", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+};
+
+const stdAudioPluginCommands = {
+  startBgm: definePluginCommand("startBgm", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  stopBgm: definePluginCommand("stopBgm", { kind: "none" }),
+  se: definePluginCommand("se", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  voice: definePluginCommand("voice", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+};
 
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
@@ -10,8 +49,8 @@ function parseSource(source: string) {
   return parsed.document;
 }
 
-function compileSource(source: string): CompiledTzrDocument {
-  const compiled = compileTzr(parseSource(source));
+function compileSource(source: string, options?: TzrCompileOptions): CompiledTzrDocument {
+  const compiled = compileTzr(parseSource(source), options);
   expect(compiled.ok).toBe(true);
   if (!compiled.ok) {
     throw new Error("expected compiler success");
@@ -19,8 +58,8 @@ function compileSource(source: string): CompiledTzrDocument {
   return compiled.document;
 }
 
-function expectCompileFailure(source: string): string[] {
-  const compiled = compileTzr(parseSource(source));
+function expectCompileFailure(source: string, options?: TzrCompileOptions): string[] {
+  const compiled = compileTzr(parseSource(source), options);
   expect(compiled.ok).toBe(false);
   if (compiled.ok) {
     throw new Error("expected compiler failure");
@@ -706,6 +745,182 @@ scene start:
         { type: "CommandInstruction", name: "hide" },
       ],
     });
+  });
+
+  it("validates std visual plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  bg classroom
+  show alice_smile at center
+  hide alice_smile
+`,
+      { plugins: [{ name: "stdVisual", commands: stdVisualPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "show" },
+      { type: "CommandInstruction", name: "hide" },
+    ]);
+  });
+
+  it("validates std audio plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  bgm daily_theme
+  se click
+  voice mio_001
+  stopBgm
+`,
+      { plugins: [{ name: "stdAudio", commands: stdAudioPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "startBgm" },
+      { type: "CommandInstruction", name: "se" },
+      { type: "CommandInstruction", name: "voice" },
+      { type: "CommandInstruction", name: "stopBgm" },
+    ]);
+  });
+
+  it("keeps std visual and audio command compilation compatible without plugin metadata", () => {
+    const document = compileSource(`scene start:
+  bg classroom
+  bgm daily_theme
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "startBgm" },
+    ]);
+  });
+
+  it("compiles call statements into plugin command instructions when validation metadata is enabled", () => {
+    const document = compileSource(
+      `scene start:
+  call screen.open(id=notebook, modal=true)
+`,
+      {
+        pluginCommands: {
+          "screen.open": definePluginCommand("screen.open", {
+            kind: "named",
+            arguments: [
+              { name: "id", type: "identifier" },
+              { name: "modal", type: "boolean", optional: true },
+            ],
+          }),
+        },
+      },
+    );
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "CommandInstruction",
+      name: "screen.open",
+      args: [
+        { type: "NamedArgument", name: "id", value: { type: "IdentifierValue", name: "notebook" } },
+        { type: "NamedArgument", name: "modal", value: { type: "BooleanValue", value: true } },
+      ],
+    });
+  });
+
+  it("rejects invalid plugin command argument shapes when metadata validation is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  call visual.bg()\n", {
+        pluginCommands: {
+          "visual.bg": definePluginCommand("visual.bg", {
+            kind: "positional",
+            arguments: [{ type: "string", nonEmpty: true }],
+          }),
+        },
+      }),
+    ).toContain('Plugin command "visual.bg" is missing required positional argument 1.');
+
+    expect(
+      expectCompileFailure("scene start:\n  call visual.show(position=top)\n", {
+        pluginCommands: {
+          "visual.show": definePluginCommand("visual.show", {
+            kind: "named",
+            arguments: [{ name: "position", type: "identifier", values: ["left", "center", "right"] }],
+          }),
+        },
+      }),
+    ).toContain('Plugin command "visual.show" named argument "position" must be one of "left", "center", "right".');
+
+    expect(
+      expectCompileFailure("scene start:\n  call visual.show(position=center, layer=front)\n", {
+        pluginCommands: {
+          "visual.show": definePluginCommand("visual.show", {
+            kind: "named",
+            arguments: [{ name: "position", type: "identifier", values: ["left", "center", "right"] }],
+          }),
+        },
+      }),
+    ).toContain('Plugin command "visual.show" does not support named argument "layer".');
+
+    expect(
+      expectCompileFailure("scene start:\n  call visual.hide(assetId=alice_smile, extra=true)\n", {
+        pluginCommands: {
+          "visual.hide": definePluginCommand("visual.hide", {
+            kind: "named",
+            arguments: [{ name: "assetId", type: "identifier" }],
+          }),
+        },
+      }),
+    ).toContain('Plugin command "visual.hide" does not support named argument "extra".');
+
+    expect(
+      expectCompileFailure("scene start:\n  call audio.startBgm()\n", {
+        pluginCommands: {
+          "audio.startBgm": definePluginCommand("audio.startBgm", {
+            kind: "positional",
+            arguments: [{ type: "string", nonEmpty: true }],
+          }),
+        },
+      }),
+    ).toContain('Plugin command "audio.startBgm" is missing required positional argument 1.');
+
+    expect(
+      expectCompileFailure("scene start:\n  call audio.stopBgm(assetId=daily_theme)\n", {
+        pluginCommands: { "audio.stopBgm": definePluginCommand("audio.stopBgm", { kind: "none" }) },
+      }),
+    ).toContain('Plugin command "audio.stopBgm" does not support named argument "assetId".');
+  });
+
+  it("rejects unknown plugin commands when metadata validation is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  call screen.open()\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "screen.open".');
+  });
+
+  it("rejects duplicate plugin command metadata", () => {
+    expect(
+      expectCompileFailure("scene start:\n", {
+        pluginCommands: [
+          definePluginCommand("bg", {
+            kind: "positional",
+            arguments: [{ type: "string" }],
+          }),
+          definePluginCommand("bg", {
+            kind: "none",
+          }),
+        ],
+      }),
+    ).toContain('Duplicate plugin command metadata for "bg".');
+  });
+
+  it("rejects plugin command metadata map keys that do not match command names", () => {
+    expect(
+      expectCompileFailure("scene start:\n", {
+        pluginCommands: {
+          bg: definePluginCommand("show", { kind: "none" }),
+        },
+      }),
+    ).toContain('Plugin command metadata key "bg" must match command name "show".');
   });
 
   it("rejects set null values for now", () => {

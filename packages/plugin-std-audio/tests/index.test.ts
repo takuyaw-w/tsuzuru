@@ -23,10 +23,12 @@ const loc = {
 
 describe("createStdAudioPlugin", () => {
   it("initializes runtimeState.plugins.stdAudio", () => {
+    const plugin = createStdAudioPlugin();
     const state = createInitialRuntimeState(createDocument(), {
-      plugins: [createStdAudioPlugin()],
+      plugins: [plugin],
     });
 
+    expect(plugin.commands).toBe(stdAudioPluginCommands);
     expect(state.plugins.stdAudio).toEqual({
       bgm: null,
       seEvents: [],
@@ -62,10 +64,22 @@ describe("createStdAudioPlugin", () => {
 describe("std-audio commands", () => {
   it("keeps plugin command metadata available for DSL v2 integrations", () => {
     expect(Object.keys(stdAudioPluginCommands)).toEqual(["startBgm", "stopBgm", "se", "voice"]);
-    expect(stdAudioPluginCommands.startBgm?.name).toBe("startBgm");
-    expect(stdAudioPluginCommands.stopBgm?.name).toBe("stopBgm");
-    expect(stdAudioPluginCommands.se?.name).toBe("se");
-    expect(stdAudioPluginCommands.voice?.name).toBe("voice");
+    expect(stdAudioPluginCommands.startBgm).toEqual({
+      name: "startBgm",
+      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+    });
+    expect(stdAudioPluginCommands.stopBgm).toEqual({
+      name: "stopBgm",
+      args: { kind: "none" },
+    });
+    expect(stdAudioPluginCommands.se).toEqual({
+      name: "se",
+      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+    });
+    expect(stdAudioPluginCommands.voice).toEqual({
+      name: "voice",
+      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+    });
   });
 
   it("starts, overwrites, and stops BGM", () => {
