@@ -54,6 +54,12 @@ export type {
 } from "./plugin-command.js";
 export { definePluginCommand, validatePluginCommandArguments } from "./plugin-command.js";
 export type {
+  TzrCompileProjectInput,
+  TzrCompileProjectResult,
+  TzrProjectDocumentInput,
+} from "./project-compiler.js";
+export { compileTzrProject } from "./project-compiler.js";
+export type {
   ChoiceResolveRuntimeEvent,
   ChoiceRuntimeEvent,
   DialogueRuntimeEvent,

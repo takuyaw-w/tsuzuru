@@ -37,6 +37,25 @@ describe("parseTzr", () => {
     });
   });
 
+  it("parses an include directive", () => {
+    const result = parseTzr('include "./chapters/01-opening.tzr"\n', { filePath: "scenario/v2.tzr" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      type: "IncludeDirective",
+      path: "./chapters/01-opening.tzr",
+    });
+  });
+
+  it("rejects include directives inside scene bodies", () => {
+    expect(expectParseFailure('scene start:\n  include "./chapters/01-opening.tzr"\n')).toContain(
+      "Unsupported DSL v2 scene body statement.",
+    );
+  });
+
   it("parses a valid scene declaration", () => {
     const result = parseTzr("scene start:\n", { filePath: "scenario/v2.tzr" });
 

@@ -20,6 +20,7 @@ import type {
   TzrHideStatement,
   TzrIdentifierValue,
   TzrIfStatement,
+  TzrIncludeDirective,
   TzrInlineAssetId,
   TzrInlineDelaySpan,
   TzrInlineNode,
@@ -195,6 +196,11 @@ class TzrParser {
 
   private parseTopLevelDeclaration(line: SourceLine): TzrTopLevelDeclaration | undefined {
     const keyword = line.code.trim().match(/^\S+/)?.[0];
+    if (keyword === "include") {
+      const declaration = this.parseInclude(line);
+      this.cursor += 1;
+      return declaration;
+    }
     if (keyword === "title") {
       const declaration = this.parseTitle(line);
       this.cursor += 1;
@@ -212,6 +218,32 @@ class TzrParser {
     this.addError(line, firstContentColumn(line), "Expected a DSL v2 top-level declaration.");
     this.cursor += 1;
     return undefined;
+  }
+
+  private parseInclude(line: SourceLine): TzrIncludeDirective | undefined {
+    const match = /^include\s+(.+)$/.exec(line.code.trim());
+    const headerColumn = firstContentColumn(line);
+    if (match === null) {
+      this.addError(line, headerColumn, 'include must use `include "./path.tzr"` syntax.');
+      return undefined;
+    }
+
+    const pathSource = match[1]?.trim() ?? "";
+    const pathColumn = line.code.indexOf(pathSource) + 1;
+    const path = this.parseStringLiteral(line, pathSource, pathColumn);
+    if (path === undefined) {
+      return undefined;
+    }
+    if (path.length === 0) {
+      this.addError(line, pathColumn, "include path must not be empty.");
+      return undefined;
+    }
+
+    return {
+      type: "IncludeDirective",
+      path,
+      loc: this.lineRange(line),
+    };
   }
 
   private parseTitle(line: SourceLine): TzrTitleDeclaration | undefined {

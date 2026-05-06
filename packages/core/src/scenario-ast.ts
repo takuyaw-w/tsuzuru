@@ -17,10 +17,21 @@ export interface TzrDocument {
   readonly type: "TzrDocument";
   readonly filePath: string;
   readonly sourceLines: readonly string[];
+  readonly sourceLineMap?: Readonly<Record<string, readonly string[]>>;
   readonly declarations: readonly TzrTopLevelDeclaration[];
 }
 
-export type TzrTopLevelDeclaration = TzrTitleDeclaration | TzrCharacterDeclaration | TzrSceneDeclaration;
+export type TzrTopLevelDeclaration =
+  | TzrIncludeDirective
+  | TzrTitleDeclaration
+  | TzrCharacterDeclaration
+  | TzrSceneDeclaration;
+
+export interface TzrIncludeDirective {
+  readonly type: "IncludeDirective";
+  readonly path: string;
+  readonly loc: SourceRange;
+}
 
 export interface TzrTitleDeclaration {
   readonly type: "TitleDeclaration";

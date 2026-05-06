@@ -145,6 +145,8 @@ class TzrCompiler {
         case "SceneDeclaration":
           this.collectScene(declaration);
           break;
+        case "IncludeDirective":
+          break;
       }
     }
   }
@@ -341,13 +343,19 @@ class TzrCompiler {
   private buildInstructions(): readonly TzrInstruction[] {
     const instructions: TzrInstruction[] = [];
 
-    for (const scene of this.scenes.values()) {
-      instructions.push({
-        type: "SceneInstruction",
-        id: scene.id,
-        loc: scene.loc,
-      } satisfies SceneInstruction);
-      instructions.push(...this.buildSceneBodyInstructions(scene.body));
+    for (const declaration of this.document.declarations) {
+      switch (declaration.type) {
+        case "SceneDeclaration":
+          instructions.push({
+            type: "SceneInstruction",
+            id: declaration.id,
+            loc: declaration.loc,
+          } satisfies SceneInstruction);
+          instructions.push(...this.buildSceneBodyInstructions(declaration.body));
+          break;
+        default:
+          break;
+      }
     }
 
     return instructions;
@@ -1001,7 +1009,7 @@ class TzrCompiler {
   }
 
   private addError(location: SourceLocation, message: string): void {
-    this.errors.push(createDiagnostic(location, message, this.sourceLine(location.line)));
+    this.errors.push(createDiagnostic(location, message, this.sourceLine(location)));
   }
 
   private documentStartLocation(): SourceLocation {
@@ -1012,8 +1020,9 @@ class TzrCompiler {
     };
   }
 
-  private sourceLine(line: number): string {
-    return this.document.sourceLines[line - 1] ?? "";
+  private sourceLine(location: SourceLocation): string {
+    const sourceLines = this.document.sourceLineMap?.[location.filePath] ?? this.document.sourceLines;
+    return sourceLines[location.line - 1] ?? "";
   }
 }
 

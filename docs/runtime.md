@@ -1,8 +1,8 @@
 # Tsuzuru Runtime
 
 > Status: DSL v2-first. The runtime still provides shared execution, snapshot,
-> plugin dispatch, and current command primitives. Legacy label jumps, runtime
-> flags, old target-label choices, and low-level `inc` / `dec` / `flag` /
+> plugin dispatch, and current command primitives. Legacy label jump syntax,
+> runtime flags, old target-label choices, and low-level `inc` / `dec` / `flag` /
 > `unflag` state commands have been removed. DSL v2 uses scene jumps, body
 > choices, scenario variables, and the current `IfInstruction`.
 
@@ -25,7 +25,7 @@ const result = stepRuntime(compiledDocument, state);
 
 The runtime reads `document.instructions`, `document.scenes`, and `document.filePath`. DSL v2 scene jumps resolve through `document.scenes`.
 
-`RuntimeDocument.labels` and `CompiledTzrDocument.labels` are not part of the current runtime document shape. Cross-file runtime jumps are not implemented.
+The runtime still has no current-file concept. Cross-file authoring is handled by `compileTzrProject` before runtime execution.
 
 ## RuntimeState
 
@@ -219,7 +219,8 @@ For current v0.x snapshots, branch frames are included directly in snapshots.
 
 `SceneJumpInstruction` resolves against `RuntimeDocument.scenes`. It moves `pointer.instructionIndex` to the scene's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
 
-Cross-file jump targets are not implemented in the current runtime.
+Cross-file authoring targets are validated and aggregated before runtime by
+`compileTzrProject`; runtime does not track a current file.
 
 Body choices produce a blocked `pendingChoice` state and are resolved separately by `resolveChoice`.
 

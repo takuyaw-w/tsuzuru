@@ -6,19 +6,12 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByText("Step")).toHaveCount(0);
   await expect(page.locator(".debug-panel")).toHaveCount(0);
 
+  await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
+  await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
+  await page.getByRole("button", { name: "Start" }).click();
+
   await page.locator(".app__interaction-surface").click();
-  await expect(page.locator(".tzr-message-window")).toContainText("Tsuzuru");
-  await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-scene.png") });
-
   const messageWindow = page.locator(".tzr-message-window");
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("Tsuzuru DSL v2 Basic");
-
-  await messageWindow.click();
-  const choiceLayer = page.locator(".tzr-choice-layer");
-  await expect(choiceLayer).toContainText("Start");
-  await choiceLayer.getByRole("button", { name: "はじめる" }).click();
-
   await expect(messageWindow).toContainText("遅いよ");
 
   await messageWindow.click();

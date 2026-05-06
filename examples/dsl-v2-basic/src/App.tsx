@@ -1,11 +1,4 @@
-import {
-  type CompiledTzrDocument,
-  compileTzr,
-  parseTzr,
-  type RuntimeDiagnostic,
-  type RuntimeEvent,
-  type RuntimePluginDefinition,
-} from "@tsuzuru/core";
+import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
@@ -17,32 +10,88 @@ import {
   RuntimeMessageLayer,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
-import type { ComponentProps } from "preact";
+import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
+import { scenarioProject } from "./scenario.js";
+import { BacklogScreen } from "./screens/BacklogScreen.js";
+import { GalleryScreen } from "./screens/GalleryScreen.js";
+import { LoadScreen } from "./screens/LoadScreen.js";
+import { SettingsScreen } from "./screens/SettingsScreen.js";
+import { TitleScreen } from "./screens/TitleScreen.js";
 import { VisualLayer } from "./VisualLayer.js";
 
 type DocumentResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument }
   | { readonly ok: false; readonly message: string };
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
+type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
 
 export function App() {
-  const documentResult = useMemo(() => compileScenario(scenarioSource), []);
+  const documentResult = useMemo((): DocumentResult => {
+    if (!scenarioProject.ok) {
+      return { ok: false, message: formatDiagnostics(scenarioProject.errors) };
+    }
+    return { ok: true, document: scenarioProject.document };
+  }, []);
+  const [screen, setScreen] = useState<AppScreen>("title");
 
   if (!documentResult.ok) {
     return <pre className="app app--error">{documentResult.message}</pre>;
   }
 
-  return <RuntimeApp document={documentResult.document} />;
+  if (screen === "runtime") {
+    return (
+      <RuntimeApp
+        document={documentResult.document}
+        onTitle={() => setScreen("title")}
+        onSettings={() => setScreen("settings")}
+        onBacklog={() => setScreen("backlog")}
+      />
+    );
+  }
+
+  return (
+    <ScreenFrame>
+      {screen === "title" ? (
+        <TitleScreen
+          onStart={() => setScreen("runtime")}
+          onLoad={() => setScreen("load")}
+          onSettings={() => setScreen("settings")}
+          onBacklog={() => setScreen("backlog")}
+          onGallery={() => setScreen("gallery")}
+        />
+      ) : screen === "load" ? (
+        <LoadScreen onBack={() => setScreen("title")} />
+      ) : screen === "settings" ? (
+        <SettingsScreen onBack={() => setScreen("title")} />
+      ) : screen === "backlog" ? (
+        <BacklogScreen onBack={() => setScreen("title")} />
+      ) : (
+        <GalleryScreen onBack={() => setScreen("title")} />
+      )}
+    </ScreenFrame>
+  );
 }
 
 interface RuntimeAppProps {
   readonly document: CompiledTzrDocument;
+  readonly onTitle: () => void;
+  readonly onSettings: () => void;
+  readonly onBacklog: () => void;
 }
 
-function RuntimeApp({ document }: RuntimeAppProps) {
+function ScreenFrame({ children }: { readonly children: ComponentChildren }) {
+  return (
+    <main className="app">
+      <GameViewport aspectRatio="16:9" className="app__viewport" maxWidth="100vw">
+        <GameShell className="app__shell">{children}</GameShell>
+      </GameViewport>
+    </main>
+  );
+}
+
+function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
     () => [createStdVisualPlugin(), createStdAudioPlugin()],
     [],
@@ -164,6 +213,17 @@ function RuntimeApp({ document }: RuntimeAppProps) {
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
+            <nav className="app__runtime-menu" aria-label="Runtime menu">
+              <button type="button" onClick={onBacklog}>
+                Backlog
+              </button>
+              <button type="button" onClick={onSettings}>
+                Settings
+              </button>
+              <button type="button" onClick={onTitle}>
+                Title
+              </button>
+            </nav>
             <div className="app__message-layer">
               {canStart ? null : choiceEvent !== null ? (
                 <>
@@ -288,21 +348,6 @@ function getRuntimeEventTextKey(event: RuntimeEvent): string {
     return event.items.map((item) => item.text).join("\u0000");
   }
   return "";
-}
-
-function compileScenario(source: string): DocumentResult {
-  const plugins = [createStdVisualPlugin(), createStdAudioPlugin()];
-  const parsed = parseTzr(source, { filePath: "examples/dsl-v2-basic/scenario/main.tzr" });
-  if (!parsed.ok) {
-    return { ok: false, message: formatDiagnostics(parsed.errors) };
-  }
-
-  const compiled = compileTzr(parsed.document, { plugins });
-  if (!compiled.ok) {
-    return { ok: false, message: formatDiagnostics(compiled.errors) };
-  }
-
-  return { ok: true, document: compiled.document };
 }
 
 interface DiagnosticLike {
