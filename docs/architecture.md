@@ -689,6 +689,10 @@ Plugin command validation has a minimal compiler foundation.
 
 Plugins may expose command metadata through the same plugin definition object used for runtime state initialization. `compileTzr(document, { plugins })` or `compileTzr(document, { pluginCommands })` can then validate emitted plugin command names and basic argument shapes before runtime execution.
 
+When validation metadata is present, every emitted non-core command is checked against that registry. Scenarios using std visual/audio commands must include the std plugin definitions at compile time. If no metadata is provided, std visual/audio sugar keeps the existing compatibility behavior and compiles without metadata validation.
+
+`call namespace.command(...)` is the current custom plugin command authoring surface under metadata validation. It is not runtime call/return control flow.
+
 The current validation scope is intentionally small:
 
 - unknown plugin commands
@@ -872,7 +876,7 @@ The following topics are intentionally deferred:
 - complex plugin command schemas
 - `RuntimeDocument.labels` removal or retention
 - `RuntimeState.flags` and low-level state command policy
-- `return` runtime semantics
+- broader `call` / `return` runtime semantics
 - `wait` runtime authoring support
 - clear visual commands
 - coordinate placement

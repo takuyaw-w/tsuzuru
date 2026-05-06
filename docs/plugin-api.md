@@ -46,6 +46,8 @@ const compiled = compileTzr(document, {
 
 Passing metadata enables compile-time validation for emitted plugin commands. If no plugin metadata is passed, current std visual/audio DSL sugar remains compatible and is compiled without plugin command metadata validation.
 
+When metadata validation is enabled, the compiler validates every emitted non-core command against the supplied registry. If a scenario uses std visual/audio DSL sugar, pass `createStdVisualPlugin()` and `createStdAudioPlugin()` to `compileTzr` so `bg` / `show` / `hide` / `startBgm` / `stopBgm` / `se` / `voice` are registered.
+
 ## Argument Schemas
 
 Plugin commands may omit `args`. This defines only the command name. When `args` is present, the compiler validates argument shape.
@@ -95,7 +97,7 @@ bg school evening
 
 ## Named Commands
 
-Named arguments are currently produced by `call namespace.command(...)` when plugin command validation metadata is provided.
+Named arguments are currently produced by `call namespace.command(...)` when plugin command validation metadata is provided. This is the custom plugin command authoring surface. It compiles to a plugin `CommandInstruction`; it is not a runtime subroutine call, call stack, or `return` mechanism.
 
 ```ts
 screenOpen: definePluginCommand("screen.open", {
@@ -124,6 +126,8 @@ call screen.open(id=notebook, extra=true)
 ## Runtime Boundary
 
 Runtime behavior is handled by runtime plugin command handlers and UI layers. Compile-time plugin command validation checks command names and argument shape, but it does not load assets, check file existence, render images, or play audio.
+
+Broader call/return runtime semantics remain deferred.
 
 Plugin commands should not own core flow control. Keep these commands core-owned:
 
