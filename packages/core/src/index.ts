@@ -17,6 +17,7 @@ export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands
 export type {
   CompiledTzrDocument,
   TzrCompiledCharacter,
+  TzrCompiledLabelMetadata,
   TzrCompiledSceneMetadata,
   TzrCompileOptions,
   TzrCompilePluginCommandInput,
@@ -35,6 +36,7 @@ export type {
   DialogueInstruction,
   ElifInstructionBranch,
   IfInstruction,
+  LabelJumpInstruction,
   NarrationInstruction,
   RuntimeDocument,
   SceneInstruction,
@@ -54,12 +56,19 @@ export type {
 } from "./plugin-command.js";
 export { definePluginCommand, validatePluginCommandArguments } from "./plugin-command.js";
 export type {
+  TzrCompileProjectInput,
+  TzrCompileProjectResult,
+  TzrProjectDocumentInput,
+} from "./project-compiler.js";
+export { compileTzrProject } from "./project-compiler.js";
+export type {
   ChoiceResolveRuntimeEvent,
   ChoiceRuntimeEvent,
   DialogueRuntimeEvent,
   EndRuntimeEvent,
   IfRuntimeEvent,
   JumpRuntimeEvent,
+  LabelJumpRuntimeEvent,
   NarrationRuntimeEvent,
   PageRuntimeEvent,
   RuntimeBlockReason,

@@ -1,0 +1,15 @@
+label notebook:
+  wait 250
+  voice mio_001
+  mio:
+    ちゃんと見ておいてね。
+  clear sprites
+  clear bg
+  stopBgm
+  end
+
+label leave:
+  narration:
+    駅をあとにした。
+  stopBgm
+  end

@@ -119,7 +119,7 @@ function formatTransientEvent(event: TransientRuntimeEvent): string {
     case "scene":
       return `Scene: ${event.id}`;
     case "jump":
-      return `Jump scene: ${event.sceneId}`;
+      return "sceneId" in event ? `Jump scene: ${event.sceneId}` : `Jump label: ${event.labelId}`;
     case "choiceResolve":
       return `Choice: ${event.text}`;
     case "if":

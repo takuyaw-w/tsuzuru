@@ -533,9 +533,9 @@ IR should be:
 - independent from DOM
 - independent from renderer implementation
 
-Scene jumps are scene-based. Scene IDs must not be disguised as legacy labels.
-
-`RuntimeDocument.labels` and `CompiledTzrDocument.labels` are removed. Current authoring uses scenes and scene jumps, not legacy labels.
+Scene jumps are scene-based and resolve through `RuntimeDocument.scenes`.
+Project label jumps use `LabelJumpInstruction` and resolve through optional
+`RuntimeDocument.labels`. Legacy `#label(...)` syntax remains removed.
 
 ---
 

@@ -1,0 +1,22 @@
+label opening_start:
+  bg station with fade(duration=300)
+  bgm daily_theme
+  show mio_smile at center with dissolve(duration=250)
+
+  mio:
+    遅いよ。
+
+  set scenario.hasNotebook = true
+  set scenario.selectedItem = null
+  set scenario.currentSpeaker = "mio"
+  set scenario.lastSpeaker = scenario.currentSpeaker
+  add scenario.score += 1
+
+  if scenario.score >= 1:
+    narration:
+      スコアが増えた。
+  else:
+    narration:
+      まだ何も起きていない。
+
+  -> common_choice

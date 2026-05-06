@@ -14,10 +14,12 @@ For runnable code, see [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/).
 Use the current DSL APIs from `@tsuzuru/core`:
 
 ```ts
-import { compileTzr, parseTzr } from "@tsuzuru/core";
+import { compileTzr, compileTzrProject, parseTzr } from "@tsuzuru/core";
 ```
 
 No compatibility aliases for the transitional v2 API names are exported.
+`compileTzrProject` compiles an in-memory set of `.tzr` documents. Core does
+not read from the file system.
 
 ## Current Syntax Snapshot
 
@@ -36,17 +38,17 @@ scene start:
 
   choice "どうする？":
     "手帳を見る" if scenario.hasNotebook:
-      jump notebook
+      -> notebook
 
     "立ち去る":
-      jump leave
+      -> leave
 
-scene notebook:
+label notebook:
   mio:
     ちゃんと持ってきたんだね。
   end
 
-scene leave:
+label leave:
   hide mio
   stopBgm
   end
@@ -55,9 +57,12 @@ scene leave:
 The currently implemented runnable subset covers:
 
 - document metadata and character declarations
+- `#include("./path.tzr")` compile-time project directives
 - `scene` bodies
+- `label` bodies
 - narration and dialogue
 - `jump` to another scene in the same document
+- `-> labelName` jumps to project-level labels
 - body choices with optional conditions
 - `if` / `elif` / `else`
 - `set` and `add`

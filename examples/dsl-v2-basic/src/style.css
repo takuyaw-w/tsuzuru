@@ -55,6 +55,136 @@ button {
   z-index: 2;
 }
 
+.app__runtime-menu {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+.app__runtime-menu button,
+.screen__button,
+.screen__gallery-item {
+  min-height: 40px;
+  border: 1px solid rgba(247, 242, 226, 0.34);
+  border-radius: 6px;
+  background: rgba(11, 14, 18, 0.72);
+  color: #fffaf0;
+  cursor: pointer;
+}
+
+.app__runtime-menu button {
+  padding: 8px 12px;
+  font-size: 0.86rem;
+}
+
+.app__runtime-menu button:hover,
+.app__runtime-menu button:focus-visible,
+.screen__button:hover,
+.screen__button:focus-visible,
+.screen__gallery-item:hover,
+.screen__gallery-item:focus-visible {
+  border-color: rgba(255, 220, 143, 0.92);
+  background: rgba(120, 76, 48, 0.62);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: clamp(20px, 5vw, 56px);
+  background:
+    linear-gradient(180deg, rgba(22, 27, 32, 0.42), rgba(7, 8, 10, 0.88)),
+    linear-gradient(90deg, rgba(28, 54, 68, 0.88), rgba(72, 91, 84, 0.78), rgba(90, 62, 78, 0.7));
+}
+
+.screen--title {
+  place-items: end start;
+}
+
+.screen__content {
+  width: min(420px, 100%);
+}
+
+.screen__content--panel {
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid rgba(247, 242, 226, 0.38);
+  border-radius: 8px;
+  background: rgba(8, 10, 13, 0.76);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.42);
+}
+
+.screen__eyebrow,
+.screen__text {
+  margin: 0 0 14px;
+  color: rgba(255, 250, 240, 0.72);
+}
+
+.screen__eyebrow {
+  font-size: 0.92rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.screen__title {
+  margin: 0 0 24px;
+  color: #fff8e8;
+  font-size: clamp(2.4rem, 8vw, 5.2rem);
+  line-height: 0.96;
+}
+
+.screen__heading {
+  margin: 0 0 18px;
+  color: #fff8e8;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.screen__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.screen__button {
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.screen__button--primary {
+  border-color: rgba(255, 220, 143, 0.72);
+  background: rgba(120, 76, 48, 0.76);
+}
+
+.screen__button:disabled,
+.screen__gallery-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.screen__toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #fffaf0;
+}
+
+.screen__gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.screen__gallery-item {
+  aspect-ratio: 16 / 10;
+  padding: 10px;
+}
+
 .app__message-layer .tzr-message-window {
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);

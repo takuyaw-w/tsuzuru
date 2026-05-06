@@ -17,10 +17,22 @@ export interface TzrDocument {
   readonly type: "TzrDocument";
   readonly filePath: string;
   readonly sourceLines: readonly string[];
+  readonly sourceLineMap?: Readonly<Record<string, readonly string[]>>;
   readonly declarations: readonly TzrTopLevelDeclaration[];
 }
 
-export type TzrTopLevelDeclaration = TzrTitleDeclaration | TzrCharacterDeclaration | TzrSceneDeclaration;
+export type TzrTopLevelDeclaration =
+  | TzrIncludeDirective
+  | TzrTitleDeclaration
+  | TzrCharacterDeclaration
+  | TzrSceneDeclaration
+  | TzrLabelDeclaration;
+
+export interface TzrIncludeDirective {
+  readonly type: "IncludeDirective";
+  readonly path: string;
+  readonly loc: SourceRange;
+}
 
 export interface TzrTitleDeclaration {
   readonly type: "TitleDeclaration";
@@ -39,6 +51,13 @@ export interface TzrSceneDeclaration {
   readonly type: "SceneDeclaration";
   readonly id: string;
   readonly title?: string;
+  readonly body: readonly TzrSceneStatement[];
+  readonly loc: SourceRange;
+}
+
+export interface TzrLabelDeclaration {
+  readonly type: "LabelDeclaration";
+  readonly id: string;
   readonly body: readonly TzrSceneStatement[];
   readonly loc: SourceRange;
 }
@@ -62,6 +81,7 @@ export type TzrSceneStatement =
   | TzrVoiceStatement
   | TzrSystemUnlockStatement
   | TzrJumpStatement
+  | TzrLabelJumpStatement
   | TzrEndStatement;
 
 export interface TzrNarrationStatement {
@@ -336,6 +356,12 @@ export interface TzrSystemUnlockStringId {
 
 export interface TzrJumpStatement {
   readonly type: "JumpStatement";
+  readonly target: string;
+  readonly loc: SourceRange;
+}
+
+export interface TzrLabelJumpStatement {
+  readonly type: "LabelJumpStatement";
   readonly target: string;
   readonly loc: SourceRange;
 }

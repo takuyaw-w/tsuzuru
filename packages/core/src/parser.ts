@@ -20,6 +20,7 @@ import type {
   TzrHideStatement,
   TzrIdentifierValue,
   TzrIfStatement,
+  TzrIncludeDirective,
   TzrInlineAssetId,
   TzrInlineDelaySpan,
   TzrInlineNode,
@@ -29,6 +30,8 @@ import type {
   TzrInlineVoiceEvent,
   TzrInlineWaitEvent,
   TzrJumpStatement,
+  TzrLabelDeclaration,
+  TzrLabelJumpStatement,
   TzrNamedArgument,
   TzrNarrationStatement,
   TzrNullValue,
@@ -195,6 +198,11 @@ class TzrParser {
 
   private parseTopLevelDeclaration(line: SourceLine): TzrTopLevelDeclaration | undefined {
     const keyword = line.code.trim().match(/^\S+/)?.[0];
+    if (line.code.trim().startsWith("#include")) {
+      const declaration = this.parseInclude(line);
+      this.cursor += 1;
+      return declaration;
+    }
     if (keyword === "title") {
       const declaration = this.parseTitle(line);
       this.cursor += 1;
@@ -208,10 +216,39 @@ class TzrParser {
     if (keyword === "scene") {
       return this.parseScene(line);
     }
+    if (keyword === "label") {
+      return this.parseLabel(line);
+    }
 
     this.addError(line, firstContentColumn(line), "Expected a DSL v2 top-level declaration.");
     this.cursor += 1;
     return undefined;
+  }
+
+  private parseInclude(line: SourceLine): TzrIncludeDirective | undefined {
+    const match = /^#include\((.*)\)$/.exec(line.code.trim());
+    const headerColumn = firstContentColumn(line);
+    if (match === null) {
+      this.addError(line, headerColumn, '#include must use `#include("./path.tzr")` syntax.');
+      return undefined;
+    }
+
+    const pathSource = match[1]?.trim() ?? "";
+    const pathColumn = line.code.indexOf(pathSource) + 1;
+    const path = this.parseStringLiteral(line, pathSource, pathColumn);
+    if (path === undefined) {
+      return undefined;
+    }
+    if (path.length === 0) {
+      this.addError(line, pathColumn, "include path must not be empty.");
+      return undefined;
+    }
+
+    return {
+      type: "IncludeDirective",
+      path,
+      loc: this.lineRange(line),
+    };
   }
 
   private parseTitle(line: SourceLine): TzrTitleDeclaration | undefined {
@@ -293,6 +330,32 @@ class TzrParser {
       type: "SceneDeclaration",
       id,
       ...(title === undefined ? {} : { title }),
+      body,
+      loc: { start: this.location(line.line, headerColumn), end },
+    };
+  }
+
+  private parseLabel(line: SourceLine): TzrLabelDeclaration | undefined {
+    const match = /^label\s+(\S+):$/.exec(line.code.trim());
+    const headerColumn = firstContentColumn(line);
+    this.cursor += 1;
+
+    if (match === null) {
+      this.addError(line, headerColumn, "label must use `label id:` syntax.");
+      return undefined;
+    }
+
+    const id = match[1] ?? "";
+    if (!this.validateIdentifier(id, line, line.code.indexOf(id) + 1)) {
+      return undefined;
+    }
+
+    const body = this.collectSceneBody();
+    const end = body.at(-1)?.loc.end ?? this.lineRange(line).end;
+
+    return {
+      type: "LabelDeclaration",
+      id,
       body,
       loc: { start: this.location(line.line, headerColumn), end },
     };
@@ -414,6 +477,9 @@ class TzrParser {
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
+    }
+    if (source.startsWith("->")) {
+      return this.parseLabelJumpStatement(line, source, statementColumn);
     }
     if (source.startsWith("end")) {
       return this.parseEndStatement(line, source, statementColumn);
@@ -2406,6 +2472,37 @@ class TzrParser {
     this.cursor += 1;
     return {
       type: "JumpStatement",
+      target,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseLabelJumpStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrLabelJumpStatement | undefined {
+    const match = /^->(?:\s+(.+))?$/.exec(source);
+    if (match === null) {
+      this.addError(line, statementColumn, "label jump statement must use `-> target` syntax.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const target = (match[1] ?? "").trim();
+    if (target.length === 0) {
+      this.addError(line, statementColumn, "label jump target is required.");
+      this.cursor += 1;
+      return undefined;
+    }
+    if (!this.validateIdentifier(target, line, line.code.indexOf(target) + 1)) {
+      this.cursor += 1;
+      return undefined;
+    }
+
+    this.cursor += 1;
+    return {
+      type: "LabelJumpStatement",
       target,
       loc: this.lineRange(line),
     };

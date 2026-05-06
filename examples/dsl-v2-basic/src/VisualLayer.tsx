@@ -33,7 +33,7 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
             key={transitionKey(assetId, sprite.transition)}
             assetId={assetId}
             position={sprite.position}
-            transition={sprite.transition}
+            {...(sprite.transition === undefined ? {} : { transition: sprite.transition })}
           />
         ))}
       </div>

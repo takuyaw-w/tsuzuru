@@ -121,6 +121,8 @@ function stepInstruction(
       };
     case "SceneJumpInstruction":
       return stepSceneJumpInstruction(document, state, nextState, instruction.sceneId);
+    case "LabelJumpInstruction":
+      return stepLabelJumpInstruction(document, state, nextState, instruction.labelId);
     case "NarrationInstruction":
       return {
         state: nextState,
@@ -166,6 +168,37 @@ function stepSceneJumpInstruction(
     event: {
       type: "jump",
       sceneId,
+      instructionIndex: target.statementIndex,
+    },
+  };
+}
+
+function stepLabelJumpInstruction(
+  document: RuntimeDocument,
+  state: RuntimeState,
+  nextState: RuntimeState,
+  labelId: string,
+): RuntimeStepResult {
+  const target = document.labels?.[labelId];
+  if (target === undefined) {
+    return unsupportedInstruction(nextState, "LabelJumpInstruction");
+  }
+
+  return {
+    state: {
+      ...state,
+      branchFrames: [],
+      pendingChoice: null,
+      pendingWait: null,
+      isWaitingForClick: false,
+      pointer: {
+        filePath: document.filePath,
+        instructionIndex: target.statementIndex,
+      },
+    },
+    event: {
+      type: "jump",
+      labelId,
       instructionIndex: target.statementIndex,
     },
   };

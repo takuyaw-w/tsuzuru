@@ -4,6 +4,7 @@ import type { TzrConditionExpression } from "./scenario-ast.js";
 export type TzrInstruction =
   | SceneInstruction
   | SceneJumpInstruction
+  | LabelJumpInstruction
   | NarrationInstruction
   | DialogueInstruction
   | CommandInstruction
@@ -19,6 +20,12 @@ export interface SceneInstruction {
 export interface SceneJumpInstruction {
   readonly type: "SceneJumpInstruction";
   readonly sceneId: string;
+  readonly loc: SourceRange;
+}
+
+export interface LabelJumpInstruction {
+  readonly type: "LabelJumpInstruction";
+  readonly labelId: string;
   readonly loc: SourceRange;
 }
 
@@ -82,4 +89,5 @@ export interface RuntimeDocument {
   readonly filePath: string;
   readonly instructions: readonly TzrInstruction[];
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly labels?: Readonly<Record<string, DeclarationIndexEntry>>;
 }

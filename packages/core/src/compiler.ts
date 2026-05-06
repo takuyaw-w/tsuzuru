@@ -9,6 +9,7 @@ import type {
   DialogueInstruction,
   ElifInstructionBranch,
   IfInstruction,
+  LabelJumpInstruction,
   NarrationInstruction,
   RuntimeDocument,
   SceneInstruction,
@@ -33,6 +34,7 @@ import type {
   TzrDocument,
   TzrHideStatement,
   TzrIfStatement,
+  TzrLabelDeclaration,
   TzrNamedArgument,
   TzrNarrationStatement,
   TzrSceneDeclaration,
@@ -75,12 +77,14 @@ export interface CompiledTzrDocument extends RuntimeDocument {
   readonly source: TzrDocument;
   readonly metadata: TzrDocumentMetadata;
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly labels?: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
 export interface TzrDocumentMetadata {
   readonly title?: string;
   readonly characters: Readonly<Record<string, TzrCompiledCharacter>>;
   readonly scenes: Readonly<Record<string, TzrCompiledSceneMetadata>>;
+  readonly labels?: Readonly<Record<string, TzrCompiledLabelMetadata>>;
 }
 
 export interface TzrCompiledCharacter {
@@ -95,6 +99,11 @@ export interface TzrCompiledSceneMetadata {
   readonly loc: SourceRange;
 }
 
+export interface TzrCompiledLabelMetadata {
+  readonly id: string;
+  readonly loc: SourceRange;
+}
+
 export function compileTzr(document: TzrDocument, options: TzrCompileOptions = {}): TzrCompileResult {
   const compiler = new TzrCompiler(document, options);
   return compiler.compile();
@@ -106,6 +115,7 @@ class TzrCompiler {
   private title: TzrTitleDeclaration | undefined;
   private readonly characters = new Map<string, TzrCharacterDeclaration>();
   private readonly scenes = new Map<string, TzrSceneDeclaration>();
+  private readonly labels = new Map<string, TzrLabelDeclaration>();
 
   public constructor(
     private readonly document: TzrDocument,
@@ -145,6 +155,11 @@ class TzrCompiler {
         case "SceneDeclaration":
           this.collectScene(declaration);
           break;
+        case "LabelDeclaration":
+          this.collectLabel(declaration);
+          break;
+        case "IncludeDirective":
+          break;
       }
     }
   }
@@ -174,6 +189,15 @@ class TzrCompiler {
     }
 
     this.scenes.set(scene.id, scene);
+  }
+
+  private collectLabel(label: TzrLabelDeclaration): void {
+    if (this.labels.has(label.id)) {
+      this.addError(label.loc.start, `Duplicate label "${label.id}".`);
+      return;
+    }
+
+    this.labels.set(label.id, label);
   }
 
   private collectPluginCommandDefinitions(
@@ -242,7 +266,7 @@ class TzrCompiler {
 
   private validateSceneBodies(): void {
     for (const declaration of this.document.declarations) {
-      if (declaration.type === "SceneDeclaration") {
+      if (declaration.type === "SceneDeclaration" || declaration.type === "LabelDeclaration") {
         this.validateSceneStatements(declaration.body);
       }
     }
@@ -256,6 +280,9 @@ class TzrCompiler {
           break;
         case "JumpStatement":
           this.validateJumpTarget(statement.target, statement.loc.start);
+          break;
+        case "LabelJumpStatement":
+          this.validateLabelJumpTarget(statement.target, statement.loc.start);
           break;
         case "IfStatement":
           this.validateIfStatement(statement);
@@ -302,6 +329,12 @@ class TzrCompiler {
     }
   }
 
+  private validateLabelJumpTarget(target: string, location: SourceLocation): void {
+    if (!this.labels.has(target)) {
+      this.addError(location, `Unknown label "${target}".`);
+    }
+  }
+
   private validateSupportedCondition(expression: TzrConditionExpression): void {
     switch (expression.type) {
       case "ConditionReference":
@@ -327,6 +360,7 @@ class TzrCompiler {
 
   private buildCompiledDocument(): CompiledTzrDocument {
     const instructions = this.buildInstructions();
+    const labels = this.buildLabelIndexes(instructions);
 
     return {
       type: "CompiledTzrDocument",
@@ -335,22 +369,59 @@ class TzrCompiler {
       metadata: this.buildMetadata(),
       instructions,
       scenes: buildSceneIndexes(instructions),
+      ...(Object.keys(labels).length === 0 ? {} : { labels }),
     };
   }
 
   private buildInstructions(): readonly TzrInstruction[] {
     const instructions: TzrInstruction[] = [];
 
-    for (const scene of this.scenes.values()) {
-      instructions.push({
-        type: "SceneInstruction",
-        id: scene.id,
-        loc: scene.loc,
-      } satisfies SceneInstruction);
-      instructions.push(...this.buildSceneBodyInstructions(scene.body));
+    for (const declaration of this.document.declarations) {
+      switch (declaration.type) {
+        case "SceneDeclaration":
+          instructions.push({
+            type: "SceneInstruction",
+            id: declaration.id,
+            loc: declaration.loc,
+          } satisfies SceneInstruction);
+          instructions.push(...this.buildSceneBodyInstructions(declaration.body));
+          break;
+        case "LabelDeclaration":
+          instructions.push(...this.buildSceneBodyInstructions(declaration.body));
+          break;
+        default:
+          break;
+      }
     }
 
     return instructions;
+  }
+
+  private buildLabelIndexes(instructions: readonly TzrInstruction[]): Readonly<Record<string, DeclarationIndexEntry>> {
+    const labels: Record<string, DeclarationIndexEntry> = {};
+
+    for (const label of this.labels.values()) {
+      labels[label.id] = {
+        id: label.id,
+        statementIndex: this.labelStatementIndex(label, instructions),
+        loc: label.loc,
+      };
+    }
+
+    return labels;
+  }
+
+  private labelStatementIndex(label: TzrLabelDeclaration, instructions: readonly TzrInstruction[]): number {
+    for (const [statementIndex, instruction] of instructions.entries()) {
+      if (
+        instruction.loc.start.filePath === label.loc.start.filePath &&
+        instruction.loc.start.line > label.loc.start.line
+      ) {
+        return statementIndex;
+      }
+    }
+
+    return instructions.length;
   }
 
   private buildSceneBodyInstructions(statements: readonly TzrSceneStatement[]): readonly TzrInstruction[] {
@@ -369,6 +440,9 @@ class TzrCompiler {
           break;
         case "JumpStatement":
           instructions.push(this.buildSceneJumpInstruction(statement.target, statement.loc));
+          break;
+        case "LabelJumpStatement":
+          instructions.push(this.buildLabelJumpInstruction(statement.target, statement.loc));
           break;
         case "ChoiceStatement":
           instructions.push(this.buildBodyChoiceInstruction(statement));
@@ -473,6 +547,14 @@ class TzrCompiler {
     return {
       type: "SceneJumpInstruction",
       sceneId,
+      loc,
+    };
+  }
+
+  private buildLabelJumpInstruction(labelId: string, loc: SourceRange): LabelJumpInstruction {
+    return {
+      type: "LabelJumpInstruction",
+      labelId,
       loc,
     };
   }
@@ -926,6 +1008,7 @@ class TzrCompiler {
   private buildMetadata(): TzrDocumentMetadata {
     const characters: Record<string, TzrCompiledCharacter> = {};
     const scenes: Record<string, TzrCompiledSceneMetadata> = {};
+    const labels: Record<string, TzrCompiledLabelMetadata> = {};
 
     for (const character of this.characters.values()) {
       characters[character.id] = {
@@ -943,10 +1026,18 @@ class TzrCompiler {
       };
     }
 
+    for (const label of this.labels.values()) {
+      labels[label.id] = {
+        id: label.id,
+        loc: label.loc,
+      };
+    }
+
     return {
       ...(this.title === undefined ? {} : { title: this.title.title }),
       characters,
       scenes,
+      ...(Object.keys(labels).length === 0 ? {} : { labels }),
     };
   }
 
@@ -1001,7 +1092,7 @@ class TzrCompiler {
   }
 
   private addError(location: SourceLocation, message: string): void {
-    this.errors.push(createDiagnostic(location, message, this.sourceLine(location.line)));
+    this.errors.push(createDiagnostic(location, message, this.sourceLine(location)));
   }
 
   private documentStartLocation(): SourceLocation {
@@ -1012,8 +1103,9 @@ class TzrCompiler {
     };
   }
 
-  private sourceLine(line: number): string {
-    return this.document.sourceLines[line - 1] ?? "";
+  private sourceLine(location: SourceLocation): string {
+    const sourceLines = this.document.sourceLineMap?.[location.filePath] ?? this.document.sourceLines;
+    return sourceLines[location.line - 1] ?? "";
   }
 }
 
