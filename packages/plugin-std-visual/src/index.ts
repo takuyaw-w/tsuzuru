@@ -38,8 +38,21 @@ export interface StdVisualState {
 const STD_VISUAL_TRANSITION_TYPES = ["fade", "dissolve"] as const;
 
 const STD_VISUAL_TRANSITION_NAMED_ARGS = [
-  { name: "transition", type: "string", optional: true, values: STD_VISUAL_TRANSITION_TYPES },
-  { name: "duration", type: "number", optional: true },
+  {
+    name: "transition",
+    type: "string",
+    optional: true,
+    values: STD_VISUAL_TRANSITION_TYPES,
+    requiredWith: ["duration"],
+  },
+  {
+    name: "duration",
+    type: "number",
+    optional: true,
+    integer: true,
+    min: 0,
+    requiredWith: ["transition"],
+  },
 ] as const;
 
 export const stdVisualPluginCommands = {

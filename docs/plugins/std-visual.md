@@ -225,7 +225,7 @@ show alice at top
 
 必須引数がない場合や、許可されていない余分な引数を渡した場合も validation error です。
 
-`bg` / `show` / `hide` / `clearBg` / `clearSprites` は optional named args として `transition` と `duration` を受け取れます。現在の標準 transition 名は `"fade"` / `"dissolve"` です。DSL sugar では `with fade(duration=300)` のように書き、compiler は `transition` / `duration` command args に変換します。
+`bg` / `show` / `hide` / `clearBg` / `clearSprites` は optional named args として `transition` と `duration` を受け取れます。現在の標準 transition 名は `"fade"` / `"dissolve"` です。`transition` と `duration` は必ず一緒に指定する必要があり、`duration` は `0` 以上の有限整数です。DSL sugar では `with fade(duration=300)` のように書き、compiler は `transition` / `duration` command args に変換します。
 
 一方、`hide missing` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
 

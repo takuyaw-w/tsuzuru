@@ -9,8 +9,8 @@ import {
 } from "../src/index.js";
 
 const stdVisualTransitionNamedArgs = [
-  { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-  { name: "duration", type: "number", optional: true },
+  { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"], requiredWith: ["duration"] },
+  { name: "duration", type: "number", optional: true, integer: true, min: 0, requiredWith: ["transition"] },
 ] as const;
 
 const stdVisualPluginCommands = {
@@ -991,6 +991,55 @@ scene start:
         pluginCommands: { "audio.stopBgm": definePluginCommand("audio.stopBgm", { kind: "none" }) },
       }),
     ).toContain('Plugin command "audio.stopBgm" does not support named argument "assetId".');
+
+    const transitionCommand = definePluginCommand("visual.transition", {
+      kind: "named",
+      arguments: stdVisualTransitionNamedArgs,
+    });
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade")\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "transition" requires named argument "duration".');
+
+    expect(
+      expectCompileFailure("scene start:\n  call visual.transition(duration=300)\n", {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" requires named argument "transition".');
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade", duration=-1)\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" must be at least 0.');
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade", duration=1.5)\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" must be an integer.');
+  });
+
+  it("accepts plugin command argument dependency and numeric constraints when metadata validation is enabled", () => {
+    const document = compileSource('scene start:\n  call visual.transition(transition="fade", duration=300)\n', {
+      pluginCommands: {
+        "visual.transition": definePluginCommand("visual.transition", {
+          kind: "named",
+          arguments: stdVisualTransitionNamedArgs,
+        }),
+      },
+    });
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "CommandInstruction",
+      name: "visual.transition",
+      args: [
+        { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
+        { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
+      ],
+    });
   });
 
   it("rejects unknown plugin commands when metadata validation is enabled", () => {

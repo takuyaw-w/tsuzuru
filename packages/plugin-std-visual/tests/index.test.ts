@@ -54,8 +54,21 @@ describe("std-visual commands", () => {
         kind: "mixed",
         positional: [{ type: "string", nonEmpty: true }],
         named: [
-          { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-          { name: "duration", type: "number", optional: true },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
         ],
       },
     });
@@ -66,8 +79,21 @@ describe("std-visual commands", () => {
         positional: [{ type: "string", nonEmpty: true }],
         named: [
           { name: "position", type: "string", optional: true, values: ["left", "center", "right"] },
-          { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-          { name: "duration", type: "number", optional: true },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
         ],
       },
     });
@@ -77,8 +103,21 @@ describe("std-visual commands", () => {
         kind: "mixed",
         positional: [{ type: "string", nonEmpty: true }],
         named: [
-          { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-          { name: "duration", type: "number", optional: true },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
         ],
       },
     });
@@ -87,8 +126,21 @@ describe("std-visual commands", () => {
       args: {
         kind: "named",
         arguments: [
-          { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-          { name: "duration", type: "number", optional: true },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
         ],
       },
     });
@@ -97,8 +149,21 @@ describe("std-visual commands", () => {
       args: {
         kind: "named",
         arguments: [
-          { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-          { name: "duration", type: "number", optional: true },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
         ],
       },
     });

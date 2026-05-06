@@ -20,8 +20,21 @@ export const stdVisualPluginCommands = {
     kind: "mixed",
     positional: [{ type: "string", nonEmpty: true }],
     named: [
-      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-      { name: "duration", type: "number", optional: true },
+      {
+        name: "transition",
+        type: "string",
+        optional: true,
+        values: ["fade", "dissolve"],
+        requiredWith: ["duration"],
+      },
+      {
+        name: "duration",
+        type: "number",
+        optional: true,
+        integer: true,
+        min: 0,
+        requiredWith: ["transition"],
+      },
     ],
   }),
   show: definePluginCommand("show", {
@@ -29,30 +42,82 @@ export const stdVisualPluginCommands = {
     positional: [{ type: "string", nonEmpty: true }],
     named: [
       { name: "position", type: "string", optional: true, values: ["left", "center", "right"] },
-      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-      { name: "duration", type: "number", optional: true },
+      {
+        name: "transition",
+        type: "string",
+        optional: true,
+        values: ["fade", "dissolve"],
+        requiredWith: ["duration"],
+      },
+      {
+        name: "duration",
+        type: "number",
+        optional: true,
+        integer: true,
+        min: 0,
+        requiredWith: ["transition"],
+      },
     ],
   }),
   hide: definePluginCommand("hide", {
     kind: "mixed",
     positional: [{ type: "string", nonEmpty: true }],
     named: [
-      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-      { name: "duration", type: "number", optional: true },
+      {
+        name: "transition",
+        type: "string",
+        optional: true,
+        values: ["fade", "dissolve"],
+        requiredWith: ["duration"],
+      },
+      {
+        name: "duration",
+        type: "number",
+        optional: true,
+        integer: true,
+        min: 0,
+        requiredWith: ["transition"],
+      },
     ],
   }),
   clearBg: definePluginCommand("clearBg", {
     kind: "named",
     arguments: [
-      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-      { name: "duration", type: "number", optional: true },
+      {
+        name: "transition",
+        type: "string",
+        optional: true,
+        values: ["fade", "dissolve"],
+        requiredWith: ["duration"],
+      },
+      {
+        name: "duration",
+        type: "number",
+        optional: true,
+        integer: true,
+        min: 0,
+        requiredWith: ["transition"],
+      },
     ],
   }),
   clearSprites: definePluginCommand("clearSprites", {
     kind: "named",
     arguments: [
-      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
-      { name: "duration", type: "number", optional: true },
+      {
+        name: "transition",
+        type: "string",
+        optional: true,
+        values: ["fade", "dissolve"],
+        requiredWith: ["duration"],
+      },
+      {
+        name: "duration",
+        type: "number",
+        optional: true,
+        integer: true,
+        min: 0,
+        requiredWith: ["transition"],
+      },
     ],
   }),
 };
@@ -100,7 +165,7 @@ Supported value types:
 
 Arguments are required by default. Add `optional: true` for optional arguments.
 
-Use `nonEmpty: true` for required non-empty string values, and `values: [...]` for a fixed set of allowed string or identifier values. Extra positional or named args are rejected by default; metadata can opt into `allowExtraPositional` or `allowExtraNamed`.
+Use `nonEmpty: true` for required non-empty string values, and `values: [...]` for a fixed set of allowed string or identifier values. Number arguments can use `integer: true` and `min: number`. Named arguments can use `requiredWith: [...]` when optional arguments must be supplied together. Extra positional or named args are rejected by default; metadata can opt into `allowExtraPositional` or `allowExtraNamed`.
 
 ## Positional Commands
 
@@ -158,8 +223,10 @@ call screen.open(id=notebook, extra=true)
 Runtime behavior is handled by runtime plugin command handlers and UI layers. Compile-time plugin command validation checks command names and argument shape, but it does not load assets, check file existence, render images, or play audio.
 
 Std visual transition metadata is compiled as command arguments and remains
-renderer-independent. The std visual plugin stores it on surviving background
-and sprite state objects; actual animation timing and presentation remain UI or
+renderer-independent. `transition` and `duration` must be supplied together,
+and `duration` is validated as a finite integer greater than or equal to `0`.
+The std visual plugin stores transition metadata on surviving background and
+sprite state objects; actual animation timing and presentation remain UI or
 renderer responsibilities.
 
 Broader call/return runtime semantics remain deferred.
