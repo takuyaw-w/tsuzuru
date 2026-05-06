@@ -1,6 +1,8 @@
-# 0008 Include-Based Multi-File Scenario
+# 0011: Include-Based Multi-File Scenario
 
-Status: accepted.
+## Status
+
+Accepted
 
 Tsuzuru supports multi-file scenario projects through `include "./path.tzr"`.
 The directive is compile-time only and never becomes a runtime command or

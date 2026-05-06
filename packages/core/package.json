@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/core",
   "version": "0.15.0",
+  "description": "Core parser, compiler, project compiler, and runtime primitives for Tsuzuru.",
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -9,8 +11,45 @@
     }
   },
   "files": [
-    "dist"
+    "dist/src/ast.*",
+    "dist/src/commands.*",
+    "dist/src/compiler.*",
+    "dist/src/condition-evaluator.*",
+    "dist/src/condition-parser.*",
+    "dist/src/diagnostic.*",
+    "dist/src/index.*",
+    "dist/src/ir.*",
+    "dist/src/parser.*",
+    "dist/src/plugin-command.*",
+    "dist/src/project-compiler.*",
+    "dist/src/runtime.*",
+    "dist/src/runtime-args.*",
+    "dist/src/runtime-commands.*",
+    "dist/src/runtime-control.*",
+    "dist/src/runtime-frames.*",
+    "dist/src/runtime-snapshot.*",
+    "dist/src/runtime-types.*",
+    "dist/src/scenario-ast.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/core#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "scenario",
+    "dsl",
+    "runtime"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",

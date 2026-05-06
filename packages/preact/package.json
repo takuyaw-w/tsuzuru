@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/preact",
   "version": "0.15.0",
+  "description": "Preact runtime adapter and convenience runtime view for Tsuzuru.",
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -9,8 +11,29 @@
     }
   },
   "files": [
-    "dist"
+    "dist/index.*",
+    "dist/runtime-save.*",
+    "dist/runtime-view.*",
+    "dist/use-runtime.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/preact"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/preact#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "preact",
+    "runtime"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
     "test": "vitest run --dir tests",

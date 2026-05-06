@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/cli",
   "version": "0.15.0",
+  "description": "Command line tools for checking Tsuzuru projects.",
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "bin": {
     "tsuzuru": "./dist/src/index.js"
   },
@@ -12,8 +14,29 @@
     }
   },
   "files": [
-    "dist"
+    "dist/src/check.*",
+    "dist/src/config-loader.*",
+    "dist/src/index.*",
+    "dist/src/scenario-files.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/cli#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "cli",
+    "scenario"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
     "test": "vitest run --dir tests",

@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/plugin-std-audio",
   "version": "0.15.0",
+  "description": "Standard audio plugin state and command handlers for Tsuzuru.",
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -9,8 +11,26 @@
     }
   },
   "files": [
-    "dist"
+    "dist/src/index.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-audio"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-audio#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "plugin",
+    "audio"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
     "test": "vitest run --dir tests",

@@ -1,7 +1,9 @@
 {
   "name": "@tsuzuru/config",
   "version": "0.15.0",
+  "description": "Project configuration helpers for Tsuzuru.",
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -9,8 +11,25 @@
     }
   },
   "files": [
-    "dist"
+    "dist/src/index.*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/config"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/config#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "config"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",
