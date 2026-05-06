@@ -1,6 +1,8 @@
 import type { RuntimeState } from "@tsuzuru/core";
 import { getStdVisualState, type StdVisualSpritePosition, type StdVisualTransition } from "@tsuzuru/plugin-std-visual";
-import type { JSX } from "preact";
+import type { ComponentProps } from "preact";
+
+type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
 
 interface VisualLayerProps {
   readonly runtimeState: RuntimeState;
@@ -63,7 +65,7 @@ function SpritePlaceholder({
 
 interface TransitionPresentation {
   readonly className?: string;
-  readonly style?: JSX.CSSProperties;
+  readonly style?: DivStyle;
 }
 
 function toTransitionPresentation(
@@ -78,7 +80,7 @@ function toTransitionPresentation(
     className: `${baseClassName}--transition-${transition.type}`,
     style: {
       "--tzr-visual-transition-duration": `${transition.durationMs}ms`,
-    } as JSX.CSSProperties,
+    } as DivStyle,
   };
 }
 

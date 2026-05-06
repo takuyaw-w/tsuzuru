@@ -43,7 +43,7 @@ export type GameViewportProps = {
   aspectRatio?: GameViewportAspectRatio;
   maxWidth?: number | string;
   className?: string;
-  style?: JSX.CSSProperties;
+  style?: ComponentProps<"div">["style"];
   children: ComponentChildren;
 };
 ```

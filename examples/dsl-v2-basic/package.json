@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && vite build",
     "dev": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && vite",
+    "test:ui": "playwright test -c playwright.config.ts",
     "typecheck": "pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

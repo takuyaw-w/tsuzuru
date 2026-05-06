@@ -9,6 +9,9 @@
       "!**/coverage",
       "!**/.vite",
       "!**/.turbo",
+      "!**/test-results",
+      "!**/playwright-report",
+      "!**/screenshots",
       "!packages/**/dist",
       "!examples/**/dist",
       "!pnpm-lock.yaml"
