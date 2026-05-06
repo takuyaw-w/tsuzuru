@@ -2,7 +2,7 @@
 
 Status: accepted.
 
-Tsuzuru supports multi-file scenario projects through `#include("./path.tzr")`.
+Tsuzuru supports multi-file scenario projects through `include "./path.tzr"`.
 The directive is compile-time only and never becomes a runtime command or
 runtime event.
 
@@ -12,8 +12,8 @@ Relative include paths resolve from the including document id.
 
 The project compiler aggregates the entry document and included documents,
 deduplicating documents that are included more than once. It reports validation
-errors for missing include targets, circular includes, duplicate scene ids,
-duplicate label ids, and missing `-> labelName` targets.
+errors for missing include targets, circular includes, duplicate scene ids, and
+missing `jump sceneName` targets.
 
 Title, settings, load, backlog, and gallery screens are application concerns.
 They should be implemented in TSX / HTML host code, not inside `.tzr`. Scenario
@@ -25,7 +25,7 @@ Rejected for the initial implementation:
 - `import`
 - `@include`
 - `@jump(...)`
-- file-aware jumps such as `-> "./file.tzr#label"`
-- label namespaces
+- file-aware jumps
+- scene namespaces
 - `tsuzuru.config.ts`
 - runtime current-file tracking

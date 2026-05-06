@@ -17,7 +17,6 @@ export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands
 export type {
   CompiledTzrDocument,
   TzrCompiledCharacter,
-  TzrCompiledLabelMetadata,
   TzrCompiledSceneMetadata,
   TzrCompileOptions,
   TzrCompilePluginCommandInput,
@@ -36,7 +35,6 @@ export type {
   DialogueInstruction,
   ElifInstructionBranch,
   IfInstruction,
-  LabelJumpInstruction,
   NarrationInstruction,
   RuntimeDocument,
   SceneInstruction,
@@ -68,7 +66,6 @@ export type {
   EndRuntimeEvent,
   IfRuntimeEvent,
   JumpRuntimeEvent,
-  LabelJumpRuntimeEvent,
   NarrationRuntimeEvent,
   PageRuntimeEvent,
   RuntimeBlockReason,

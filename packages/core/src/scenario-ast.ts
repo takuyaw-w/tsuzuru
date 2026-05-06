@@ -25,8 +25,7 @@ export type TzrTopLevelDeclaration =
   | TzrIncludeDirective
   | TzrTitleDeclaration
   | TzrCharacterDeclaration
-  | TzrSceneDeclaration
-  | TzrLabelDeclaration;
+  | TzrSceneDeclaration;
 
 export interface TzrIncludeDirective {
   readonly type: "IncludeDirective";
@@ -55,13 +54,6 @@ export interface TzrSceneDeclaration {
   readonly loc: SourceRange;
 }
 
-export interface TzrLabelDeclaration {
-  readonly type: "LabelDeclaration";
-  readonly id: string;
-  readonly body: readonly TzrSceneStatement[];
-  readonly loc: SourceRange;
-}
-
 export type TzrSceneStatement =
   | TzrNarrationStatement
   | TzrDialogueStatement
@@ -81,7 +73,6 @@ export type TzrSceneStatement =
   | TzrVoiceStatement
   | TzrSystemUnlockStatement
   | TzrJumpStatement
-  | TzrLabelJumpStatement
   | TzrEndStatement;
 
 export interface TzrNarrationStatement {
@@ -356,12 +347,6 @@ export interface TzrSystemUnlockStringId {
 
 export interface TzrJumpStatement {
   readonly type: "JumpStatement";
-  readonly target: string;
-  readonly loc: SourceRange;
-}
-
-export interface TzrLabelJumpStatement {
-  readonly type: "LabelJumpStatement";
   readonly target: string;
   readonly loc: SourceRange;
 }

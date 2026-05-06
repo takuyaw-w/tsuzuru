@@ -4,14 +4,13 @@
 > plugin dispatch, and current command primitives. Legacy label jump syntax,
 > runtime flags, old target-label choices, and low-level `inc` / `dec` / `flag` /
 > `unflag` state commands have been removed. DSL v2 uses scene jumps, body
-> choices, scenario variables, project-level label jumps, and the current
-> `IfInstruction`.
+> choices, scenario variables, and the current `IfInstruction`.
 
 This document describes the currently implemented DSL v2 runtime surface in `@tsuzuru/core`.
 
 ## Role
 
-The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, DSL v2 scene jumps, label jumps, conditional execution, plugin command dispatch, and minimal snapshot creation.
+The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, DSL v2 scene jumps, conditional execution, plugin command dispatch, and minimal snapshot creation.
 
 The core runtime does not render UI and does not manage real time. It has no dependency on `setTimeout`, DOM APIs, Preact, browser storage, asset loading, or plugin lifecycle code. A host or UI layer observes runtime events and calls the appropriate resume or resolve function.
 
@@ -24,7 +23,7 @@ const state = createInitialRuntimeState(compiledDocument);
 const result = stepRuntime(compiledDocument, state);
 ```
 
-The runtime reads `document.instructions`, `document.scenes`, optional `document.labels`, and `document.filePath`. DSL v2 scene jumps resolve through `document.scenes`. `-> labelName` jumps resolve through `document.labels` when a compiled document contains label declarations.
+The runtime reads `document.instructions`, `document.scenes`, and `document.filePath`. DSL v2 scene jumps resolve through `document.scenes`.
 
 The runtime still has no current-file concept. Cross-file authoring is handled by `compileTzrProject` before runtime execution.
 
@@ -220,7 +219,6 @@ For current v0.x snapshots, branch frames are included directly in snapshots.
 
 `SceneJumpInstruction` resolves against `RuntimeDocument.scenes`. It moves `pointer.instructionIndex` to the scene's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
 
-`LabelJumpInstruction` resolves against optional `RuntimeDocument.labels`.
 Cross-file authoring targets are validated and aggregated before runtime by
 `compileTzrProject`; runtime does not track a current file.
 

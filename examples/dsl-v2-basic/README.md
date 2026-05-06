@@ -2,7 +2,7 @@
 
 This example runs a multi-file scenario project from `scenario/main.tzr` as a fullscreen visual-novel style browser screen. It compiles the project with `compileTzrProject` and drives the compiled document through `@tsuzuru/preact`'s `useRuntime`.
 
-It demonstrates the current runnable DSL v2 subset: `#include("./path.tzr")` compile-time directives, `label id:` targets, `-> labelId` jumps, visual sugar including clear commands and transition metadata, audio sugar, dialogue, narration, state updates, `if` / `else`, conditional body choices, waits, and `end`.
+It demonstrates the current runnable DSL v2 subset: `include "./path.tzr"` compile-time directives, cross-file scene jumps with `jump targetScene`, visual sugar including clear commands and transition metadata, audio sugar, dialogue, narration, state updates, `if` / `else`, conditional body choices, waits, and `end`.
 
 Title, load, settings, backlog, and gallery screens are ordinary TSX components under `src/screens`. The `.tzr` files focus on the scenario body after Start.
 

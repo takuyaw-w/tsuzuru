@@ -1,8 +1,8 @@
-label common_choice:
+scene common_choice:
   choice "どうする？":
     "手帳を見る" id=openNotebook if scenario.hasNotebook:
       se page
-      -> notebook
+      jump notebook
 
     "立ち去る" id=leave:
-      -> leave
+      jump leave

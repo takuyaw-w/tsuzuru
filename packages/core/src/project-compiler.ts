@@ -72,7 +72,7 @@ class TzrProjectCompiler {
 
   private visitDocument(id: string, includeLocation: SourceLocation | undefined, stack: readonly string[]): void {
     if (this.visiting.has(id)) {
-      const chain = [...stack, id].join(" -> ");
+      const chain = [...stack, id].join(" includes ");
       this.addDiagnostic(
         includeLocation ?? { filePath: id, line: 1, column: 1 },
         `Circular include detected: ${chain}.`,

@@ -37,21 +37,22 @@ describe("compileTzrProject", () => {
     const document = compileProject([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/01-opening.tzr")
+        source: `include "./chapters/01-opening.tzr"
 scene main:
-  -> opening_start
+  jump opening_start
 `,
       },
       {
         id: "scenario/chapters/01-opening.tzr",
-        source: `label opening_start:
+        source: `scene opening_start:
   narration:
     Opening.
 `,
       },
     ]);
 
-    expect(document.labels).toMatchObject({
+    expect(document.scenes).toMatchObject({
+      main: { id: "main", statementIndex: 0 },
       opening_start: { id: "opening_start", statementIndex: 2 },
     });
   });
@@ -60,23 +61,23 @@ scene main:
     const document = compileProject([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/a.tzr")
-#include("./chapters/b.tzr")
-#include("./chapters/a.tzr")
+        source: `include "./chapters/a.tzr"
+include "./chapters/b.tzr"
+include "./chapters/a.tzr"
 scene main:
-  -> a
+  jump a
 `,
       },
       {
         id: "scenario/chapters/a.tzr",
-        source: `label a:
+        source: `scene a:
   narration:
     A
 `,
       },
       {
         id: "scenario/chapters/b.tzr",
-        source: `label b:
+        source: `scene b:
   narration:
     B
 `,
@@ -85,59 +86,61 @@ scene main:
 
     expect(document.instructions).toMatchObject([
       { type: "SceneInstruction", id: "main" },
-      { type: "LabelJumpInstruction", labelId: "a" },
+      { type: "SceneJumpInstruction", sceneId: "a" },
+      { type: "SceneInstruction", id: "a" },
       { type: "NarrationInstruction", lines: [{ text: "A" }] },
+      { type: "SceneInstruction", id: "b" },
       { type: "NarrationInstruction", lines: [{ text: "B" }] },
     ]);
-    expect(document.labels?.a?.statementIndex).toBeLessThan(document.labels?.b?.statementIndex ?? 0);
+    expect(document.scenes.a?.statementIndex).toBeLessThan(document.scenes.b?.statementIndex ?? 0);
   });
 
   it("resolves nested includes", () => {
     const document = compileProject([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/01-opening.tzr")
+        source: `include "./chapters/01-opening.tzr"
 scene main:
-  -> common
+  jump common
 `,
       },
       {
         id: "scenario/chapters/01-opening.tzr",
-        source: `#include("./02-common.tzr")
-label opening_start:
+        source: `include "./02-common.tzr"
+scene opening_start:
   narration:
     Opening.
 `,
       },
       {
         id: "scenario/chapters/02-common.tzr",
-        source: `label common:
+        source: `scene common:
   narration:
     Common.
 `,
       },
     ]);
 
-    expect(document.labels).toMatchObject({
+    expect(document.scenes).toMatchObject({
       opening_start: { id: "opening_start" },
       common: { id: "common" },
     });
   });
 
-  it("jumps to an included label with -> labelName", () => {
+  it("jumps to an included scene with jump sceneName", () => {
     const document = compileProject([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/01-opening.tzr")
+        source: `include "./chapters/01-opening.tzr"
 scene main:
-  -> opening_start
+  jump opening_start
 `,
       },
       {
         id: "scenario/chapters/01-opening.tzr",
-        source: `label opening_start:
+        source: `scene opening_start:
   narration:
-    Cross-file label.
+    Cross-file scene.
 `,
       },
     ]);
@@ -146,12 +149,15 @@ scene main:
     expect(scene.event).toMatchObject({ type: "scene", id: "main" });
 
     const jump = stepRuntime(document, scene.state);
-    expect(jump.event).toMatchObject({ type: "jump", labelId: "opening_start" });
+    expect(jump.event).toMatchObject({ type: "jump", sceneId: "opening_start" });
 
-    const narration = stepRuntime(document, jump.state);
+    const targetScene = stepRuntime(document, jump.state);
+    expect(targetScene.event).toMatchObject({ type: "scene", id: "opening_start" });
+
+    const narration = stepRuntime(document, targetScene.state);
     expect(narration.event).toMatchObject({
       type: "narration",
-      lines: [{ text: "Cross-file label." }],
+      lines: [{ text: "Cross-file scene." }],
     });
   });
 
@@ -159,7 +165,7 @@ scene main:
     const errors = expectProjectFailure([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/01-opening.tzr")
+        source: `include "./chapters/01-opening.tzr"
 scene main:
 `,
       },
@@ -174,49 +180,24 @@ scene main:
     expect(errors.map((error) => error.message)).toContain('Duplicate scene "main".');
   });
 
-  it("rejects duplicate label ids at project level", () => {
-    const errors = expectProjectFailure([
-      {
-        id: "scenario/main.tzr",
-        source: `#include("./chapters/a.tzr")
-#include("./chapters/b.tzr")
-scene main:
-`,
-      },
-      {
-        id: "scenario/chapters/a.tzr",
-        source: `label duplicated:
-`,
-      },
-      {
-        id: "scenario/chapters/b.tzr",
-        source: `label duplicated:
-`,
-      },
-    ]);
-
-    expect(errors).toContainEqual(expect.objectContaining({ filePath: "scenario/chapters/b.tzr" }));
-    expect(errors.map((error) => error.message)).toContain('Duplicate label "duplicated".');
-  });
-
-  it("rejects missing project-level label jump targets", () => {
+  it("rejects missing project-level scene jump targets", () => {
     const errors = expectProjectFailure([
       {
         id: "scenario/main.tzr",
         source: `scene main:
-  -> missing
+  jump missing
 `,
       },
     ]);
 
-    expect(errors.map((error) => error.message)).toContain('Unknown label "missing".');
+    expect(errors.map((error) => error.message)).toContain('Unknown scene "missing".');
   });
 
   it("rejects missing include targets", () => {
     const errors = expectProjectFailure([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/missing.tzr")
+        source: `include "./chapters/missing.tzr"
 scene main:
 `,
       },
@@ -230,14 +211,14 @@ scene main:
     const errors = expectProjectFailure([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/a.tzr")
+        source: `include "./chapters/a.tzr"
 scene main:
 `,
       },
       {
         id: "scenario/chapters/a.tzr",
-        source: `#include("../main.tzr")
-label a:
+        source: `include "../main.tzr"
+scene a:
 `,
       },
     ]);
@@ -250,14 +231,14 @@ label a:
     const document = compileProject([
       {
         id: "scenario/main.tzr",
-        source: `#include("./chapters/01-opening.tzr")
+        source: `include "./chapters/01-opening.tzr"
 scene main:
   end
 `,
       },
       {
         id: "scenario/chapters/01-opening.tzr",
-        source: `label opening_start:
+        source: `scene opening_start:
   narration:
     Opening.
 `,

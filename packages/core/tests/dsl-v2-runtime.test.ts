@@ -6,17 +6,11 @@ import {
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
-  type RuntimeDocument,
   type RuntimePluginCommandHandler,
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
 } from "../src/index.js";
-
-const loc = {
-  start: { filePath: "scenario/v2.tzr", line: 1, column: 1 },
-  end: { filePath: "scenario/v2.tzr", line: 1, column: 1 },
-};
 
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
@@ -163,7 +157,7 @@ scene later:
     });
   });
 
-  it("does not expose labels for DSL v2 scene jumps", () => {
+  it("keeps DSL v2 scene jumps scene-index based", () => {
     const document = compileSource(`scene start:
   jump later
 scene later:
@@ -171,32 +165,11 @@ scene later:
     const scene = stepRuntime(document, createInitialRuntimeState(document));
     const jump = stepRuntime(document, scene.state);
 
-    expect("labels" in document).toBe(false);
     expect(jump.event).toEqual({
       type: "jump",
       sceneId: "later",
       instructionIndex: 2,
     });
-  });
-
-  it("does not fall back to legacy labels for scene jumps", () => {
-    const document = {
-      filePath: "scenario/main.tzr",
-      instructions: [
-        {
-          type: "SceneJumpInstruction",
-          sceneId: "later",
-          loc,
-        },
-      ],
-      labels: {
-        later: { id: "later", statementIndex: 0, loc },
-      },
-      scenes: {},
-    } as unknown as RuntimeDocument;
-    const jump = stepRuntime(document, createInitialRuntimeState(document));
-
-    expect(jump.event).toEqual({ type: "unsupported", instructionType: "SceneJumpInstruction" });
   });
 
   it("runs DSL v2 scene to choice event", () => {
@@ -349,7 +322,7 @@ scene later:
     });
   });
 
-  it("does not expose labels for DSL v2 body choices", () => {
+  it("renders DSL v2 body choices without target metadata", () => {
     const document = compileSource(`scene start:
   choice "Choose":
     "Stay":
@@ -359,7 +332,6 @@ scene later:
     const scene = stepRuntime(document, createInitialRuntimeState(document));
     const choice = stepRuntime(document, scene.state);
 
-    expect("labels" in document).toBe(false);
     expect(choice.event).toEqual({
       type: "choice",
       question: "Choose",

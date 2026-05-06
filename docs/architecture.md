@@ -534,8 +534,8 @@ IR should be:
 - independent from renderer implementation
 
 Scene jumps are scene-based and resolve through `RuntimeDocument.scenes`.
-Project label jumps use `LabelJumpInstruction` and resolve through optional
-`RuntimeDocument.labels`. Legacy `#label(...)` syntax remains removed.
+Project compilation aggregates included scenes before runtime. Legacy
+`#label(...)` syntax remains removed.
 
 ---
 

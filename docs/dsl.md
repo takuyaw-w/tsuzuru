@@ -38,17 +38,17 @@ scene start:
 
   choice "どうする？":
     "手帳を見る" if scenario.hasNotebook:
-      -> notebook
+      jump notebook
 
     "立ち去る":
-      -> leave
+      jump leave
 
-label notebook:
+scene notebook:
   mio:
     ちゃんと持ってきたんだね。
   end
 
-label leave:
+scene leave:
   hide mio
   stopBgm
   end
@@ -57,12 +57,11 @@ label leave:
 The currently implemented runnable subset covers:
 
 - document metadata and character declarations
-- `#include("./path.tzr")` compile-time project directives
+- `include "./path.tzr"` compile-time project directives
 - `scene` bodies
-- `label` bodies
 - narration and dialogue
 - `jump` to another scene in the same document
-- `-> labelName` jumps to project-level labels
+- cross-file `jump` targets when compiled with `compileTzrProject`
 - body choices with optional conditions
 - `if` / `elif` / `else`
 - `set` and `add`
