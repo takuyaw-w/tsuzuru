@@ -47,22 +47,125 @@ describe("createStdVisualPlugin", () => {
 
 describe("std-visual commands", () => {
   it("keeps plugin command metadata available for DSL v2 integrations", () => {
-    expect(Object.keys(stdVisualPluginCommands)).toEqual(["bg", "show", "hide"]);
+    expect(Object.keys(stdVisualPluginCommands)).toEqual(["bg", "show", "hide", "clearBg", "clearSprites"]);
     expect(stdVisualPluginCommands.bg).toEqual({
       name: "bg",
-      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+      args: {
+        kind: "mixed",
+        positional: [{ type: "string", nonEmpty: true }],
+        named: [
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
+        ],
+      },
     });
     expect(stdVisualPluginCommands.show).toEqual({
       name: "show",
       args: {
         kind: "mixed",
         positional: [{ type: "string", nonEmpty: true }],
-        named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
+        named: [
+          { name: "position", type: "string", optional: true, values: ["left", "center", "right"] },
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
+        ],
       },
     });
     expect(stdVisualPluginCommands.hide).toEqual({
       name: "hide",
-      args: { kind: "positional", arguments: [{ type: "string", nonEmpty: true }] },
+      args: {
+        kind: "mixed",
+        positional: [{ type: "string", nonEmpty: true }],
+        named: [
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
+        ],
+      },
+    });
+    expect(stdVisualPluginCommands.clearBg).toEqual({
+      name: "clearBg",
+      args: {
+        kind: "named",
+        arguments: [
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
+        ],
+      },
+    });
+    expect(stdVisualPluginCommands.clearSprites).toEqual({
+      name: "clearSprites",
+      args: {
+        kind: "named",
+        arguments: [
+          {
+            name: "transition",
+            type: "string",
+            optional: true,
+            values: ["fade", "dissolve"],
+            requiredWith: ["duration"],
+          },
+          {
+            name: "duration",
+            type: "number",
+            optional: true,
+            integer: true,
+            min: 0,
+            requiredWith: ["transition"],
+          },
+        ],
+      },
     });
   });
 
@@ -73,6 +176,17 @@ describe("std-visual commands", () => {
     );
 
     expect(getStdVisualState(result.state).background).toEqual({ assetId: "street" });
+  });
+
+  it("stores transition metadata on backgrounds", () => {
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("classroom"), namedString("transition", "fade"), namedNumber("duration", 300)]),
+    );
+
+    expect(getStdVisualState(result.state).background).toEqual({
+      assetId: "classroom",
+      transition: { type: "fade", durationMs: 300 },
+    });
   });
 
   it("shows sprites at default and named positions", () => {
@@ -87,6 +201,24 @@ describe("std-visual commands", () => {
     });
   });
 
+  it("stores transition metadata on shown sprites", () => {
+    const result = runStdVisualCommands(
+      command("show", [
+        positionalString("alice_smile"),
+        namedString("position", "right"),
+        namedString("transition", "dissolve"),
+        namedNumber("duration", 250),
+      ]),
+    );
+
+    expect(getStdVisualState(result.state).sprites).toEqual({
+      alice_smile: {
+        position: "right",
+        transition: { type: "dissolve", durationMs: 250 },
+      },
+    });
+  });
+
   it("updates and hides sprites", () => {
     const result = runStdVisualCommands(
       command("show", [positionalString("alice_smile"), namedString("position", "left")]),
@@ -95,6 +227,74 @@ describe("std-visual commands", () => {
     );
 
     expect(getStdVisualState(result.state).sprites).toEqual({});
+  });
+
+  it("clears the background while preserving sprites", () => {
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("classroom")]),
+      command("show", [positionalString("alice_smile"), namedString("position", "left")]),
+      command("clearBg", []),
+    );
+
+    expect(getStdVisualState(result.state)).toEqual({
+      background: null,
+      sprites: {
+        alice_smile: { position: "left" },
+      },
+    });
+  });
+
+  it("keeps clearBg a no-op when the background is already null", () => {
+    const result = runStdVisualCommands(command("clearBg", []));
+
+    expect(getStdVisualState(result.state)).toEqual({
+      background: null,
+      sprites: {},
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("clears all sprites while preserving the background", () => {
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("classroom")]),
+      command("show", [positionalString("alice_smile"), namedString("position", "left")]),
+      command("show", [positionalString("yu_smile"), namedString("position", "right")]),
+      command("clearSprites", []),
+    );
+
+    expect(getStdVisualState(result.state)).toEqual({
+      background: { assetId: "classroom" },
+      sprites: {},
+    });
+  });
+
+  it("keeps clearSprites a no-op when sprites are already empty", () => {
+    const result = runStdVisualCommands(command("clearSprites", []));
+
+    expect(getStdVisualState(result.state)).toEqual({
+      background: null,
+      sprites: {},
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("accepts transition metadata on destructive operations without persisting it", () => {
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("classroom")]),
+      command("show", [positionalString("alice_smile")]),
+      command("hide", [
+        positionalString("alice_smile"),
+        namedString("transition", "fade"),
+        namedNumber("duration", 100),
+      ]),
+      command("clearBg", [namedString("transition", "dissolve"), namedNumber("duration", 0)]),
+      command("clearSprites", [namedString("transition", "fade"), namedNumber("duration", 50)]),
+    );
+
+    expect(getStdVisualState(result.state)).toEqual({
+      background: null,
+      sprites: {},
+    });
   });
 
   it("emits a runtime warning when hiding a missing sprite", () => {
@@ -117,6 +317,9 @@ describe("std-visual commands", () => {
     expect(() =>
       runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")])),
     ).toThrow("Invalid @show runtime arguments. Expected validated std visual command arguments.");
+    expect(() =>
+      runStdVisualCommands(command("bg", [positionalString("classroom"), namedString("transition", "fade")])),
+    ).toThrow("Invalid @bg runtime arguments. Expected validated std visual command arguments.");
   });
 });
 
@@ -151,6 +354,15 @@ function namedString(name: string, value: string): TzrArgument {
     type: "NamedArgument",
     name,
     value: { type: "StringValue", value, loc },
+    loc,
+  };
+}
+
+function namedNumber(name: string, value: number): TzrArgument {
+  return {
+    type: "NamedArgument",
+    name,
+    value: { type: "NumberValue", value, loc },
     loc,
   };
 }

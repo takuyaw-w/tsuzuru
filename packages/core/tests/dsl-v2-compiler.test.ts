@@ -8,19 +8,37 @@ import {
   type TzrCompileOptions,
 } from "../src/index.js";
 
+const stdVisualTransitionNamedArgs = [
+  { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"], requiredWith: ["duration"] },
+  { name: "duration", type: "number", optional: true, integer: true, min: 0, requiredWith: ["transition"] },
+] as const;
+
 const stdVisualPluginCommands = {
   bg: definePluginCommand("bg", {
-    kind: "positional",
-    arguments: [{ type: "string", nonEmpty: true }],
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: stdVisualTransitionNamedArgs,
   }),
   show: definePluginCommand("show", {
     kind: "mixed",
     positional: [{ type: "string", nonEmpty: true }],
-    named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
+    named: [
+      { name: "position", type: "string", optional: true, values: ["left", "center", "right"] },
+      ...stdVisualTransitionNamedArgs,
+    ],
   }),
   hide: definePluginCommand("hide", {
-    kind: "positional",
-    arguments: [{ type: "string", nonEmpty: true }],
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: stdVisualTransitionNamedArgs,
+  }),
+  clearBg: definePluginCommand("clearBg", {
+    kind: "named",
+    arguments: stdVisualTransitionNamedArgs,
+  }),
+  clearSprites: definePluginCommand("clearSprites", {
+    kind: "named",
+    arguments: stdVisualTransitionNamedArgs,
   }),
 };
 
@@ -573,6 +591,82 @@ scene start:
     ]);
   });
 
+  it("compiles clear bg to CommandInstruction clearBg", () => {
+    const document = compileSource(`scene start:
+  clear bg
+`);
+    const instruction = expectCommandInstruction(document, 1, "clearBg");
+
+    expect(instruction.args).toEqual([]);
+  });
+
+  it("compiles clear sprites to CommandInstruction clearSprites", () => {
+    const document = compileSource(`scene start:
+  clear sprites
+`);
+    const instruction = expectCommandInstruction(document, 1, "clearSprites");
+
+    expect(instruction.args).toEqual([]);
+  });
+
+  it("compiles visual transition metadata to command arguments", () => {
+    const document = compileSource(`scene start:
+  bg classroom with fade(duration=300)
+  show alice_smile at center with dissolve(duration=250)
+  hide alice_smile with fade(duration=100)
+  clear bg with dissolve(duration=0)
+  clear sprites with fade(duration=50)
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "show",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+          { type: "NamedArgument", name: "position", value: { type: "StringValue", value: "center" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "dissolve" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 250 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "hide",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "alice_smile" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 100 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "clearBg",
+        args: [
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "dissolve" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 0 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "clearSprites",
+        args: [
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 50 } },
+        ],
+      },
+    ]);
+  });
+
   it("compiles bgm identifier to CommandInstruction startBgm", () => {
     const document = compileSource(`scene start:
   bgm daily_theme
@@ -666,6 +760,7 @@ scene start:
       bg classroom
       show alice_smile at right
       hide alice_smile
+      clear sprites
 `);
 
     expect(document.instructions[1]).toMatchObject({
@@ -677,6 +772,7 @@ scene start:
             { type: "CommandInstruction", name: "bg" },
             { type: "CommandInstruction", name: "show" },
             { type: "CommandInstruction", name: "hide" },
+            { type: "CommandInstruction", name: "clearSprites" },
           ],
         },
       ],
@@ -735,6 +831,7 @@ scene start:
     bg classroom
     show alice_smile at center
     hide alice_smile
+    clear bg
 `);
 
     expect(document.instructions[1]).toMatchObject({
@@ -743,6 +840,7 @@ scene start:
         { type: "CommandInstruction", name: "bg" },
         { type: "CommandInstruction", name: "show" },
         { type: "CommandInstruction", name: "hide" },
+        { type: "CommandInstruction", name: "clearBg" },
       ],
     });
   });
@@ -750,9 +848,11 @@ scene start:
   it("validates std visual plugin commands when metadata is passed through plugins", () => {
     const document = compileSource(
       `scene start:
-  bg classroom
-  show alice_smile at center
-  hide alice_smile
+  bg classroom with fade(duration=300)
+  show alice_smile at center with dissolve(duration=250)
+  hide alice_smile with fade(duration=100)
+  clear bg
+  clear sprites with dissolve(duration=0)
 `,
       { plugins: [{ name: "stdVisual", commands: stdVisualPluginCommands }] },
     );
@@ -762,6 +862,8 @@ scene start:
       { type: "CommandInstruction", name: "bg" },
       { type: "CommandInstruction", name: "show" },
       { type: "CommandInstruction", name: "hide" },
+      { type: "CommandInstruction", name: "clearBg" },
+      { type: "CommandInstruction", name: "clearSprites" },
     ]);
   });
 
@@ -788,12 +890,14 @@ scene start:
   it("keeps std visual and audio command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
+  clear bg
   bgm daily_theme
 `);
 
     expect(document.instructions).toMatchObject([
       { type: "SceneInstruction", id: "start" },
       { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "clearBg" },
       { type: "CommandInstruction", name: "startBgm" },
     ]);
   });
@@ -887,6 +991,55 @@ scene start:
         pluginCommands: { "audio.stopBgm": definePluginCommand("audio.stopBgm", { kind: "none" }) },
       }),
     ).toContain('Plugin command "audio.stopBgm" does not support named argument "assetId".');
+
+    const transitionCommand = definePluginCommand("visual.transition", {
+      kind: "named",
+      arguments: stdVisualTransitionNamedArgs,
+    });
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade")\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "transition" requires named argument "duration".');
+
+    expect(
+      expectCompileFailure("scene start:\n  call visual.transition(duration=300)\n", {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" requires named argument "transition".');
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade", duration=-1)\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" must be at least 0.');
+
+    expect(
+      expectCompileFailure('scene start:\n  call visual.transition(transition="fade", duration=1.5)\n', {
+        pluginCommands: { "visual.transition": transitionCommand },
+      }),
+    ).toContain('Plugin command "visual.transition" named argument "duration" must be an integer.');
+  });
+
+  it("accepts plugin command argument dependency and numeric constraints when metadata validation is enabled", () => {
+    const document = compileSource('scene start:\n  call visual.transition(transition="fade", duration=300)\n', {
+      pluginCommands: {
+        "visual.transition": definePluginCommand("visual.transition", {
+          kind: "named",
+          arguments: stdVisualTransitionNamedArgs,
+        }),
+      },
+    });
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "CommandInstruction",
+      name: "visual.transition",
+      args: [
+        { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
+        { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
+      ],
+    });
   });
 
   it("rejects unknown plugin commands when metadata validation is enabled", () => {
@@ -1103,61 +1256,12 @@ scene later:
     ).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
-  it("rejects clear sprites for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
-  clear sprites
-`),
-    ).toContain("clear visual statements are not compile-supported yet.");
-  });
-
-  it("rejects clear bg for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
-  clear bg
-`),
-    ).toContain("clear visual statements are not compile-supported yet.");
-  });
-
   it("rejects show coordinate placement for now", () => {
     expect(
       expectCompileFailure(`scene start:
   show alice_smile at x=100 y=200
 `),
     ).toContain("show coordinate placement is not compile-supported yet.");
-  });
-
-  it("rejects bg with transition for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
-  bg classroom with fade(duration=300)
-`),
-    ).toContain("visual transitions are not compile-supported yet.");
-  });
-
-  it("rejects show with transition for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
-  show alice_smile at center with dissolve(duration=250)
-`),
-    ).toContain("visual transitions are not compile-supported yet.");
-  });
-
-  it("rejects hide with transition for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
-  hide alice_smile with dissolve(duration=250)
-`),
-    ).toContain("visual transitions are not compile-supported yet.");
-  });
-
-  it("rejects clear with transition for now", () => {
-    const messages = expectCompileFailure(`scene start:
-  clear sprites with fade(duration=100)
-`);
-
-    expect(messages).toContain("visual transitions are not compile-supported yet.");
-    expect(messages).toContain("clear visual statements are not compile-supported yet.");
   });
 
   it("rejects duplicate title declarations", () => {

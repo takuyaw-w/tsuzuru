@@ -14,6 +14,9 @@ export interface PluginCommandArgumentDefinition {
   readonly optional?: boolean;
   readonly nonEmpty?: boolean;
   readonly values?: readonly string[];
+  readonly integer?: boolean;
+  readonly min?: number;
+  readonly requiredWith?: readonly string[];
 }
 
 export interface PluginCommandPositionalArgumentDefinition extends PluginCommandArgumentDefinition {
@@ -199,6 +202,24 @@ function validateNamedArguments(
     }
   }
 
+  for (const definition of definitions) {
+    if (!seen.has(definition.name)) {
+      continue;
+    }
+
+    for (const requiredName of definition.requiredWith ?? []) {
+      if (seen.has(requiredName)) {
+        continue;
+      }
+
+      const arg = args.find((candidate) => candidate.name === definition.name);
+      diagnostics.push({
+        location: arg?.loc.start ?? location,
+        message: `Plugin command "${commandName}" named argument "${definition.name}" requires named argument "${requiredName}".`,
+      });
+    }
+  }
+
   return diagnostics;
 }
 
@@ -226,6 +247,31 @@ function validateValue(
       location,
       message: `Plugin command "${commandName}" ${argumentLabel} must not be empty.`,
     });
+  }
+
+  if (value.type === "NumberValue") {
+    const shouldValidateNumberRange = definition.integer === true || definition.min !== undefined;
+    if (shouldValidateNumberRange && !Number.isFinite(value.value)) {
+      diagnostics.push({
+        location,
+        message: `Plugin command "${commandName}" ${argumentLabel} must be finite.`,
+      });
+      return diagnostics;
+    }
+
+    if (definition.integer === true && !Number.isInteger(value.value)) {
+      diagnostics.push({
+        location,
+        message: `Plugin command "${commandName}" ${argumentLabel} must be an integer.`,
+      });
+    }
+
+    if (definition.min !== undefined && value.value < definition.min) {
+      diagnostics.push({
+        location,
+        message: `Plugin command "${commandName}" ${argumentLabel} must be at least ${definition.min}.`,
+      });
+    }
   }
 
   if (

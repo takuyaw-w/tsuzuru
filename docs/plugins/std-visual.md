@@ -25,7 +25,7 @@ const runtimeState = createInitialRuntimeState(document, {
 });
 ```
 
-DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。compile 時に `plugins: [createStdVisualPlugin()]` を渡すと、std visual command metadata に基づいて command name と argument shape を検証します。
+DSL v2 compiler は、対応済みの `bg` / `show` / `hide` / `clear bg` / `clear sprites` statement を runtime `CommandInstruction` に変換します。compile 時に `plugins: [createStdVisualPlugin()]` を渡すと、std visual command metadata に基づいて command name と argument shape を検証します。
 
 runtime 実行時は std-visual command handler を渡します。
 
@@ -50,10 +50,20 @@ state の形は次のとおりです。
 
 ```ts
 {
-  background: null | { assetId: string },
+  background: null | {
+    assetId: string,
+    transition?: {
+      type: string,
+      durationMs: number
+    }
+  },
   sprites: {
     [assetId: string]: {
-      position: "left" | "center" | "right"
+      position: "left" | "center" | "right",
+      transition?: {
+        type: string,
+        durationMs: number
+      }
     }
   }
 }
@@ -84,9 +94,10 @@ const visual = getStdVisualState(runtimeState);
 
 ```txt
 bg classroom
+bg classroom with fade(duration=300)
 ```
 
-`assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。
+`assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。transition が指定された場合、renderer-independent metadata として background state に保存されます。
 
 実行後の state:
 
@@ -94,18 +105,26 @@ bg classroom
 background: { assetId: "classroom" }
 ```
 
-v0.2 初期では、transition / duration は扱いません。背景を消すための clear background command もまだありません。
+transition 付きの state:
+
+```ts
+background: {
+  assetId: "classroom",
+  transition: { type: "fade", durationMs: 300 },
+}
+```
 
 ### `show assetId at position`
 
 sprite を表示、または既存 sprite の位置を更新します。
 
 ```txt
-show alice_smile
+show alice_smile at center
 show bob_normal at left
+show alice_smile at center with dissolve(duration=250)
 ```
 
-`assetId` は非空文字列である必要があります。`position` は `"left" | "center" | "right"` のいずれかです。省略時は `"center"` になります。
+`assetId` は非空文字列である必要があります。`position` は `"left" | "center" | "right"` のいずれかです。runtime command handler では省略時に `"center"` になります。DSL sugar では現在 `at <placement>` が必須です。transition が指定された場合、sprite state に保存されます。
 
 実行後の state:
 
@@ -135,7 +154,7 @@ sprites: {
 
 複数 sprite が同じ `position` を共有することもできます。実際の重なりや細かい座標調整は renderer / app 側の責務です。
 
-v0.2 初期では、sprite の `order` / `zIndex` は扱いません。
+現在、sprite の `order` / `zIndex` は扱いません。
 
 ### `hide assetId`
 
@@ -143,6 +162,7 @@ v0.2 初期では、sprite の `order` / `zIndex` は扱いません。
 
 ```txt
 hide alice_smile
+hide alice_smile with fade(duration=100)
 ```
 
 対象 sprite が存在する場合、`sprites` から削除されます。
@@ -158,6 +178,32 @@ plugin.stdVisual.hideTargetNotFound
 ```
 
 空文字 `assetId` は validation error です。missing target の warning は、非空文字列の `assetId` が実行時点で表示されていない場合だけ発生します。
+
+`hide` の transition metadata は command validation と handler argument validation には使われますが、sprite は削除されるため state には残りません。
+
+### `clearBg`
+
+現在の背景を消します。
+
+```txt
+clear bg
+clear bg with dissolve(duration=100)
+```
+
+runtime command name は `clearBg` です。実行後、`background` は `null` になります。sprites は変更されません。すでに `background` が `null` の場合も no-op で、warning は出ません。
+
+### `clearSprites`
+
+すべての sprite を消します。
+
+```txt
+clear sprites
+clear sprites with fade(duration=100)
+```
+
+runtime command name は `clearSprites` です。実行後、`sprites` は `{}` になります。background は変更されません。すでに sprites が空の場合も no-op で、warning は出ません。
+
+`clearBg` / `clearSprites` の transition metadata は command validation と handler argument validation には使われますが、対象 state が削除されるため state には残りません。
 
 ## Validation Behavior
 
@@ -179,6 +225,8 @@ show alice at top
 
 必須引数がない場合や、許可されていない余分な引数を渡した場合も validation error です。
 
+`bg` / `show` / `hide` / `clearBg` / `clearSprites` は optional named args として `transition` と `duration` を受け取れます。現在の標準 transition 名は `"fade"` / `"dissolve"` です。`transition` と `duration` は必ず一緒に指定する必要があり、`duration` は `0` 以上の有限整数です。DSL sugar では `with fade(duration=300)` のように書き、compiler は `transition` / `duration` command args に変換します。
+
 一方、`hide missing` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
 
 ## Design Boundaries
@@ -189,8 +237,7 @@ std-visual plugin は、次の機能を持ちません。
 - DOM / Preact component
 - asset resolver
 - asset path 解決
-- transition / duration
-- clear background command
+- transition animation execution
 - character ID / expression model
 - background layers
 - sprite order / zIndex
