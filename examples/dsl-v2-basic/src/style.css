@@ -201,6 +201,14 @@ button {
   text-transform: uppercase;
 }
 
+.visual-layer__background--transition-fade {
+  animation: visual-layer-fade-in var(--tzr-visual-transition-duration, 240ms) ease-out both;
+}
+
+.visual-layer__background--transition-dissolve {
+  animation: visual-layer-dissolve-in var(--tzr-visual-transition-duration, 280ms) ease-out both;
+}
+
 .visual-layer__sprites {
   position: absolute;
   inset: 0;
@@ -226,6 +234,14 @@ button {
     0 24px 58px rgba(0, 0, 0, 0.4);
   color: #fff8e8;
   text-align: center;
+}
+
+.visual-layer__sprite--transition-fade {
+  animation: visual-layer-fade-in var(--tzr-visual-transition-duration, 240ms) ease-out both;
+}
+
+.visual-layer__sprite--transition-dissolve {
+  animation: visual-layer-dissolve-in var(--tzr-visual-transition-duration, 280ms) ease-out both;
 }
 
 .visual-layer__sprite span,
@@ -302,5 +318,40 @@ button {
 
   .audio-layer {
     width: min(190px, calc(100% - 24px));
+  }
+}
+
+@keyframes visual-layer-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes visual-layer-dissolve-in {
+  from {
+    opacity: 0;
+    filter: blur(8px) saturate(0.7);
+  }
+
+  62% {
+    filter: blur(2px) saturate(1.08);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-layer__background--transition-fade,
+  .visual-layer__background--transition-dissolve,
+  .visual-layer__sprite--transition-fade,
+  .visual-layer__sprite--transition-dissolve {
+    animation-duration: 1ms;
   }
 }
