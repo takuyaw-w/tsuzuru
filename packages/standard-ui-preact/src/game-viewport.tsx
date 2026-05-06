@@ -1,13 +1,14 @@
-import type { ComponentChildren, JSX } from "preact";
+import type { ComponentChildren, ComponentProps } from "preact";
 import { joinClassNames } from "./class-name.js";
 
 export type GameViewportAspectRatio = "16:9" | "4:3";
+type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
 
 export type GameViewportProps = {
   readonly aspectRatio?: GameViewportAspectRatio;
   readonly maxWidth?: number | string;
   readonly className?: string;
-  readonly style?: JSX.CSSProperties;
+  readonly style?: DivStyle;
   readonly children: ComponentChildren;
 };
 

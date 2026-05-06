@@ -17,7 +17,7 @@ import {
   RuntimeMessageLayer,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
-import type { JSX } from "preact";
+import type { ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
@@ -26,6 +26,7 @@ import { VisualLayer } from "./VisualLayer.js";
 type DocumentResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument }
   | { readonly ok: false; readonly message: string };
+type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 
 export function App() {
   const documentResult = useMemo(() => compileScenario(scenarioSource), []);
@@ -65,11 +66,14 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     autoStepTransientEvents: true,
   });
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
+  const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
+  const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
+  const retainedMessageEvent = runtime.visibleEvent?.type === "wait" ? lastMessageEvent : null;
   const presentationKey = useVisibleEventPresentationKey(runtime.visibleEvent);
   const currentRenderableEvent = runtime.event === null ? null : getRenderableRuntimeEvent(runtime.event);
   const messageLines = useMemo(
-    () => (runtime.visibleEvent === null ? null : getMessageLines(runtime.visibleEvent)),
-    [runtime.visibleEvent],
+    () => (visiblePresentationEvent === null ? null : getMessageLines(visiblePresentationEvent)),
+    [visiblePresentationEvent],
   );
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
@@ -78,14 +82,17 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     charactersPerSecond: 60,
   });
   const canAdvanceText =
-    (runtime.visibleEvent?.type === "narration" || runtime.visibleEvent?.type === "dialogue") &&
+    visiblePresentationEvent !== null &&
+    isMessageEvent(visiblePresentationEvent) &&
     currentRenderableEvent === runtime.visibleEvent &&
     runtime.blockReason === null &&
     !runtime.state.isStopped;
   const canStart =
     runtime.visibleEvent === null && runtime.event === null && runtime.blockReason === null && !runtime.state.isStopped;
-  const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
   const handleAdvanceRequest = useCallback(() => {
+    if (choiceEvent !== null) {
+      return;
+    }
     if (messageLines !== null) {
       if (textReveal.isRevealing) {
         textReveal.revealAll();
@@ -99,9 +106,9 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     if (canStart) {
       runtime.step();
     }
-  }, [canAdvanceText, canStart, messageLines, runtime, textReveal.isRevealing, textReveal.revealAll]);
-  const handleViewportClick = useCallback(
-    (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+  }, [canAdvanceText, canStart, choiceEvent, messageLines, runtime, textReveal.isRevealing, textReveal.revealAll]);
+  const handleViewportClick = useCallback<DivClickHandler>(
+    (event) => {
       if (isInteractiveClickTarget(event.target)) {
         return;
       }
@@ -158,9 +165,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
             <div className="app__message-layer">
-              {canStart ? (
-                <StartOverlay title={formatStartTitle(document.metadata.title)} />
-              ) : choiceEvent !== null ? (
+              {canStart ? null : choiceEvent !== null ? (
                 <>
                   <ChoiceLayer
                     className="app__choice-layer"
@@ -177,10 +182,17 @@ function RuntimeApp({ document }: RuntimeAppProps) {
                     />
                   )}
                 </>
-              ) : runtime.visibleEvent === null ? null : (
+              ) : retainedMessageEvent !== null ? (
+                <RuntimeMessageLayer
+                  key={getRuntimeEventTextKey(retainedMessageEvent)}
+                  className="app__retained-message"
+                  event={retainedMessageEvent}
+                  canAdvance={false}
+                />
+              ) : visiblePresentationEvent === null ? null : (
                 <RuntimeMessageLayer
                   key={presentationKey}
-                  event={runtime.visibleEvent}
+                  event={visiblePresentationEvent}
                   onAdvance={handleAdvanceRequest}
                   {...(messageLines === null ? {} : { renderMessageLine })}
                   canAdvance={canAdvanceText}
@@ -200,22 +212,6 @@ function RuntimeApp({ document }: RuntimeAppProps) {
       )}
     </main>
   );
-}
-
-function StartOverlay({ title }: { readonly title: string }) {
-  return (
-    <div className="app__start-overlay" aria-label="start screen">
-      <h1>{title}</h1>
-      <p>Click / Enter / Space to Start</p>
-    </div>
-  );
-}
-
-function formatStartTitle(title: string | undefined): string {
-  if (title === undefined || title.startsWith("Tsuzuru ")) {
-    return title ?? "Tsuzuru DSL v2 Basic";
-  }
-  return `Tsuzuru ${title}`;
 }
 
 function useVisibleEventPresentationKey(event: RuntimeEvent | null): string {
@@ -251,6 +247,13 @@ function isKeyboardHandledTarget(target: EventTarget | null): boolean {
     target instanceof Element &&
     target.closest(".tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
+}
+
+function toExamplePresentationEvent(event: RuntimeEvent | null): RuntimeEvent | null {
+  if (event?.type === "wait") {
+    return null;
+  }
+  return event;
 }
 
 function isMessageEvent(

@@ -1,6 +1,16 @@
-title "DSL v2 Basic"
+title "Tsuzuru DSL v2 Basic"
 
 character mio name="美緒"
+
+scene title:
+  bg title_bg
+
+  narration:
+    Tsuzuru DSL v2 Basic
+
+  choice "Start":
+    "はじめる" id=start:
+      jump start
 
 scene start:
   bg station with fade(duration=300)
