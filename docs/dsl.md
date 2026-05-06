@@ -61,6 +61,7 @@ The currently implemented runnable subset covers:
 - body choices with optional conditions
 - `if` / `elif` / `else`
 - `set` and `add`
+- `wait 1000` timed waits in milliseconds
 - std visual sugar: `bg`, `show`, `hide`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
 - `end`
@@ -68,6 +69,21 @@ The currently implemented runnable subset covers:
 Some design-level syntax in `docs/design/design/dsl-v2.md` may still be parser-only
 or not implemented at runtime. Treat `examples/dsl-v2-basic` as the current
 runnable reference.
+
+Current state authoring supports string, number, boolean, and `null` values:
+
+```txt
+set scenario.selectedItem = null
+set scenario.name = "mio"
+set scenario.currentSpeaker = scenario.name
+add scenario.score += 1
+```
+
+`set scenario.b = scenario.a` copies an existing `scenario.*` runtime value at
+execution time. Missing source values produce a runtime error event.
+`system.*` state remains deferred and cannot be targeted or copied by `set`.
+The core runtime emits wait events for `wait 1000`, but does not start browser
+timers; hosts clear the wait after their own timer completes.
 
 ## Current Implementation Files
 

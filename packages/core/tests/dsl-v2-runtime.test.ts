@@ -116,6 +116,21 @@ scene start:
     expect(stop.state.isStopped).toBe(true);
   });
 
+  it("runs DSL v2 timed wait as a host-cleared pending wait", () => {
+    const document = compileSource(`scene start:
+  wait 1000
+`);
+
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const wait = stepRuntime(document, scene.state);
+    const repeatedWait = stepRuntime(document, wait.state);
+
+    expect(wait.event).toEqual({ type: "wait", durationMs: 1000 });
+    expect(wait.state.pendingWait).toEqual({ durationMs: 1000 });
+    expect(repeatedWait.state).toBe(wait.state);
+    expect(repeatedWait.event).toEqual({ type: "wait", durationMs: 1000 });
+  });
+
   it("runs DSL v2 scene jump to a later scene", () => {
     const document = compileSource(`scene start:
   jump later
@@ -779,6 +794,55 @@ scene leave:
     expect(add.state.variables).toEqual({ "scenario.score": 1 });
   });
 
+  it("runs DSL v2 set null and preserves it through snapshot restore", () => {
+    const document = compileSource(`scene start:
+  set scenario.selectedItem = null
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const restored = restoreRuntimeState(JSON.parse(JSON.stringify(createRuntimeSnapshot(set.state))));
+
+    expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.selectedItem", value: null });
+    expect(set.state.variables).toEqual({ "scenario.selectedItem": null });
+    expect(restored.variables).toEqual({ "scenario.selectedItem": null });
+  });
+
+  it("runs DSL v2 set from a scenario variable reference", () => {
+    const document = compileSource(`scene start:
+  set scenario.name = "mio"
+  set scenario.currentSpeaker = scenario.name
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const name = stepRuntime(document, scene.state);
+    const currentSpeaker = stepRuntime(document, name.state);
+
+    expect(currentSpeaker.event).toEqual({
+      type: "state",
+      command: "set",
+      name: "scenario.currentSpeaker",
+      value: "mio",
+    });
+    expect(currentSpeaker.state.variables).toEqual({
+      "scenario.name": "mio",
+      "scenario.currentSpeaker": "mio",
+    });
+  });
+
+  it("returns a runtime error when DSL v2 set references missing scenario state", () => {
+    const document = compileSource(`scene start:
+  set scenario.currentSpeaker = scenario.name
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const currentSpeaker = stepRuntime(document, scene.state);
+
+    expect(currentSpeaker.event).toEqual({
+      type: "error",
+      code: "state_reference_missing",
+      message: 'Cannot set "scenario.currentSpeaker" from "scenario.name" because the source value is missing.',
+    });
+    expect(currentSpeaker.state.variables).toEqual({});
+  });
+
   it("runs DSL v2 add from an existing numeric value", () => {
     const document = compileSource(`scene start:
   set scenario.score = 10
@@ -1245,6 +1309,38 @@ scene leave:
       result: true,
       branch: "then",
       event: { type: "narration", lines: [{ text: "Missing." }] },
+    });
+  });
+
+  it("runs DSL v2 null equality and inequality against stored null values", () => {
+    const document = compileSource(`scene start:
+  set scenario.currentCg = null
+  if scenario.currentCg == null:
+    narration:
+      Empty.
+  if scenario.currentCg != null:
+    narration:
+      Filled.
+  else:
+    narration:
+      Still empty.
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const equal = stepRuntime(document, set.state);
+    const notEqual = stepRuntime(document, equal.state);
+
+    expect(equal.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: { type: "narration", lines: [{ text: "Empty." }] },
+    });
+    expect(notEqual.event).toMatchObject({
+      type: "if",
+      result: false,
+      branch: "else",
+      event: { type: "narration", lines: [{ text: "Still empty." }] },
     });
   });
 

@@ -12,7 +12,7 @@ export interface RuntimeBranchFrame {
   readonly instructionIndex: number;
 }
 
-export type RuntimeValue = string | number | boolean;
+export type RuntimeValue = string | number | boolean | null;
 
 export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
@@ -207,6 +207,7 @@ export type RuntimeErrorCode =
   | "choice_index_out_of_range"
   | "choice_no_available_items"
   | "state_add_non_number"
+  | "state_reference_missing"
   | "condition_invalid_numeric_comparison"
   | "condition_system_reference_unsupported";
 

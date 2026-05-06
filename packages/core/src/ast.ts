@@ -29,7 +29,7 @@ export interface NamedArgument {
   readonly loc: SourceRange;
 }
 
-export type TzrValue = StringValue | NumberValue | BooleanValue | IdentifierValue;
+export type TzrValue = StringValue | NumberValue | BooleanValue | NullValue | IdentifierValue;
 
 export interface StringValue {
   readonly type: "StringValue";
@@ -46,6 +46,12 @@ export interface NumberValue {
 export interface BooleanValue {
   readonly type: "BooleanValue";
   readonly value: boolean;
+  readonly loc: SourceRange;
+}
+
+export interface NullValue {
+  readonly type: "NullValue";
+  readonly value: null;
   readonly loc: SourceRange;
 }
 

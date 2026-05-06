@@ -180,8 +180,9 @@ export interface TzrCallStatement {
 
 export interface TzrWaitStatement {
   readonly type: "WaitStatement";
-  readonly name: string;
-  readonly args: readonly TzrNamedArgument[];
+  readonly duration?: TzrNumberValue;
+  readonly name?: string;
+  readonly args?: readonly TzrNamedArgument[];
   readonly loc: SourceRange;
 }
 

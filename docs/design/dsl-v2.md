@@ -1012,6 +1012,7 @@ Rules:
 set scenario.inventory.hasNotebook = true
 set scenario.route.current = "common"
 set scenario.selectedRoute = null
+set scenario.currentSpeaker = scenario.name
 ```
 
 ### 18.2 `add`
@@ -1026,7 +1027,9 @@ Rules:
 
 - `set` / `add` may target only `scenario.*`.
 - `system.*` is not allowed.
-- `set` may assign string, number, boolean, or null.
+- `set` may assign string, number, boolean, null, or an existing `scenario.*`
+  variable reference.
+- `system.*` variable references remain deferred for `set`.
 - `add` accepts number only.
 - `add` right-hand side must be a number literal.
 
@@ -1072,7 +1075,17 @@ $scenario.mio.trust
 $system.endings.trueEnd.unlocked
 ```
 
-Without `$`, `scenario.xxx` is treated as a string literal, not a variable reference.
+Named argument variable references use `$scenario.*` or `$system.*`.
+
+For `set` right-hand-side values, `scenario.*` is also accepted as a variable
+reference:
+
+```txt
+set scenario.currentSpeaker = scenario.name
+```
+
+`system.*` references in `set` are parser-recognized but remain
+compile-unsupported.
 
 ---
 
@@ -1083,6 +1096,7 @@ Without `$`, `scenario.xxx` is treated as a string literal, not a variable refer
 ```txt
 call <namespace.action>(<namedArgs>)
 wait <namespace.event>(<namedArgs>)
+wait <durationMs>
 ```
 
 ### 20.2 Examples
@@ -1095,11 +1109,16 @@ call inventory.add(itemId=notebook, count=1)
 
 wait hotspot.selected()
 wait minigame.finished(id=lockpick, result=success)
+wait 1000
 ```
 
 ### 20.3 Rules
 
-- Parentheses are required.
+- `wait <durationMs>` is the current compile-supported timed wait authoring
+  form. Duration is milliseconds and must be a non-negative number literal.
+- Namespaced `wait <namespace.event>(...)` remains design syntax and is not
+  compile-supported yet.
+- Parentheses are required for `call` and namespaced `wait`.
 - Empty parentheses are required when there are no arguments.
 - Arguments must be named args.
 - Positional args are not allowed.
@@ -1113,7 +1132,8 @@ wait minigame.finished(id=lockpick, result=success)
 
 ```bnf
 CallStatement ::= "call" NamespacedName "(" NamedArgsOpt ")" NEWLINE
-WaitStatement ::= "wait" NamespacedName "(" NamedArgsOpt ")" NEWLINE
+WaitStatement ::= "wait" Number NEWLINE
+                | "wait" NamespacedName "(" NamedArgsOpt ")" NEWLINE
 
 NamedArgsOpt  ::= [ NamedArg { "," NamedArg } ]
 NamedArg      ::= IDENT "=" Value

@@ -335,8 +335,10 @@ The DSL currently covers a practical runtime subset:
 - choice body execution
 - `if` / `elif` / `else`
 - `scenario.*` condition evaluation
-- `set` for string / number / boolean values
+- `set` for string / number / boolean / null values
+- `set` from existing `scenario.*` variable references
 - `add` for number values
+- `wait 1000` timed wait authoring
 - `end` / `stop`
 - standard visual sugar:
   - `bg`
@@ -877,15 +879,14 @@ The following topics are intentionally deferred:
 - `RuntimeDocument.labels` removal or retention
 - `RuntimeState.flags` and low-level state command policy
 - broader `call` / `return` runtime semantics
-- `wait` runtime authoring support
+- broader namespaced `wait` event semantics
 - clear visual commands
 - coordinate placement
 - visual transitions
 - std system sugar
 - rich text / inline event runtime
 - persistent system state
-- `set null`
-- set variable reference
+- `system.*` runtime state references
 - reusable staging / preset design
 - macro-like authoring sugar
 

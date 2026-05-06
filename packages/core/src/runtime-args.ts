@@ -51,6 +51,8 @@ function valueToRuntimeValue(value: TzrValue): RuntimeValue | undefined {
     case "NumberValue":
     case "BooleanValue":
       return value.value;
+    case "NullValue":
+      return null;
     case "IdentifierValue":
       return undefined;
   }

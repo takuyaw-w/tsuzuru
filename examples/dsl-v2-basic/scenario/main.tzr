@@ -11,6 +11,9 @@ scene start:
     遅いよ。
 
   set scenario.hasNotebook = true
+  set scenario.selectedItem = null
+  set scenario.currentSpeaker = "mio"
+  set scenario.lastSpeaker = scenario.currentSpeaker
   add scenario.score += 1
 
   if scenario.score >= 1:
@@ -29,6 +32,7 @@ scene start:
       jump leave
 
 scene notebook:
+  wait 250
   voice mio_001
   mio:
     ちゃんと見ておいてね。

@@ -87,7 +87,7 @@ Current `RuntimeEvent` variants:
 - `jump`: emitted for `SceneJumpInstruction`
 - `if`: emitted when evaluating an `IfInstruction`
 - `choice`: emitted for `BodyChoiceInstruction` and repeated while a choice is pending
-- `wait`: emitted for `@wait(ms)` and repeated while timed wait is pending
+- `wait`: emitted for DSL v2 `wait 1000` and repeated while timed wait is pending
 - `pluginCommand`: emitted by plugin command handlers
 - `unsupported`: emitted for unsupported instruction or command handling
 - `error`: emitted for runtime operation errors such as invalid choice resolution
@@ -109,7 +109,8 @@ const nextState = clearClickWait(result.state);
 
 ## Timed Wait
 
-`@wait(500)` advances the instruction pointer, sets:
+DSL v2 `wait 500` compiles to the core timed wait command. It advances the
+instruction pointer, sets:
 
 ```ts
 pendingWait: { durationMs: 500 }
@@ -173,6 +174,12 @@ Scene jumps from inside a selected body are handled by the normal `SceneJumpInst
 Runtime state commands are core-owned.
 
 DSL v2 `set scenario.route = "mio"` stores a string, number, boolean, or null value in `variables`.
+
+DSL v2 `set scenario.currentSpeaker = scenario.name` copies an existing
+`scenario.*` variable value at runtime. If the source variable is missing, the
+runtime emits an `error` event with `code: "state_reference_missing"` and does
+not write the target variable. `system.*` variable references remain deferred
+and are not compile-supported for `set`.
 
 DSL v2 `add scenario.affection += 1` updates numeric variables. Missing variables are treated as `0`, and adding to an existing non-number value emits a runtime `error`.
 

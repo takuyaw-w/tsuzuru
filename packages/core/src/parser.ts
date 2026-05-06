@@ -1101,7 +1101,7 @@ class TzrParser {
       return this.parseStringValue(line, source, sourceColumn);
     }
     if (source.startsWith("$")) {
-      return this.parseVariableReferenceValue(line, source, sourceColumn);
+      return this.parseVariableReferenceValue(line, source, sourceColumn, "set");
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
       return { type: "NumberValue", value: Number(source), loc } satisfies TzrNumberValue;
@@ -1111,6 +1111,9 @@ class TzrParser {
     }
     if (source === "null") {
       return { type: "NullValue", value: null, loc } satisfies TzrNullValue;
+    }
+    if (source.startsWith("scenario.") || source.startsWith("system.")) {
+      return this.parseVariableReferenceValue(line, source, sourceColumn, "set");
     }
 
     if (/\s/.test(source)) {
@@ -1155,13 +1158,18 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
+    context: CallWaitStatementKeyword | StateStatementKeyword,
   ): TzrVariableReferenceValue | undefined {
     if (/\s/.test(source)) {
-      this.addError(line, sourceColumn + source.search(/\s/), "set statement must not have extra trailing tokens.");
+      this.addError(
+        line,
+        sourceColumn + source.search(/\s/),
+        `${context} statement must not have extra trailing tokens.`,
+      );
       return undefined;
     }
 
-    const path = source.slice(1);
+    const path = source.startsWith("$") ? source.slice(1) : source;
     const parts = path.split(".");
     if (!isValidTzrDottedIdentifier(path) || parts.length < 2) {
       this.addError(line, sourceColumn, "Invalid set variable reference.");
@@ -1221,6 +1229,21 @@ class TzrParser {
   }
 
   private parseWaitStatement(line: SourceLine, source: string, statementColumn: number): TzrWaitStatement | undefined {
+    const rest = source.slice("wait".length).trim();
+    if (/^-?\d/.test(rest)) {
+      const duration = this.parseWaitDuration(line, rest, statementColumn + source.indexOf(rest));
+      this.cursor += 1;
+      if (duration === undefined) {
+        return undefined;
+      }
+
+      return {
+        type: "WaitStatement",
+        duration,
+        loc: this.lineRange(line),
+      };
+    }
+
     const parsed = this.parseCallWaitStatementParts(line, source, "wait", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1232,6 +1255,26 @@ class TzrParser {
       name: parsed.name,
       args: parsed.args,
       loc: this.lineRange(line),
+    };
+  }
+
+  private parseWaitDuration(line: SourceLine, source: string, sourceColumn: number): TzrNumberValue | undefined {
+    if (/\s/.test(source)) {
+      this.addError(line, sourceColumn + source.search(/\s/), "wait statement must not have extra trailing tokens.");
+      return undefined;
+    }
+    if (!NUMBER_LITERAL_PATTERN.test(source)) {
+      this.addError(line, sourceColumn, "wait duration must be a number literal.");
+      return undefined;
+    }
+
+    return {
+      type: "NumberValue",
+      value: Number(source),
+      loc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + source.length),
+      },
     };
   }
 

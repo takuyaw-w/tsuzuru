@@ -48,9 +48,11 @@ import type {
   TzrVisualAssetRef,
   TzrVisualTransition,
   TzrVoiceStatement,
+  TzrWaitStatement,
 } from "./scenario-ast.js";
 
 const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
+const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 
 export interface TzrCompilePluginDefinition {
   readonly name: string;
@@ -382,6 +384,13 @@ class TzrCompiler {
         case "AddStatement":
           instructions.push(this.buildAddInstruction(statement));
           break;
+        case "WaitStatement": {
+          const instruction = this.buildWaitInstruction(statement);
+          if (instruction !== undefined) {
+            instructions.push(instruction);
+          }
+          break;
+        }
         case "CallStatement": {
           const instruction = this.buildCallInstruction(statement);
           if (instruction !== undefined) {
@@ -490,7 +499,11 @@ class TzrCompiler {
   }
 
   private buildSetInstruction(statement: TzrSetStatement): readonly CommandInstruction[] {
-    const value = this.compileSetValue(statement.value);
+    if (statement.value.type === "VariableReferenceValue") {
+      return this.buildSetReferenceInstruction(statement);
+    }
+
+    const value = this.compileSetLiteralValue(statement.value);
     if (value === undefined) {
       return [];
     }
@@ -506,6 +519,33 @@ class TzrCompiler {
             statement.target.loc,
           ),
           this.namedArgument("value", value, statement.value.loc),
+        ],
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildSetReferenceInstruction(statement: TzrSetStatement): readonly CommandInstruction[] {
+    const value = statement.value;
+    if (value.type !== "VariableReferenceValue") {
+      return [];
+    }
+    if (value.root === "system") {
+      this.addError(value.loc.start, "set system variable references are not compile-supported yet.");
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: DSL_SET_REFERENCE_COMMAND_NAME,
+        args: [
+          this.namedArgument(
+            "name",
+            { type: "StringValue", value: statement.target.path, loc: statement.target.loc },
+            statement.target.loc,
+          ),
+          this.namedArgument("from", { type: "StringValue", value: value.path, loc: value.loc }, value.loc),
         ],
         loc: statement.loc,
       },
@@ -547,6 +587,28 @@ class TzrCompiler {
       type: "CommandInstruction",
       name: statement.name,
       args,
+      loc: statement.loc,
+    };
+  }
+
+  private buildWaitInstruction(statement: TzrWaitStatement): CommandInstruction | undefined {
+    if (statement.duration === undefined) {
+      this.addError(statement.loc.start, 'DSL v2 statement "WaitStatement" is not compile-supported yet.');
+      return undefined;
+    }
+    if (!Number.isFinite(statement.duration.value)) {
+      this.addError(statement.duration.loc.start, "wait duration must be a finite number.");
+      return undefined;
+    }
+    if (statement.duration.value < 0) {
+      this.addError(statement.duration.loc.start, "wait duration must not be negative.");
+      return undefined;
+    }
+
+    return {
+      type: "CommandInstruction",
+      name: "wait",
+      args: [this.positionalArgument(statement.duration, statement.duration.loc)],
       loc: statement.loc,
     };
   }
@@ -730,17 +792,15 @@ class TzrCompiler {
     return assetRef.value;
   }
 
-  private compileSetValue(value: TzrValueExpression): TzrValue | undefined {
+  private compileSetLiteralValue(value: TzrValueExpression): TzrValue | undefined {
     switch (value.type) {
       case "StringValue":
       case "NumberValue":
       case "BooleanValue":
-        return value;
       case "NullValue":
-        this.addError(value.loc.start, "set null value is not compile-supported yet.");
-        return undefined;
+        return value;
       case "VariableReferenceValue":
-        this.addError(value.loc.start, "set variable reference value is not compile-supported yet.");
+        this.addError(value.loc.start, "set variable reference value must be compiled as a reference.");
         return undefined;
     }
   }
@@ -921,7 +981,11 @@ class TzrCompiler {
   }
 
   private validateCompiledPluginCommand(instruction: CommandInstruction): void {
-    if (isCoreCommandName(instruction.name) || instruction.name === DSL_ADD_COMMAND_NAME) {
+    if (
+      isCoreCommandName(instruction.name) ||
+      instruction.name === DSL_ADD_COMMAND_NAME ||
+      instruction.name === DSL_SET_REFERENCE_COMMAND_NAME
+    ) {
       return;
     }
 

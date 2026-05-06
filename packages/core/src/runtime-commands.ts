@@ -7,9 +7,10 @@ import {
   getPositionalNumber,
   getPositionalString,
 } from "./runtime-args.js";
-import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runtime-types.js";
+import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult, RuntimeValue } from "./runtime-types.js";
 
 export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
+export const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 
 export function stepCommandInstruction(
   _document: RuntimeDocument,
@@ -96,6 +97,36 @@ export function stepCommandInstruction(
     };
   }
 
+  if (name === DSL_SET_REFERENCE_COMMAND_NAME) {
+    const variableName = getNamedString(args, "name");
+    const sourceName = getNamedString(args, "from");
+    if (variableName === undefined || sourceName === undefined) {
+      return unsupportedCommand(nextState);
+    }
+    if (!hasRuntimeVariable(nextState, sourceName)) {
+      return {
+        state: nextState,
+        event: {
+          type: "error",
+          code: "state_reference_missing",
+          message: `Cannot set "${variableName}" from "${sourceName}" because the source value is missing.`,
+        },
+      };
+    }
+
+    const value = nextState.variables[sourceName] as RuntimeValue;
+    return {
+      state: {
+        ...nextState,
+        variables: {
+          ...nextState.variables,
+          [variableName]: value,
+        },
+      },
+      event: { type: "state", command: "set", name: variableName, value },
+    };
+  }
+
   if (name === "set") {
     const variableName = getNamedString(args, "name");
     const value = getNamedRuntimeValue(args, "value");
@@ -165,6 +196,10 @@ export function stepCommandInstruction(
   }
 
   return unsupportedCommand(nextState);
+}
+
+function hasRuntimeVariable(state: RuntimeState, name: string): boolean {
+  return Object.hasOwn(state.variables, name);
 }
 
 function unsupportedCommand(state: RuntimeState): RuntimeStepResult {

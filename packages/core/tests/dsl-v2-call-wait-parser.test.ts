@@ -42,6 +42,13 @@ describe("parseTzr call and wait statements", () => {
     });
   });
 
+  it("parses timed wait duration in milliseconds", () => {
+    expect(parseSingleStatement("scene start:\n  wait 1000\n")).toMatchObject({
+      type: "WaitStatement",
+      duration: { type: "NumberValue", value: 1000 },
+    });
+  });
+
   it("parses identifier args", () => {
     expect(parseSingleStatement("scene start:\n  call screen.open(id=notebook)\n")).toMatchObject({
       type: "CallStatement",
@@ -155,6 +162,10 @@ describe("parseTzr call and wait statements", () => {
     expect(expectCallWaitFailure("scene start:\n  wait screen.closed\n")).toContain(
       "wait statement must include parentheses.",
     );
+  });
+
+  it("rejects non-number timed wait duration", () => {
+    expect(expectCallWaitFailure("scene start:\n  wait 1s\n")).toContain("wait duration must be a number literal.");
   });
 
   it("rejects missing closing parenthesis", () => {
