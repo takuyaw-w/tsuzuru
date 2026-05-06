@@ -408,7 +408,7 @@ class TzrCompiler {
           instructions.push(...this.buildHideInstruction(statement));
           break;
         case "ClearVisualStatement":
-          this.rejectClearVisualStatement(statement);
+          instructions.push(this.buildClearVisualInstruction(statement));
           break;
         case "BgmStatement":
           instructions.push(this.buildBgmInstruction(statement));
@@ -651,10 +651,6 @@ class TzrCompiler {
   }
 
   private buildBgInstruction(statement: TzrBgStatement): readonly CommandInstruction[] {
-    if (!this.validateNoVisualTransition(statement.transition)) {
-      return [];
-    }
-
     return [
       {
         type: "CommandInstruction",
@@ -664,6 +660,7 @@ class TzrCompiler {
             this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
             statement.assetRef.loc,
           ),
+          ...this.visualTransitionArguments(statement.transition),
         ],
         loc: statement.loc,
       },
@@ -671,9 +668,6 @@ class TzrCompiler {
   }
 
   private buildShowInstruction(statement: TzrShowStatement): readonly CommandInstruction[] {
-    if (!this.validateNoVisualTransition(statement.transition)) {
-      return [];
-    }
     if (statement.placement.type === "VisualCoordinatePlacement") {
       this.addError(statement.placement.loc.start, "show coordinate placement is not compile-supported yet.");
       return [];
@@ -693,6 +687,7 @@ class TzrCompiler {
             this.stringValue(statement.placement.value, statement.placement.loc),
             statement.placement.loc,
           ),
+          ...this.visualTransitionArguments(statement.transition),
         ],
         loc: statement.loc,
       },
@@ -700,10 +695,6 @@ class TzrCompiler {
   }
 
   private buildHideInstruction(statement: TzrHideStatement): readonly CommandInstruction[] {
-    if (!this.validateNoVisualTransition(statement.transition)) {
-      return [];
-    }
-
     return [
       {
         type: "CommandInstruction",
@@ -713,24 +704,35 @@ class TzrCompiler {
             this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
             statement.assetRef.loc,
           ),
+          ...this.visualTransitionArguments(statement.transition),
         ],
         loc: statement.loc,
       },
     ];
   }
 
-  private rejectClearVisualStatement(statement: TzrClearVisualStatement): void {
-    this.validateNoVisualTransition(statement.transition);
-    this.addError(statement.loc.start, "clear visual statements are not compile-supported yet.");
+  private buildClearVisualInstruction(statement: TzrClearVisualStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: statement.target === "bg" ? "clearBg" : "clearSprites",
+      args: this.visualTransitionArguments(statement.transition),
+      loc: statement.loc,
+    };
   }
 
-  private validateNoVisualTransition(transition: TzrVisualTransition | undefined): boolean {
+  private visualTransitionArguments(transition: TzrVisualTransition | undefined): readonly TzrArgument[] {
     if (transition === undefined) {
-      return true;
+      return [];
     }
 
-    this.addError(transition.loc.start, "visual transitions are not compile-supported yet.");
-    return false;
+    return [
+      this.namedArgument("transition", this.stringValue(transition.name, transition.loc), transition.loc),
+      this.namedArgument(
+        "duration",
+        { type: "NumberValue", value: transition.duration, loc: transition.loc },
+        transition.loc,
+      ),
+    ];
   }
 
   private visualAssetRefValue(assetRef: TzrVisualAssetRef): string {

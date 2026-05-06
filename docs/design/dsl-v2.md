@@ -1249,13 +1249,15 @@ plugin.stdVisual.hideTargetNotFound
 clear sprites
 ```
 
-Removes all visible sprites. Background is unchanged. No warning if empty.
+Compiles to the std visual `clearSprites` command. It removes all visible
+sprites. Background is unchanged. No warning if empty.
 
 ```txt
 clear bg
 ```
 
-Sets background to `null`. Sprites are unchanged. No warning if already empty.
+Compiles to the std visual `clearBg` command. It sets background to `null`.
+Sprites are unchanged. No warning if already empty.
 
 ---
 
@@ -1289,9 +1291,16 @@ Rules:
 - `duration` is required.
 - `duration` uses ms.
 - `duration` must be an integer greater than or equal to `0`.
-- Negative numbers, decimals, and non-number values are compile errors.
+- Negative numbers, decimals, and non-number values are parser errors.
 - Standard transitions are `fade` and `dissolve`.
-- Custom transition names may be allowed when registered by renderer, app, or plugin.
+- Custom transition names are not accepted by the current parser; they may be
+  considered later with renderer, app, or plugin registration.
+- Compiler output stores transition metadata as std visual command arguments.
+- The std visual plugin stores transition metadata on surviving background and
+  sprite state objects.
+- `hide`, `clear sprites`, and `clear bg` accept transition metadata, but do not
+  retain it in plugin state after the target is removed.
+- Transition animation execution is renderer / app responsibility.
 
 ### 22.4 BNF
 

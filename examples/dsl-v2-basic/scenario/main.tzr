@@ -3,9 +3,9 @@ title "DSL v2 Basic"
 character mio name="美緒"
 
 scene start:
-  bg station
+  bg station with fade(duration=300)
   bgm daily_theme
-  show mio_smile at center
+  show mio_smile at center with dissolve(duration=250)
 
   mio:
     遅いよ。
@@ -36,7 +36,8 @@ scene notebook:
   voice mio_001
   mio:
     ちゃんと見ておいてね。
-  hide mio_smile
+  clear sprites
+  clear bg
   stopBgm
   end
 

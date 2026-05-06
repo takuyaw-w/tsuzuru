@@ -17,13 +17,43 @@ import { definePluginCommand } from "@tsuzuru/core";
 
 export const stdVisualPluginCommands = {
   bg: definePluginCommand("bg", {
-    kind: "positional",
-    arguments: [{ type: "string", nonEmpty: true }],
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [
+      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
+      { name: "duration", type: "number", optional: true },
+    ],
   }),
   show: definePluginCommand("show", {
     kind: "mixed",
     positional: [{ type: "string", nonEmpty: true }],
-    named: [{ name: "position", type: "string", optional: true, values: ["left", "center", "right"] }],
+    named: [
+      { name: "position", type: "string", optional: true, values: ["left", "center", "right"] },
+      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
+      { name: "duration", type: "number", optional: true },
+    ],
+  }),
+  hide: definePluginCommand("hide", {
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [
+      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
+      { name: "duration", type: "number", optional: true },
+    ],
+  }),
+  clearBg: definePluginCommand("clearBg", {
+    kind: "named",
+    arguments: [
+      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
+      { name: "duration", type: "number", optional: true },
+    ],
+  }),
+  clearSprites: definePluginCommand("clearSprites", {
+    kind: "named",
+    arguments: [
+      { name: "transition", type: "string", optional: true, values: ["fade", "dissolve"] },
+      { name: "duration", type: "number", optional: true },
+    ],
   }),
 };
 ```
@@ -46,7 +76,7 @@ const compiled = compileTzr(document, {
 
 Passing metadata enables compile-time validation for emitted plugin commands. If no plugin metadata is passed, current std visual/audio DSL sugar remains compatible and is compiled without plugin command metadata validation.
 
-When metadata validation is enabled, the compiler validates every emitted non-core command against the supplied registry. If a scenario uses std visual/audio DSL sugar, pass `createStdVisualPlugin()` and `createStdAudioPlugin()` to `compileTzr` so `bg` / `show` / `hide` / `startBgm` / `stopBgm` / `se` / `voice` are registered.
+When metadata validation is enabled, the compiler validates every emitted non-core command against the supplied registry. If a scenario uses std visual/audio DSL sugar, pass `createStdVisualPlugin()` and `createStdAudioPlugin()` to `compileTzr` so `bg` / `show` / `hide` / `clearBg` / `clearSprites` / `startBgm` / `stopBgm` / `se` / `voice` are registered.
 
 ## Argument Schemas
 
@@ -126,6 +156,11 @@ call screen.open(id=notebook, extra=true)
 ## Runtime Boundary
 
 Runtime behavior is handled by runtime plugin command handlers and UI layers. Compile-time plugin command validation checks command names and argument shape, but it does not load assets, check file existence, render images, or play audio.
+
+Std visual transition metadata is compiled as command arguments and remains
+renderer-independent. The std visual plugin stores it on surviving background
+and sprite state objects; actual animation timing and presentation remain UI or
+renderer responsibilities.
 
 Broader call/return runtime semantics remain deferred.
 

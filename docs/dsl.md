@@ -1,12 +1,12 @@
 # Tsuzuru DSL
 
-> Status: current DSL entry point for `feature/new-dsl`.
+> Status: current DSL entry point.
 > DSL v2 is the current supported DSL path. The old DSL parser/compiler,
 > legacy AST, and macro API were removed. `parseTzr` / `compileTzr` now refer
 > to the current DSL implementation.
 
 This document is a short entry point for the currently supported `.tzr` syntax.
-For the fuller design notes, see [`docs/design/design/dsl-v2.md`](design/design/dsl-v2.md).
+For the fuller design notes, see [`docs/design/dsl-v2.md`](design/dsl-v2.md).
 For runnable code, see [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/).
 
 ## Current API
@@ -62,7 +62,7 @@ The currently implemented runnable subset covers:
 - `if` / `elif` / `else`
 - `set` and `add`
 - `wait 1000` timed waits in milliseconds
-- std visual sugar: `bg`, `show`, `hide`
+- std visual sugar: `bg`, `show`, `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
 - `end`
 
@@ -84,6 +84,9 @@ execution time. Missing source values produce a runtime error event.
 `system.*` state remains deferred and cannot be targeted or copied by `set`.
 The core runtime emits wait events for `wait 1000`, but does not start browser
 timers; hosts clear the wait after their own timer completes.
+Visual transitions such as `bg station with fade(duration=300)` compile to
+renderer-independent std-visual metadata. Core and std-visual do not run DOM,
+CSS, or timer animations for transitions.
 
 ## Current Implementation Files
 

@@ -880,9 +880,8 @@ The following topics are intentionally deferred:
 - `RuntimeState.flags` and low-level state command policy
 - broader `call` / `return` runtime semantics
 - broader namespaced `wait` event semantics
-- clear visual commands
 - coordinate placement
-- visual transitions
+- visual transition animation / renderer execution
 - std system sugar
 - rich text / inline event runtime
 - persistent system state
