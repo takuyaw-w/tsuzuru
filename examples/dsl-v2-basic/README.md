@@ -10,10 +10,10 @@ The visual layer reads std-visual transition metadata and renders `fade` and `di
 
 Controls:
 
-- Click, Enter, or Space to start and advance messages.
+- The example opens with a start overlay. Click, Enter, or Space to start and advance messages.
 - While text is revealing, Click, Enter, or Space reveals the full message.
 - After the full message is visible, Click, Enter, or Space advances to the next event.
-- Click a choice button to select it.
+- Choices are shown above the message window while the previous message remains visible. Click a choice button to select it.
 
 ```sh
 pnpm --filter @tsuzuru/example-dsl-v2-basic dev

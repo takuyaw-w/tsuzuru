@@ -87,6 +87,8 @@ button {
 
 .app__message-layer .tzr-message-window__lines {
   gap: 8px;
+  min-height: calc((1em * 1.75 * 2) + 8px);
+  align-content: start;
 }
 
 .app__message-layer .tzr-message-window__line {
@@ -146,20 +148,51 @@ button {
   background: rgba(120, 76, 48, 0.62);
 }
 
-.app__placeholder {
+.app__message-layer .app__choice-layer {
+  right: clamp(28px, 18vw, 260px);
+  bottom: clamp(188px, 34%, 260px);
+  left: clamp(28px, 18vw, 260px);
+  z-index: 2;
+}
+
+.app__message-layer .app__retained-message {
+  cursor: default;
+}
+
+.app__start-overlay {
   position: absolute;
-  right: clamp(16px, 4vw, 44px);
-  bottom: clamp(16px, 4vw, 40px);
-  left: clamp(16px, 4vw, 44px);
-  margin: 0;
-  padding: clamp(18px, 3vw, 28px);
-  border: 1px solid rgba(247, 242, 226, 0.42);
-  border-radius: 8px;
-  background: rgba(8, 9, 12, 0.72);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
-  color: rgba(255, 250, 240, 0.86);
-  font-size: clamp(1rem, 2vw, 1.22rem);
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(14px, 2.6vw, 24px);
+  padding: clamp(24px, 6vw, 72px);
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 232, 174, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(8, 9, 12, 0.18), rgba(8, 9, 12, 0.62));
+  color: #fff8e8;
   text-align: center;
+}
+
+.app__start-overlay h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6.2vw, 4.6rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.08;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.58);
+}
+
+.app__start-overlay p {
+  margin: 0;
+  padding: 10px 18px;
+  border: 1px solid rgba(247, 242, 226, 0.34);
+  border-radius: 8px;
+  background: rgba(8, 9, 12, 0.52);
+  color: rgba(255, 250, 240, 0.84);
+  font-size: clamp(0.92rem, 1.8vw, 1.12rem);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
 }
 
 .app__runtime-error,
