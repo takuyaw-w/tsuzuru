@@ -114,6 +114,7 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const hasAutoStartedRef = useRef(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
@@ -181,6 +182,23 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
   useEffect(() => {
     textReveal.reset();
   }, [presentationKey, textReveal.reset]);
+
+  useEffect(() => {
+    if (hasAutoStartedRef.current) {
+      return;
+    }
+    if (
+      runtime.event !== null ||
+      runtime.visibleEvent !== null ||
+      runtime.blockReason !== null ||
+      runtime.state.isStopped
+    ) {
+      return;
+    }
+
+    hasAutoStartedRef.current = true;
+    runtime.step();
+  }, [runtime.event, runtime.visibleEvent, runtime.blockReason, runtime.state.isStopped, runtime.step]);
 
   useEffect(() => {
     if (runtime.visibleEvent !== null && isMessageEvent(runtime.visibleEvent)) {

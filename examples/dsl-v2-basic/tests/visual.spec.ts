@@ -10,7 +10,6 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
   await page.getByRole("button", { name: "Start" }).click();
 
-  await page.locator(".app__interaction-surface").click();
   const messageWindow = page.locator(".tzr-message-window");
   await expect(messageWindow).toContainText("遅いよ");
 
