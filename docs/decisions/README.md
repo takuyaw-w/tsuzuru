@@ -32,6 +32,12 @@ reintroduced.
 | 0003 | Macro vs Plugin | Accepted |
 | 0004 | Standard Visual Plugin | Accepted |
 | 0005 | Standard Audio Plugin | Accepted |
+| 0006 | Standard UI Preact | Accepted |
+| 0007 | Standard UI Viewport | Accepted |
+| 0008 | Include-based Multi-file Scenario | Accepted |
+| 0008 | Screen Host | Accepted |
+| 0009 | Tsuzuru Project Config | Accepted |
+| 0010 | create-tsuzuru Package | Accepted |
 
 ## Reading Order
 
