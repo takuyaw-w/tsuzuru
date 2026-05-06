@@ -226,6 +226,7 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("");
     expect(harness.getState().isComplete).toBe(false);
+    expect(harness.getState().isRevealing).toBe(true);
   });
 
   it("reveals characters over time", async () => {
@@ -233,9 +234,11 @@ describe("useTextReveal", () => {
 
     await advanceTimersByTime(100);
     expect(harness.getState().visibleText).toBe("a");
+    expect(harness.getState().isRevealing).toBe(true);
 
     await advanceTimersByTime(100);
     expect(harness.getState().visibleText).toBe("ab");
+    expect(harness.getState().isComplete).toBe(false);
   });
 
   it("resets when text changes", async () => {
@@ -247,6 +250,7 @@ describe("useTextReveal", () => {
     await harness.update("xyz", { charactersPerSecond: 10 });
     expect(harness.getState().visibleText).toBe("");
     expect(harness.getState().isComplete).toBe(false);
+    expect(harness.getState().isRevealing).toBe(true);
   });
 
   it("revealAll shows full text", async () => {
@@ -259,6 +263,28 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("abc");
     expect(harness.getState().isComplete).toBe(true);
+    expect(harness.getState().isRevealing).toBe(false);
+  });
+
+  it("revealAll calls onComplete only once", async () => {
+    const onComplete = vi.fn();
+    const harness = await mountReveal("abc", { onComplete });
+
+    act(() => {
+      harness.getState().revealAll();
+    });
+    await flushUpdates();
+
+    act(() => {
+      harness.getState().revealAll();
+    });
+    await flushUpdates();
+
+    expect(harness.getState().visibleText).toBe("abc");
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    await advanceTimersByTime(1000);
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it("reset returns to the initial reveal state", async () => {
@@ -274,6 +300,34 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("");
     expect(harness.getState().isComplete).toBe(false);
+    expect(harness.getState().isRevealing).toBe(true);
+  });
+
+  it("reset resets completion state", async () => {
+    const onComplete = vi.fn();
+    const harness = await mountReveal("ab", { charactersPerSecond: 10, onComplete });
+
+    act(() => {
+      harness.getState().revealAll();
+    });
+    await flushUpdates();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      harness.getState().reset();
+    });
+    await flushUpdates();
+
+    expect(harness.getState().visibleText).toBe("");
+    expect(harness.getState().isComplete).toBe(false);
+    expect(harness.getState().isRevealing).toBe(true);
+
+    await advanceTimersByTime(100);
+    await advanceTimersByTime(100);
+
+    expect(harness.getState().visibleText).toBe("ab");
+    expect(harness.getState().isComplete).toBe(true);
+    expect(onComplete).toHaveBeenCalledTimes(2);
   });
 
   it("shows full text when disabled", async () => {
@@ -281,6 +335,7 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("abc");
     expect(harness.getState().isComplete).toBe(true);
+    expect(harness.getState().isRevealing).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -289,6 +344,7 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("abc");
     expect(harness.getState().isComplete).toBe(true);
+    expect(harness.getState().isRevealing).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -311,6 +367,25 @@ describe("useTextReveal", () => {
 
     expect(harness.getState().visibleText).toBe("ab");
     expect(harness.getState().isComplete).toBe(true);
+    expect(harness.getState().isRevealing).toBe(false);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    await advanceTimersByTime(100);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call onComplete again when revealAll is called after natural completion", async () => {
+    const onComplete = vi.fn();
+    const harness = await mountReveal("ab", { charactersPerSecond: 10, onComplete });
+
+    await advanceTimersByTime(100);
+    await advanceTimersByTime(100);
+    act(() => {
+      harness.getState().revealAll();
+    });
+    await flushUpdates();
+
+    expect(harness.getState().visibleText).toBe("ab");
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 

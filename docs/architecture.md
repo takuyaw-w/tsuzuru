@@ -764,6 +764,12 @@ actual audio playback, voice synchronization, and asset routing remain app or
 plugin responsibilities. Rich text and inline event runtime support remain
 deferred runtime/design topics.
 
+`useTextReveal` exposes `isRevealing`, `isComplete`, `revealAll`, and `reset`
+so UI code can coordinate message advance behavior. A common host policy is:
+while `isRevealing` is true, click/Enter/Space calls `revealAll`; after the text
+is complete, the same input advances the runtime. Core runtime is not involved
+in text reveal timing.
+
 ---
 
 ## Example App Flow
