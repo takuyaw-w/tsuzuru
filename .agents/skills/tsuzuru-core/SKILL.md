@@ -1,275 +1,71 @@
 ---
 name: tsuzuru-core
-description: Use when working on @tsuzuru/core parser, compiler, IR, runtime, diagnostics, macro expansion, plugin command validation, and save/load primitives.
+description: Use when working on @tsuzuru/core parser, compiler, AST, IR, runtime, diagnostics, plugin command validation, and save/load primitives.
 ---
 
 # Tsuzuru Core Skill
 
 ## Purpose
 
-Use this skill when working on `@tsuzuru/core`.
+Use this skill for changes under `packages/core`.
 
-`@tsuzuru/core` owns Tsuzuru's DSL parser, AST, compiler, IR, runtime, command validation, macro expansion, plugin command registry, runtime state, and save/load primitives.
-
-The core package must stay independent from Preact, DOM, Vite, and browser UI concerns.
+Core owns parsing, AST, compiler validation, runtime IR, runtime stepping,
+state, choices, jumps, conditions, command dispatch, diagnostics, and
+snapshot/restore primitives.
 
 ## Read First
 
-Before editing, read:
-
 1. `AGENTS.md`
-2. `TODOS.md`
-3. `packages/core/package.json`
-4. Relevant files under `packages/core/src/`
-5. Relevant tests under `packages/core/tests/`
-6. Relevant docs under `docs/`
+2. `packages/core/package.json`
+3. Relevant files under `packages/core/src`
+4. Relevant tests under `packages/core/tests`
+5. Public exports in `packages/core/src/index.ts` when APIs change
 
-## Scope
+## Current Constraints
 
-This skill applies to:
+- Current DSL implementation lives directly under `packages/core/src`.
+- Use the current public parser/compiler exports from `@tsuzuru/core`.
+- Do not restore deleted DSL implementation directories or deleted APIs.
+- Do not add general-purpose scripting to `.tzr` files.
+- Do not add macro, preset, or stage syntax unless explicitly requested.
+- Do not depend on DOM, Preact, CSS, Vite, browser storage, or examples.
 
-- `packages/core/src/ast.ts`
-- `packages/core/src/parser.ts`
-- `packages/core/src/compiler.ts`
-- `packages/core/src/ir.ts`
-- `packages/core/src/runtime.ts`
-- `packages/core/src/condition.ts`
-- `packages/core/src/macro.ts`
-- `packages/core/src/commands.ts`
-- `packages/core/src/diagnostic.ts`
-- `packages/core/src/index.ts`
-- `packages/core/tests/`
+## Change Guidance
 
-## Core Responsibilities
+- Parser changes need parser tests.
+- Compiler validation changes need compiler tests.
+- Runtime behavior changes need runtime tests.
+- Public export changes must update `packages/core/src/index.ts` and relevant docs/examples.
+- Plugin command validation belongs in core only when it affects command contracts.
+- Keep diagnostics deterministic and source-location aware.
 
-`@tsuzuru/core` owns:
+## Verification
 
-- `.tzr` parsing
-- AST definitions
-- compiler validation
-- IR generation
-- macro expansion
-- plugin command definition and validation
-- core command definitions
-- jump target parsing and validation
-- condition evaluation
-- runtime stepping
-- runtime state
-- choice resolution
-- wait / waitClick / page / stop behavior
-- runtime snapshot creation
-- runtime restoration
-- save/load primitives
-
-## Non-Responsibilities
-
-Do not implement the following in core:
-
-- Preact components
-- DOM operations
-- CSS
-- visual layout
-- message window rendering
-- choice UI rendering
-- browser event handlers
-- localStorage access directly, unless explicitly designed as a core abstraction
-- Vite-specific behavior
-- example-specific behavior
-
-## Design Rules
-
-- `.tzr` is a constrained scenario DSL, not a JavaScript runtime.
-- Scenario files describe narrative flow.
-- Runtime behavior, rendering, plugins, and reusable logic belong in TypeScript.
-- Validate as much as possible at compile time.
-- Runtime should execute already-compiled IR.
-- Keep public APIs explicit and typed.
-- Prefer discriminated unions.
-- Avoid hidden global mutable state.
-- Avoid `any`.
-- Avoid UI-driven changes to core data structures.
-- Keep functions small and testable.
-
-## DSL Safety Rules
-
-Do not allow arbitrary JavaScript or TypeScript in `.tzr`.
-
-Invalid examples:
-
-```txt
-@set(name="score", value=Math.random())
-@bg(name=`school_${time}`)
-@if(calcSomething())
-```
-
-Allowed value types should remain intentionally limited:
-
-- string literals
-- number literals
-- boolean literals
-- explicitly supported identifiers only when necessary
-
-## Macro Rules
-
-Macros are compile-time expansions.
-
-Macros may simplify repetitive presentation commands.
-
-For v0.1, macros must not hide narrative structure.
-
-Avoid allowing macros to generate:
-
-- `@if`
-- `@else`
-- `@endif`
-- `@jump`
-- `#scene`
-- `#label`
-- choices
-
-Macro calls should not remain in runtime IR after compilation.
-
-## Plugin Command Rules
-
-Plugin commands extend runtime behavior, but they must not own core flow control.
-
-Plugin-owned examples:
-
-```txt
-@bg("school_evening")
-@bgm("daily")
-@se("door")
-@show(character="haruka", pose="smile", at="center")
-@hide(character="haruka")
-@transition("fade", duration=300)
-@shake(target="screen", duration=300)
-```
-
-Core-owned commands:
-
-```txt
-@jump(...)
-@if(...)
-@else
-@endif
-@set(...)
-@inc(...)
-@dec(...)
-@flag(...)
-@unflag(...)
-@waitClick()
-@page()
-@stop()
-@wait(...)
-```
-
-Unknown commands should be compile-time errors unless registered as plugin commands.
-
-## Runtime Rules
-
-Runtime should:
-
-- step through compiled IR
-- emit runtime events
-- update runtime state predictably
-- handle choices through explicit choice resolution
-- handle waits through explicit blocked states
-- support snapshot and restore
-- avoid direct UI assumptions
-
-Runtime should not:
-
-- render UI
-- access DOM
-- call Preact hooks
-- depend on browser-specific APIs
-- parse raw `.tzr` source during execution
-
-## Error and Diagnostic Rules
-
-Compiler diagnostics should include as much as possible:
-
-- file path
-- line number
-- column number when available
-- offending source line when available
-- clear error message
-- suggestion when practical
-
-Example style:
-
-```txt
-scenario/main.tzr:24:8
-Unknown label "#after_chioce".
-
-Did you mean "#after_choice"?
-```
-
-## Testing Requirements
-
-When behavior changes, add or update tests.
-
-Prioritize tests for:
-
-- parser behavior
-- compiler validation
-- invalid DSL diagnostics
-- macro expansion
-- plugin command validation
-- jump target validation
-- condition evaluation
-- runtime stepping
-- choice resolution
-- wait / waitClick / page / stop behavior
-- snapshot / restore
-
-## Commands
-
-Run focused checks first:
+For core-only changes:
 
 ```sh
-pnpm --filter @tsuzuru/core test
-pnpm --filter @tsuzuru/core typecheck
+rtk pnpm --filter @tsuzuru/core test
+rtk pnpm --filter @tsuzuru/core typecheck
+rtk pnpm format:check
+rtk pnpm lint
+rtk pnpm check
+rtk git diff --check
 ```
 
-When relevant, also run:
+When public API, runtime document shape, or examples are affected:
 
 ```sh
-pnpm --filter @tsuzuru/core build
-pnpm test
-pnpm typecheck
+rtk pnpm test
+rtk pnpm typecheck
+rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
 ```
 
-## Completion Criteria
+## Final Report
 
-A task is complete only when:
+Include:
 
-- The requested behavior is implemented.
-- Relevant tests are added or updated.
-- `pnpm --filter @tsuzuru/core test` passes.
-- `pnpm --filter @tsuzuru/core typecheck` passes.
-- Public API changes are reflected in `packages/core/src/index.ts`.
-- Public behavior changes are reflected in docs.
-- Completed TODO items are checked in `TODOS.md`.
-- The final report lists changed files, executed commands, results, and remaining concerns.
-
-## Final Report Format
-
-Use this format:
-
-```txt
-実施内容:
-- ...
-
-確認:
-- pnpm --filter @tsuzuru/core test: pass
-- pnpm --filter @tsuzuru/core typecheck: pass
-
-更新したTODO:
-- ...
-
-未対応 / 懸念:
-- ...
-```
-
-Keep the report short.
+- parser/compiler/runtime areas touched
+- tests added or updated
+- public API impact
+- commands run and results
+- remaining diagnostics or risks
