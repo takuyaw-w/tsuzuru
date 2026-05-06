@@ -11,9 +11,11 @@ them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
 editing. Title, load, settings, backlog, and gallery UI belong in `src/screens`.
 
-`tsuzuru.config.ts` is a typed project config example for future create-tsuzuru
-and tooling work. It is not loaded automatically yet; scenario files are still
-collected by `src/scenario.ts`.
+`tsuzuru.config.ts` is consumed by the first CLI command, `tsuzuru check`.
+The command reads `scenario.entry`, expands `scenario.files`, loads the matched
+`.tzr` files, and validates the scenario project with `compileTzrProject`.
+`dev`, `build`, Vite integration, and create-tsuzuru wiring remain future work;
+the running example still collects scenario files through `src/scenario.ts`.
 
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 
@@ -28,6 +30,7 @@ Controls:
 
 ```sh
 pnpm --filter @tsuzuru/example-dsl-v2-basic dev
+pnpm --filter @tsuzuru/example-dsl-v2-basic check:scenario
 pnpm --filter @tsuzuru/example-dsl-v2-basic build
 pnpm --filter @tsuzuru/example-dsl-v2-basic test:ui
 ```
