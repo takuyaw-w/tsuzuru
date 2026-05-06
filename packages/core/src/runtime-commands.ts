@@ -12,8 +12,8 @@ import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult } from "./runt
 export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 
 export function stepCommandInstruction(
-  document: RuntimeDocument,
-  state: RuntimeState,
+  _document: RuntimeDocument,
+  _state: RuntimeState,
   nextState: RuntimeState,
   instruction: CommandInstruction,
   options: RuntimeStepOptions,

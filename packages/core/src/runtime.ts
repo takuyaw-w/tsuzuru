@@ -172,7 +172,7 @@ function stepSceneJumpInstruction(
   };
 }
 
-export function resolveChoice(document: RuntimeDocument, state: RuntimeState, itemIndex: number): RuntimeStepResult {
+export function resolveChoice(_document: RuntimeDocument, state: RuntimeState, itemIndex: number): RuntimeStepResult {
   if (state.pendingChoice === null) {
     return runtimeError(state, "choice_not_pending", "Cannot resolve a choice because no choice is pending.");
   }
