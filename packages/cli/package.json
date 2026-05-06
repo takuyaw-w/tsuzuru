@@ -44,8 +44,8 @@
     "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tsuzuru/config": "workspace:*",
-    "@tsuzuru/core": "workspace:*",
+    "@tsuzuru/config": "workspace:^",
+    "@tsuzuru/core": "workspace:^",
     "jiti": "^2.7.0",
     "tinyglobby": "^0.2.16"
   },

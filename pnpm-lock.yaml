@@ -73,10 +73,10 @@ importers:
   packages/cli:
     dependencies:
       '@tsuzuru/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config
       '@tsuzuru/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       jiti:
         specifier: ^2.7.0
@@ -128,7 +128,7 @@ importers:
   packages/plugin-std-audio:
     dependencies:
       '@tsuzuru/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       typescript:
@@ -141,7 +141,7 @@ importers:
   packages/plugin-std-visual:
     dependencies:
       '@tsuzuru/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       typescript:
@@ -154,7 +154,7 @@ importers:
   packages/preact:
     dependencies:
       '@tsuzuru/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       preact:
@@ -170,7 +170,7 @@ importers:
   packages/standard-ui-preact:
     dependencies:
       '@tsuzuru/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       preact:

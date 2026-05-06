@@ -38,7 +38,7 @@
     "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tsuzuru/core": "workspace:*"
+    "@tsuzuru/core": "workspace:^"
   },
   "devDependencies": {
     "typescript": "catalog:",
