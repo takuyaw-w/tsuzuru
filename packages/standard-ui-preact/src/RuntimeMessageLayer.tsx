@@ -1,7 +1,7 @@
 import type { RuntimeEvent, RuntimeValue } from "@tsuzuru/core";
 import type { ComponentChildren } from "preact";
 import { ChoiceLayer } from "./ChoiceLayer.js";
-import { MessageWindow } from "./MessageWindow.js";
+import { MessageWindow, type MessageWindowRenderLine } from "./MessageWindow.js";
 import { StatusLayer } from "./StatusLayer.js";
 
 export interface RuntimeMessageLayerProps {
@@ -9,6 +9,7 @@ export interface RuntimeMessageLayerProps {
   readonly onChoice?: (itemIndex: number) => void;
   readonly onAdvance?: () => void;
   readonly onContinue?: () => void;
+  readonly renderMessageLine?: MessageWindowRenderLine;
   readonly canAdvance?: boolean;
   readonly showTransientStatus?: boolean;
   readonly advanceHint?: string;
@@ -21,6 +22,7 @@ export function RuntimeMessageLayer({
   onChoice,
   onAdvance,
   onContinue,
+  renderMessageLine,
   canAdvance,
   showTransientStatus = false,
   advanceHint,
@@ -32,6 +34,7 @@ export function RuntimeMessageLayer({
       return (
         <MessageWindow
           lines={event.lines.map((line) => line.text)}
+          {...(renderMessageLine !== undefined ? { renderLine: renderMessageLine } : {})}
           {...(onAdvance !== undefined ? { onAdvance } : {})}
           {...(canAdvance !== undefined ? { canAdvance } : {})}
           {...(advanceHint !== undefined ? { advanceHint } : {})}
@@ -43,6 +46,7 @@ export function RuntimeMessageLayer({
         <MessageWindow
           speaker={event.speaker}
           lines={event.lines.map((line) => line.text)}
+          {...(renderMessageLine !== undefined ? { renderLine: renderMessageLine } : {})}
           {...(onAdvance !== undefined ? { onAdvance } : {})}
           {...(canAdvance !== undefined ? { canAdvance } : {})}
           {...(advanceHint !== undefined ? { advanceHint } : {})}

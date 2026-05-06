@@ -5,9 +5,17 @@ type DivProps = ComponentProps<"div">;
 type AdvanceableDivProps = Pick<DivProps, "onClick" | "onKeyDown" | "role" | "tabIndex">;
 type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
 
+export interface MessageWindowRenderLineContext {
+  readonly line: string;
+  readonly lineIndex: number;
+}
+
+export type MessageWindowRenderLine = (context: MessageWindowRenderLineContext) => ComponentChildren;
+
 export interface MessageWindowProps {
   readonly speaker?: string;
   readonly lines: readonly string[];
+  readonly renderLine?: MessageWindowRenderLine;
   readonly onAdvance?: () => void;
   readonly canAdvance?: boolean;
   readonly advanceHint?: string;
@@ -17,6 +25,7 @@ export interface MessageWindowProps {
 export function MessageWindow({
   speaker,
   lines,
+  renderLine,
   onAdvance,
   canAdvance = false,
   advanceHint = "Click to continue",
@@ -51,7 +60,7 @@ export function MessageWindow({
       <div className="tzr-message-window__lines">
         {lines.map((line, index) => (
           <p className="tzr-message-window__line" key={index}>
-            {line}
+            {renderLine === undefined ? line : renderLine({ line, lineIndex: index })}
           </p>
         ))}
       </div>

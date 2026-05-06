@@ -15,7 +15,13 @@ import {
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { isAutoSteppableRuntimeEvent } from "@tsuzuru/preact";
-import { GameShell, GameViewport, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
+import {
+  GameShell,
+  GameViewport,
+  type MessageWindowRenderLineContext,
+  RuntimeMessageLayer,
+  useTextReveal,
+} from "@tsuzuru/standard-ui-preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
@@ -79,6 +85,10 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     (visibleEvent?.type === "narration" || visibleEvent?.type === "dialogue") &&
     getRuntimeBlockReason(state) === null &&
     !state.isStopped;
+  const renderMessageLine = useCallback(
+    ({ line }: MessageWindowRenderLineContext) => <ExampleTextRevealLine text={line} />,
+    [],
+  );
 
   const applyRunResult = (result: RuntimeRunResult) => {
     setState(result.state);
@@ -139,6 +149,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
                 event={visibleEvent}
                 onChoice={choose}
                 onAdvance={step}
+                renderMessageLine={renderMessageLine}
                 canAdvance={canAdvanceText}
                 showTransientStatus
               />
@@ -169,6 +180,11 @@ function RuntimeApp({ document }: RuntimeAppProps) {
       )}
     </main>
   );
+}
+
+function ExampleTextRevealLine({ text }: { readonly text: string }) {
+  const reveal = useTextReveal(text, { charactersPerSecond: 60 });
+  return <span>{reveal.visibleText}</span>;
 }
 
 function runUntilVisible(

@@ -741,6 +741,7 @@ The standard UI package should:
 - consume runtime-facing data
 - render message and choice components
 - provide layout primitives
+- provide UI-level message presentation extension points
 - remain replaceable
 - avoid owning scenario semantics
 
@@ -751,6 +752,17 @@ The standard UI package should not:
 - step runtime state
 - mutate plugin state directly
 - define DSL semantics
+
+`MessageWindow` supports custom line rendering through `renderLine`, and
+`RuntimeMessageLayer` can pass that renderer to narration and dialogue through
+`renderMessageLine`. These hooks affect only message presentation; choices,
+status events, runtime stepping, and scenario semantics stay unchanged.
+
+`useTextReveal` is a standard UI hook for UI-level character reveal. A host can
+use `onCharacterReveal` to trigger a pop sound or other presentation effect, but
+actual audio playback, voice synchronization, and asset routing remain app or
+plugin responsibilities. Rich text and inline event runtime support remain
+deferred runtime/design topics.
 
 ---
 
