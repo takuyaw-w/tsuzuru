@@ -21,7 +21,7 @@ pnpm --filter @tsuzuru/example-dsl-v2-basic build
 pnpm --filter @tsuzuru/example-dsl-v2-basic test:ui
 ```
 
-The UI check uses Playwright to start the example dev server, capture a title-scene screenshot under `test-results`, and run a short click-through smoke check.
+The UI check uses Playwright to start the example dev server at `http://127.0.0.1:5173/`, capture a title-scene screenshot under `test-results`, and run a short click-through smoke check.
 If Chromium has not been installed for Playwright yet, run:
 
 ```sh
