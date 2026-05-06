@@ -1,5 +1,6 @@
 import {
   type CompiledTzrDocument,
+  clearWait,
   compileTzr,
   createInitialRuntimeState,
   getRuntimeBlockReason,
@@ -14,7 +15,7 @@ import {
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { isAutoSteppableRuntimeEvent } from "@tsuzuru/preact";
+import { getRenderableRuntimeEvent, isAutoSteppableRuntimeEvent } from "@tsuzuru/preact";
 import {
   GameShell,
   GameViewport,
@@ -22,7 +23,7 @@ import {
   RuntimeMessageLayer,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
-import { useCallback, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
 import { VisualLayer } from "./VisualLayer.js";
@@ -86,14 +87,27 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     getRuntimeBlockReason(state) === null &&
     !state.isStopped;
 
-  const applyRunResult = (result: RuntimeRunResult) => {
+  const applyRunResult = useCallback((result: RuntimeRunResult) => {
     setState(result.state);
     setEvent(result.event);
     setAutoStepError(result.autoStepError);
     if (result.visibleEvent !== null) {
       setVisibleEvent(result.visibleEvent);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const renderableEvent = event === null ? null : getRenderableRuntimeEvent(event);
+    if (renderableEvent?.type !== "wait" || state.pendingWait === null) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      applyRunResult(runUntilVisible(document, clearWait(state), stepOptions));
+    }, state.pendingWait.durationMs);
+
+    return () => window.clearTimeout(timer);
+  }, [applyRunResult, document, event, state, stepOptions]);
 
   const step = () => {
     if (getRuntimeBlockReason(state) !== null || state.isStopped) {
@@ -147,7 +161,6 @@ function RuntimeApp({ document }: RuntimeAppProps) {
                 onChoice={choose}
                 onStep={step}
                 canAdvance={canAdvanceText}
-                showTransientStatus
               />
             )}
           </div>
@@ -183,16 +196,9 @@ interface RevealRuntimeMessageLayerProps {
   readonly onChoice: (itemIndex: number) => void;
   readonly onStep: () => void;
   readonly canAdvance: boolean;
-  readonly showTransientStatus: boolean;
 }
 
-function RevealRuntimeMessageLayer({
-  event,
-  onChoice,
-  onStep,
-  canAdvance,
-  showTransientStatus,
-}: RevealRuntimeMessageLayerProps) {
+function RevealRuntimeMessageLayer({ event, onChoice, onStep, canAdvance }: RevealRuntimeMessageLayerProps) {
   const messageLines = useMemo(() => getMessageLines(event), [event]);
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
@@ -225,7 +231,6 @@ function RevealRuntimeMessageLayer({
       onAdvance={handleAdvanceRequest}
       renderMessageLine={messageLines === null ? undefined : renderMessageLine}
       canAdvance={canAdvance}
-      showTransientStatus={showTransientStatus}
     />
   );
 }
@@ -280,11 +285,21 @@ function runUntilVisible(
     state = result.state;
     event = result.event;
 
-    if (!isAutoSteppableRuntimeEvent(event) || getRuntimeBlockReason(state) !== null || state.isStopped) {
+    const blockReason = getRuntimeBlockReason(state);
+    if (blockReason === "wait") {
       return {
         state,
         event,
-        visibleEvent: event,
+        visibleEvent: null,
+        autoStepError: null,
+      };
+    }
+
+    if (!isAutoSteppableRuntimeEvent(event) || blockReason !== null || state.isStopped) {
+      return {
+        state,
+        event,
+        visibleEvent: getRenderableRuntimeEvent(event),
         autoStepError: null,
       };
     }
@@ -293,7 +308,7 @@ function runUntilVisible(
   return {
     state,
     event,
-    visibleEvent: event,
+    visibleEvent: event === null ? null : getRenderableRuntimeEvent(event),
     autoStepError: `Auto-step stopped after ${AUTO_STEP_MAX_STEPS} consecutive runtime events.`,
   };
 }
