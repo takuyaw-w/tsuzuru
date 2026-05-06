@@ -10,6 +10,7 @@ import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/pl
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
+  ChoiceLayer,
   GameShell,
   GameViewport,
   type MessageWindowRenderLineContext,
@@ -63,6 +64,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const presentationKey = useVisibleEventPresentationKey(runtime.visibleEvent);
   const currentRenderableEvent = runtime.event === null ? null : getRenderableRuntimeEvent(runtime.event);
   const messageLines = useMemo(
@@ -82,6 +84,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     !runtime.state.isStopped;
   const canStart =
     runtime.visibleEvent === null && runtime.event === null && runtime.blockReason === null && !runtime.state.isStopped;
+  const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
   const handleAdvanceRequest = useCallback(() => {
     if (messageLines !== null) {
       if (textReveal.isRevealing) {
@@ -124,6 +127,12 @@ function RuntimeApp({ document }: RuntimeAppProps) {
   }, [presentationKey, textReveal.reset]);
 
   useEffect(() => {
+    if (runtime.visibleEvent !== null && isMessageEvent(runtime.visibleEvent)) {
+      setLastMessageEvent(runtime.visibleEvent);
+    }
+  }, [runtime.visibleEvent]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isKeyboardHandledTarget(event.target)) {
         return;
@@ -149,13 +158,29 @@ function RuntimeApp({ document }: RuntimeAppProps) {
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
             <div className="app__message-layer">
-              {runtime.visibleEvent === null ? (
-                <p className="app__placeholder">Click to start</p>
-              ) : (
+              {canStart ? (
+                <StartOverlay title={formatStartTitle(document.metadata.title)} />
+              ) : choiceEvent !== null ? (
+                <>
+                  <ChoiceLayer
+                    className="app__choice-layer"
+                    question={choiceEvent.question}
+                    choices={choiceEvent.items.map((item) => ({ text: item.text }))}
+                    onChoice={runtime.choose}
+                  />
+                  {lastMessageEvent === null ? null : (
+                    <RuntimeMessageLayer
+                      key={getRuntimeEventTextKey(lastMessageEvent)}
+                      className="app__retained-message"
+                      event={lastMessageEvent}
+                      canAdvance={false}
+                    />
+                  )}
+                </>
+              ) : runtime.visibleEvent === null ? null : (
                 <RuntimeMessageLayer
                   key={presentationKey}
                   event={runtime.visibleEvent}
-                  onChoice={runtime.choose}
                   onAdvance={handleAdvanceRequest}
                   {...(messageLines === null ? {} : { renderMessageLine })}
                   canAdvance={canAdvanceText}
@@ -175,6 +200,22 @@ function RuntimeApp({ document }: RuntimeAppProps) {
       )}
     </main>
   );
+}
+
+function StartOverlay({ title }: { readonly title: string }) {
+  return (
+    <div className="app__start-overlay" aria-label="start screen">
+      <h1>{title}</h1>
+      <p>Click / Enter / Space to Start</p>
+    </div>
+  );
+}
+
+function formatStartTitle(title: string | undefined): string {
+  if (title === undefined || title.startsWith("Tsuzuru ")) {
+    return title ?? "Tsuzuru DSL v2 Basic";
+  }
+  return `Tsuzuru ${title}`;
 }
 
 function useVisibleEventPresentationKey(event: RuntimeEvent | null): string {
@@ -212,8 +253,14 @@ function isKeyboardHandledTarget(target: EventTarget | null): boolean {
   );
 }
 
+function isMessageEvent(
+  event: RuntimeEvent,
+): event is Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }> {
+  return event.type === "narration" || event.type === "dialogue";
+}
+
 function getMessageLines(event: RuntimeEvent): readonly string[] | null {
-  if (event.type !== "narration" && event.type !== "dialogue") {
+  if (!isMessageEvent(event)) {
     return null;
   }
   return event.lines.map((line) => line.text);
