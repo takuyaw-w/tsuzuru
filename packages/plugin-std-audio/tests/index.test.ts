@@ -218,7 +218,6 @@ function createDocument(instructions: readonly CommandInstruction[] = []): Runti
   return {
     filePath: "scenario/std-audio.tzr",
     instructions,
-    labels: {},
     scenes: {},
   };
 }

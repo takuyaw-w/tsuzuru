@@ -10,7 +10,7 @@ import {
 } from "@tsuzuru/core";
 
 export interface RuntimeSaveData {
-  readonly version: 1;
+  readonly version: 2;
   readonly snapshot: RuntimeSnapshot;
   readonly event: RuntimeEvent | null;
 }
@@ -42,19 +42,19 @@ export function restoreRuntimeSnapshotForView(
 
 export function createRuntimeSaveData(snapshot: RuntimeSnapshot, event: RuntimeEvent | null): RuntimeSaveData {
   return {
-    version: 1,
+    version: 2,
     snapshot,
     event,
   };
 }
 
 export function isRuntimeSaveData(value: unknown): value is RuntimeSaveData {
-  if (!isObjectRecord(value) || value.version !== 1 || !isObjectRecord(value.snapshot)) {
+  if (!isObjectRecord(value) || value.version !== 2 || !isObjectRecord(value.snapshot)) {
     return false;
   }
 
   const snapshot = value.snapshot;
-  if (snapshot.version !== 1 || !isObjectRecord(snapshot.pointer)) {
+  if (snapshot.version !== 2 || !isObjectRecord(snapshot.pointer)) {
     return false;
   }
 

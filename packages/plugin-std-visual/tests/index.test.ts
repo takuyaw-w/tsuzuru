@@ -327,7 +327,6 @@ function createDocument(instructions: readonly CommandInstruction[] = []): Runti
   return {
     filePath: "scenario/std-visual.tzr",
     instructions,
-    labels: {},
     scenes: {},
   };
 }

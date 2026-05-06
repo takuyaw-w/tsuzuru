@@ -81,6 +81,5 @@ export interface DeclarationIndexEntry {
 export interface RuntimeDocument {
   readonly filePath: string;
   readonly instructions: readonly TzrInstruction[];
-  readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
-  readonly scenes?: Readonly<Record<string, DeclarationIndexEntry>>;
+  readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }

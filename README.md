@@ -313,7 +313,7 @@ v0.1 では、以下を目標にします。
 - cloud save
 - save data compatibility guarantees across scenario/runtime changes
 
-v0.1 の save/load は example での確認用です。`RuntimeSaveData` は scenario identity、scenario version、migration metadata を含まず、scenario や runtime/event shape が変わった後の互換性は保証しません。
+v0.x の save/load は example での確認用です。`RuntimeSaveData` は scenario identity、scenario version、migration metadata を含まず、scenario や runtime/event shape が変わった後の互換性は保証しません。
 
 ## Codex / Agent 運用
 

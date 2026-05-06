@@ -16,8 +16,6 @@ export type RuntimeValue = string | number | boolean | null;
 
 export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
-export type RuntimeFlags = Readonly<Record<string, boolean>>;
-
 export type RuntimePluginStates = Readonly<Record<string, unknown>>;
 
 export interface RuntimePluginDefinition<TState = unknown> {
@@ -54,7 +52,6 @@ export interface RuntimePendingWait {
 export interface RuntimeState {
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
-  readonly flags: RuntimeFlags;
   readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
@@ -64,10 +61,9 @@ export interface RuntimeState {
 }
 
 export interface RuntimeSnapshot {
-  readonly version: 1;
+  readonly version: 2;
   readonly pointer: RuntimePointer;
   readonly variables: RuntimeVariables;
-  readonly flags: RuntimeFlags;
   readonly plugins: RuntimePluginStates;
   readonly branchFrames: readonly RuntimeBranchFrame[];
   readonly pendingChoice: RuntimePendingChoice | null;
@@ -149,7 +145,7 @@ export interface StopRuntimeEvent {
   readonly type: "stop";
 }
 
-export type StateCommandName = "set" | "add" | "inc" | "dec" | "flag" | "unflag";
+export type StateCommandName = "set" | "add";
 
 export interface StateRuntimeEvent {
   readonly type: "state";

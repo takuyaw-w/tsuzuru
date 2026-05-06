@@ -74,7 +74,6 @@ export interface CompiledTzrDocument extends RuntimeDocument {
   readonly type: "CompiledTzrDocument";
   readonly source: TzrDocument;
   readonly metadata: TzrDocumentMetadata;
-  readonly labels: Readonly<Record<string, DeclarationIndexEntry>>;
   readonly scenes: Readonly<Record<string, DeclarationIndexEntry>>;
 }
 
@@ -335,7 +334,6 @@ class TzrCompiler {
       source: this.document,
       metadata: this.buildMetadata(),
       instructions,
-      labels: {},
       scenes: buildSceneIndexes(instructions),
     };
   }

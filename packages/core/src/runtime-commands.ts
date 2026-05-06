@@ -1,12 +1,6 @@
 import { isCoreCommandName } from "./commands.js";
 import type { CommandInstruction, RuntimeDocument } from "./ir.js";
-import {
-  getNamedNumber,
-  getNamedRuntimeValue,
-  getNamedString,
-  getPositionalNumber,
-  getPositionalString,
-} from "./runtime-args.js";
+import { getNamedNumber, getNamedRuntimeValue, getNamedString, getPositionalNumber } from "./runtime-args.js";
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult, RuntimeValue } from "./runtime-types.js";
 
 export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
@@ -142,45 +136,6 @@ export function stepCommandInstruction(
         },
       },
       event: { type: "state", command: "set", name: variableName, value },
-    };
-  }
-
-  if (name === "inc" || name === "dec") {
-    const variableName = getNamedString(args, "name");
-    const by = getNamedNumber(args, "by");
-    if (variableName === undefined || by === undefined) {
-      return unsupportedCommand(nextState);
-    }
-    const current = nextState.variables[variableName];
-    const currentNumber = typeof current === "number" ? current : 0;
-    const value = name === "inc" ? currentNumber + by : currentNumber - by;
-    return {
-      state: {
-        ...nextState,
-        variables: {
-          ...nextState.variables,
-          [variableName]: value,
-        },
-      },
-      event: { type: "state", command: name, name: variableName, value },
-    };
-  }
-
-  if (name === "flag" || name === "unflag") {
-    const flagName = getPositionalString(args, 0);
-    if (flagName === undefined) {
-      return unsupportedCommand(nextState);
-    }
-    const value = name === "flag";
-    return {
-      state: {
-        ...nextState,
-        flags: {
-          ...nextState.flags,
-          [flagName]: value,
-        },
-      },
-      event: { type: "state", command: name, name: flagName, value },
     };
   }
 
