@@ -203,12 +203,13 @@ function runUntilVisible(
 }
 
 function compileScenario(source: string): DocumentResult {
+  const plugins = [createStdVisualPlugin(), createStdAudioPlugin()];
   const parsed = parseTzr(source, { filePath: "examples/dsl-v2-basic/scenario/main.tzr" });
   if (!parsed.ok) {
     return { ok: false, message: formatDiagnostics(parsed.errors) };
   }
 
-  const compiled = compileTzr(parsed.document);
+  const compiled = compileTzr(parsed.document, { plugins });
   if (!compiled.ok) {
     return { ok: false, message: formatDiagnostics(compiled.errors) };
   }

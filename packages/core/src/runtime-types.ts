@@ -1,5 +1,6 @@
 import type { TextLine } from "./ast.js";
 import type { CommandInstruction, TzrInstruction } from "./ir.js";
+import type { PluginCommandMap } from "./plugin-command.js";
 
 export interface RuntimePointer {
   readonly filePath: string;
@@ -21,6 +22,7 @@ export type RuntimePluginStates = Readonly<Record<string, unknown>>;
 
 export interface RuntimePluginDefinition<TState = unknown> {
   readonly name: string;
+  readonly commands?: PluginCommandMap;
   readonly createInitialState: () => TState;
 }
 

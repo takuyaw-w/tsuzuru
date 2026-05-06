@@ -32,9 +32,9 @@ The following legacy-only items were removed during the DSL v2 cleanup:
 - legacy example source packages
 - the old `packages/core/src/dsl-v2/` internal directory layout
 
-The legacy compiler `pluginCommands` validation path is also gone.
-`definePluginCommand` and std plugin command maps remain as metadata/runtime
-integration points. DSL v2 plugin command validation policy is still undecided.
+The legacy compiler `pluginCommands` validation path is also gone. DSL v2 now
+has a minimal plugin command validation foundation through
+`compileTzr(document, { plugins })` and `compileTzr(document, { pluginCommands })`.
 
 ## Dead File Audit Result
 
@@ -97,7 +97,7 @@ current behavior.
 
 ## Remaining PR-Ready Tasks
 
-- Decide DSL v2 plugin command validation policy.
+- Expand DSL v2 plugin command validation only through explicit design tasks.
 - Decide whether `RuntimeDocument.labels` should be removed or made optional.
 - Decide whether `RuntimeState.flags` and `inc` / `dec` / `flag` / `unflag`
   remain long-term runtime primitives.

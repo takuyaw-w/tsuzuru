@@ -685,11 +685,25 @@ The command handler updates runtime state. It does not render or load assets.
 
 ## Plugin Validation Policy
 
-Generic plugin command validation policy is still deferred.
+Plugin command validation has a minimal compiler foundation.
 
-Current architecture keeps plugin command metadata and runtime dispatch infrastructure, but new validation framework work should be handled as an explicit design task.
+Plugins may expose command metadata through the same plugin definition object used for runtime state initialization. `compileTzr(document, { plugins })` or `compileTzr(document, { pluginCommands })` can then validate emitted plugin command names and basic argument shapes before runtime execution.
 
-Do not introduce broad plugin validation behavior during unrelated parser, compiler, runtime, docs, or formatting tasks.
+When validation metadata is present, every emitted non-core command is checked against that registry. Scenarios using std visual/audio commands must include the std plugin definitions at compile time. If no metadata is provided, std visual/audio sugar keeps the existing compatibility behavior and compiles without metadata validation.
+
+`call namespace.command(...)` is the current custom plugin command authoring surface under metadata validation. It is not runtime call/return control flow.
+
+The current validation scope is intentionally small:
+
+- unknown plugin commands
+- required / optional positional args
+- required / optional named args
+- unsupported named args
+- basic string / number / boolean / identifier value types
+- fixed allowed values such as std visual positions
+- duplicate command metadata
+
+Renderer-specific checks remain out of scope. Asset path resolution, asset file existence, playback behavior, and cross-command validation belong to apps, renderers, or future explicit design work.
 
 ---
 
@@ -859,10 +873,10 @@ They should not become:
 
 The following topics are intentionally deferred:
 
-- plugin command validation policy
+- complex plugin command schemas
 - `RuntimeDocument.labels` removal or retention
 - `RuntimeState.flags` and low-level state command policy
-- `call` / `return` runtime semantics
+- broader `call` / `return` runtime semantics
 - `wait` runtime authoring support
 - clear visual commands
 - coordinate placement

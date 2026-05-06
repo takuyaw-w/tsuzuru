@@ -1,4 +1,5 @@
 import type { SourceLocation, SourceRange, TextLine, TzrArgument, TzrValue } from "./ast.js";
+import { isCoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 import type {
   BodyChoiceInstruction,
@@ -14,11 +15,15 @@ import type {
   SceneJumpInstruction,
   TzrInstruction,
 } from "./ir.js";
+import type { PluginCommandDefinition, PluginCommandMap } from "./plugin-command.js";
+import { validatePluginCommandArguments } from "./plugin-command.js";
 import type {
   TzrAddStatement,
+  TzrArgumentValue,
   TzrAudioAssetRef,
   TzrBgmStatement,
   TzrBgStatement,
+  TzrCallStatement,
   TzrCharacterDeclaration,
   TzrChoiceItem,
   TzrChoiceStatement,
@@ -28,6 +33,7 @@ import type {
   TzrDocument,
   TzrHideStatement,
   TzrIfStatement,
+  TzrNamedArgument,
   TzrNarrationStatement,
   TzrSceneDeclaration,
   TzrSceneStatement,
@@ -46,7 +52,17 @@ import type {
 
 const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 
-export interface TzrCompileOptions {}
+export interface TzrCompilePluginDefinition {
+  readonly name: string;
+  readonly commands?: PluginCommandMap;
+}
+
+export type TzrCompilePluginCommandInput = PluginCommandMap | readonly PluginCommandDefinition[];
+
+export interface TzrCompileOptions {
+  readonly plugins?: readonly TzrCompilePluginDefinition[];
+  readonly pluginCommands?: TzrCompilePluginCommandInput;
+}
 
 export type TzrCompileResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument; readonly errors: readonly [] }
@@ -78,18 +94,24 @@ export interface TzrCompiledSceneMetadata {
   readonly loc: SourceRange;
 }
 
-export function compileTzr(document: TzrDocument, _options: TzrCompileOptions = {}): TzrCompileResult {
-  const compiler = new TzrCompiler(document);
+export function compileTzr(document: TzrDocument, options: TzrCompileOptions = {}): TzrCompileResult {
+  const compiler = new TzrCompiler(document, options);
   return compiler.compile();
 }
 
 class TzrCompiler {
   private readonly errors: Diagnostic[] = [];
+  private readonly pluginCommands: ReadonlyMap<string, PluginCommandDefinition> | undefined;
   private title: TzrTitleDeclaration | undefined;
   private readonly characters = new Map<string, TzrCharacterDeclaration>();
   private readonly scenes = new Map<string, TzrSceneDeclaration>();
 
-  public constructor(private readonly document: TzrDocument) {}
+  public constructor(
+    private readonly document: TzrDocument,
+    options: TzrCompileOptions,
+  ) {
+    this.pluginCommands = this.collectPluginCommandDefinitions(options);
+  }
 
   public compile(): TzrCompileResult {
     this.collectTopLevelDeclarations();
@@ -97,6 +119,7 @@ class TzrCompiler {
     this.validateSceneBodies();
 
     const compiled = this.buildCompiledDocument();
+    this.validateCompiledPluginCommands(compiled.instructions);
 
     if (this.errors.length > 0) {
       return { ok: false, errors: this.errors };
@@ -150,6 +173,64 @@ class TzrCompiler {
     }
 
     this.scenes.set(scene.id, scene);
+  }
+
+  private collectPluginCommandDefinitions(
+    options: TzrCompileOptions,
+  ): ReadonlyMap<string, PluginCommandDefinition> | undefined {
+    const registry = new Map<string, PluginCommandDefinition>();
+    let enabled = options.pluginCommands !== undefined;
+
+    if (options.pluginCommands !== undefined) {
+      this.collectPluginCommandInput(registry, options.pluginCommands);
+    }
+
+    for (const plugin of options.plugins ?? []) {
+      if (plugin.commands === undefined) {
+        continue;
+      }
+      enabled = true;
+      this.collectPluginCommandInput(registry, plugin.commands);
+    }
+
+    return enabled ? registry : undefined;
+  }
+
+  private collectPluginCommandInput(
+    registry: Map<string, PluginCommandDefinition>,
+    input: TzrCompilePluginCommandInput,
+  ): void {
+    if (Array.isArray(input)) {
+      for (const command of input) {
+        this.collectPluginCommandDefinition(registry, command.name, command);
+      }
+      return;
+    }
+
+    for (const [key, command] of Object.entries(input)) {
+      this.collectPluginCommandDefinition(registry, key, command);
+    }
+  }
+
+  private collectPluginCommandDefinition(
+    registry: Map<string, PluginCommandDefinition>,
+    key: string,
+    command: PluginCommandDefinition,
+  ): void {
+    if (key !== command.name) {
+      this.addError(
+        this.documentStartLocation(),
+        `Plugin command metadata key "${key}" must match command name "${command.name}".`,
+      );
+      return;
+    }
+
+    if (registry.has(command.name)) {
+      this.addError(this.documentStartLocation(), `Duplicate plugin command metadata for "${command.name}".`);
+      return;
+    }
+
+    registry.set(command.name, command);
   }
 
   private validateScenePresence(): void {
@@ -301,6 +382,13 @@ class TzrCompiler {
         case "AddStatement":
           instructions.push(this.buildAddInstruction(statement));
           break;
+        case "CallStatement": {
+          const instruction = this.buildCallInstruction(statement);
+          if (instruction !== undefined) {
+            instructions.push(instruction);
+          }
+          break;
+        }
         case "BgStatement":
           instructions.push(...this.buildBgInstruction(statement));
           break;
@@ -442,6 +530,62 @@ class TzrCompiler {
       ],
       loc: statement.loc,
     };
+  }
+
+  private buildCallInstruction(statement: TzrCallStatement): CommandInstruction | undefined {
+    if (this.pluginCommands === undefined) {
+      this.addError(statement.loc.start, 'DSL v2 statement "CallStatement" is not compile-supported yet.');
+      return undefined;
+    }
+
+    const args = this.compileCallArguments(statement.args);
+    if (args === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "CommandInstruction",
+      name: statement.name,
+      args,
+      loc: statement.loc,
+    };
+  }
+
+  private compileCallArguments(args: readonly TzrNamedArgument[]): readonly TzrArgument[] | undefined {
+    let ok = true;
+    const compiled: TzrArgument[] = [];
+
+    for (const arg of args) {
+      const value = this.compileCallArgumentValue(arg.value);
+      if (value === undefined) {
+        ok = false;
+        continue;
+      }
+      compiled.push(this.namedArgument(arg.name, value, arg.loc));
+    }
+
+    return ok ? compiled : undefined;
+  }
+
+  private compileCallArgumentValue(value: TzrArgumentValue): TzrValue | undefined {
+    switch (value.type) {
+      case "StringValue":
+      case "NumberValue":
+      case "BooleanValue":
+        return value;
+      case "IdentifierValue":
+        return {
+          type: "IdentifierValue",
+          name: value.value,
+          loc: value.loc,
+        };
+      case "NullValue":
+        this.addError(value.loc.start, "call null argument values are not compile-supported yet.");
+        return undefined;
+      case "VariableReferenceValue":
+        this.addError(value.loc.start, "call variable reference argument values are not compile-supported yet.");
+        return undefined;
+    }
   }
 
   private buildBgInstruction(statement: TzrBgStatement): readonly CommandInstruction[] {
@@ -744,6 +888,52 @@ class TzrCompiler {
       characters,
       scenes,
     };
+  }
+
+  private validateCompiledPluginCommands(instructions: readonly TzrInstruction[]): void {
+    if (this.pluginCommands === undefined) {
+      return;
+    }
+
+    for (const instruction of instructions) {
+      switch (instruction.type) {
+        case "CommandInstruction":
+          this.validateCompiledPluginCommand(instruction);
+          break;
+        case "IfInstruction":
+          this.validateCompiledPluginCommands(instruction.thenBranch);
+          for (const branch of instruction.elifBranches) {
+            this.validateCompiledPluginCommands(branch.body);
+          }
+          if (instruction.elseBranch !== undefined) {
+            this.validateCompiledPluginCommands(instruction.elseBranch);
+          }
+          break;
+        case "BodyChoiceInstruction":
+          for (const item of instruction.items) {
+            this.validateCompiledPluginCommands(item.body);
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  private validateCompiledPluginCommand(instruction: CommandInstruction): void {
+    if (isCoreCommandName(instruction.name) || instruction.name === DSL_ADD_COMMAND_NAME) {
+      return;
+    }
+
+    const command = this.pluginCommands?.get(instruction.name);
+    if (command === undefined) {
+      this.addError(instruction.loc.start, `Unknown plugin command "${instruction.name}".`);
+      return;
+    }
+
+    for (const diagnostic of validatePluginCommandArguments(command, instruction.args, instruction.loc.start)) {
+      this.addError(diagnostic.location, diagnostic.message);
+    }
   }
 
   private addError(location: SourceLocation, message: string): void {

@@ -213,7 +213,11 @@ Body choices produce a blocked `pendingChoice` state and are resolved separately
 
 DSL v2 compiles its supported std visual/audio statements to shared `CommandInstruction` values. Runtime dispatch uses command handlers supplied to `stepRuntime`.
 
-The legacy compiler's `pluginCommands` validation path was removed with the old DSL compiler. `definePluginCommand` and plugin command schema metadata remain exported for std plugins and future validation policy work, but the current DSL v2 compiler does not accept a plugin command registry.
+DSL v2 compile-time plugin command validation is available through `compileTzr(document, { plugins })` or `compileTzr(document, { pluginCommands })`. Runtime dispatch remains separate: compile-time metadata validates command names and argument shapes, while runtime command handlers execute command effects.
+
+When metadata validation is enabled, every emitted non-core command must be present in the compile-time registry. A scenario that uses std visual/audio commands should pass `createStdVisualPlugin()` / `createStdAudioPlugin()` to `compileTzr`; without metadata, existing std visual/audio sugar remains compatible and compiles without metadata validation.
+
+`call namespace.command(...)` is only a custom plugin command authoring form when metadata validation is enabled. It does not introduce runtime subroutine calls, a call stack, or return semantics.
 
 Runtime handlers should use the same command names emitted by the compiler.
 

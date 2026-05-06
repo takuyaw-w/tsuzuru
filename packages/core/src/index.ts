@@ -18,6 +18,8 @@ export type {
   TzrCompiledCharacter,
   TzrCompiledSceneMetadata,
   TzrCompileOptions,
+  TzrCompilePluginCommandInput,
+  TzrCompilePluginDefinition,
   TzrCompileResult,
   TzrDocumentMetadata,
 } from "./compiler.js";
@@ -46,9 +48,10 @@ export type {
   PluginCommandMap,
   PluginCommandNamedArgumentDefinition,
   PluginCommandPositionalArgumentDefinition,
+  PluginCommandValidationDiagnostic,
   PluginCommandValueType,
 } from "./plugin-command.js";
-export { definePluginCommand } from "./plugin-command.js";
+export { definePluginCommand, validatePluginCommandArguments } from "./plugin-command.js";
 export type {
   ChoiceResolveRuntimeEvent,
   ChoiceRuntimeEvent,

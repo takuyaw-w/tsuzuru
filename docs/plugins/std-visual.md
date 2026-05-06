@@ -1,7 +1,8 @@
 # std-visual plugin
 
-> Status: DSL v2-first. Runtime handlers and plugin command metadata remain, but
-> the legacy compiler `pluginCommands` validation path is historical. The
+> Status: DSL v2-first. Runtime handlers and plugin command metadata are
+> current, and `createStdVisualPlugin()` exposes metadata for compiler
+> validation. The
 > current runnable integration is
 > [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
 
@@ -24,7 +25,7 @@ const runtimeState = createInitialRuntimeState(document, {
 });
 ```
 
-DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。legacy compiler の `pluginCommands` registry は削除済みで、DSL v2 の任意 plugin command validation policy は未決です。
+DSL v2 compiler は、対応済みの `bg` / `show` / `hide` statement を runtime `CommandInstruction` に変換します。compile 時に `plugins: [createStdVisualPlugin()]` を渡すと、std visual command metadata に基づいて command name と argument shape を検証します。
 
 runtime 実行時は std-visual command handler を渡します。
 

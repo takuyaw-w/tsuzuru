@@ -47,6 +47,7 @@ export const stdVisualPluginCommands = {
 export function createStdVisualPlugin(): RuntimePluginDefinition<StdVisualState> {
   return {
     name: STD_VISUAL_PLUGIN_NAME,
+    commands: stdVisualPluginCommands,
     createInitialState: createInitialStdVisualState,
   };
 }

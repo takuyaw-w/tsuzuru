@@ -54,6 +54,7 @@ export const stdAudioPluginCommands = {
 export function createStdAudioPlugin(): RuntimePluginDefinition<StdAudioState> {
   return {
     name: STD_AUDIO_PLUGIN_NAME,
+    commands: stdAudioPluginCommands,
     createInitialState: createInitialStdAudioState,
   };
 }
