@@ -9,6 +9,7 @@ import {
   type GameViewportProps,
   MessageWindow,
   type MessageWindowProps,
+  type MessageWindowRenderLineContext,
   RuntimeMessageLayer,
   type ScreenComponentProps,
   ScreenHost,
@@ -230,6 +231,48 @@ describe("MessageWindow", () => {
     expect(getNodeText(node)).toContain("You're late.");
   });
 
+  it("renders default line content inside stable line elements", () => {
+    const node = expectVNode(MessageWindow({ lines: ["Line one.", "Line two."] }));
+    const lines = findByClass(node, "tzr-message-window__line");
+
+    expect(lines).toHaveLength(2);
+    expect(lines.map((line) => getNodeText(line))).toEqual(["Line one.", "Line two."]);
+  });
+
+  it("renders custom line content with renderLine", () => {
+    const receivedContexts: MessageWindowRenderLineContext[] = [];
+    const node = expectVNode(
+      MessageWindow({
+        lines: ["Line one.", "Line two."],
+        renderLine: (context) => {
+          receivedContexts.push(context);
+          return <span className="custom-line">{`${context.lineIndex}:${context.line}`}</span>;
+        },
+      }),
+    );
+    const lineNodes = findByClass(node, "tzr-message-window__line");
+    const customLineNodes = findByClass(node, "custom-line");
+
+    expect(lineNodes).toHaveLength(2);
+    expect(customLineNodes.map((line) => getNodeText(line))).toEqual(["0:Line one.", "1:Line two."]);
+  });
+
+  it("passes line and lineIndex to renderLine", () => {
+    const receivedContexts: MessageWindowRenderLineContext[] = [];
+    MessageWindow({
+      lines: ["Alpha", "Beta"],
+      renderLine: (context) => {
+        receivedContexts.push(context);
+        return context.line;
+      },
+    });
+
+    expect(receivedContexts).toEqual([
+      { line: "Alpha", lineIndex: 0 },
+      { line: "Beta", lineIndex: 1 },
+    ]);
+  });
+
   it("calls onAdvance when advanceable", () => {
     const onAdvance = vi.fn();
     const node = expectVNode(MessageWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
@@ -353,6 +396,19 @@ describe("RuntimeMessageLayer", () => {
     expect(node.props.speaker).toBeUndefined();
   });
 
+  it("passes renderMessageLine to narration MessageWindow", () => {
+    const renderMessageLine = vi.fn(({ line }: MessageWindowRenderLineContext) => <span>{line}</span>);
+    const node = expectVNode<MessageWindowProps>(
+      RuntimeMessageLayer({
+        event: { type: "narration", lines: [{ text: "The room was quiet.", loc }] },
+        renderMessageLine,
+      }),
+    );
+
+    expect(node.type).toBe(MessageWindow);
+    expect(node.props.renderLine).toBe(renderMessageLine);
+  });
+
   it("maps dialogue", () => {
     const node = expectVNode<MessageWindowProps>(
       RuntimeMessageLayer({
@@ -363,6 +419,19 @@ describe("RuntimeMessageLayer", () => {
     expect(node.type).toBe(MessageWindow);
     expect(node.props.speaker).toBe("Yu");
     expect(node.props.lines).toEqual(["I made it."]);
+  });
+
+  it("passes renderMessageLine to dialogue MessageWindow", () => {
+    const renderMessageLine = vi.fn(({ line }: MessageWindowRenderLineContext) => <span>{line}</span>);
+    const node = expectVNode<MessageWindowProps>(
+      RuntimeMessageLayer({
+        event: { type: "dialogue", speaker: "Yu", lines: [{ text: "I made it.", loc }] },
+        renderMessageLine,
+      }),
+    );
+
+    expect(node.type).toBe(MessageWindow);
+    expect(node.props.renderLine).toBe(renderMessageLine);
   });
 
   it("maps choice", () => {
@@ -385,6 +454,22 @@ describe("RuntimeMessageLayer", () => {
     expect(node.props.question).toBe("What do you do?");
     expect(node.props.choices).toEqual([{ text: "Stay" }, { text: "Go" }]);
     expect(node.props.onChoice).toBe(onChoice);
+  });
+
+  it("does not pass renderMessageLine to choice rendering", () => {
+    const node = expectVNode<ChoiceLayerProps & { readonly renderLine?: unknown }>(
+      RuntimeMessageLayer({
+        event: {
+          type: "choice",
+          question: "What do you do?",
+          items: [{ id: "stay", text: "Stay" }],
+        },
+        renderMessageLine: ({ line }) => line,
+      }),
+    );
+
+    expect(node.type).toBe(ChoiceLayer);
+    expect(node.props.renderLine).toBeUndefined();
   });
 
   it("maps targetless body choice items", () => {
@@ -441,6 +526,18 @@ describe("RuntimeMessageLayer", () => {
 
     expect(node.type).toBe(StatusLayer);
     expect(node.props.label).toBe("Waiting 500ms");
+  });
+
+  it("does not pass renderMessageLine to status rendering", () => {
+    const node = expectVNode<StatusLayerProps & { readonly renderLine?: unknown }>(
+      RuntimeMessageLayer({
+        event: { type: "wait", durationMs: 500 },
+        renderMessageLine: ({ line }) => line,
+      }),
+    );
+
+    expect(node.type).toBe(StatusLayer);
+    expect(node.props.renderLine).toBeUndefined();
   });
 
   it("hides transient events by default", () => {

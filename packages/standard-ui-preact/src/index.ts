@@ -5,7 +5,7 @@ export type { GameShellProps } from "./GameShell.js";
 export { GameShell } from "./GameShell.js";
 export type { GameViewportAspectRatio, GameViewportProps } from "./game-viewport.js";
 export { GameViewport } from "./game-viewport.js";
-export type { MessageWindowProps } from "./MessageWindow.js";
+export type { MessageWindowProps, MessageWindowRenderLine, MessageWindowRenderLineContext } from "./MessageWindow.js";
 export { MessageWindow } from "./MessageWindow.js";
 export type { RuntimeMessageLayerProps } from "./RuntimeMessageLayer.js";
 export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
@@ -20,3 +20,6 @@ export type {
   ScreenRegistry,
 } from "./screen-host.js";
 export { ScreenHost } from "./screen-host.js";
+
+export type { TextRevealCharacterEvent, TextRevealState, UseTextRevealOptions } from "./useTextReveal.js";
+export { useTextReveal } from "./useTextReveal.js";
