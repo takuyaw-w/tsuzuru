@@ -15,5 +15,9 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

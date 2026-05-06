@@ -4,13 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "pnpm --filter @tsuzuru/core test && pnpm --filter @tsuzuru/preact test && pnpm --filter @tsuzuru/plugin-std-visual test && pnpm --filter @tsuzuru/plugin-std-audio test && pnpm --filter @tsuzuru/standard-ui-preact test",
     "typecheck": "pnpm --filter @tsuzuru/core typecheck && pnpm --filter @tsuzuru/preact typecheck && pnpm --filter @tsuzuru/plugin-std-visual typecheck && pnpm --filter @tsuzuru/plugin-std-audio typecheck && pnpm --filter @tsuzuru/standard-ui-preact typecheck",
     "release:version": "bash scripts/release-version.sh"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.7"
+    "@biomejs/biome": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@11.0.0"
 }
