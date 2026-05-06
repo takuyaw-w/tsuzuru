@@ -1,33 +1,57 @@
 # Tsuzuru Architecture
 
-> Status: partially historical. This document still contains legacy syntax and
-> legacy AST references. The current supported DSL path is DSL v2
-> (`parseTzr` / `compileTzr`), and the cleanup result is tracked
-> in [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md).
-> Legacy examples named `examples/basic` or `examples/preact-basic` were removed.
+This document describes the current Tsuzuru architecture.
 
-This document describes Tsuzuru architecture notes. Sections that still mention
-the old DSL or removed examples are historical, not current API guidance.
+Tsuzuru is a web-first visual novel engine built around:
 
-Tsuzuru is a web-first visual novel engine built around a constrained `.tzr` scenario DSL, a TypeScript core runtime, and a Preact adapter.
+- a constrained `.tzr` scenario DSL
+- a TypeScript parser / compiler
+- a browser-independent core runtime
+- Preact integration packages
+- standard visual / audio plugins
+- a small runnable example
+
+The current public parser/compiler API is:
+
+```ts
+import { parseTzr, compileTzr } from "@tsuzuru/core";
+```
+
+Legacy DSL support has been removed.
+
+Do not treat the following as current architecture:
+
+- `#scene(...)`
+- `#label(...)`
+- `:: Speaker`
+- `@command(...)`
+- `$macro(...)`
+- `parseTzrV2`
+- `compileTzrV2`
+- legacy parser/compiler files
+- macro expansion API
+- deleted legacy examples
+
+---
 
 ## Overview
 
-The main pipeline is:
+The current pipeline is:
 
 ```txt
 .tzr source
   -> parseTzr
-  -> DSL v2 AST
+  -> TzrDocument
   -> compileTzr
-  -> RuntimeDocument / compiled v2 IR
-  -> runtime state
-  -> runtime events
-  -> Preact adapter
+  -> CompiledTzrDocument
+  -> RuntimeDocument / runtime IR
+  -> RuntimeState
+  -> RuntimeEvent
+  -> Preact adapter / host app
   -> user UI
 ```
 
-The core idea is:
+The guiding boundary is:
 
 ```txt
 Scenario files describe narrative flow.
@@ -36,7 +60,9 @@ Runtime behavior, rendering, plugins, and reusable logic belong in TypeScript.
 
 `.tzr` files must not become arbitrary JavaScript or TypeScript execution environments.
 
-## Packages
+---
+
+## Repository Structure
 
 Current main packages:
 
@@ -44,45 +70,61 @@ Current main packages:
 packages/
   core/
   preact/
+  standard-ui-preact/
+  plugin-std-visual/
+  plugin-std-audio/
 
 examples/
   dsl-v2-basic/
 ```
 
-Expected future package candidates:
+Current design / planning docs:
 
 ```txt
-packages/
-  vite/
-  create-tsuzuru/
+docs/
+  architecture.md
+  dsl.md
+  runtime.md
+  plugin-api.md
+  roadmap.md
+  design/
+    dsl-v2.md
+  decisions/
+  plans/
 ```
 
-Future packages should not be documented as implemented until they exist and work.
+Current runnable example:
+
+```txt
+examples/dsl-v2-basic
+```
+
+Future package candidates such as `@tsuzuru/vite` or `create-tsuzuru` must not be documented as implemented until they exist and work.
+
+---
 
 ## Package Responsibilities
 
-## `@tsuzuru/core`
+### `@tsuzuru/core`
 
-`@tsuzuru/core` owns the engine model and execution logic.
+`@tsuzuru/core` owns the scenario model, compiler, runtime IR, and execution semantics.
 
 Responsibilities:
 
 - `.tzr` parser
-- AST definitions
+- scenario AST definitions
 - compiler
 - compiler diagnostics
-- IR generation
-- core command definitions
-- command validation
-- plugin command metadata and runtime dispatch
-- jump target validation
-- condition evaluation
+- runtime document / IR definitions
 - runtime state
 - runtime stepping
 - choice resolution
-- wait / waitClick / page / stop behavior
-- runtime snapshot creation
-- runtime restoration
+- conditional branch evaluation
+- scene jump behavior
+- command instruction dispatch
+- runtime snapshot / restore
+- plugin command infrastructure
+- shared source-location and value primitives
 
 `@tsuzuru/core` must not depend on:
 
@@ -91,116 +133,248 @@ Responsibilities:
 - CSS
 - browser storage
 - Vite-specific behavior
+- application-specific assets
 - example-specific behavior
 - UI rendering logic
 
 Core should remain usable as a standalone TypeScript package.
 
-## `@tsuzuru/preact`
+---
 
-`@tsuzuru/preact` is the Preact adapter for Tsuzuru runtime.
+### `@tsuzuru/preact`
+
+`@tsuzuru/preact` connects the core runtime to Preact.
 
 Responsibilities:
 
 - `useRuntime`
 - `RuntimeView`
-- renderable runtime event handling
-- visible event handling
-- transient event suppression
-- auto-step behavior
+- runtime event handling for Preact consumers
+- visible event management
+- transient event stepping
 - click-to-advance wiring
 - choice selection wiring
-- Preact-level save/load adapter utilities
+- Preact-facing save/load adapter utilities
 - view restoration helpers
 
 `@tsuzuru/preact` must not own:
 
 - `.tzr` syntax
 - parser behavior
-- compiler validation
+- compiler diagnostics
 - IR generation
 - runtime stepping semantics
 - condition evaluation
-- jump behavior
+- scene jump semantics
 - core state model decisions
 
 If behavior belongs to scenario execution, it belongs in `@tsuzuru/core`.
 
-If behavior belongs to rendering or user interaction, it belongs in `@tsuzuru/preact`.
+If behavior belongs to rendering or user interaction, it belongs in `@tsuzuru/preact` or userland UI.
 
-## Examples
+---
 
-Examples are integration checks and usage references.
+### `@tsuzuru/standard-ui-preact`
+
+`@tsuzuru/standard-ui-preact` provides reusable Preact UI components.
 
 Responsibilities:
 
-- demonstrate current package APIs
-- verify core and preact work together
-- provide small executable scenarios
-- show plugin command registration and handling
-- show basic save/load usage
-- provide clean commands for manual verification
+- reusable visual novel UI components
+- message layer components
+- choice layer components
+- viewport / shell style components
+- standard UI building blocks
+
+It must not own:
+
+- parser behavior
+- compiler behavior
+- runtime stepping
+- scenario semantics
+- plugin state semantics
+
+Standard UI components should be replaceable by userland components.
+
+---
+
+### `@tsuzuru/plugin-std-visual`
+
+`@tsuzuru/plugin-std-visual` provides standard visual command handlers.
+
+Responsibilities:
+
+- maintain standard visual plugin state
+- update background state
+- update sprite state
+- handle standard visual command instructions
+
+It does not:
+
+- render DOM / Canvas / WebGL
+- resolve asset IDs to URLs
+- load image assets
+- own scene flow
+- own runtime stepping
+
+Asset resolution belongs to the app, renderer, or example.
+
+---
+
+### `@tsuzuru/plugin-std-audio`
+
+`@tsuzuru/plugin-std-audio` provides standard audio command handlers.
+
+Responsibilities:
+
+- maintain standard audio plugin state
+- update BGM state
+- append SE events
+- append voice events
+- handle standard audio command instructions
+
+It does not:
+
+- create audio elements
+- load audio files
+- bundle audio assets
+- stop or overlap real playback directly
+- own scene flow
+- own runtime stepping
+
+Playback and asset resolution belong to the app, renderer, or example.
+
+---
+
+### Examples
+
+Examples are integration checks and usage references.
+
+Current example:
+
+```txt
+examples/dsl-v2-basic
+```
+
+Example responsibilities:
+
+- demonstrate current public APIs
+- verify core, Preact, standard UI, and plugins can work together
+- provide a small executable scenario
+- show plugin command handling
+- provide commands for manual verification
 
 Examples should not become:
 
 - production game templates
-- GUI editors
-- full UI frameworks
+- full GUI editors
 - asset pipelines
 - plugin marketplaces
 - showcases for unimplemented roadmap features
+
+---
 
 ## Scenario DSL Boundary
 
 Scenario files use the `.tzr` extension.
 
-The DSL currently supports:
+The current DSL is indentation-based and line-oriented.
+
+Representative current syntax:
 
 ```txt
-#scene("id")
-#label("id")
+title "DSL v2 Basic"
 
-:: Speaker
-Dialogue text
+character mio name="美緒"
 
-Narration text
+scene start:
+  bg station
+  bgm daily_theme
+  show mio_smile at center
 
-@command(...)
-$macro(...)
+  mio:
+    遅いよ。
 
-@if(...)
-@else
-@endif
+  set scenario.hasNotebook = true
+  add scenario.score += 1
 
-? Question
-- "Choice text" -> #target
+  if scenario.score >= 1:
+    narration:
+      スコアが増えた。
+  else:
+    narration:
+      まだ何も起きていない。
+
+  choice "どうする？":
+    "手帳を見る" id=openNotebook if scenario.hasNotebook:
+      se page
+      jump notebook
+
+    "立ち去る" id=leave:
+      jump leave
+
+scene notebook:
+  voice mio_001
+  mio:
+    ちゃんと見ておいてね。
+  hide mio_smile
+  stopBgm
+  end
 ```
 
-DSL responsibilities:
+The DSL currently covers a practical runtime subset:
 
-- scenario structure
+- title declaration
+- character declaration
+- scenes
 - narration
 - dialogue
+- scene jumps
 - choices
-- jumps
-- constrained conditionals
-- command calls
-- macro calls
+- conditional choices
+- choice body execution
+- `if` / `elif` / `else`
+- `scenario.*` condition evaluation
+- `set` for string / number / boolean values
+- `add` for number values
+- `end` / `stop`
+- standard visual sugar:
+  - `bg`
+  - `show`
+  - `hide`
+- standard audio sugar:
+  - `bgm`
+  - `stopBgm`
+  - `se`
+  - `voice`
 
-DSL non-responsibilities:
+The DSL must not support arbitrary JavaScript or TypeScript execution.
 
-- arbitrary JavaScript execution
-- arbitrary TypeScript execution
-- plugin definitions
-- macro definitions
-- UI implementation
-- animation internals
-- reusable procedure definitions
-- hidden complex control flow
+---
+
+## Current Non-Goals
+
+Do not implement these unless explicitly requested:
+
+- legacy DSL compatibility
+- macro system
+- preset / stage system
+- scenario-local reusable procedures
+- arbitrary JavaScript or TypeScript inside `.tzr`
+- TyranoScript compatibility
+- KAG / KS compatibility
+- Ren'Py compatibility
+- GUI editor
+- visual scripting editor
+- RPG/map/battle systems
+
+Macro-like reusable staging may be reconsidered later as a constrained authoring feature, but it is not part of the current implementation.
+
+---
 
 ## Parser
 
-The parser converts `.tzr` source into AST.
+The parser converts `.tzr` source into `TzrDocument`.
 
 Input:
 
@@ -216,45 +390,71 @@ TzrDocument
 
 Parser responsibilities:
 
-- parse line-oriented scenario syntax
-- group narration blocks
-- group speaker blocks
-- parse structure declarations
-- parse command calls
-- parse macro calls
-- parse choice blocks
-- parse conditional blocks
+- parse top-level declarations
+- parse scene blocks
+- parse narration blocks
+- parse dialogue blocks
+- parse choices
+- parse conditional branches
+- parse state updates
+- parse visual/audio sugar statements
+- parse condition expressions
 - attach source locations
 - return parse diagnostics
 
 Parser non-responsibilities:
 
-- macro expansion
-- plugin command validation
-- same-file label validation
-- cross-file existence checks
 - runtime execution
-- UI rendering
+- compiler validation
+- scene target existence validation
+- plugin command execution
+- rendering
+- browser interaction
+- asset loading
 
-## AST
+The parser should preserve source structure and source locations so compiler diagnostics can remain useful.
 
-The AST represents parsed scenario source.
+---
+
+## Scenario AST
+
+The scenario AST represents parsed authoring syntax.
+
+Primary AST file:
+
+```txt
+packages/core/src/scenario-ast.ts
+```
+
+Shared source/value primitive file:
+
+```txt
+packages/core/src/ast.ts
+```
+
+The split is intentional:
+
+- `scenario-ast.ts` owns scenario-specific AST nodes.
+- `ast.ts` owns shared primitives such as source locations, text lines, and argument/value shapes.
 
 The AST should preserve:
 
-- source structure
+- top-level declarations
+- scene bodies
 - source locations
-- command arguments
-- macro arguments
-- choice targets
-- condition source
-- narration and dialogue text
+- dialogue and narration blocks
+- choice bodies
+- condition expressions
+- visual/audio sugar statements
+- state update statements
 
 The AST should not contain runtime-only state.
 
+---
+
 ## Compiler
 
-The compiler converts AST into compiled IR.
+The compiler converts `TzrDocument` into `CompiledTzrDocument`.
 
 Input:
 
@@ -268,63 +468,90 @@ Output:
 CompiledTzrDocument
 ```
 
+`CompiledTzrDocument` extends the runtime document shape and includes source and metadata useful to tooling and diagnostics.
+
 Compiler responsibilities:
 
-- validate duplicate scene ids
-- validate duplicate label ids
-- validate same-file jump targets
-- validate same-file choice targets
-- validate invalid jump target formats
-- validate core command arguments
-- validate plugin command registration
-- validate plugin command schemas
-- validate plugin command arguments
-- validate unknown non-core commands
-- validate unknown macros
-- expand macros
-- reject unsafe macro expansion results
-- produce executable IR
+- validate duplicate titles
+- validate duplicate characters
+- validate duplicate scenes
+- validate scene presence
+- validate dialogue speakers
+- validate scene jump targets
+- validate supported condition expressions
+- validate choice bodies
+- compile narration to runtime instructions
+- compile dialogue to runtime instructions
+- compile scene jumps to `SceneJumpInstruction`
+- compile choices to `BodyChoiceInstruction`
+- compile `if` / `elif` / `else` to `IfInstruction`
+- compile supported state updates to command instructions
+- compile standard visual/audio sugar to command instructions
 - produce compiler diagnostics
 
 Compiler non-responsibilities:
 
-- rendering UI
-- managing browser events
-- managing localStorage
-- running timers
-- resolving user choices at runtime
-- executing arbitrary JavaScript from `.tzr`
+- rendering
+- browser events
+- localStorage
+- timers
+- asset resolution
+- actual plugin side effects
+- user choice resolution at runtime
+- arbitrary JavaScript execution
 
-## IR
+The compiler should reject unsupported authoring syntax rather than silently producing ambiguous runtime behavior.
 
-IR is the compiled representation consumed by the runtime.
+---
+
+## Runtime Document and IR
+
+The runtime consumes a compiled instruction sequence.
+
+Core IR types include:
+
+- `RuntimeDocument`
+- `CompiledTzrDocument`
+- `TzrInstruction`
+- `SceneInstruction`
+- `NarrationInstruction`
+- `DialogueInstruction`
+- `SceneJumpInstruction`
+- `BodyChoiceInstruction`
+- `IfInstruction`
+- `CommandInstruction`
 
 IR should be:
 
 - explicit
 - typed
-- validated
+- stable enough for runtime execution
 - easier to execute than AST
 - independent from Preact
 - independent from DOM
+- independent from renderer implementation
 
-Macro calls should not remain in runtime IR after successful compilation.
+Scene jumps are scene-based. Scene IDs must not be disguised as legacy labels.
+
+`CompiledTzrDocument.labels` may still exist as a compatibility-shaped field, but current authoring uses scenes and scene jumps, not legacy labels.
+
+---
 
 ## Runtime
 
-The runtime executes compiled IR.
+The runtime executes a compiled runtime document.
 
 Input:
 
 ```txt
-CompiledTzrDocument
+RuntimeDocument
 RuntimeState
 ```
 
 Main operation:
 
 ```txt
-stepRuntime(document, state)
+stepRuntime(document, state, options)
 ```
 
 Output:
@@ -338,15 +565,14 @@ Runtime responsibilities:
 - execute instructions
 - move the runtime pointer
 - emit runtime events
-- evaluate conditions
-- update variables
-- update flags
-- handle jumps
-- handle choices
-- handle waits
-- handle click waits
-- handle stop state
-- dispatch plugin commands
+- evaluate conditional branches
+- manage active branch frames
+- manage pending choices
+- resolve choices
+- update runtime variables
+- update runtime flags where low-level commands still exist
+- handle scene jumps
+- dispatch plugin command instructions
 - create snapshots
 - restore snapshots
 
@@ -360,174 +586,112 @@ Runtime non-responsibilities:
 - timers
 - asset loading
 - plugin lifecycle management
+- UI layout decisions
 
 The host or UI layer is responsible for observing runtime events and deciding how to present them.
 
+---
+
 ## Runtime Events
 
-Runtime emits events such as:
+Runtime events are the bridge between core execution and UI / host behavior.
 
-```txt
-scene
-label
-narration
-dialogue
-choice
-jump
-if
-state
-wait
-waitClick
-page
-stop
-pluginCommand
-unsupported
-error
-end
-```
+Important event categories:
 
-Runtime events are the bridge between core execution and UI rendering.
+- scene events
+- narration events
+- dialogue events
+- choice events
+- choice resolution events
+- scene jump events
+- state events
+- plugin command events
+- stop events
+- end events
+- error / unsupported events
 
-The Preact adapter consumes runtime events and exposes view-oriented behavior.
+Some low-level runtime event types may exist before the current DSL authoring syntax exposes them fully. Do not treat every runtime event type as currently supported `.tzr` syntax.
+
+---
 
 ## Runtime State
 
-`RuntimeState` includes:
+`RuntimeState` tracks execution state.
+
+It includes:
 
 - current pointer
-- variables
-- flags
+- runtime variables
+- runtime flags
 - active branch frames
-- pending choice
-- pending wait
+- pending choices
+- pending waits
 - click-wait state
 - stopped state
+- plugin states
 
-Runtime state should remain independent from UI component state.
+Runtime state must remain independent from UI component state.
 
-## Save / Load Boundary
+Plugin state is stored under runtime plugin state, not in independent plugin-owned stores.
+
+---
+
+## Snapshot / Restore
 
 Core owns runtime snapshots.
 
-Preact owns adapter-level view restoration helpers.
+Core responsibilities:
+
+- capture runtime state
+- restore runtime state
+- preserve plugin state
+- deep clone instruction-bearing runtime structures where needed
+- avoid restoring transient UI-only state
+
+Preact responsibilities:
+
+- adapt snapshots for view usage
+- expose save/load helpers
+- restore view-facing runtime state safely
 
 Examples may use `localStorage`, but browser storage is not a core responsibility.
 
-Boundary:
+Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
+
+---
+
+## Plugin Command Flow
+
+Standard visual/audio DSL sugar compiles to runtime command instructions.
+
+Flow:
 
 ```txt
-@tsuzuru/core
-  -> createRuntimeSnapshot
-  -> restoreRuntimeState
-
-@tsuzuru/preact
-  -> createRuntimeSaveData
-  -> isRuntimeSaveData
-  -> restoreRuntimeSnapshotForView
-
-examples
-  -> localStorage
-  -> buttons
-  -> manual save/load flow
+.tzr visual/audio sugar
+  -> parser statement
+  -> compiler command instruction
+  -> runtime dispatch
+  -> plugin command handler
+  -> runtime plugin state update
+  -> renderer / app observes plugin state
+  -> UI/audio presentation
 ```
 
-For v0.1, save data does not include scenario identity, scenario version, or migration metadata. Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
+Current implemented standard visual/audio sugar is intentionally renderer-independent.
 
-## Plugin Commands
+The command handler updates runtime state. It does not render or load assets.
 
-Plugins extend runtime behavior through registered command names.
+---
 
-Plugin command examples:
+## Plugin Validation Policy
 
-```txt
-@bg("school_evening")
-@bgm("daily")
-@se("door")
-@show(character="haruka", pose="smile", at="center")
-@hide(character="haruka")
-@transition("fade", duration=300)
-@shake(target="screen", duration=300)
-```
+Generic plugin command validation policy is still deferred.
 
-Plugin command flow:
+Current architecture keeps plugin command metadata and runtime dispatch infrastructure, but new validation framework work should be handled as an explicit design task.
 
-```txt
-.tzr command call
-  -> parser records command
-  -> compiler checks command registration
-  -> compiler validates command arguments
-  -> runtime emits or dispatches plugin command
-  -> host / UI handles presentation behavior
-```
+Do not introduce broad plugin validation behavior during unrelated parser, compiler, runtime, docs, or formatting tasks.
 
-Plugins should not own core flow control.
-
-Core-owned commands include:
-
-```txt
-@jump(...)
-@if(...)
-@else
-@endif
-@set(...)
-@inc(...)
-@dec(...)
-@flag(...)
-@unflag(...)
-@waitClick()
-@page()
-@stop()
-@wait(...)
-```
-
-## Macros
-
-Macros are compile-time shorthand.
-
-Macro call example:
-
-```txt
-$enter("haruka", "smile", "center")
-```
-
-Macro flow:
-
-```txt
-.tzr macro call
-  -> parser records macro call
-  -> compiler looks up macro definition
-  -> compiler expands macro
-  -> compiler validates expanded instructions
-  -> runtime receives normal IR
-```
-
-Macros should simplify repetitive presentation commands.
-
-For v0.1, macros must not hide narrative structure.
-
-Macro expansion should not generate:
-
-- scenes
-- labels
-- conditionals
-- choices
-- macro instructions
-- jumps
-
-## Plugin vs Macro
-
-Use a plugin command when behavior happens at runtime.
-
-Use a macro when repetitive commands can be expanded at compile time.
-
-```txt
-plugin = runtime command extension
-macro  = compile-time presentation shorthand
-```
-
-Do not use macros to hide branching, jumps, or choices.
-
-Do not use plugins to redefine core execution semantics.
+---
 
 ## Preact Adapter Flow
 
@@ -539,191 +703,236 @@ Typical flow:
 CompiledTzrDocument
   -> useRuntime
   -> runtime state
-  -> visibleEvent
-  -> RuntimeView
-  -> user click or choice
-  -> continueClick / choose
+  -> visible event
+  -> UI components
+  -> user click / choice
+  -> continue / choose
   -> next runtime step
 ```
 
 `RuntimeView` should remain a convenience component, not a full visual novel UI framework.
 
-For v0.1, narration and dialogue may advance from message-area clicks, while `waitClick` and `page` continue through explicit continue-button wiring.
+Advanced game UI should be implemented with userland components or standard UI components, not by expanding core runtime responsibilities.
 
-Advanced UI features should be implemented separately or by userland components.
+---
+
+## Standard UI Flow
+
+`@tsuzuru/standard-ui-preact` provides reusable UI components.
+
+The standard UI package should:
+
+- consume runtime-facing data
+- render message and choice components
+- provide layout primitives
+- remain replaceable
+- avoid owning scenario semantics
+
+The standard UI package should not:
+
+- parse `.tzr`
+- compile scenarios
+- step runtime state
+- mutate plugin state directly
+- define DSL semantics
+
+---
 
 ## Example App Flow
 
-The Preact example demonstrates:
+`examples/dsl-v2-basic` demonstrates the current architecture in one runnable example.
 
-```txt
-scenario/main.tzr
-  -> parseTzr
-  -> compileTzr
-  -> useRuntime
-  -> RuntimeView
-  -> Save / Load / Clear Save
-```
+It should show:
 
-The example may register simple plugin commands and handlers.
+- current `.tzr` syntax
+- `parseTzr`
+- `compileTzr`
+- runtime integration
+- Preact integration
+- standard visual/audio plugin handling
+- placeholder visual/audio behavior without requiring real production assets
 
-The example should remain small and easy to inspect.
+It should remain small and executable.
 
-## Dependency Direction
+---
 
-Allowed dependency direction:
+## Tooling
 
-```txt
-examples/dsl-v2-basic
-  -> @tsuzuru/preact
-  -> @tsuzuru/standard-ui-preact
-  -> @tsuzuru/plugin-std-visual
-  -> @tsuzuru/plugin-std-audio
-  -> @tsuzuru/core
-```
+The repository uses pnpm workspaces.
 
-```txt
-@tsuzuru/preact
-  -> @tsuzuru/core
-```
+Tooling versions are managed through `pnpm-workspace.yaml` catalog entries.
 
-Not allowed:
+Current tooling includes:
 
-```txt
-@tsuzuru/core
-  -> @tsuzuru/preact
-```
+- TypeScript
+- Vitest
+- Biome
 
-```txt
-@tsuzuru/core
-  -> DOM
-```
-
-```txt
-@tsuzuru/core
-  -> Vite
-```
-
-```txt
-@tsuzuru/core
-  -> examples
-```
-
-## Current v0.1 Scope
-
-v0.1 should focus on:
-
-- `.tzr` parser
-- compiler
-- runtime
-- same-file labels and jumps
-- choices
-- limited conditionals
-- variables and flags
-- text flow commands
-- plugin command registration and validation
-- macro expansion
-- Preact adapter
-- basic save/load
-- executable examples
-- manual setup using the examples as references
-- accurate docs
-
-## Explicit Non-Goals for v0.1
-
-Do not include these unless explicitly re-scoped:
-
-- GUI editor
-- visual scripting editor
-- TyranoScript compatibility
-- KAG / KS compatibility
-- Ren'Py compatibility
-- arbitrary JavaScript in `.tzr`
-- arbitrary TypeScript in `.tzr`
-- `create-tsuzuru`
-- `@tsuzuru/vite`
-- Live2D
-- Pixi integration
-- advanced animation editor
-- voice system
-- backlog
-- skip mode
-- auto mode
-- read tracking
-- gallery
-- achievements
-- cloud save
-- RPG systems
-- battle systems
-
-## Future Candidates
-
-Possible post-v0.1 areas:
-
-- cross-file jump existence validation
-- `create-tsuzuru`
-- `@tsuzuru/vite`
-- backlog
-- skip mode
-- auto mode
-- text speed settings
-- ruby text
-- variable interpolation
-- multiple save slots
-- config screen
-- audio volume settings
-- packaged plugin distribution
-- VS Code extension
-- syntax highlighting
-
-Future candidates should remain documented as future work until implemented.
-
-## Design Checklist
-
-Before making architecture-affecting changes, check:
-
-- Does this keep `.tzr` readable?
-- Does this preserve static analyzability?
-- Does this avoid arbitrary JavaScript execution?
-- Does this preserve core / preact boundaries?
-- Does this preserve plugin / macro boundaries?
-- Does this require runtime state changes?
-- Does this affect save/load compatibility?
-- Does this affect public exports?
-- Does this require docs updates?
-- Does this require example updates?
-- Does this require tests?
-
-## Quality Gates
-
-Common checks:
+Root scripts provide repository-level checks:
 
 ```sh
+pnpm format:check
+pnpm lint
+pnpm check
 pnpm test
 pnpm typecheck
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
 ```
 
-Core checks:
+Biome owns formatting, linting, and import organization.
+
+Do not introduce ESLint or Prettier unless explicitly requested.
+
+---
+
+## Architecture Rules
+
+### Keep Core Independent
+
+Core must stay independent from rendering frameworks and browser APIs.
+
+Allowed in core:
+
+- pure TypeScript parser/compiler/runtime code
+- runtime state and events
+- plugin command dispatch infrastructure
+- source locations and diagnostics
+
+Not allowed in core:
+
+- Preact components
+- DOM access
+- CSS
+- localStorage
+- asset loading
+- app-specific rendering decisions
+
+---
+
+### Keep Scenario DSL Constrained
+
+The DSL should remain readable and analyzable.
+
+Do not add:
+
+- arbitrary JS/TS execution
+- hidden control flow through macros
+- runtime-defined scenario syntax
+- plugin-defined narrative flow control
+- dynamic scene IDs
+- broad expression language without explicit design
+
+When in doubt, prefer explicit syntax and compile-time diagnostics.
+
+---
+
+### Keep Plugins Presentation-Focused
+
+Plugins should extend runtime behavior through command handlers and plugin-owned state.
+
+Plugins should not redefine:
+
+- scene execution
+- choice resolution
+- branching semantics
+- runtime pointer movement
+- snapshot semantics
+- compiler ownership of narrative structure
+
+---
+
+### Keep Examples Small
+
+Examples should demonstrate supported behavior.
+
+They should not become:
+
+- full templates
+- complex game projects
+- asset-heavy showcases
+- hidden integration test suites
+- speculative roadmap demos
+
+---
+
+## Deferred Architecture Topics
+
+The following topics are intentionally deferred:
+
+- plugin command validation policy
+- `RuntimeDocument.labels` removal or retention
+- `RuntimeState.flags` and low-level state command policy
+- `call` / `return` runtime semantics
+- `wait` runtime authoring support
+- clear visual commands
+- coordinate placement
+- visual transitions
+- std system sugar
+- rich text / inline event runtime
+- persistent system state
+- `set null`
+- set variable reference
+- reusable staging / preset design
+- macro-like authoring sugar
+
+These should be handled as explicit design tasks, not incidental cleanup.
+
+---
+
+## Verification Guidance
+
+For broad repository changes, run:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm check
+pnpm test
+pnpm typecheck
+pnpm --filter @tsuzuru/example-dsl-v2-basic build
+git diff --check
+```
+
+For package-focused work, run the relevant filtered checks first.
+
+Examples:
 
 ```sh
 pnpm --filter @tsuzuru/core test
 pnpm --filter @tsuzuru/core typecheck
-pnpm --filter @tsuzuru/core build
-```
-
-Preact checks:
-
-```sh
 pnpm --filter @tsuzuru/preact test
 pnpm --filter @tsuzuru/preact typecheck
-pnpm --filter @tsuzuru/preact build
+pnpm --filter @tsuzuru/standard-ui-preact test
+pnpm --filter @tsuzuru/plugin-std-visual test
+pnpm --filter @tsuzuru/plugin-std-audio test
 ```
 
-Example checks:
+If `rtk` is available, prefer equivalent `rtk` commands when they preserve the same verification intent and reduce output noise.
 
-```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
-pnpm --filter @tsuzuru/example-dsl-v2-basic typecheck
+---
+
+## Summary
+
+Current Tsuzuru architecture is:
+
+```txt
+.tzr current DSL
+  -> parseTzr
+  -> TzrDocument
+  -> compileTzr
+  -> CompiledTzrDocument
+  -> core runtime
+  -> runtime events / plugin state
+  -> Preact adapter and standard UI
+  -> user-facing visual novel app
 ```
 
-Run broader checks when changing public APIs, runtime semantics, DSL behavior, or example behavior.
+The architectural priority is:
+
+```txt
+Keep scenario syntax readable.
+Keep runtime behavior predictable.
+Keep rendering and assets outside core.
+Keep extension logic in TypeScript.
+```
