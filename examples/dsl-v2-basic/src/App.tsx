@@ -145,7 +145,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
                 key={presentationKey(visibleEvent, state)}
                 event={visibleEvent}
                 onChoice={choose}
-                onAdvance={step}
+                onStep={step}
                 canAdvance={canAdvanceText}
                 showTransientStatus
               />
@@ -181,7 +181,7 @@ function RuntimeApp({ document }: RuntimeAppProps) {
 interface RevealRuntimeMessageLayerProps {
   readonly event: RuntimeEvent;
   readonly onChoice: (itemIndex: number) => void;
-  readonly onAdvance: () => void;
+  readonly onStep: () => void;
   readonly canAdvance: boolean;
   readonly showTransientStatus: boolean;
 }
@@ -189,7 +189,7 @@ interface RevealRuntimeMessageLayerProps {
 function RevealRuntimeMessageLayer({
   event,
   onChoice,
-  onAdvance,
+  onStep,
   canAdvance,
   showTransientStatus,
 }: RevealRuntimeMessageLayerProps) {
@@ -200,13 +200,13 @@ function RevealRuntimeMessageLayer({
     enabled: messageLines !== null,
     charactersPerSecond: 60,
   });
-  const handleAdvance = useCallback(() => {
+  const handleAdvanceRequest = useCallback(() => {
     if (reveal.isRevealing) {
       reveal.revealAll();
       return;
     }
-    onAdvance();
-  }, [onAdvance, reveal]);
+    onStep();
+  }, [onStep, reveal]);
   const renderMessageLine = useCallback(
     ({ line, lineIndex }: MessageWindowRenderLineContext) => {
       const range = lineRanges[lineIndex];
@@ -222,7 +222,7 @@ function RevealRuntimeMessageLayer({
     <RuntimeMessageLayer
       event={event}
       onChoice={onChoice}
-      onAdvance={handleAdvance}
+      onAdvance={handleAdvanceRequest}
       renderMessageLine={messageLines === null ? undefined : renderMessageLine}
       canAdvance={canAdvance}
       showTransientStatus={showTransientStatus}
