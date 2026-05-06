@@ -28,7 +28,7 @@ Do not reintroduce:
 - legacy `:: Speaker`
 - legacy `@command(...)`
 - legacy `$macro(...)`
-- legacy `parseTzrV2` / `compileTzrV2`
+- removed transitional `parseTzrV2` / `compileTzrV2` aliases
 - legacy macro API
 - legacy parser/compiler files
 - deleted legacy examples
@@ -285,6 +285,9 @@ Use these commands before reporting completion:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm check
 pnpm test
 pnpm typecheck
 pnpm --filter @tsuzuru/example-dsl-v2-basic build
@@ -322,6 +325,12 @@ Use dedicated docs for detailed design records:
 docs/decisions/
 docs/plans/
 docs/design/
+```
+
+The current DSL design document should live at:
+
+```txt
+docs/design/dsl-v2.md
 ```
 
 ## Coding Guidelines
