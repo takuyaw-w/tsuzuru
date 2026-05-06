@@ -48,7 +48,7 @@ has a minimal plugin command validation foundation through
 | `README.md` | rewrite/minimize | Kept DSL v2-first; removed wording that implied current macro support. |
 | ADRs under `docs/decisions/` | keep with note | Retained as historical decisions. Broken links to the removed macro API doc were replaced. |
 | `docs/roadmap.md` | keep with note | Retained as partially historical roadmap. It has a status note warning about legacy syntax and APIs. |
-| `docs/architecture.md` | keep with note | Retained as partially historical architecture map. A full rewrite is a larger docs task. |
+| `docs/architecture.md` | keep with note | Retained as the DSL v2-first architecture map. |
 
 ## Shared Components Retained
 
@@ -96,5 +96,3 @@ current behavior.
 ## Remaining PR-Ready Tasks
 
 - Expand DSL v2 plugin command validation only through explicit design tasks.
-- Rewrite `docs/architecture.md` from a DSL v2-first perspective.
-- Refresh historical roadmap wording when v0.1 release scope is finalized.
