@@ -2,6 +2,7 @@ export type {
   BooleanValue,
   IdentifierValue,
   NamedArgument,
+  NullValue,
   NumberValue,
   PositionalArgument,
   SourceLocation,

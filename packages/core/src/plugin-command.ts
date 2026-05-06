@@ -213,7 +213,7 @@ function validateValue(
   const expectedTypes = Array.isArray(definition.type) ? definition.type : [definition.type];
   const actualType = pluginCommandValueType(value);
 
-  if (!expectedTypes.includes(actualType)) {
+  if (!isPluginCommandValueType(actualType) || !expectedTypes.includes(actualType)) {
     diagnostics.push({
       location,
       message: `Plugin command "${commandName}" ${argumentLabel} must be ${formatExpectedTypes(expectedTypes)}.`,
@@ -244,7 +244,7 @@ function validateValue(
   return diagnostics;
 }
 
-function pluginCommandValueType(value: TzrValue): PluginCommandValueType {
+function pluginCommandValueType(value: TzrValue): PluginCommandValueType | "null" {
   switch (value.type) {
     case "StringValue":
       return "string";
@@ -254,7 +254,13 @@ function pluginCommandValueType(value: TzrValue): PluginCommandValueType {
       return "boolean";
     case "IdentifierValue":
       return "identifier";
+    case "NullValue":
+      return "null";
   }
+}
+
+function isPluginCommandValueType(value: PluginCommandValueType | "null"): value is PluginCommandValueType {
+  return value !== "null";
 }
 
 function positionalArgumentLabel(index: number): string {

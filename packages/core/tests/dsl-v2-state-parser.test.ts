@@ -68,14 +68,18 @@ describe("parseTzr state statements", () => {
   });
 
   it("parses set variable references to scenario and system paths", () => {
-    expect(parseSingleStatement("scene start:\n  set scenario.currentVoice = $scenario.nextVoice\n")).toMatchObject({
+    expect(parseSingleStatement("scene start:\n  set scenario.currentVoice = scenario.nextVoice\n")).toMatchObject({
       type: "SetStatement",
       value: { type: "VariableReferenceValue", path: "scenario.nextVoice", root: "scenario" },
     });
-    expect(parseSingleStatement("scene start:\n  set scenario.lastUnlocked = $system.endings.trueEnd\n")).toMatchObject(
+    expect(parseSingleStatement("scene start:\n  set scenario.lastUnlocked = system.endings.trueEnd\n")).toMatchObject({
+      type: "SetStatement",
+      value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" },
+    });
+    expect(parseSingleStatement("scene start:\n  set scenario.previousVoice = $scenario.currentVoice\n")).toMatchObject(
       {
         type: "SetStatement",
-        value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" },
+        value: { type: "VariableReferenceValue", path: "scenario.currentVoice", root: "scenario" },
       },
     );
   });

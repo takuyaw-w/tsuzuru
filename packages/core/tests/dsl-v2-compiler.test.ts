@@ -923,24 +923,55 @@ scene start:
     ).toContain('Plugin command metadata key "bg" must match command name "show".');
   });
 
-  it("rejects set null values for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
+  it("compiles set null values", () => {
+    const document = compileSource(`scene start:
   set scenario.currentCg = null
-`),
-    ).toContain("set null value is not compile-supported yet.");
+`);
+
+    expect(expectCommandInstruction(document, 1, "set").args[1]?.value).toMatchObject({
+      type: "NullValue",
+      value: null,
+    });
   });
 
-  it("rejects set variable reference values for now", () => {
+  it("compiles scenario set variable reference values", () => {
+    const document = compileSource(`scene start:
+  set scenario.currentVoice = scenario.nextVoice
+`);
+
+    expect(expectCommandInstruction(document, 1, "__tsuzuru_set_reference").args.map((arg) => arg.value)).toMatchObject(
+      [
+        { type: "StringValue", value: "scenario.currentVoice" },
+        { type: "StringValue", value: "scenario.nextVoice" },
+      ],
+    );
+  });
+
+  it("rejects system set variable reference values for now", () => {
     expect(
       expectCompileFailure(`scene start:
-  set scenario.currentVoice = $scenario.nextVoice
-  set scenario.lastUnlocked = $system.endings.trueEnd
+  set scenario.lastUnlocked = system.endings.trueEnd
 `),
-    ).toEqual([
-      "set variable reference value is not compile-supported yet.",
-      "set variable reference value is not compile-supported yet.",
-    ]);
+    ).toEqual(["set system variable references are not compile-supported yet."]);
+  });
+
+  it("compiles timed wait statements", () => {
+    const document = compileSource(`scene start:
+  wait 1000
+`);
+
+    expect(expectCommandInstruction(document, 1, "wait").args[0]?.value).toMatchObject({
+      type: "NumberValue",
+      value: 1000,
+    });
+  });
+
+  it("rejects negative timed wait durations", () => {
+    expect(
+      expectCompileFailure(`scene start:
+  wait -1
+`),
+    ).toContain("wait duration must not be negative.");
   });
 
   it("compiles set and add inside choice item bodies", () => {
@@ -1296,7 +1327,7 @@ scene start:
     ).toContain("Inline voice is not compile-supported yet.");
   });
 
-  it("rejects unsupported call, wait, and system statements", () => {
+  it("rejects unsupported call, event wait, and system statements", () => {
     const cases = [
       { source: "call screen.open(id=notebook)", statement: "CallStatement" },
       { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
