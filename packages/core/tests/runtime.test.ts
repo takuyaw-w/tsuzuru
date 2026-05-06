@@ -63,20 +63,10 @@ function positionalString(value: string): TzrArgument {
   };
 }
 
-function namedString(name: string, value: string): TzrArgument {
-  return {
-    type: "NamedArgument",
-    name,
-    value: { type: "StringValue", value, loc },
-    loc,
-  };
-}
-
 function createDocument(instructions: readonly CommandInstruction[] = []): RuntimeDocument {
   return {
     filePath: "scenario/runtime.tzr",
     instructions,
-    labels: {},
     scenes: {},
   };
 }
@@ -96,7 +86,6 @@ describe("createInitialRuntimeState", () => {
         instructionIndex: 0,
       },
       variables: {},
-      flags: {},
       plugins: {},
       branchFrames: [],
       pendingChoice: null,
@@ -104,6 +93,7 @@ describe("createInitialRuntimeState", () => {
       isStopped: false,
       isWaitingForClick: false,
     });
+    expect("flags" in state).toBe(false);
     expect(JSON.parse(JSON.stringify(state))).toEqual(state);
   });
 
@@ -242,16 +232,18 @@ scene start:
     expect(add.state.variables).toEqual({ "scenario.score": 5 });
   });
 
-  it("still supports retained runtime state helper commands without legacy parser/compiler", () => {
-    const document = createDocument([
-      command("set", [namedString("name", "route"), namedString("value", "mio")]),
-      command("flag", [positionalString("met_mio")]),
-    ]);
-    const set = stepRuntime(document, createInitialRuntimeState(document));
-    const flag = stepRuntime(document, set.state);
+  it("does not support removed low-level state helper commands as core commands", () => {
+    const document = createDocument([command("inc"), command("dec"), command("flag"), command("unflag")]);
+    let state = createInitialRuntimeState(document);
 
-    expect(set.event).toEqual({ type: "state", command: "set", name: "route", value: "mio" });
-    expect(flag.event).toEqual({ type: "state", command: "flag", name: "met_mio", value: true });
+    for (const name of ["inc", "dec", "flag", "unflag"]) {
+      expect(document.instructions[state.pointer.instructionIndex]).toMatchObject({ name });
+      const result = stepRuntime(document, state);
+      expect(result.event).toEqual({ type: "unsupported", instructionType: "CommandInstruction" });
+      expect(result.state.variables).toEqual({});
+      expect("flags" in result.state).toBe(false);
+      state = result.state;
+    }
   });
 
   it("ends when the instruction pointer is past the document", () => {
@@ -279,6 +271,8 @@ describe("runtime blocking and snapshots", () => {
     const snapshot = createRuntimeSnapshot(result.state);
     const restored = restoreRuntimeState(snapshot);
 
+    expect(snapshot.version).toBe(2);
+    expect("flags" in snapshot).toBe(false);
     expect(restored).toEqual(result.state);
     expect(restored).not.toBe(result.state);
   });

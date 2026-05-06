@@ -6,11 +6,17 @@ import {
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
+  type RuntimeDocument,
   type RuntimePluginCommandHandler,
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
 } from "../src/index.js";
+
+const loc = {
+  start: { filePath: "scenario/v2.tzr", line: 1, column: 1 },
+  end: { filePath: "scenario/v2.tzr", line: 1, column: 1 },
+};
 
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
@@ -157,7 +163,7 @@ scene later:
     });
   });
 
-  it("does not use labels for DSL v2 scene jumps", () => {
+  it("does not expose labels for DSL v2 scene jumps", () => {
     const document = compileSource(`scene start:
   jump later
 scene later:
@@ -165,12 +171,32 @@ scene later:
     const scene = stepRuntime(document, createInitialRuntimeState(document));
     const jump = stepRuntime(document, scene.state);
 
-    expect(document.labels).toEqual({});
+    expect("labels" in document).toBe(false);
     expect(jump.event).toEqual({
       type: "jump",
       sceneId: "later",
       instructionIndex: 2,
     });
+  });
+
+  it("does not fall back to legacy labels for scene jumps", () => {
+    const document = {
+      filePath: "scenario/main.tzr",
+      instructions: [
+        {
+          type: "SceneJumpInstruction",
+          sceneId: "later",
+          loc,
+        },
+      ],
+      labels: {
+        later: { id: "later", statementIndex: 0, loc },
+      },
+      scenes: {},
+    } as unknown as RuntimeDocument;
+    const jump = stepRuntime(document, createInitialRuntimeState(document));
+
+    expect(jump.event).toEqual({ type: "unsupported", instructionType: "SceneJumpInstruction" });
   });
 
   it("runs DSL v2 scene to choice event", () => {
@@ -323,7 +349,7 @@ scene later:
     });
   });
 
-  it("does not require labels for DSL v2 body choices", () => {
+  it("does not expose labels for DSL v2 body choices", () => {
     const document = compileSource(`scene start:
   choice "Choose":
     "Stay":
@@ -333,7 +359,7 @@ scene later:
     const scene = stepRuntime(document, createInitialRuntimeState(document));
     const choice = stepRuntime(document, scene.state);
 
-    expect(document.labels).toEqual({});
+    expect("labels" in document).toBe(false);
     expect(choice.event).toEqual({
       type: "choice",
       question: "Choose",
@@ -1142,6 +1168,22 @@ scene leave:
       "scenario.route": "mio",
       "scenario.score": 2,
     });
+    expect("flags" in restored).toBe(false);
+  });
+
+  it("preserves scenario boolean variables after snapshot restore", () => {
+    const document = compileSource(`scene start:
+  set scenario.flagLike = true
+`);
+    const scene = stepRuntime(document, createInitialRuntimeState(document));
+    const set = stepRuntime(document, scene.state);
+    const snapshot = createRuntimeSnapshot(set.state);
+    const restored = restoreRuntimeState(snapshot);
+
+    expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.flagLike", value: true });
+    expect(snapshot.version).toBe(2);
+    expect("flags" in snapshot).toBe(false);
+    expect(restored.variables).toEqual({ "scenario.flagLike": true });
   });
 
   it("runs a DSL v2 if true branch from a scenario boolean variable", () => {

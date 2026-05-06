@@ -1,15 +1,16 @@
 # Tsuzuru Runtime
 
 > Status: DSL v2-first. The runtime still provides shared execution, snapshot,
-> plugin dispatch, and command primitives, but legacy label jumps and old
-> target-label choices were removed. DSL v2 uses scene jumps, body choices, and
-> the current `IfInstruction`.
+> plugin dispatch, and current command primitives. Legacy label jumps, runtime
+> flags, old target-label choices, and low-level `inc` / `dec` / `flag` /
+> `unflag` state commands have been removed. DSL v2 uses scene jumps, body
+> choices, scenario variables, and the current `IfInstruction`.
 
 This document describes the currently implemented DSL v2 runtime surface in `@tsuzuru/core`.
 
 ## Role
 
-The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, DSL v2 scene jumps, conditional execution, plugin command dispatch, and minimal snapshot creation. `RuntimeState.flags` and the `inc` / `dec` / `flag` / `unflag` command handlers remain as low-level runtime primitives, but they are not current DSL v2 authoring syntax.
+The runtime executes compiled Tsuzuru instructions. It owns scenario flow, runtime state, waits, choices, variables, DSL v2 scene jumps, conditional execution, plugin command dispatch, and minimal snapshot creation.
 
 The core runtime does not render UI and does not manage real time. It has no dependency on `setTimeout`, DOM APIs, Preact, browser storage, asset loading, or plugin lifecycle code. A host or UI layer observes runtime events and calls the appropriate resume or resolve function.
 
@@ -24,7 +25,7 @@ const result = stepRuntime(compiledDocument, state);
 
 The runtime reads `document.instructions`, `document.scenes`, and `document.filePath`. DSL v2 scene jumps resolve through `document.scenes`.
 
-`RuntimeDocument.labels` still exists as an empty compatibility field on DSL v2 compiled documents, but the current runtime does not use it for DSL v2 scene jumps or body choices. Cross-file runtime jumps are not implemented.
+`RuntimeDocument.labels` and `CompiledTzrDocument.labels` are not part of the current runtime document shape. Cross-file runtime jumps are not implemented.
 
 ## RuntimeState
 
@@ -34,7 +35,7 @@ Important fields:
 
 - `pointer`: current top-level file path and instruction index
 - `variables`: runtime values set by DSL v2 `set` and `add`
-- `flags`: retained low-level boolean flag map, not current DSL v2 authoring syntax
+- `plugins`: plugin-owned runtime state
 - `branchFrames`: active nested instruction lists for DSL v2 `if` branches and body choices
 - `pendingChoice`: active choice waiting for host resolution, or `null`
 - `pendingWait`: active timed wait request, or `null`
@@ -49,7 +50,7 @@ Important fields:
 {
   pointer: { filePath: document.filePath, instructionIndex: 0 },
   variables: {},
-  flags: {},
+  plugins: {},
   branchFrames: [],
   pendingChoice: null,
   pendingWait: null,
@@ -83,7 +84,7 @@ Current `RuntimeEvent` variants:
 - `waitClick`: emitted for `@waitClick()` and repeated while click wait is active
 - `page`: emitted for `@page()`
 - `stop`: emitted for `@stop()`
-- `state`: emitted for DSL v2 `set` and `add`; also emitted by retained low-level `inc`, `dec`, `flag`, and `unflag` handlers
+- `state`: emitted for DSL v2 `set` and `add`
 - `jump`: emitted for `SceneJumpInstruction`
 - `if`: emitted when evaluating an `IfInstruction`
 - `choice`: emitted for `BodyChoiceInstruction` and repeated while a choice is pending
@@ -169,7 +170,7 @@ Scene jumps from inside a selected body are handled by the normal `SceneJumpInst
 
 `isStopped` is stateful execution status, but it is not currently reported as a block reason.
 
-## Variables and Flags
+## Variables and State Commands
 
 Runtime state commands are core-owned.
 
@@ -183,7 +184,13 @@ and are not compile-supported for `set`.
 
 DSL v2 `add scenario.affection += 1` updates numeric variables. Missing variables are treated as `0`, and adding to an existing non-number value emits a runtime `error`.
 
-The legacy-shaped `inc`, `dec`, `flag`, and `unflag` command handlers remain available only as low-level runtime primitives for manually constructed `CommandInstruction` values. They are not current DSL v2 syntax.
+Scenario boolean variables cover flag-like authoring needs:
+
+```txt
+set scenario.metMio = true
+```
+
+`RuntimeState.flags` was removed. The legacy-shaped `inc`, `dec`, `flag`, and `unflag` names are no longer core runtime commands. A manually constructed `CommandInstruction` using one of those names is treated like any other non-core command: it is dispatched only if the host supplies a plugin handler, otherwise it emits `unsupported`.
 
 Each state command emits a `state` event.
 
@@ -200,7 +207,7 @@ Each state command emits a `state` event.
 
 When an `IfInstruction` or selected body choice has a non-empty branch, the runtime pushes a frame and immediately executes the first instruction in that branch. Subsequent calls to `stepRuntime` continue executing the frame until it reaches the end. Then the frame is popped and execution returns to the already-advanced top-level pointer.
 
-For v0.1, branch frames are included directly in snapshots.
+For current v0.x snapshots, branch frames are included directly in snapshots.
 
 ## If, Jump, and Choice Model
 
@@ -259,10 +266,10 @@ Plugin handlers are synchronous. They receive the already-advanced state and the
 
 ```ts
 {
-  version: 1,
+  version: 2,
   pointer,
   variables,
-  flags,
+  plugins,
   branchFrames,
   pendingChoice,
   pendingWait,
@@ -273,7 +280,7 @@ Plugin handlers are synchronous. They receive the already-advanced state and the
 
 `restoreRuntimeState(snapshot)` returns a `RuntimeState`.
 
-For v0.1, `RuntimeSnapshot` intentionally stores `RuntimeState` directly and plainly. This keeps restore logic simple and matches the current runtime model.
+`RuntimeSnapshot` stores core runtime state directly and plainly. It includes `variables`, generic plugin state, active `branchFrames`, `pendingChoice`, `pendingWait`, stopped state, and click-wait state. This keeps restore logic simple and matches the current runtime model.
 
 One important constraint is `branchFrames`. Current branch frames include the branch `instructions` themselves:
 
@@ -291,7 +298,9 @@ The tradeoffs are:
 - save data can become larger because branch instructions are embedded
 - compatibility is weak if the scenario document changes after the snapshot is created
 
-`RuntimeSaveData` does not include scenario identity, scenario version, or migration metadata in v0.1. Save data compatibility is not guaranteed if the scenario document, compiled instruction order, runtime model, or event shape changes after saving.
+`RuntimeSaveData` does not include scenario identity, scenario version, or migration metadata in current v0.x releases. Save data compatibility is not guaranteed before v1.0, and compatibility is especially weak if the scenario document, compiled instruction order, runtime model, or event shape changes after saving.
+
+Plugin state is saved as generic JSON-compatible runtime state. Plugin-specific save policy remains plugin-owned. For example, std-audio provides `prepareStdAudioStateForSnapshot(runtimeState)` so BGM state is retained while one-shot SE and voice events are cleared before the core snapshot is created.
 
 A future snapshot format may store a scenario identity, scenario version, migration version, branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `RuntimeDocument`.
 

@@ -71,7 +71,6 @@ export type {
   RuntimeErrorCode,
   RuntimeErrorEvent,
   RuntimeEvent,
-  RuntimeFlags,
   RuntimeInitialStateOptions,
   RuntimePendingBodyChoice,
   RuntimePendingBodyChoiceItem,

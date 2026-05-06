@@ -31,7 +31,6 @@ export function createInitialRuntimeState(
       instructionIndex: 0,
     },
     variables: {},
-    flags: {},
     plugins: createInitialPluginStates(options),
     branchFrames: [],
     pendingChoice: null,
@@ -147,7 +146,7 @@ function stepSceneJumpInstruction(
   nextState: RuntimeState,
   sceneId: string,
 ): RuntimeStepResult {
-  const target = document.scenes?.[sceneId];
+  const target = document.scenes[sceneId];
   if (target === undefined) {
     return unsupportedInstruction(nextState, "SceneJumpInstruction");
   }

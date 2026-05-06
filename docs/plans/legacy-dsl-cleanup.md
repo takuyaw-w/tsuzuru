@@ -70,15 +70,13 @@ integration and must not be removed as part of legacy cleanup:
 
 ## RuntimeDocument And Runtime State Follow-Ups
 
-`RuntimeDocument.labels` remains for now. Current DSL v2 scene jumps and body
-choices do not use it, and `CompiledTzrDocument` currently emits `labels: {}`.
-Removing the field would touch public type shape and many tests/fixtures, so it
-should be handled in a focused runtime document cleanup.
+Resolved in the v0.11 runtime state policy cleanup:
 
-`RuntimeState.flags` and the low-level `inc`, `dec`, `flag`, and `unflag`
-runtime command handlers remain. DSL v2 authoring currently uses `set` and
-`add`; docs must not present flag commands as current DSL v2 syntax. These
-runtime primitives can be revisited once the v2 state model is finalized.
+- `RuntimeDocument.labels` and `CompiledTzrDocument.labels` were removed.
+- `RuntimeState.flags`, `RuntimeSnapshot.flags`, and `RuntimeFlags` were removed.
+- The low-level `inc`, `dec`, `flag`, and `unflag` names were removed from core
+  command handling and command metadata.
+- Snapshot version moved to `2` because the snapshot shape changed.
 
 ## Residual Reference Policy
 
@@ -98,8 +96,5 @@ current behavior.
 ## Remaining PR-Ready Tasks
 
 - Expand DSL v2 plugin command validation only through explicit design tasks.
-- Decide whether `RuntimeDocument.labels` should be removed or made optional.
-- Decide whether `RuntimeState.flags` and `inc` / `dec` / `flag` / `unflag`
-  remain long-term runtime primitives.
 - Rewrite `docs/architecture.md` from a DSL v2-first perspective.
 - Refresh historical roadmap wording when v0.1 release scope is finalized.

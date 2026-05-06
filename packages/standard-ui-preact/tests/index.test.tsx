@@ -449,7 +449,7 @@ describe("RuntimeMessageLayer", () => {
       { type: "jump", sceneId: "later", instructionIndex: 20 },
       { type: "choiceResolve", itemIndex: 0, text: "Stay", id: "stay" },
       { type: "if", result: true, branch: "then" },
-      { type: "state", command: "flag", name: "met_haruka", value: true },
+      { type: "state", command: "set", name: "scenario.metHaruka", value: true },
       { type: "pluginCommand", name: "bg" },
     ];
 

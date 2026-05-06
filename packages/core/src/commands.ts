@@ -1,4 +1,4 @@
-export const CORE_COMMAND_NAMES = ["waitClick", "page", "stop", "wait", "set", "inc", "dec", "flag", "unflag"] as const;
+export const CORE_COMMAND_NAMES = ["waitClick", "page", "stop", "wait", "set"] as const;
 
 export type CoreCommandName = (typeof CORE_COMMAND_NAMES)[number];
 
@@ -13,10 +13,6 @@ export const CORE_COMMANDS: readonly CoreCommandDefinition[] = [
   { name: "stop", category: "flow" },
   { name: "wait", category: "flow" },
   { name: "set", category: "state" },
-  { name: "inc", category: "state" },
-  { name: "dec", category: "state" },
-  { name: "flag", category: "state" },
-  { name: "unflag", category: "state" },
 ];
 
 const coreCommandNames = new Set<string>(CORE_COMMAND_NAMES);

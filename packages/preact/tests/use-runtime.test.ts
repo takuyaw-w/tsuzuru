@@ -27,13 +27,12 @@ import {
 } from "../src/index.js";
 
 const snapshot: RuntimeSnapshot = {
-  version: 1,
+  version: 2,
   pointer: {
     filePath: "scenario/main.tzr",
     instructionIndex: 1,
   },
   variables: {},
-  flags: {},
   plugins: {},
   branchFrames: [],
   pendingChoice: null,

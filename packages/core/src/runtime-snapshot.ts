@@ -3,10 +3,9 @@ import type { RuntimePendingChoice, RuntimeSnapshot, RuntimeState } from "./runt
 
 export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
   return {
-    version: 1,
+    version: 2,
     pointer: { ...state.pointer },
     variables: { ...state.variables },
-    flags: { ...state.flags },
     plugins: clonePluginStates(state.plugins),
     branchFrames: state.branchFrames.map((frame) => ({
       instructions: cloneInstructions(frame.instructions),
@@ -23,7 +22,6 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
   return {
     pointer: { ...snapshot.pointer },
     variables: { ...snapshot.variables },
-    flags: { ...snapshot.flags },
     plugins: clonePluginStates(snapshot.plugins ?? {}),
     branchFrames: snapshot.branchFrames.map((frame) => ({
       instructions: cloneInstructions(frame.instructions),

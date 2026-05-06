@@ -535,7 +535,7 @@ IR should be:
 
 Scene jumps are scene-based. Scene IDs must not be disguised as legacy labels.
 
-`CompiledTzrDocument.labels` may still exist as a compatibility-shaped field, but current authoring uses scenes and scene jumps, not legacy labels.
+`RuntimeDocument.labels` and `CompiledTzrDocument.labels` are removed. Current authoring uses scenes and scene jumps, not legacy labels.
 
 ---
 
@@ -572,7 +572,6 @@ Runtime responsibilities:
 - manage pending choices
 - resolve choices
 - update runtime variables
-- update runtime flags where low-level commands still exist
 - handle scene jumps
 - dispatch plugin command instructions
 - create snapshots
@@ -624,7 +623,6 @@ It includes:
 
 - current pointer
 - runtime variables
-- runtime flags
 - active branch frames
 - pending choices
 - pending waits
@@ -635,6 +633,8 @@ It includes:
 Runtime state must remain independent from UI component state.
 
 Plugin state is stored under runtime plugin state, not in independent plugin-owned stores.
+
+Scenario variables are the current state model. `RuntimeState.flags` and the low-level `inc` / `dec` / `flag` / `unflag` core command handlers are removed; `add` remains the supported numeric mutation command.
 
 ---
 
@@ -876,8 +876,6 @@ They should not become:
 The following topics are intentionally deferred:
 
 - complex plugin command schemas
-- `RuntimeDocument.labels` removal or retention
-- `RuntimeState.flags` and low-level state command policy
 - broader `call` / `return` runtime semantics
 - broader namespaced `wait` event semantics
 - coordinate placement
