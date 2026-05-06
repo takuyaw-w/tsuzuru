@@ -1,0 +1,7 @@
+title "Tsuzuru DSL v2 Basic"
+
+character mio name="美緒"
+
+include "./chapters/01-opening.tzr"
+include "./chapters/02-common.tzr"
+include "./chapters/03-ending.tzr"

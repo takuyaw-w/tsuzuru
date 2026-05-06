@@ -1,0 +1,23 @@
+{
+  "name": "create-tsuzuru",
+  "version": "0.15.0",
+  "type": "module",
+  "bin": {
+    "create-tsuzuru": "./dist/src/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
