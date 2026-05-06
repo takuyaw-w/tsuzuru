@@ -19,11 +19,7 @@ export function RuntimeView({
   switch (event.type) {
     case "narration":
       return (
-        <AdvanceableMessage
-          className="tzr-runtime-view--narration"
-          onAdvance={onAdvance}
-          canAdvance={canAdvance}
-        >
+        <AdvanceableMessage className="tzr-runtime-view--narration" onAdvance={onAdvance} canAdvance={canAdvance}>
           {event.lines.map((line, index) => (
             <p key={index}>{line.text}</p>
           ))}
@@ -31,11 +27,7 @@ export function RuntimeView({
       );
     case "dialogue":
       return (
-        <AdvanceableMessage
-          className="tzr-runtime-view--dialogue"
-          onAdvance={onAdvance}
-          canAdvance={canAdvance}
-        >
+        <AdvanceableMessage className="tzr-runtime-view--dialogue" onAdvance={onAdvance} canAdvance={canAdvance}>
           <p className="tzr-runtime-view__speaker">{event.speaker}</p>
           {event.lines.map((line, index) => (
             <p key={index}>{line.text}</p>
@@ -58,13 +50,7 @@ export function RuntimeView({
         </section>
       );
     case "waitClick":
-      return (
-        <RuntimeControlMessage
-          label="Waiting for click"
-          buttonLabel="Continue"
-          onContinue={onContinue}
-        />
-      );
+      return <RuntimeControlMessage label="Waiting for click" buttonLabel="Continue" onContinue={onContinue} />;
     case "page":
       return <RuntimeControlMessage label="Page break" buttonLabel="Continue" onContinue={onContinue} />;
     case "wait":
@@ -113,9 +99,7 @@ function AdvanceableMessage({
       onClick={isAdvanceable ? onAdvance : undefined}
     >
       {children}
-      {isAdvanceable ? (
-        <p className="tzr-runtime-view__advance-hint">Click to continue</p>
-      ) : null}
+      {isAdvanceable ? <p className="tzr-runtime-view__advance-hint">Click to continue</p> : null}
     </section>
   );
 }
@@ -134,11 +118,7 @@ interface RuntimeControlMessageProps {
   readonly onContinue: (() => void) | undefined;
 }
 
-function RuntimeControlMessage({
-  label,
-  buttonLabel,
-  onContinue,
-}: RuntimeControlMessageProps): ComponentChildren {
+function RuntimeControlMessage({ label, buttonLabel, onContinue }: RuntimeControlMessageProps): ComponentChildren {
   return (
     <section className="tzr-runtime-view tzr-runtime-view--control">
       <p>{label}</p>

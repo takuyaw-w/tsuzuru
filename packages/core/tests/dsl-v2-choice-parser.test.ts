@@ -253,9 +253,9 @@ describe("parseTzr choice statements", () => {
   });
 
   it("rejects invalid item ids", () => {
-    expect(expectChoiceFailure('scene start:\n  choice "Choose":\n    "Apologize" id=1st:\n      jump apologize\n')).toContain(
-      'Invalid choice item id "1st".',
-    );
+    expect(
+      expectChoiceFailure('scene start:\n  choice "Choose":\n    "Apologize" id=1st:\n      jump apologize\n'),
+    ).toContain('Invalid choice item id "1st".');
   });
 
   it("rejects duplicate item ids", () => {
@@ -283,7 +283,9 @@ describe("parseTzr choice statements", () => {
   });
 
   it("rejects choice with no items", () => {
-    expect(expectChoiceFailure('scene start:\n  choice "Choose":\n')).toContain("choice must include at least one item.");
+    expect(expectChoiceFailure('scene start:\n  choice "Choose":\n')).toContain(
+      "choice must include at least one item.",
+    );
   });
 
   it("rejects item with empty body", () => {
@@ -293,15 +295,15 @@ describe("parseTzr choice statements", () => {
   });
 
   it("rejects malformed item indentation", () => {
-    expect(expectChoiceFailure('scene start:\n  choice "Choose":\n      "Apologize":\n        jump apologize\n')).toContain(
-      "Choice items must be indented 4 spaces.",
-    );
+    expect(
+      expectChoiceFailure('scene start:\n  choice "Choose":\n      "Apologize":\n        jump apologize\n'),
+    ).toContain("Choice items must be indented 4 spaces.");
   });
 
   it("rejects malformed item body indentation", () => {
-    expect(expectChoiceFailure('scene start:\n  choice "Choose":\n    "Apologize":\n        jump apologize\n')).toContain(
-      "Choice item body statements must be indented 6 spaces.",
-    );
+    expect(
+      expectChoiceFailure('scene start:\n  choice "Choose":\n    "Apologize":\n        jump apologize\n'),
+    ).toContain("Choice item body statements must be indented 6 spaces.");
   });
 
   it("rejects id after if", () => {

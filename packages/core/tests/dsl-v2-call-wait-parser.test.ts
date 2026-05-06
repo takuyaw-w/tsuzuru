@@ -79,16 +79,24 @@ describe("parseTzr call and wait statements", () => {
   it("parses variable reference args", () => {
     expect(parseSingleStatement("scene start:\n  call voice.play(current=$scenario.currentVoice)\n")).toMatchObject({
       type: "CallStatement",
-      args: [{ name: "current", value: { type: "VariableReferenceValue", path: "scenario.currentVoice", root: "scenario" } }],
+      args: [
+        { name: "current", value: { type: "VariableReferenceValue", path: "scenario.currentVoice", root: "scenario" } },
+      ],
     });
-    expect(parseSingleStatement("scene start:\n  call achievement.unlock(unlocked=$system.endings.trueEnd)\n")).toMatchObject({
+    expect(
+      parseSingleStatement("scene start:\n  call achievement.unlock(unlocked=$system.endings.trueEnd)\n"),
+    ).toMatchObject({
       type: "CallStatement",
-      args: [{ name: "unlocked", value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" } }],
+      args: [
+        { name: "unlocked", value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" } },
+      ],
     });
   });
 
   it("parses multiple args", () => {
-    expect(parseSingleStatement('scene start:\n  call screen.open(id=notebook, route="mio-route", count=1)\n')).toMatchObject({
+    expect(
+      parseSingleStatement('scene start:\n  call screen.open(id=notebook, route="mio-route", count=1)\n'),
+    ).toMatchObject({
       type: "CallStatement",
       name: "screen.open",
       args: [

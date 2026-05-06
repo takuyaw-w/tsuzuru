@@ -1,16 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { h, isValidElement, render, type ComponentChildren, type VNode } from "preact";
-import { act } from "preact/test-utils";
 import {
   compileTzr,
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
-  stepRuntime,
   type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
+  stepRuntime,
 } from "@tsuzuru/core";
+import { type ComponentChildren, h, isValidElement, render, type VNode } from "preact";
+import { act } from "preact/test-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createRuntimeSaveData,
   getAutoClearWaitDuration,
@@ -19,11 +19,11 @@ import {
   isRenderableRuntimeEvent,
   isRuntimeSaveData,
   isTransientRuntimeEvent,
-  restoreRuntimeSnapshotForView,
   RuntimeView,
-  useRuntime,
+  restoreRuntimeSnapshotForView,
   type UseRuntimeOptions,
   type UseRuntimeResult,
+  useRuntime,
 } from "../src/index.js";
 
 const snapshot: RuntimeSnapshot = {
@@ -163,7 +163,7 @@ function nextSiblingOf(node: MinimalNode): MinimalNode | null {
     return null;
   }
   const index = siblings.indexOf(node);
-  return index === -1 ? null : siblings[index + 1] ?? null;
+  return index === -1 ? null : (siblings[index + 1] ?? null);
 }
 
 interface MinimalDocument {
@@ -331,10 +331,7 @@ describe("useRuntime", () => {
     vi.useRealTimers();
   });
 
-  async function mountRuntime(
-    document: RuntimeDocument,
-    options: UseRuntimeOptions,
-  ): Promise<() => UseRuntimeResult> {
+  async function mountRuntime(document: RuntimeDocument, options: UseRuntimeOptions): Promise<() => UseRuntimeResult> {
     let currentRuntime: UseRuntimeResult | null = null;
     const root = createMinimalElement("div");
     roots.push(root);

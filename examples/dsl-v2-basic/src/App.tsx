@@ -1,32 +1,22 @@
-import { useCallback, useMemo, useState } from "preact/hooks";
 import {
+  type CompiledTzrDocument,
   compileTzr,
   createInitialRuntimeState,
   getRuntimeBlockReason,
   parseTzr,
-  resolveChoice,
-  stepRuntime,
-  type CompiledTzrDocument,
   type RuntimeDiagnostic,
   type RuntimeEvent,
   type RuntimePluginDefinition,
   type RuntimeState,
   type RuntimeStepOptions,
+  resolveChoice,
+  stepRuntime,
 } from "@tsuzuru/core";
-import {
-  createStdAudioCommandHandlers,
-  createStdAudioPlugin,
-} from "@tsuzuru/plugin-std-audio";
-import {
-  createStdVisualCommandHandlers,
-  createStdVisualPlugin,
-} from "@tsuzuru/plugin-std-visual";
+import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { isAutoSteppableRuntimeEvent } from "@tsuzuru/preact";
-import {
-  GameShell,
-  GameViewport,
-  RuntimeMessageLayer,
-} from "@tsuzuru/standard-ui-preact";
+import { GameShell, GameViewport, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
 import { VisualLayer } from "./VisualLayer.js";

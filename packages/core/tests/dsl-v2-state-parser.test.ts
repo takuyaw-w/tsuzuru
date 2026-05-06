@@ -72,10 +72,12 @@ describe("parseTzr state statements", () => {
       type: "SetStatement",
       value: { type: "VariableReferenceValue", path: "scenario.nextVoice", root: "scenario" },
     });
-    expect(parseSingleStatement("scene start:\n  set scenario.lastUnlocked = $system.endings.trueEnd\n")).toMatchObject({
-      type: "SetStatement",
-      value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" },
-    });
+    expect(parseSingleStatement("scene start:\n  set scenario.lastUnlocked = $system.endings.trueEnd\n")).toMatchObject(
+      {
+        type: "SetStatement",
+        value: { type: "VariableReferenceValue", path: "system.endings.trueEnd", root: "system" },
+      },
+    );
   });
 
   it("parses add number values including negative numbers", () => {
@@ -196,9 +198,7 @@ describe("parseTzr state statements", () => {
   });
 
   it("rejects add without plus equals", () => {
-    expect(expectStateFailure("scene start:\n  add scenario.score 1\n")).toContain(
-      "add statement must include `+=`.",
-    );
+    expect(expectStateFailure("scene start:\n  add scenario.score 1\n")).toContain("add statement must include `+=`.");
   });
 
   it("rejects add with equals", () => {
@@ -208,9 +208,7 @@ describe("parseTzr state statements", () => {
   });
 
   it("rejects invalid add targets", () => {
-    expect(expectStateFailure("scene start:\n  add system.playCount += 1\n")).toContain(
-      "add cannot target system.*.",
-    );
+    expect(expectStateFailure("scene start:\n  add system.playCount += 1\n")).toContain("add cannot target system.*.");
     expect(expectStateFailure("scene start:\n  add player.score += 1\n")).toContain(
       "add target must start with scenario.",
     );

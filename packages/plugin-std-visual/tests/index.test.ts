@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
 import {
-  createInitialRuntimeState,
-  stepRuntime,
   type CommandInstruction,
+  createInitialRuntimeState,
   type RuntimeDocument,
+  stepRuntime,
   type TzrArgument,
 } from "@tsuzuru/core";
+import { describe, expect, it } from "vitest";
 import {
   createStdVisualCommandHandlers,
   createStdVisualPlugin,
@@ -52,7 +52,10 @@ describe("std-visual commands", () => {
   });
 
   it("sets and overwrites the background with bg commands", () => {
-    const result = runStdVisualCommands(command("bg", [positionalString("classroom")]), command("bg", [positionalString("street")]));
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("classroom")]),
+      command("bg", [positionalString("street")]),
+    );
 
     expect(getStdVisualState(result.state).background).toEqual({ assetId: "street" });
   });
@@ -96,9 +99,9 @@ describe("std-visual commands", () => {
     expect(() => runStdVisualCommands(command("bg", [positionalString("")]))).toThrow(
       "Invalid @bg runtime arguments. Expected validated std visual command arguments.",
     );
-    expect(() => runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")]))).toThrow(
-      "Invalid @show runtime arguments. Expected validated std visual command arguments.",
-    );
+    expect(() =>
+      runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")])),
+    ).toThrow("Invalid @show runtime arguments. Expected validated std visual command arguments.");
   });
 });
 

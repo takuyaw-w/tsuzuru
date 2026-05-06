@@ -126,7 +126,15 @@ describe("parseTzr std visual sugar statements", () => {
 
     expect(statement).toMatchObject({
       type: "ChoiceStatement",
-      items: [{ body: [{ type: "BgStatement" }, { type: "ShowStatement" }, { type: "ClearVisualStatement", target: "bg", transition: { name: "dissolve", duration: 100 } }] }],
+      items: [
+        {
+          body: [
+            { type: "BgStatement" },
+            { type: "ShowStatement" },
+            { type: "ClearVisualStatement", target: "bg", transition: { name: "dissolve", duration: 100 } },
+          ],
+        },
+      ],
     });
   });
 
@@ -172,9 +180,7 @@ describe("parseTzr std visual sugar statements", () => {
 
   it("rejects invalid bg statements", () => {
     expect(expectVisualFailure("scene start:\n  bg\n")).toContain("bg assetRef is required.");
-    expect(expectVisualFailure("scene start:\n  bg $scenario.bg\n")).toContain(
-      "bg visual assetRef must be static.",
-    );
+    expect(expectVisualFailure("scene start:\n  bg $scenario.bg\n")).toContain("bg visual assetRef must be static.");
     expect(expectVisualFailure('scene start:\n  bg ""\n')).toContain("bg visual assetRef must not be empty.");
     expect(expectVisualFailure("scene start:\n  bg classroom-bg\n")).toContain("Invalid bg visual assetRef.");
     expect(expectVisualFailure("scene start:\n  bg classroom extra\n")).toContain(

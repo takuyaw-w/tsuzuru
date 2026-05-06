@@ -40,9 +40,6 @@ export type PluginCommandArgumentSchema =
       readonly arguments: readonly PluginCommandNamedArgumentDefinition[];
     };
 
-export function definePluginCommand(
-  name: string,
-  args?: PluginCommandArgumentSchema,
-): PluginCommandDefinition {
+export function definePluginCommand(name: string, args?: PluginCommandArgumentSchema): PluginCommandDefinition {
   return args === undefined ? { name } : { name, args };
 }

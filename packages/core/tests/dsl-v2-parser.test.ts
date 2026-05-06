@@ -207,10 +207,7 @@ scene commonRoute:
       {
         type: "SceneDeclaration",
         id: "commonRoute",
-        body: [
-          { type: "DialogueStatement", speaker: "mio", explicit: true },
-          { type: "EndStatement" },
-        ],
+        body: [{ type: "DialogueStatement", speaker: "mio", explicit: true }, { type: "EndStatement" }],
       },
     ]);
   });
@@ -442,7 +439,9 @@ scene commonRoute:
           type: "DialogueStatement",
           explicit: true,
           meta: {
-            attributes: [{ type: "TextBlockMoodMetaAttribute", name: "mood", value: "annoyed", valueKind: "identifier" }],
+            attributes: [
+              { type: "TextBlockMoodMetaAttribute", name: "mood", value: "annoyed", valueKind: "identifier" },
+            ],
           },
           lines: [{ type: "TextLine", text: "You're late." }],
         },
@@ -653,7 +652,9 @@ scene commonRoute:
   });
 
   it("rejects full-width space indentation", () => {
-    expect(expectParseFailure("scene start:\n　narration:\n")).toContain("Full-width spaces are not allowed for indentation.");
+    expect(expectParseFailure("scene start:\n　narration:\n")).toContain(
+      "Full-width spaces are not allowed for indentation.",
+    );
   });
 
   it("rejects odd scene body indentation", () => {
@@ -726,9 +727,9 @@ scene commonRoute:
   });
 
   it("rejects duplicate :meta", () => {
-    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      mood=annoyed\n    :meta\n      delay=70\n    Text.\n")).toContain(
-      "Duplicate :meta block.",
-    );
+    expect(
+      expectParseFailure("scene start:\n  mio:\n    :meta\n      mood=annoyed\n    :meta\n      delay=70\n    Text.\n"),
+    ).toContain("Duplicate :meta block.");
   });
 
   it("rejects :meta after text block items", () => {
@@ -765,9 +766,9 @@ scene commonRoute:
     expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      unknown=true\n    Text.\n")).toContain(
       'Unknown :meta attribute "unknown".',
     );
-    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=70\n      delay=80\n    Text.\n")).toContain(
-      'Duplicate :meta attribute "delay".',
-    );
+    expect(
+      expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=70\n      delay=80\n    Text.\n"),
+    ).toContain('Duplicate :meta attribute "delay".');
   });
 
   it("rejects invalid :meta color values", () => {
@@ -798,7 +799,7 @@ scene commonRoute:
     expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=-1\n    Text.\n")).toContain(
       "Invalid :meta delay value.",
     );
-    expect(expectParseFailure("scene start:\n  mio:\n    :meta\n      delay=\"70\"\n    Text.\n")).toContain(
+    expect(expectParseFailure('scene start:\n  mio:\n    :meta\n      delay="70"\n    Text.\n')).toContain(
       "Invalid :meta delay value.",
     );
   });

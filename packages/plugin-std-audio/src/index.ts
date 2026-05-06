@@ -1,6 +1,6 @@
 import {
-  definePluginCommand,
   type CommandInstruction,
+  definePluginCommand,
   type PluginCommandMap,
   type RuntimePluginCommandHandler,
   type RuntimePluginDefinition,
@@ -172,7 +172,11 @@ function withStdAudioState(state: RuntimeState, stdAudio: StdAudioState): Runtim
 
 function getRequiredPositionalString(instruction: CommandInstruction, index: number): string {
   const argument = instruction.args[index];
-  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue" || argument.value.value.length === 0) {
+  if (
+    argument?.type !== "PositionalArgument" ||
+    argument.value.type !== "StringValue" ||
+    argument.value.value.length === 0
+  ) {
     throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std audio command arguments.`);
   }
   return argument.value.value;

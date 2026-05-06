@@ -1,25 +1,26 @@
 import type { SourceLocation, SourceRange } from "./ast.js";
+import { parseTzrConditionExpression } from "./condition-parser.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
   TzrAddStatement,
   TzrArgumentValue,
   TzrAudioAssetRef,
-  TzrBgStatement,
   TzrBgmStatement,
+  TzrBgStatement,
   TzrBooleanValue,
   TzrCallStatement,
   TzrCharacterDeclaration,
   TzrChoiceItem,
   TzrChoiceStatement,
   TzrClearVisualStatement,
+  TzrConditionExpression,
   TzrDialogueStatement,
   TzrDocument,
-  TzrConditionExpression,
   TzrElifBranch,
   TzrEndStatement,
-  TzrIfStatement,
-  TzrIdentifierValue,
   TzrHideStatement,
+  TzrIdentifierValue,
+  TzrIfStatement,
   TzrInlineAssetId,
   TzrInlineDelaySpan,
   TzrInlineNode,
@@ -39,8 +40,9 @@ import type {
   TzrSceneStatement,
   TzrSeStatement,
   TzrSetStatement,
-  TzrStopBgmStatement,
+  TzrShowStatement,
   TzrStatePath,
+  TzrStopBgmStatement,
   TzrStringValue,
   TzrSystemUnlockId,
   TzrSystemUnlockKind,
@@ -61,9 +63,7 @@ import type {
   TzrVisualTransitionName,
   TzrVoiceStatement,
   TzrWaitStatement,
-  TzrShowStatement,
 } from "./scenario-ast.js";
-import { parseTzrConditionExpression } from "./condition-parser.js";
 
 interface SourceLine {
   readonly original: string;
@@ -146,7 +146,10 @@ class TzrParser {
   private readonly errors: ParseDiagnostic[];
   private cursor = 0;
 
-  public constructor(source: string, private readonly filePath: string) {
+  public constructor(
+    source: string,
+    private readonly filePath: string,
+  ) {
     const sourceLines = source.replace(/\r\n?/g, "\n").split("\n");
     const scanned = stripComments(sourceLines, filePath);
     this.lines = scanned.lines;
@@ -696,7 +699,11 @@ class TzrParser {
       return this.parseChoiceItemCondition(line, afterId, afterIdColumn, { label, id });
     }
 
-    this.addError(line, restColumn + rest.indexOf(afterId), 'choice item must use `"label":`, `"label" id=id:`, or `"label" id=id if condition:` syntax.');
+    this.addError(
+      line,
+      restColumn + rest.indexOf(afterId),
+      'choice item must use `"label":`, `"label" id=id:`, or `"label" id=id if condition:` syntax.',
+    );
     return undefined;
   }
 
@@ -720,11 +727,7 @@ class TzrParser {
     const result = parseTzrConditionExpression(conditionSource, { filePath: this.filePath });
     if (!result.ok) {
       for (const error of result.errors) {
-        this.addError(
-          line,
-          conditionColumn + error.column - 1,
-          `Invalid choice item condition: ${error.message}`,
-        );
+        this.addError(line, conditionColumn + error.column - 1, `Invalid choice item condition: ${error.message}`);
       }
       return undefined;
     }
@@ -779,7 +782,11 @@ class TzrParser {
         if (indent <= parentIndent) {
           break;
         }
-        this.addError(line, firstContentColumn(line), "if / elif / else branch headers must align with the owning if statement.");
+        this.addError(
+          line,
+          firstContentColumn(line),
+          "if / elif / else branch headers must align with the owning if statement.",
+        );
         this.skipIndentedBlock(indent);
         continue;
       }
@@ -913,11 +920,7 @@ class TzrParser {
     const result = parseTzrConditionExpression(conditionSource, { filePath: this.filePath });
     if (!result.ok) {
       for (const error of result.errors) {
-        this.addError(
-          line,
-          conditionColumn + error.column - 1,
-          `Invalid ${keyword} condition: ${error.message}`,
-        );
+        this.addError(line, conditionColumn + error.column - 1, `Invalid ${keyword} condition: ${error.message}`);
       }
       return undefined;
     }
@@ -1126,7 +1129,11 @@ class TzrParser {
     if (literalEnd !== undefined) {
       const trailing = source.slice(literalEnd + 1);
       if (trailing.trim().length > 0) {
-        this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), "set statement must not have extra trailing tokens.");
+        this.addError(
+          line,
+          sourceColumn + literalEnd + 1 + trailing.search(/\S/),
+          "set statement must not have extra trailing tokens.",
+        );
         return undefined;
       }
     }
@@ -1200,11 +1207,7 @@ class TzrParser {
     };
   }
 
-  private parseCallStatement(
-    line: SourceLine,
-    source: string,
-    statementColumn: number,
-  ): TzrCallStatement | undefined {
+  private parseCallStatement(line: SourceLine, source: string, statementColumn: number): TzrCallStatement | undefined {
     const parsed = this.parseCallWaitStatementParts(line, source, "call", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1219,11 +1222,7 @@ class TzrParser {
     };
   }
 
-  private parseWaitStatement(
-    line: SourceLine,
-    source: string,
-    statementColumn: number,
-  ): TzrWaitStatement | undefined {
+  private parseWaitStatement(line: SourceLine, source: string, statementColumn: number): TzrWaitStatement | undefined {
     const parsed = this.parseCallWaitStatementParts(line, source, "wait", statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1282,7 +1281,11 @@ class TzrParser {
 
     const trailing = rest.slice(closeParenIndex + 1);
     if (trailing.trim().length > 0) {
-      this.addError(line, restColumn + closeParenIndex + 1 + trailing.search(/\S/), `${keyword} statement must not have extra trailing tokens.`);
+      this.addError(
+        line,
+        restColumn + closeParenIndex + 1 + trailing.search(/\S/),
+        `${keyword} statement must not have extra trailing tokens.`,
+      );
       return undefined;
     }
 
@@ -1506,7 +1509,11 @@ class TzrParser {
     if (literalEnd !== undefined) {
       const trailing = source.slice(literalEnd + 1);
       if (trailing.trim().length > 0) {
-        this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `Invalid ${keyword} argument value.`);
+        this.addError(
+          line,
+          sourceColumn + literalEnd + 1 + trailing.search(/\S/),
+          `Invalid ${keyword} argument value.`,
+        );
         return undefined;
       }
     }
@@ -1617,11 +1624,7 @@ class TzrParser {
     };
   }
 
-  private parseShowStatement(
-    line: SourceLine,
-    source: string,
-    statementColumn: number,
-  ): TzrShowStatement | undefined {
+  private parseShowStatement(line: SourceLine, source: string, statementColumn: number): TzrShowStatement | undefined {
     const parsed = this.parseShowStatementParts(line, source, statementColumn);
     this.cursor += 1;
     if (parsed === undefined) {
@@ -1684,7 +1687,11 @@ class TzrParser {
     }
 
     const placementSource = afterAt.slice(placementOffset).trimEnd();
-    const placement = this.parseVisualPlacement(line, placementSource, restColumn + atIndex + "at".length + placementOffset);
+    const placement = this.parseVisualPlacement(
+      line,
+      placementSource,
+      restColumn + atIndex + "at".length + placementOffset,
+    );
     if (placement === undefined) {
       return undefined;
     }
@@ -1717,7 +1724,11 @@ class TzrParser {
       if (literalEnd !== undefined) {
         const trailing = source.slice(literalEnd + 1);
         if (trailing.trim().length > 0) {
-          this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `${keyword} statement must not have extra trailing tokens.`);
+          this.addError(
+            line,
+            sourceColumn + literalEnd + 1 + trailing.search(/\S/),
+            `${keyword} statement must not have extra trailing tokens.`,
+          );
           return undefined;
         }
       }
@@ -1762,11 +1773,7 @@ class TzrParser {
     };
   }
 
-  private parseVisualPlacement(
-    line: SourceLine,
-    source: string,
-    sourceColumn: number,
-  ): TzrVisualPlacement | undefined {
+  private parseVisualPlacement(line: SourceLine, source: string, sourceColumn: number): TzrVisualPlacement | undefined {
     if (source === "left" || source === "center" || source === "right") {
       return {
         type: "VisualNamedPlacement",
@@ -1939,7 +1946,11 @@ class TzrParser {
 
     const trailing = source.slice(closeParenIndex + 1);
     if (trailing.trim().length > 0) {
-      this.addError(line, sourceColumn + closeParenIndex + 1 + trailing.search(/\S/), "Visual transition must not have extra trailing tokens.");
+      this.addError(
+        line,
+        sourceColumn + closeParenIndex + 1 + trailing.search(/\S/),
+        "Visual transition must not have extra trailing tokens.",
+      );
       return undefined;
     }
 
@@ -1960,11 +1971,7 @@ class TzrParser {
     };
   }
 
-  private parseVisualTransitionDuration(
-    line: SourceLine,
-    source: string,
-    sourceColumn: number,
-  ): number | undefined {
+  private parseVisualTransitionDuration(line: SourceLine, source: string, sourceColumn: number): number | undefined {
     if (source.trim().length === 0) {
       this.addError(line, sourceColumn, "Visual transition duration is required.");
       return undefined;
@@ -2139,7 +2146,11 @@ class TzrParser {
       if (literalEnd !== undefined) {
         const trailing = source.slice(literalEnd + 1);
         if (trailing.trim().length > 0) {
-          this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `${keyword} statement must not have extra trailing tokens.`);
+          this.addError(
+            line,
+            sourceColumn + literalEnd + 1 + trailing.search(/\S/),
+            `${keyword} statement must not have extra trailing tokens.`,
+          );
           return undefined;
         }
       }
@@ -2190,7 +2201,11 @@ class TzrParser {
     statementColumn: number,
   ): TzrStopBgmStatement | undefined {
     if (source !== "stopBgm") {
-      this.addError(line, statementColumn + "stopBgm".length + 1, "stopBgm statement must not have extra trailing tokens.");
+      this.addError(
+        line,
+        statementColumn + "stopBgm".length + 1,
+        "stopBgm statement must not have extra trailing tokens.",
+      );
       this.cursor += 1;
       return undefined;
     }
@@ -2256,7 +2271,11 @@ class TzrParser {
       if (literalEnd !== undefined) {
         const trailing = source.slice(literalEnd + 1);
         if (trailing.trim().length > 0) {
-          this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), `${statementName} statement must not have extra trailing tokens.`);
+          this.addError(
+            line,
+            sourceColumn + literalEnd + 1 + trailing.search(/\S/),
+            `${statementName} statement must not have extra trailing tokens.`,
+          );
           return undefined;
         }
       }
@@ -2282,7 +2301,11 @@ class TzrParser {
 
     const firstWhitespace = source.search(/\s/);
     if (firstWhitespace !== -1) {
-      this.addError(line, sourceColumn + firstWhitespace, `${statementName} statement must not have extra trailing tokens.`);
+      this.addError(
+        line,
+        sourceColumn + firstWhitespace,
+        `${statementName} statement must not have extra trailing tokens.`,
+      );
       return undefined;
     }
 
@@ -2928,7 +2951,12 @@ class TzrParser {
         this.addError(line, attribute.valueColumn, "Invalid {text} size value.");
         return undefined;
       }
-      parsed.push({ type: "InlineTextSizeAttribute", name: "size", value: Number(attribute.value), loc: attribute.loc });
+      parsed.push({
+        type: "InlineTextSizeAttribute",
+        name: "size",
+        value: Number(attribute.value),
+        loc: attribute.loc,
+      });
     }
 
     return parsed;
@@ -3442,11 +3470,7 @@ function findVisualStandaloneToken(source: string, token: string): number | unde
 }
 
 function isSystemUnlockStatementName(value: string): value is SystemUnlockStatementName {
-  return (
-    value === "system.unlockEnding" ||
-    value === "system.unlockCg" ||
-    value === "system.unlockAchievement"
-  );
+  return value === "system.unlockEnding" || value === "system.unlockCg" || value === "system.unlockAchievement";
 }
 
 function systemUnlockKind(statementName: SystemUnlockStatementName): TzrSystemUnlockKind {

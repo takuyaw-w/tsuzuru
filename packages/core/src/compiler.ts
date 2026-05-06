@@ -6,21 +6,22 @@ import type {
   CommandInstruction,
   DeclarationIndexEntry,
   DialogueInstruction,
-  NarrationInstruction,
-  RuntimeDocument,
-  SceneJumpInstruction,
-  SceneInstruction,
-  TzrInstruction,
   ElifInstructionBranch,
   IfInstruction,
+  NarrationInstruction,
+  RuntimeDocument,
+  SceneInstruction,
+  SceneJumpInstruction,
+  TzrInstruction,
 } from "./ir.js";
 import type {
-  TzrCharacterDeclaration,
-  TzrChoiceItem,
-  TzrChoiceStatement,
+  TzrAddStatement,
   TzrAudioAssetRef,
   TzrBgmStatement,
   TzrBgStatement,
+  TzrCharacterDeclaration,
+  TzrChoiceItem,
+  TzrChoiceStatement,
   TzrClearVisualStatement,
   TzrConditionExpression,
   TzrDialogueStatement,
@@ -31,17 +32,16 @@ import type {
   TzrSceneDeclaration,
   TzrSceneStatement,
   TzrSeStatement,
-  TzrShowStatement,
   TzrSetStatement,
-  TzrAddStatement,
+  TzrShowStatement,
   TzrStopBgmStatement,
   TzrTextBlockItem,
   TzrTextLine,
   TzrTitleDeclaration,
   TzrValueExpression,
-  TzrVoiceStatement,
   TzrVisualAssetRef,
   TzrVisualTransition,
+  TzrVoiceStatement,
 } from "./scenario-ast.js";
 
 const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
@@ -394,7 +394,9 @@ class TzrCompiler {
           loc: branch.loc,
         }),
       ),
-      ...(statement.elseBranch === undefined ? {} : { elseBranch: this.buildSceneBodyInstructions(statement.elseBranch) }),
+      ...(statement.elseBranch === undefined
+        ? {}
+        : { elseBranch: this.buildSceneBodyInstructions(statement.elseBranch) }),
       loc: statement.loc,
     };
   }
@@ -410,7 +412,11 @@ class TzrCompiler {
         type: "CommandInstruction",
         name: "set",
         args: [
-          this.namedArgument("name", { type: "StringValue", value: statement.target.path, loc: statement.target.loc }, statement.target.loc),
+          this.namedArgument(
+            "name",
+            { type: "StringValue", value: statement.target.path, loc: statement.target.loc },
+            statement.target.loc,
+          ),
           this.namedArgument("value", value, statement.value.loc),
         ],
         loc: statement.loc,
@@ -423,8 +429,16 @@ class TzrCompiler {
       type: "CommandInstruction",
       name: DSL_ADD_COMMAND_NAME,
       args: [
-        this.namedArgument("name", { type: "StringValue", value: statement.target.path, loc: statement.target.loc }, statement.target.loc),
-        this.namedArgument("by", { type: "NumberValue", value: statement.value.value, loc: statement.value.loc }, statement.value.loc),
+        this.namedArgument(
+          "name",
+          { type: "StringValue", value: statement.target.path, loc: statement.target.loc },
+          statement.target.loc,
+        ),
+        this.namedArgument(
+          "by",
+          { type: "NumberValue", value: statement.value.value, loc: statement.value.loc },
+          statement.value.loc,
+        ),
       ],
       loc: statement.loc,
     };
@@ -468,7 +482,11 @@ class TzrCompiler {
             this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
             statement.assetRef.loc,
           ),
-          this.namedArgument("position", this.stringValue(statement.placement.value, statement.placement.loc), statement.placement.loc),
+          this.namedArgument(
+            "position",
+            this.stringValue(statement.placement.value, statement.placement.loc),
+            statement.placement.loc,
+          ),
         ],
         loc: statement.loc,
       },
@@ -627,7 +645,9 @@ class TzrCompiler {
     };
   }
 
-  private compilePlainTextBlock(statement: TzrNarrationStatement | TzrDialogueStatement): readonly TextLine[] | undefined {
+  private compilePlainTextBlock(
+    statement: TzrNarrationStatement | TzrDialogueStatement,
+  ): readonly TextLine[] | undefined {
     let ok = true;
     const lines: TextLine[] = [];
 

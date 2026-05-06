@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileTzr, parseTzr, type CommandInstruction, type CompiledTzrDocument } from "../src/index.js";
+import { type CommandInstruction, type CompiledTzrDocument, compileTzr, parseTzr } from "../src/index.js";
 
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
@@ -709,16 +709,20 @@ scene start:
   });
 
   it("rejects set null values for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   set scenario.currentCg = null
-`)).toContain("set null value is not compile-supported yet.");
+`),
+    ).toContain("set null value is not compile-supported yet.");
   });
 
   it("rejects set variable reference values for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   set scenario.currentVoice = $scenario.nextVoice
   set scenario.lastUnlocked = $system.endings.trueEnd
-`)).toEqual([
+`),
+    ).toEqual([
       "set variable reference value is not compile-supported yet.",
       "set variable reference value is not compile-supported yet.",
     ]);
@@ -763,18 +767,22 @@ scene start:
   });
 
   it("rejects system condition references for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   if system.endings.trueEnd.unlocked:
     narration:
       True end.
-`)).toContain("system condition references are not compile-supported yet.");
+`),
+    ).toContain("system condition references are not compile-supported yet.");
   });
 
   it("rejects unsupported statements inside if branch bodies", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   if scenario.hasNotebook:
     call screen.open(id=notebook)
-`)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
+`),
+    ).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
   it("compiles conditional choice items into BodyChoiceInstructionItem conditions", () => {
@@ -829,56 +837,72 @@ scene later:
   });
 
   it("rejects system references in conditional choice item conditions for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   choice "Choose":
     "True end" if system.endings.trueEnd.unlocked:
       narration:
         True end.
-`)).toContain("system condition references are not compile-supported yet.");
+`),
+    ).toContain("system condition references are not compile-supported yet.");
   });
 
   it("rejects unsupported statements inside choice item bodies", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   choice "Choose":
     "Set route":
       call screen.open(id=notebook)
-`)).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
+`),
+    ).toContain('DSL v2 statement "CallStatement" is not compile-supported yet.');
   });
 
   it("rejects clear sprites for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   clear sprites
-`)).toContain("clear visual statements are not compile-supported yet.");
+`),
+    ).toContain("clear visual statements are not compile-supported yet.");
   });
 
   it("rejects clear bg for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   clear bg
-`)).toContain("clear visual statements are not compile-supported yet.");
+`),
+    ).toContain("clear visual statements are not compile-supported yet.");
   });
 
   it("rejects show coordinate placement for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   show alice_smile at x=100 y=200
-`)).toContain("show coordinate placement is not compile-supported yet.");
+`),
+    ).toContain("show coordinate placement is not compile-supported yet.");
   });
 
   it("rejects bg with transition for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   bg classroom with fade(duration=300)
-`)).toContain("visual transitions are not compile-supported yet.");
+`),
+    ).toContain("visual transitions are not compile-supported yet.");
   });
 
   it("rejects show with transition for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   show alice_smile at center with dissolve(duration=250)
-`)).toContain("visual transitions are not compile-supported yet.");
+`),
+    ).toContain("visual transitions are not compile-supported yet.");
   });
 
   it("rejects hide with transition for now", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   hide alice_smile with dissolve(duration=250)
-`)).toContain("visual transitions are not compile-supported yet.");
+`),
+    ).toContain("visual transitions are not compile-supported yet.");
   });
 
   it("rejects clear with transition for now", () => {
@@ -891,68 +915,86 @@ scene later:
   });
 
   it("rejects duplicate title declarations", () => {
-    expect(expectCompileFailure(`title "First"
+    expect(
+      expectCompileFailure(`title "First"
 title "Second"
 scene start:
-`)).toContain("Duplicate title declaration.");
+`),
+    ).toContain("Duplicate title declaration.");
   });
 
   it("rejects duplicate character ids", () => {
-    expect(expectCompileFailure(`character mio name="Mio"
+    expect(
+      expectCompileFailure(`character mio name="Mio"
 character mio name="Mio Alt"
 scene start:
-`)).toContain('Duplicate character "mio".');
+`),
+    ).toContain('Duplicate character "mio".');
   });
 
   it("rejects duplicate scene ids", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
 scene start:
-`)).toContain('Duplicate scene "start".');
+`),
+    ).toContain('Duplicate scene "start".');
   });
 
   it("rejects unknown dialogue speakers", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   mio:
     Hello.
-`)).toContain('Unknown dialogue speaker "mio".');
+`),
+    ).toContain('Unknown dialogue speaker "mio".');
   });
 
   it("rejects unknown dialogue speakers inside nested if branches", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   if scenario.hasNotebook:
     mio:
       Hello.
-`)).toContain('Unknown dialogue speaker "mio".');
+`),
+    ).toContain('Unknown dialogue speaker "mio".');
   });
 
   it("rejects unknown dialogue speakers inside nested choice item bodies", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   choice "Choose":
     "Talk":
       mio:
         Hello.
-`)).toContain('Unknown dialogue speaker "mio".');
+`),
+    ).toContain('Unknown dialogue speaker "mio".');
   });
 
   it("rejects unknown jump targets", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   jump missing
-`)).toContain('Unknown scene "missing".');
+`),
+    ).toContain('Unknown scene "missing".');
   });
 
   it("rejects unknown jump targets inside nested if branches", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   if scenario.hasNotebook:
     jump missing
-`)).toContain('Unknown scene "missing".');
+`),
+    ).toContain('Unknown scene "missing".');
   });
 
   it("rejects unknown jump targets inside nested choice item bodies", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   choice "Choose":
     "Go":
       jump missing
-`)).toContain('Unknown scene "missing".');
+`),
+    ).toContain('Unknown scene "missing".');
   });
 
   it("rejects document with no scene", () => {
@@ -962,65 +1004,81 @@ scene start:
   });
 
   it("rejects narration with text click wait", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     First.
 
     Second.
-`)).toContain("Text click wait is not compile-supported yet.");
+`),
+    ).toContain("Text click wait is not compile-supported yet.");
   });
 
   it("rejects narration with text page break", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     First.
     ---
     Second.
-`)).toContain("Text page break is not compile-supported yet.");
+`),
+    ).toContain("Text page break is not compile-supported yet.");
   });
 
   it("rejects narration with text block metadata", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     :meta
       delay=70
     Rain blurred the platform edge.
-`)).toContain("Text block metadata is not compile-supported yet.");
+`),
+    ).toContain("Text block metadata is not compile-supported yet.");
   });
 
   it("rejects narration with rich inline text", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     {text bold=true|Bold}
-`)).toContain("Rich inline text is not compile-supported yet.");
+`),
+    ).toContain("Rich inline text is not compile-supported yet.");
   });
 
   it("rejects narration with inline delay", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     {delay ms=20|Fast}
-`)).toContain("Inline delay is not compile-supported yet.");
+`),
+    ).toContain("Inline delay is not compile-supported yet.");
   });
 
   it("rejects narration with inline wait", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     A {wait ms=500}B
-`)).toContain("Inline wait is not compile-supported yet.");
+`),
+    ).toContain("Inline wait is not compile-supported yet.");
   });
 
   it("rejects narration with inline se", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     {se assetId=doorOpen}Door.
-`)).toContain("Inline se is not compile-supported yet.");
+`),
+    ).toContain("Inline se is not compile-supported yet.");
   });
 
   it("rejects narration with inline voice", () => {
-    expect(expectCompileFailure(`scene start:
+    expect(
+      expectCompileFailure(`scene start:
   narration:
     {voice assetId=mio_001}Line.
-`)).toContain("Inline voice is not compile-supported yet.");
+`),
+    ).toContain("Inline voice is not compile-supported yet.");
   });
 
   it("rejects unsupported call, wait, and system statements", () => {

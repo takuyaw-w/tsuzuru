@@ -10,11 +10,7 @@ export interface Diagnostic {
 
 export type ParseDiagnostic = Diagnostic;
 
-export function createDiagnostic(
-  location: SourceLocation,
-  message: string,
-  sourceLine: string,
-): Diagnostic {
+export function createDiagnostic(location: SourceLocation, message: string, sourceLine: string): Diagnostic {
   return {
     filePath: location.filePath,
     line: location.line,

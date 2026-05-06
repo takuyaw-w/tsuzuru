@@ -2,9 +2,9 @@ import { evaluateTzrCondition, type TzrConditionEvaluationError } from "./condit
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
+  IfInstruction,
   RuntimeDocument,
   TzrInstruction,
-  IfInstruction,
 } from "./ir.js";
 import { advanceActiveBranchFrame, pushBranchFrame } from "./runtime-frames.js";
 import type {

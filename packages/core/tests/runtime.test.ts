@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type CommandInstruction,
   clearClickWait,
   clearWait,
   compileTzr,
@@ -9,11 +10,10 @@ import {
   getRuntimeBlockReason,
   isRuntimeBlocked,
   parseTzr,
-  restoreRuntimeState,
-  stepRuntime,
-  type CommandInstruction,
   type RuntimeDocument,
   type RuntimePluginCommandHandler,
+  restoreRuntimeState,
+  stepRuntime,
   type TzrArgument,
 } from "../src/index.js";
 

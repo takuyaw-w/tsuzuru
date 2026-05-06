@@ -11,34 +11,8 @@ export type {
   TzrArgument,
   TzrValue,
 } from "./ast.js";
-export type {
-  PluginCommandArgumentDefinition,
-  PluginCommandArgumentSchema,
-  PluginCommandDefinition,
-  PluginCommandMap,
-  PluginCommandNamedArgumentDefinition,
-  PluginCommandPositionalArgumentDefinition,
-  PluginCommandValueType,
-} from "./plugin-command.js";
-export { definePluginCommand } from "./plugin-command.js";
 export type { CoreCommandDefinition, CoreCommandName } from "./commands.js";
 export { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "./commands.js";
-export type { Diagnostic, ParseDiagnostic } from "./diagnostic.js";
-export type {
-  BodyChoiceInstruction,
-  BodyChoiceInstructionItem,
-  CommandInstruction,
-  DeclarationIndexEntry,
-  DialogueInstruction,
-  NarrationInstruction,
-  RuntimeDocument,
-  SceneJumpInstruction,
-  SceneInstruction,
-  TzrInstruction,
-  ElifInstructionBranch,
-  IfInstruction,
-} from "./ir.js";
-export type * from "./scenario-ast.js";
 export type {
   CompiledTzrDocument,
   TzrCompiledCharacter,
@@ -49,18 +23,43 @@ export type {
 } from "./compiler.js";
 export { compileTzr } from "./compiler.js";
 export { parseTzrConditionExpression } from "./condition-parser.js";
+export type { Diagnostic, ParseDiagnostic } from "./diagnostic.js";
+export type {
+  BodyChoiceInstruction,
+  BodyChoiceInstructionItem,
+  CommandInstruction,
+  DeclarationIndexEntry,
+  DialogueInstruction,
+  ElifInstructionBranch,
+  IfInstruction,
+  NarrationInstruction,
+  RuntimeDocument,
+  SceneInstruction,
+  SceneJumpInstruction,
+  TzrInstruction,
+} from "./ir.js";
 export { isValidTzrDottedIdentifier, isValidTzrIdentifier, parseTzr } from "./parser.js";
 export type {
-  ChoiceRuntimeEvent,
+  PluginCommandArgumentDefinition,
+  PluginCommandArgumentSchema,
+  PluginCommandDefinition,
+  PluginCommandMap,
+  PluginCommandNamedArgumentDefinition,
+  PluginCommandPositionalArgumentDefinition,
+  PluginCommandValueType,
+} from "./plugin-command.js";
+export { definePluginCommand } from "./plugin-command.js";
+export type {
   ChoiceResolveRuntimeEvent,
+  ChoiceRuntimeEvent,
   DialogueRuntimeEvent,
   EndRuntimeEvent,
   IfRuntimeEvent,
   JumpRuntimeEvent,
   NarrationRuntimeEvent,
   PageRuntimeEvent,
-  RuntimeBranchFrame,
   RuntimeBlockReason,
+  RuntimeBranchFrame,
   RuntimeChoiceItem,
   RuntimeDiagnostic,
   RuntimeDiagnosticReporter,
@@ -70,20 +69,20 @@ export type {
   RuntimeEvent,
   RuntimeFlags,
   RuntimeInitialStateOptions,
-  RuntimePendingChoice,
   RuntimePendingBodyChoice,
   RuntimePendingBodyChoiceItem,
+  RuntimePendingChoice,
   RuntimePendingWait,
-  RuntimePluginDefinition,
-  RuntimePluginCommandEvent,
   RuntimePluginCommandContext,
+  RuntimePluginCommandEvent,
   RuntimePluginCommandHandler,
+  RuntimePluginDefinition,
   RuntimePluginStates,
   RuntimePointer,
   RuntimeSnapshot,
   RuntimeState,
-  RuntimeStepResult,
   RuntimeStepOptions,
+  RuntimeStepResult,
   RuntimeValue,
   RuntimeVariables,
   SceneJumpRuntimeEvent,
@@ -106,3 +105,4 @@ export {
   restoreRuntimeState,
   stepRuntime,
 } from "./runtime.js";
+export type * from "./scenario-ast.js";

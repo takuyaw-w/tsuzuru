@@ -1,6 +1,6 @@
 import {
-  definePluginCommand,
   type CommandInstruction,
+  definePluginCommand,
   type PluginCommandMap,
   type RuntimePluginCommandContext,
   type RuntimePluginCommandHandler,
@@ -143,7 +143,11 @@ function withStdVisualState(state: RuntimeState, stdVisual: StdVisualState): Run
 
 function getRequiredPositionalString(instruction: CommandInstruction, index: number): string {
   const argument = instruction.args[index];
-  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue" || argument.value.value.length === 0) {
+  if (
+    argument?.type !== "PositionalArgument" ||
+    argument.value.type !== "StringValue" ||
+    argument.value.value.length === 0
+  ) {
     throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std visual command arguments.`);
   }
   return argument.value.value;

@@ -77,12 +77,17 @@ export function RuntimeMessageLayer({
         />
       );
     case "wait":
-      return <StatusLayer label={`Waiting ${event.durationMs}ms`} {...(className !== undefined ? { className } : {})} />;
+      return (
+        <StatusLayer label={`Waiting ${event.durationMs}ms`} {...(className !== undefined ? { className } : {})} />
+      );
     case "error":
       return <StatusLayer label={event.message} {...(className !== undefined ? { className } : {})} />;
     case "unsupported":
       return (
-        <StatusLayer label={`Unsupported instruction: ${event.instructionType}`} {...(className !== undefined ? { className } : {})} />
+        <StatusLayer
+          label={`Unsupported instruction: ${event.instructionType}`}
+          {...(className !== undefined ? { className } : {})}
+        />
       );
     case "stop":
       return <StatusLayer label="Stopped" {...(className !== undefined ? { className } : {})} />;
@@ -100,7 +105,10 @@ export function RuntimeMessageLayer({
   }
 }
 
-type TransientRuntimeEvent = Extract<RuntimeEvent, { readonly type: "scene" | "jump" | "choiceResolve" | "if" | "state" | "pluginCommand" }>;
+type TransientRuntimeEvent = Extract<
+  RuntimeEvent,
+  { readonly type: "scene" | "jump" | "choiceResolve" | "if" | "state" | "pluginCommand" }
+>;
 
 function formatTransientEvent(event: TransientRuntimeEvent): string {
   switch (event.type) {

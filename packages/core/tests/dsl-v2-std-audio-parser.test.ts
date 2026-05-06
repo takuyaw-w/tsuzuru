@@ -117,9 +117,7 @@ describe("parseTzr std audio sugar statements", () => {
 
   it("rejects invalid bgm statements", () => {
     expect(expectAudioFailure("scene start:\n  bgm\n")).toContain("bgm assetRef is required.");
-    expect(expectAudioFailure("scene start:\n  bgm $scenario.bgm\n")).toContain(
-      "bgm audio assetRef must be static.",
-    );
+    expect(expectAudioFailure("scene start:\n  bgm $scenario.bgm\n")).toContain("bgm audio assetRef must be static.");
     expect(expectAudioFailure('scene start:\n  bgm ""\n')).toContain("bgm audio assetRef must not be empty.");
     expect(expectAudioFailure("scene start:\n  bgm daily-theme\n")).toContain("Invalid bgm audio assetRef.");
     expect(expectAudioFailure("scene start:\n  bgm daily_theme extra\n")).toContain(
@@ -135,9 +133,7 @@ describe("parseTzr std audio sugar statements", () => {
 
   it("rejects invalid se statements", () => {
     expect(expectAudioFailure("scene start:\n  se\n")).toContain("se assetRef is required.");
-    expect(expectAudioFailure("scene start:\n  se $scenario.se\n")).toContain(
-      "se audio assetRef must be static.",
-    );
+    expect(expectAudioFailure("scene start:\n  se $scenario.se\n")).toContain("se audio assetRef must be static.");
     expect(expectAudioFailure('scene start:\n  se ""\n')).toContain("se audio assetRef must not be empty.");
     expect(expectAudioFailure("scene start:\n  se door-open\n")).toContain("Invalid se audio assetRef.");
     expect(expectAudioFailure("scene start:\n  se doorOpen extra\n")).toContain(

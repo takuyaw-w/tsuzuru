@@ -1,14 +1,4 @@
-export const CORE_COMMAND_NAMES = [
-  "waitClick",
-  "page",
-  "stop",
-  "wait",
-  "set",
-  "inc",
-  "dec",
-  "flag",
-  "unflag",
-] as const;
+export const CORE_COMMAND_NAMES = ["waitClick", "page", "stop", "wait", "set", "inc", "dec", "flag", "unflag"] as const;
 
 export type CoreCommandName = (typeof CORE_COMMAND_NAMES)[number];
 

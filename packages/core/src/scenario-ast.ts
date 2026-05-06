@@ -20,10 +20,7 @@ export interface TzrDocument {
   readonly declarations: readonly TzrTopLevelDeclaration[];
 }
 
-export type TzrTopLevelDeclaration =
-  | TzrTitleDeclaration
-  | TzrCharacterDeclaration
-  | TzrSceneDeclaration;
+export type TzrTopLevelDeclaration = TzrTitleDeclaration | TzrCharacterDeclaration | TzrSceneDeclaration;
 
 export interface TzrTitleDeclaration {
   readonly type: "TitleDeclaration";
@@ -525,10 +522,7 @@ export interface TzrInlineVoiceEvent {
   readonly loc: SourceRange;
 }
 
-export type TzrInlineAssetId =
-  | TzrInlineIdentifierAssetId
-  | TzrInlineStringAssetId
-  | TzrInlineVariableAssetId;
+export type TzrInlineAssetId = TzrInlineIdentifierAssetId | TzrInlineStringAssetId | TzrInlineVariableAssetId;
 
 export interface TzrInlineIdentifierAssetId {
   readonly type: "InlineIdentifierAssetId";

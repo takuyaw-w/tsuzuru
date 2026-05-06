@@ -1,9 +1,9 @@
+import type { RuntimeErrorCode, RuntimeState, RuntimeValue } from "./runtime-types.js";
 import type {
   TzrConditionComparisonExpression,
   TzrConditionExpression,
   TzrConditionReference,
 } from "./scenario-ast.js";
-import type { RuntimeErrorCode, RuntimeState, RuntimeValue } from "./runtime-types.js";
 
 export type TzrConditionEvaluationResult =
   | { readonly ok: true; readonly value: boolean }
@@ -124,10 +124,7 @@ function evaluateNumericComparison(
   }
 }
 
-function evaluateValueExpression(
-  expression: TzrConditionExpression,
-  state: RuntimeState,
-): ValueEvaluationResult {
+function evaluateValueExpression(expression: TzrConditionExpression, state: RuntimeState): ValueEvaluationResult {
   switch (expression.type) {
     case "ConditionReference":
       return evaluateReference(expression, state);

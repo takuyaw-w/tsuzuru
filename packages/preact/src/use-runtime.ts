@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import {
   clearClickWait,
   clearWait,
@@ -6,22 +5,19 @@ import {
   createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
-  resolveChoice,
-  restoreRuntimeState,
-  stepRuntime,
-  type RuntimeDocument,
   type RuntimeBlockReason,
+  type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeInitialStateOptions,
   type RuntimeSnapshot,
   type RuntimeState,
   type RuntimeStepOptions,
+  resolveChoice,
+  restoreRuntimeState,
+  stepRuntime,
 } from "@tsuzuru/core";
-import {
-  createRuntimeSaveData,
-  restoreRuntimeSnapshotForView,
-  type RuntimeSaveData,
-} from "./runtime-save.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { createRuntimeSaveData, type RuntimeSaveData, restoreRuntimeSnapshotForView } from "./runtime-save.js";
 
 export interface UseRuntimeOptions {
   readonly plugins?: RuntimeInitialStateOptions["plugins"];
@@ -159,14 +155,17 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
 
   const createSnapshot = useCallback(() => createRuntimeSnapshot(state), [state]);
 
-  const restoreSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
-    const result = restoreRuntimeSnapshotForView(document, snapshot, stepOptions);
-    setState(result.state);
-    setEvent(result.event);
-    setVisibleEvent(result.event === null ? null : getRenderableRuntimeEvent(result.event));
-    setAutoStepCount(0);
-    setAutoStepError(null);
-  }, [document, stepOptions]);
+  const restoreSnapshot = useCallback(
+    (snapshot: RuntimeSnapshot) => {
+      const result = restoreRuntimeSnapshotForView(document, snapshot, stepOptions);
+      setState(result.state);
+      setEvent(result.event);
+      setVisibleEvent(result.event === null ? null : getRenderableRuntimeEvent(result.event));
+      setAutoStepCount(0);
+      setAutoStepError(null);
+    },
+    [document, stepOptions],
+  );
 
   const createSaveData = useCallback(
     () => createRuntimeSaveData(createRuntimeSnapshot(state), visibleEvent),
@@ -327,10 +326,7 @@ function assertNever(value: never): never {
   throw new Error(`Unhandled runtime event: ${JSON.stringify(value)}`);
 }
 
-function createInitialState(
-  document: RuntimeDocument,
-  plugins: RuntimeInitialStateOptions["plugins"],
-): RuntimeState {
+function createInitialState(document: RuntimeDocument, plugins: RuntimeInitialStateOptions["plugins"]): RuntimeState {
   return createInitialRuntimeState(document, plugins === undefined ? {} : { plugins });
 }
 

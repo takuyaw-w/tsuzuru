@@ -1,12 +1,12 @@
 import {
   getRuntimeBlockReason,
-  restoreRuntimeState,
-  stepRuntime,
   type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
   type RuntimeState,
   type RuntimeStepOptions,
+  restoreRuntimeState,
+  stepRuntime,
 } from "@tsuzuru/core";
 
 export interface RuntimeSaveData {
@@ -40,10 +40,7 @@ export function restoreRuntimeSnapshotForView(
   };
 }
 
-export function createRuntimeSaveData(
-  snapshot: RuntimeSnapshot,
-  event: RuntimeEvent | null,
-): RuntimeSaveData {
+export function createRuntimeSaveData(snapshot: RuntimeSnapshot, event: RuntimeEvent | null): RuntimeSaveData {
   return {
     version: 1,
     snapshot,

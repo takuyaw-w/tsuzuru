@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  type CommandInstruction,
+  type CompiledTzrDocument,
   compileTzr,
-  createRuntimeSnapshot,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   parseTzr,
+  type RuntimePluginCommandHandler,
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
-  type CommandInstruction,
-  type CompiledTzrDocument,
-  type RuntimePluginCommandHandler,
 } from "../src/index.js";
 
 function parseSource(source: string) {
@@ -175,10 +175,7 @@ scene later:
     expect(choice.event).toEqual({
       type: "choice",
       question: "Choose",
-      items: [
-        { id: "stay", text: "Stay" },
-        { text: "Go" },
-      ],
+      items: [{ id: "stay", text: "Stay" }, { text: "Go" }],
     });
     expect(choice.state.pendingChoice).toMatchObject({
       kind: "body",
@@ -653,7 +650,9 @@ scene leave:
     }
     expect(activeBranchSnapshot.branchFrames[0]?.instructions).not.toBe(instruction.items[0]?.body);
     expect(activeBranchSnapshot.branchFrames[0]?.instructions[0]).not.toBe(instruction.items[0]?.body[0]);
-    expect(activeBranchRestored.branchFrames[0]?.instructions).not.toBe(activeBranchSnapshot.branchFrames[0]?.instructions);
+    expect(activeBranchRestored.branchFrames[0]?.instructions).not.toBe(
+      activeBranchSnapshot.branchFrames[0]?.instructions,
+    );
     expect(talk.event).toMatchObject({
       type: "narration",
       lines: [{ text: "Talk." }],

@@ -188,9 +188,7 @@ describe("parseTzrConditionExpression", () => {
   });
 
   it("rejects missing right-hand side expressions", () => {
-    expect(expectConditionFailure("scenario.score >")).toContain(
-      'Missing right-hand side for condition operator ">".',
-    );
+    expect(expectConditionFailure("scenario.score >")).toContain('Missing right-hand side for condition operator ">".');
   });
 
   it("rejects missing closing parenthesis", () => {
@@ -209,6 +207,8 @@ describe("parseTzrConditionExpression", () => {
     expect(expectConditionFailure("scenario.route == 'common'")).toContain(
       "Only double-quoted string literals are supported.",
     );
-    expect(expectConditionFailure("scenario.route == `common`")).toContain("Backtick string literals are not supported.");
+    expect(expectConditionFailure("scenario.route == `common`")).toContain(
+      "Backtick string literals are not supported.",
+    );
   });
 });

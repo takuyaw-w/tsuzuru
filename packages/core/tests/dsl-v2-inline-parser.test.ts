@@ -364,17 +364,13 @@ describe("parseTzr inline markup", () => {
     expect(expectInlineFailure("{voice assetId=}")).toContain("{voice} assetId must not be empty.");
     expect(expectInlineFailure("{voice id=mio_001}")).toContain('Unknown {voice} attribute "id".');
     expect(expectInlineFailure('{voice assetId=""}')).toContain("{voice} assetId must not be empty.");
-    expect(expectInlineFailure("{voice assetId=mio_001 volume=80}")).toContain(
-      'Unknown {voice} attribute "volume".',
-    );
+    expect(expectInlineFailure("{voice assetId=mio_001 volume=80}")).toContain('Unknown {voice} attribute "volume".');
     expect(expectInlineFailure("{voice assetId=mio_001 assetId=mio_002}")).toContain(
       'Duplicate {voice} attribute "assetId".',
     );
     expect(expectInlineFailure("{voice assetId=door-open.part}")).toContain("Invalid {voice} assetId value.");
     expect(expectInlineFailure("{voice assetId=$}")).toContain("Invalid {voice} variable assetId.");
-    expect(expectInlineFailure("{voice assetId=mio_001|text}")).toContain(
-      "{voice} does not support text ranges.",
-    );
+    expect(expectInlineFailure("{voice assetId=mio_001|text}")).toContain("{voice} does not support text ranges.");
   });
 
   it("rejects invalid escapes", () => {

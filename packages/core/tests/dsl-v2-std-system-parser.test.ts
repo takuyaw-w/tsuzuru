@@ -111,7 +111,14 @@ describe("parseTzr std system sugar statements", () => {
 
     expect(statement).toMatchObject({
       type: "ChoiceStatement",
-      items: [{ body: [{ type: "SystemUnlockStatement", kind: "ending" }, { type: "SystemUnlockStatement", kind: "achievement" }] }],
+      items: [
+        {
+          body: [
+            { type: "SystemUnlockStatement", kind: "ending" },
+            { type: "SystemUnlockStatement", kind: "achievement" },
+          ],
+        },
+      ],
     });
   });
 
@@ -132,9 +139,7 @@ describe("parseTzr std system sugar statements", () => {
     expect(expectSystemFailure("scene start:\n  system.unlockEnding\n")).toContain(
       "system.unlockEnding id is required.",
     );
-    expect(expectSystemFailure("scene start:\n  system.unlockCg\n")).toContain(
-      "system.unlockCg id is required.",
-    );
+    expect(expectSystemFailure("scene start:\n  system.unlockCg\n")).toContain("system.unlockCg id is required.");
     expect(expectSystemFailure("scene start:\n  system.unlockAchievement\n")).toContain(
       "system.unlockAchievement id is required.",
     );
@@ -153,9 +158,7 @@ describe("parseTzr std system sugar statements", () => {
     expect(expectSystemFailure('scene start:\n  system.unlockEnding ""\n')).toContain(
       "system.unlockEnding id must not be empty.",
     );
-    expect(expectSystemFailure("scene start:\n  system.unlockCg cg-001\n")).toContain(
-      "Invalid system.unlockCg id.",
-    );
+    expect(expectSystemFailure("scene start:\n  system.unlockCg cg-001\n")).toContain("Invalid system.unlockCg id.");
   });
 
   it("rejects extra trailing tokens", () => {
@@ -171,8 +174,6 @@ describe("parseTzr std system sugar statements", () => {
     expect(expectSystemFailure("scene start:\n  set system.endings.trueEnd.unlocked = true\n")).toContain(
       "set cannot target system.*.",
     );
-    expect(expectSystemFailure("scene start:\n  add system.playCount += 1\n")).toContain(
-      "add cannot target system.*.",
-    );
+    expect(expectSystemFailure("scene start:\n  add system.playCount += 1\n")).toContain("add cannot target system.*.");
   });
 });

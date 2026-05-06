@@ -1,11 +1,6 @@
 import type { RuntimeDocument, TzrInstruction } from "./ir.js";
 import { stepCommandInstruction, unsupportedInstruction } from "./runtime-commands.js";
-import {
-  choiceEvent,
-  stepBodyChoiceInstruction,
-  stepIfInstruction,
-  waitEvent,
-} from "./runtime-control.js";
+import { choiceEvent, stepBodyChoiceInstruction, stepIfInstruction, waitEvent } from "./runtime-control.js";
 import {
   advanceActiveBranchFrame,
   getActiveBranchFrame,
@@ -23,8 +18,8 @@ import type {
   RuntimeStepResult,
 } from "./runtime-types.js";
 
-export type * from "./runtime-types.js";
 export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
+export type * from "./runtime-types.js";
 
 export function createInitialRuntimeState(
   document: RuntimeDocument,
@@ -103,7 +98,13 @@ export function stepRuntime(
     };
   }
 
-  return stepInstruction(document, normalizedState, instruction, advanceInstruction(document, normalizedState), options);
+  return stepInstruction(
+    document,
+    normalizedState,
+    instruction,
+    advanceInstruction(document, normalizedState),
+    options,
+  );
 }
 
 function stepInstruction(
@@ -171,11 +172,7 @@ function stepSceneJumpInstruction(
   };
 }
 
-export function resolveChoice(
-  document: RuntimeDocument,
-  state: RuntimeState,
-  itemIndex: number,
-): RuntimeStepResult {
+export function resolveChoice(document: RuntimeDocument, state: RuntimeState, itemIndex: number): RuntimeStepResult {
   if (state.pendingChoice === null) {
     return runtimeError(state, "choice_not_pending", "Cannot resolve a choice because no choice is pending.");
   }

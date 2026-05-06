@@ -1,19 +1,19 @@
 import type { RuntimeEvent } from "@tsuzuru/core";
-import { isValidElement, type ComponentChildren, type ComponentProps, type VNode } from "preact";
+import { type ComponentChildren, type ComponentProps, isValidElement, type VNode } from "preact";
 import { describe, expect, it, vi } from "vitest";
 import {
   ChoiceLayer,
-  GameViewport,
-  GameShell,
-  MessageWindow,
-  RuntimeMessageLayer,
-  ScreenHost,
-  StatusLayer,
   type ChoiceLayerProps,
+  GameShell,
+  GameViewport,
   type GameViewportProps,
+  MessageWindow,
   type MessageWindowProps,
+  RuntimeMessageLayer,
   type ScreenComponentProps,
+  ScreenHost,
   type ScreenHostProps,
+  StatusLayer,
   type StatusLayerProps,
 } from "../src/index.js";
 
@@ -63,7 +63,11 @@ function findByClass(value: ComponentChildren, className: string): readonly VNod
   }
 
   const vnode = value as VNode<TestNodeProps>;
-  const matches = String(vnode.props.className ?? "").split(" ").includes(className) ? [vnode] : [];
+  const matches = String(vnode.props.className ?? "")
+    .split(" ")
+    .includes(className)
+    ? [vnode]
+    : [];
   return [...matches, ...findByClass(vnode.props.children, className)];
 }
 
@@ -166,7 +170,9 @@ describe("ScreenHost", () => {
       }),
     );
     const surface = findByClass(node, "tzr-screen-host__surface")[0];
-    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(surface?.props.children);
+    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(
+      surface?.props.children,
+    );
     const renderedFallback = expectVNode(
       (fallbackNode.type as (props: typeof fallbackNode.props) => ComponentChildren)(fallbackNode.props),
     );
@@ -180,7 +186,9 @@ describe("ScreenHost", () => {
     const onClose = vi.fn();
     const node = expectVNode(ScreenHost({ activeScreen: { id: "missing" }, screens: {}, onClose }));
     const surface = findByClass(node, "tzr-screen-host__surface")[0];
-    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(surface?.props.children);
+    const fallbackNode = expectVNode<{ readonly screenId: string; readonly onClose: () => void }>(
+      surface?.props.children,
+    );
     const renderedFallback = expectVNode(
       (fallbackNode.type as (props: typeof fallbackNode.props) => ComponentChildren)(fallbackNode.props),
     );

@@ -3,17 +3,7 @@ import { CORE_COMMAND_NAMES, CORE_COMMANDS, isCoreCommandName } from "../src/ind
 
 describe("core command registry", () => {
   it("defines the v0.1 core-owned command names", () => {
-    expect(CORE_COMMAND_NAMES).toEqual([
-      "waitClick",
-      "page",
-      "stop",
-      "wait",
-      "set",
-      "inc",
-      "dec",
-      "flag",
-      "unflag",
-    ]);
+    expect(CORE_COMMAND_NAMES).toEqual(["waitClick", "page", "stop", "wait", "set", "inc", "dec", "flag", "unflag"]);
   });
 
   it("classifies core commands by ownership category", () => {

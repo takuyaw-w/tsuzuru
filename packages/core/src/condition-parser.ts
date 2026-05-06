@@ -1,5 +1,6 @@
 import type { SourceLocation, SourceRange } from "./ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
+import { isValidTzrDottedIdentifier } from "./parser.js";
 import type {
   TzrConditionBinaryExpression,
   TzrConditionBooleanLiteral,
@@ -14,7 +15,6 @@ import type {
   TzrConditionUnaryExpression,
   TzrParseOptions,
 } from "./scenario-ast.js";
-import { isValidTzrDottedIdentifier } from "./parser.js";
 
 type ComparisonOperator = "==" | "!=" | ">=" | "<=" | ">" | "<";
 type LogicalOperator = "and" | "or" | "not";
@@ -35,10 +35,7 @@ interface TokenizeResult {
   readonly errors: readonly ParseDiagnostic[];
 }
 
-export function parseTzrConditionExpression(
-  source: string,
-  options: TzrParseOptions = {},
-): TzrConditionParseResult {
+export function parseTzrConditionExpression(source: string, options: TzrParseOptions = {}): TzrConditionParseResult {
   const filePath = options.filePath ?? "<anonymous>";
   const tokenizer = tokenizeConditionExpression(source, filePath);
   if (tokenizer.errors.length > 0) {
@@ -244,7 +241,9 @@ class TzrConditionExpressionParser {
     return undefined;
   }
 
-  private parseReferenceToken(token: Extract<ConditionToken, { type: "reference" }>): TzrConditionReference | undefined {
+  private parseReferenceToken(
+    token: Extract<ConditionToken, { type: "reference" }>,
+  ): TzrConditionReference | undefined {
     const parts = token.value.split(".");
     if (!isValidTzrDottedIdentifier(token.value) || parts.length < 2) {
       this.addError(token.loc.start, `Invalid dotted identifier "${token.value}".`);
@@ -437,7 +436,11 @@ function readStringToken(
   filePath: string,
   startIndex: number,
 ):
-  | { readonly token: Extract<ConditionToken, { type: "string" }>; readonly nextIndex: number; readonly error?: undefined }
+  | {
+      readonly token: Extract<ConditionToken, { type: "string" }>;
+      readonly nextIndex: number;
+      readonly error?: undefined;
+    }
   | { readonly error: ParseDiagnostic } {
   let value = "";
   let escaped = false;

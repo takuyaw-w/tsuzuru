@@ -196,7 +196,9 @@ describe("parseTzr if statements", () => {
   });
 
   it("rejects if missing a colon", () => {
-    expect(expectIfFailure("scene start:\n  if scenario.a\n    jump route\n")).toContain("if header must end with `:`.");
+    expect(expectIfFailure("scene start:\n  if scenario.a\n    jump route\n")).toContain(
+      "if header must end with `:`.",
+    );
   });
 
   it("rejects invalid if conditions", () => {
@@ -218,15 +220,15 @@ describe("parseTzr if statements", () => {
   });
 
   it("rejects elif missing a colon", () => {
-    expect(expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif scenario.b\n    jump second\n")).toContain(
-      "elif header must end with `:`.",
-    );
+    expect(
+      expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif scenario.b\n    jump second\n"),
+    ).toContain("elif header must end with `:`.");
   });
 
   it("rejects invalid elif conditions", () => {
-    expect(expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif player.score:\n    jump second\n")).toContain(
-      'Invalid elif condition: Invalid reference root "player".',
-    );
+    expect(
+      expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif player.score:\n    jump second\n"),
+    ).toContain('Invalid elif condition: Invalid reference root "player".');
   });
 
   it("rejects empty elif bodies", () => {
@@ -236,9 +238,9 @@ describe("parseTzr if statements", () => {
   });
 
   it("rejects else with a condition or arguments", () => {
-    expect(expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  else scenario.b:\n    jump second\n")).toContain(
-      "else must not have a condition or arguments.",
-    );
+    expect(
+      expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  else scenario.b:\n    jump second\n"),
+    ).toContain("else must not have a condition or arguments.");
   });
 
   it("rejects else missing a colon", () => {
