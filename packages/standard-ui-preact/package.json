@@ -2,6 +2,7 @@
   "name": "@tsuzuru/standard-ui-preact",
   "version": "0.15.0",
   "description": "Reusable Preact UI components for Tsuzuru visual novel screens.",
+  "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {

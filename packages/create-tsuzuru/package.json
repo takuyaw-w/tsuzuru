@@ -2,6 +2,7 @@
   "name": "create-tsuzuru",
   "version": "0.15.0",
   "description": "Minimal project generator for Tsuzuru.",
+  "license": "MIT",
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "bin": {

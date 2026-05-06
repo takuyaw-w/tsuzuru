@@ -2,6 +2,7 @@
   "name": "@tsuzuru/plugin-std-visual",
   "version": "0.15.0",
   "description": "Standard visual plugin state and command handlers for Tsuzuru.",
+  "license": "MIT",
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
