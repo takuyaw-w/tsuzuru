@@ -12,8 +12,10 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
 
   return (
     <div className="visual-layer" aria-label="std-visual placeholder layer">
-      <div className="visual-layer__background">
-        <span>{backgroundAssetId ?? "No background"}</span>
+      <div
+        className={`visual-layer__background${backgroundAssetId === null ? " visual-layer__background--empty" : ""}`}
+      >
+        {backgroundAssetId === null ? null : <span>{backgroundAssetId}</span>}
       </div>
       <div className="visual-layer__sprites" aria-label="sprites">
         {sprites.map(([assetId, sprite]) => (

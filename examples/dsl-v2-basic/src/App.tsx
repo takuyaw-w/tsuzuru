@@ -5,11 +5,10 @@ import {
   type RuntimeDiagnostic,
   type RuntimeEvent,
   type RuntimePluginDefinition,
-  type RuntimeState,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { getRenderableRuntimeEvent, type UseRuntimeResult, useRuntime } from "@tsuzuru/preact";
+import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   GameShell,
   GameViewport,
@@ -17,7 +16,8 @@ import {
   RuntimeMessageLayer,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "preact";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import scenarioSource from "../scenario/main.tzr?raw";
 import { AudioLayer } from "./AudioLayer.js";
 import { VisualLayer } from "./VisualLayer.js";
@@ -65,55 +65,106 @@ function RuntimeApp({ document }: RuntimeAppProps) {
   });
   const presentationKey = useVisibleEventPresentationKey(runtime.visibleEvent);
   const currentRenderableEvent = runtime.event === null ? null : getRenderableRuntimeEvent(runtime.event);
+  const messageLines = useMemo(
+    () => (runtime.visibleEvent === null ? null : getMessageLines(runtime.visibleEvent)),
+    [runtime.visibleEvent],
+  );
+  const revealText = messageLines?.join("\n") ?? "";
+  const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
+  const textReveal = useTextReveal(revealText, {
+    enabled: messageLines !== null,
+    charactersPerSecond: 60,
+  });
   const canAdvanceText =
     (runtime.visibleEvent?.type === "narration" || runtime.visibleEvent?.type === "dialogue") &&
     currentRenderableEvent === runtime.visibleEvent &&
     runtime.blockReason === null &&
     !runtime.state.isStopped;
+  const canStart =
+    runtime.visibleEvent === null && runtime.event === null && runtime.blockReason === null && !runtime.state.isStopped;
+  const handleAdvanceRequest = useCallback(() => {
+    if (messageLines !== null) {
+      if (textReveal.isRevealing) {
+        textReveal.revealAll();
+        return;
+      }
+      if (canAdvanceText) {
+        runtime.step();
+      }
+      return;
+    }
+    if (canStart) {
+      runtime.step();
+    }
+  }, [canAdvanceText, canStart, messageLines, runtime, textReveal.isRevealing, textReveal.revealAll]);
+  const handleViewportClick = useCallback(
+    (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+      if (isInteractiveClickTarget(event.target)) {
+        return;
+      }
+      handleAdvanceRequest();
+    },
+    [handleAdvanceRequest],
+  );
+  const renderMessageLine = useCallback(
+    ({ line, lineIndex }: MessageWindowRenderLineContext) => {
+      const range = lineRanges[lineIndex];
+      if (range === undefined) {
+        return line;
+      }
+      return (
+        <span>{textReveal.visibleText.slice(range.start, Math.min(range.end, textReveal.visibleText.length))}</span>
+      );
+    },
+    [lineRanges, textReveal.visibleText],
+  );
 
-  const reset = () => {
-    setDiagnostics([]);
-    runtime.reset();
-  };
+  useEffect(() => {
+    textReveal.reset();
+  }, [presentationKey, textReveal.reset]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || isKeyboardHandledTarget(event.target)) {
+        return;
+      }
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      handleAdvanceRequest();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleAdvanceRequest]);
 
   return (
     <main className="app">
-      <header className="app__header">
-        <h1>{document.metadata.title ?? "DSL v2 Basic"}</h1>
-        <p>parseTzr -&gt; compileTzr -&gt; useRuntime</p>
-      </header>
-      <GameViewport aspectRatio="16:9" maxWidth={960}>
+      <GameViewport aspectRatio="16:9" className="app__viewport" maxWidth="100vw">
         <GameShell className="app__shell">
-          <VisualLayer runtimeState={runtime.state} />
-          <AudioLayer runtimeState={runtime.state} />
-          <div className="app__message-layer">
-            {runtime.visibleEvent === null ? (
-              <p className="app__placeholder">Press Step to start.</p>
-            ) : (
-              <RevealRuntimeMessageLayer
-                key={presentationKey}
-                event={runtime.visibleEvent}
-                onChoice={runtime.choose}
-                onStep={runtime.step}
-                canAdvance={canAdvanceText}
-              />
-            )}
+          <div className="app__interaction-surface" onClick={handleViewportClick}>
+            <VisualLayer runtimeState={runtime.state} />
+            <AudioLayer runtimeState={runtime.state} />
+            <div className="app__message-layer">
+              {runtime.visibleEvent === null ? (
+                <p className="app__placeholder">Click to start</p>
+              ) : (
+                <RuntimeMessageLayer
+                  key={presentationKey}
+                  event={runtime.visibleEvent}
+                  onChoice={runtime.choose}
+                  onAdvance={handleAdvanceRequest}
+                  {...(messageLines === null ? {} : { renderMessageLine })}
+                  canAdvance={canAdvanceText}
+                />
+              )}
+            </div>
           </div>
         </GameShell>
       </GameViewport>
-      <div className="app__controls">
-        <button
-          type="button"
-          onClick={runtime.step}
-          disabled={runtime.isBlocked || runtime.state.isStopped || runtime.event?.type === "end"}
-        >
-          Step
-        </button>
-        <button type="button" onClick={reset}>
-          Reset
-        </button>
-      </div>
-      <RuntimeDebug runtime={runtime} />
       {runtime.autoStepError === null ? null : <p className="app__runtime-error">{runtime.autoStepError}</p>}
       {diagnostics.length === 0 ? null : (
         <ul className="app__diagnostics">
@@ -142,53 +193,23 @@ function useVisibleEventPresentationKey(event: RuntimeEvent | null): string {
   return `${keyRef.current.sequence}:${event === null ? "none" : getRuntimeEventTextKey(event)}`;
 }
 
-interface RevealRuntimeMessageLayerProps {
-  readonly event: RuntimeEvent;
-  readonly onChoice: (itemIndex: number) => void;
-  readonly onStep: () => void;
-  readonly canAdvance: boolean;
-}
-
-function RevealRuntimeMessageLayer({ event, onChoice, onStep, canAdvance }: RevealRuntimeMessageLayerProps) {
-  const messageLines = useMemo(() => getMessageLines(event), [event]);
-  const revealText = messageLines?.join("\n") ?? "";
-  const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
-  const reveal = useTextReveal(revealText, {
-    enabled: messageLines !== null,
-    charactersPerSecond: 60,
-  });
-  const handleAdvanceRequest = useCallback(() => {
-    if (reveal.isRevealing) {
-      reveal.revealAll();
-      return;
-    }
-    onStep();
-  }, [onStep, reveal]);
-  const renderMessageLine = useCallback(
-    ({ line, lineIndex }: MessageWindowRenderLineContext) => {
-      const range = lineRanges[lineIndex];
-      if (range === undefined) {
-        return line;
-      }
-      return <span>{reveal.visibleText.slice(range.start, Math.min(range.end, reveal.visibleText.length))}</span>;
-    },
-    [lineRanges, reveal.visibleText],
-  );
-
-  return (
-    <RuntimeMessageLayer
-      event={event}
-      onChoice={onChoice}
-      onAdvance={handleAdvanceRequest}
-      {...(messageLines === null ? {} : { renderMessageLine })}
-      canAdvance={canAdvance}
-    />
-  );
-}
-
 interface LineRange {
   readonly start: number;
   readonly end: number;
+}
+
+function isInteractiveClickTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(".tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+  );
+}
+
+function isKeyboardHandledTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(".tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+  );
 }
 
 function getMessageLines(event: RuntimeEvent): readonly string[] | null {
@@ -240,40 +261,4 @@ interface DiagnosticLike {
 
 function formatDiagnostics(diagnostics: readonly DiagnosticLike[]): string {
   return diagnostics.map((diagnostic) => diagnostic.message).join("\n");
-}
-
-function RuntimeDebug({ runtime }: { readonly runtime: UseRuntimeResult }) {
-  return (
-    <section className="debug-panel" aria-label="runtime debug">
-      <div>
-        <span>Event</span>
-        <strong>{runtime.event?.type ?? "none"}</strong>
-      </div>
-      <div>
-        <span>Pointer</span>
-        <strong>{runtime.state.pointer.instructionIndex}</strong>
-      </div>
-      <div>
-        <span>Variables</span>
-        <strong>{formatVariables(runtime.state.variables)}</strong>
-      </div>
-      <div>
-        <span>Block</span>
-        <strong>{runtime.blockReason ?? "none"}</strong>
-      </div>
-      <div>
-        <span>Auto-step</span>
-        <strong>{runtime.autoStepError ?? "ok"}</strong>
-      </div>
-    </section>
-  );
-}
-
-function formatVariables(variables: RuntimeState["variables"]): string {
-  const entries = Object.entries(variables);
-  if (entries.length === 0) {
-    return "none";
-  }
-
-  return entries.map(([key, value]) => `${key}=${String(value)}`).join(", ");
 }
