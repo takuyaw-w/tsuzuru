@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/plugin-std-audio",
-  "version": "0.15.0",
+  "version": "0.1.0",
   "description": "Standard audio plugin state and command handlers for Tsuzuru.",
   "license": "MIT",
   "type": "module",
