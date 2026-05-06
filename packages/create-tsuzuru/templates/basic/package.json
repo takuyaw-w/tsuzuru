@@ -9,16 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tsuzuru/config": "^0.1.0",
-    "@tsuzuru/core": "^0.1.0",
-    "@tsuzuru/plugin-std-audio": "^0.1.0",
-    "@tsuzuru/plugin-std-visual": "^0.1.0",
-    "@tsuzuru/preact": "^0.1.0",
-    "@tsuzuru/standard-ui-preact": "^0.1.0",
+    "@tsuzuru/config": "^0.1.1",
+    "@tsuzuru/core": "^0.1.1",
+    "@tsuzuru/plugin-std-audio": "^0.1.1",
+    "@tsuzuru/plugin-std-visual": "^0.1.1",
+    "@tsuzuru/preact": "^0.1.1",
+    "@tsuzuru/standard-ui-preact": "^0.1.1",
     "preact": "^10.0.0"
   },
   "devDependencies": {
-    "@tsuzuru/cli": "^0.1.0",
+    "@tsuzuru/cli": "^0.1.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.10"
   }

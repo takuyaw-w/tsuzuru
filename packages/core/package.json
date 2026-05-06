@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core parser, compiler, project compiler, and runtime primitives for Tsuzuru.",
   "license": "MIT",
   "type": "module",
