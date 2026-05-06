@@ -6,6 +6,11 @@ It demonstrates the current runnable DSL v2 subset: `include "./path.tzr"` compi
 
 Title, load, settings, backlog, and gallery screens are ordinary TSX components under `src/screens`. The `.tzr` files focus on the scenario body after Start.
 
+Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
+them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
+automatically collects `scenario/**/*.tzr` with Vite and usually does not need
+editing. Title, load, settings, backlog, and gallery UI belong in `src/screens`.
+
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 
 The visual layer reads std-visual transition metadata and renders `fade` and `dissolve` entrance/update transitions with example-side CSS. Transition execution is not part of the core runtime. Exit transitions for `hide`, `clear bg`, and `clear sprites` remain future scope because those operations remove the surviving visual state.
