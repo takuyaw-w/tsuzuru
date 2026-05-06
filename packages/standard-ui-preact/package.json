@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/standard-ui-preact",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "exports": {
     ".": {
