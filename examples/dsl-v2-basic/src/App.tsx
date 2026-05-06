@@ -85,10 +85,6 @@ function RuntimeApp({ document }: RuntimeAppProps) {
     (visibleEvent?.type === "narration" || visibleEvent?.type === "dialogue") &&
     getRuntimeBlockReason(state) === null &&
     !state.isStopped;
-  const renderMessageLine = useCallback(
-    ({ line }: MessageWindowRenderLineContext) => <ExampleTextRevealLine text={line} />,
-    [],
-  );
 
   const applyRunResult = (result: RuntimeRunResult) => {
     setState(result.state);
@@ -145,11 +141,11 @@ function RuntimeApp({ document }: RuntimeAppProps) {
             {visibleEvent === null ? (
               <p className="app__placeholder">Press Step to start.</p>
             ) : (
-              <RuntimeMessageLayer
+              <RevealRuntimeMessageLayer
+                key={presentationKey(visibleEvent, state)}
                 event={visibleEvent}
                 onChoice={choose}
                 onAdvance={step}
-                renderMessageLine={renderMessageLine}
                 canAdvance={canAdvanceText}
                 showTransientStatus
               />
@@ -182,9 +178,93 @@ function RuntimeApp({ document }: RuntimeAppProps) {
   );
 }
 
-function ExampleTextRevealLine({ text }: { readonly text: string }) {
-  const reveal = useTextReveal(text, { charactersPerSecond: 60 });
-  return <span>{reveal.visibleText}</span>;
+interface RevealRuntimeMessageLayerProps {
+  readonly event: RuntimeEvent;
+  readonly onChoice: (itemIndex: number) => void;
+  readonly onAdvance: () => void;
+  readonly canAdvance: boolean;
+  readonly showTransientStatus: boolean;
+}
+
+function RevealRuntimeMessageLayer({
+  event,
+  onChoice,
+  onAdvance,
+  canAdvance,
+  showTransientStatus,
+}: RevealRuntimeMessageLayerProps) {
+  const messageLines = useMemo(() => getMessageLines(event), [event]);
+  const revealText = messageLines?.join("\n") ?? "";
+  const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
+  const reveal = useTextReveal(revealText, {
+    enabled: messageLines !== null,
+    charactersPerSecond: 60,
+  });
+  const handleAdvance = useCallback(() => {
+    if (reveal.isRevealing) {
+      reveal.revealAll();
+      return;
+    }
+    onAdvance();
+  }, [onAdvance, reveal]);
+  const renderMessageLine = useCallback(
+    ({ line, lineIndex }: MessageWindowRenderLineContext) => {
+      const range = lineRanges[lineIndex];
+      if (range === undefined) {
+        return line;
+      }
+      return <span>{reveal.visibleText.slice(range.start, Math.min(range.end, reveal.visibleText.length))}</span>;
+    },
+    [lineRanges, reveal.visibleText],
+  );
+
+  return (
+    <RuntimeMessageLayer
+      event={event}
+      onChoice={onChoice}
+      onAdvance={handleAdvance}
+      renderMessageLine={messageLines === null ? undefined : renderMessageLine}
+      canAdvance={canAdvance}
+      showTransientStatus={showTransientStatus}
+    />
+  );
+}
+
+interface LineRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+function getMessageLines(event: RuntimeEvent): readonly string[] | null {
+  if (event.type !== "narration" && event.type !== "dialogue") {
+    return null;
+  }
+  return event.lines.map((line) => line.text);
+}
+
+function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
+  const ranges: LineRange[] = [];
+  let start = 0;
+  for (const line of lines) {
+    const end = start + line.length;
+    ranges.push({ start, end });
+    start = end + 1;
+  }
+  return ranges;
+}
+
+function presentationKey(event: RuntimeEvent, state: RuntimeState): string {
+  return `${event.type}:${state.pointer.filePath}:${state.pointer.instructionIndex}:${getRuntimeEventTextKey(event)}`;
+}
+
+function getRuntimeEventTextKey(event: RuntimeEvent): string {
+  if (event.type === "narration" || event.type === "dialogue") {
+    return event.lines.map((line) => line.text).join("\u0000");
+  }
+  if (event.type === "choice") {
+    return event.items.map((item) => item.text).join("\u0000");
+  }
+  return "";
 }
 
 function runUntilVisible(

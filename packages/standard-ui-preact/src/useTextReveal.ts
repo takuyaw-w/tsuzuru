@@ -18,6 +18,7 @@ export interface TextRevealCharacterEvent {
 export interface TextRevealState {
   readonly visibleText: string;
   readonly isComplete: boolean;
+  readonly isRevealing: boolean;
   readonly revealAll: () => void;
   readonly reset: () => void;
 }
@@ -33,6 +34,15 @@ export function useTextReveal(text: string, options: UseTextRevealOptions = {}):
     readonly onCharacterReveal?: (event: TextRevealCharacterEvent) => void;
     readonly onComplete?: () => void;
   }>({});
+  const hasCompletedRef = useRef(!shouldRevealOverTime || text.length === 0);
+
+  const completeCurrentReveal = useCallback(() => {
+    if (hasCompletedRef.current) {
+      return;
+    }
+    hasCompletedRef.current = true;
+    callbacksRef.current.onComplete?.();
+  }, []);
 
   useEffect(() => {
     callbacksRef.current = {
@@ -42,7 +52,9 @@ export function useTextReveal(text: string, options: UseTextRevealOptions = {}):
   }, [options.onCharacterReveal, options.onComplete]);
 
   useEffect(() => {
-    setVisibleCharacterCount(initialVisibleCharacterCount(text, shouldRevealOverTime));
+    const nextVisibleCharacterCount = initialVisibleCharacterCount(text, shouldRevealOverTime);
+    hasCompletedRef.current = nextVisibleCharacterCount >= text.length;
+    setVisibleCharacterCount(nextVisibleCharacterCount);
   }, [text, shouldRevealOverTime]);
 
   useEffect(() => {
@@ -61,32 +73,36 @@ export function useTextReveal(text: string, options: UseTextRevealOptions = {}):
       });
       setVisibleCharacterCount(nextVisibleCharacterCount);
       if (nextVisibleCharacterCount >= text.length) {
-        callbacksRef.current.onComplete?.();
+        completeCurrentReveal();
       }
     }, delayMs);
 
     return () => {
       globalThis.clearTimeout(timeout);
     };
-  }, [charactersPerSecond, shouldRevealOverTime, text, visibleCharacterCount]);
+  }, [charactersPerSecond, completeCurrentReveal, shouldRevealOverTime, text, visibleCharacterCount]);
 
   const revealAll = useCallback(() => {
     setVisibleCharacterCount((current) => {
       if (current < text.length) {
-        callbacksRef.current.onComplete?.();
+        completeCurrentReveal();
       }
       return text.length;
     });
-  }, [text]);
+  }, [completeCurrentReveal, text]);
 
   const reset = useCallback(() => {
-    setVisibleCharacterCount(initialVisibleCharacterCount(text, shouldRevealOverTime));
+    const nextVisibleCharacterCount = initialVisibleCharacterCount(text, shouldRevealOverTime);
+    hasCompletedRef.current = nextVisibleCharacterCount >= text.length;
+    setVisibleCharacterCount(nextVisibleCharacterCount);
   }, [shouldRevealOverTime, text]);
 
   const visibleText = text.slice(0, visibleCharacterCount);
+  const isComplete = visibleCharacterCount >= text.length;
   return {
     visibleText,
-    isComplete: visibleCharacterCount >= text.length,
+    isComplete,
+    isRevealing: shouldRevealOverTime && !isComplete,
     revealAll,
     reset,
   };
