@@ -23,6 +23,7 @@ export interface UseRuntimeOptions {
   readonly plugins?: RuntimeInitialStateOptions["plugins"];
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
   readonly onDiagnostic?: RuntimeStepOptions["onDiagnostic"];
+  readonly autoStart?: boolean;
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
   readonly autoStepMaxSteps?: number;
@@ -51,6 +52,8 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
   const [state, setState] = useState<RuntimeState>(() => createInitialState(document, options.plugins));
   const [event, setEvent] = useState<RuntimeEvent | null>(null);
   const [visibleEvent, setVisibleEvent] = useState<RuntimeEvent | null>(null);
+  const hasAutoStartedRef = useRef(false);
+  const autoStart = options.autoStart ?? false;
   const autoClearWait = options.autoClearWait ?? true;
   const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
   const autoStepMaxSteps = options.autoStepMaxSteps ?? 1000;
@@ -183,6 +186,22 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
   useEffect(() => {
     reset();
   }, [reset]);
+
+  useEffect(() => {
+    if (
+      !autoStart ||
+      hasAutoStartedRef.current ||
+      event !== null ||
+      visibleEvent !== null ||
+      isRuntimeBlocked(state) ||
+      state.isStopped
+    ) {
+      return;
+    }
+
+    hasAutoStartedRef.current = true;
+    step();
+  }, [autoStart, event, visibleEvent, state, step]);
 
   useEffect(() => {
     const waitDurationMs = getAutoClearWaitDuration(event, state, autoClearWait);

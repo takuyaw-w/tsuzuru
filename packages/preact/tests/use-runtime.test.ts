@@ -357,6 +357,81 @@ describe("useRuntime", () => {
     };
   }
 
+  it("does not auto-start by default", async () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const runtime = await mountRuntime(document, {});
+
+    expect(runtime().event).toBeNull();
+    expect(runtime().visibleEvent).toBeNull();
+    expect(runtime().state.pointer.instructionIndex).toBe(0);
+  });
+
+  it("auto-starts once when autoStart is true", async () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const runtime = await mountRuntime(document, { autoStart: true });
+
+    expect(runtime().event).toEqual({ type: "scene", id: "start" });
+    expect(runtime().visibleEvent).toBeNull();
+    expect(runtime().state.pointer.instructionIndex).toBe(1);
+  });
+
+  it("auto-starts through transient events when autoStepTransientEvents is true", async () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const runtime = await mountRuntime(document, { autoStart: true, autoStepTransientEvents: true });
+
+    expect(runtime().event).toMatchObject({
+      type: "narration",
+      lines: [{ text: "Ready." }],
+    });
+    expect(runtime().visibleEvent).toMatchObject({ type: "narration" });
+  });
+
+  it("does not repeatedly auto-start after reaching a blocked choice", async () => {
+    const document = compileScript(`scene start:
+  choice "Choose":
+    "Stay":
+      narration:
+        Stayed.
+`);
+    const runtime = await mountRuntime(document, { autoStart: true, autoStepTransientEvents: true });
+
+    expect(runtime().event).toMatchObject({ type: "choice", question: "Choose" });
+    expect(runtime().blockReason).toBe("choice");
+
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({ type: "choice", question: "Choose" });
+    expect(runtime().blockReason).toBe("choice");
+  });
+
+  it("treats autoStart as mount-only and does not auto-start again after reset", async () => {
+    const document = compileScript(`scene start:
+  narration:
+    Ready.
+`);
+    const runtime = await mountRuntime(document, { autoStart: true });
+
+    expect(runtime().event).toEqual({ type: "scene", id: "start" });
+
+    await act(async () => {
+      runtime().reset();
+    });
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toBeNull();
+    expect(runtime().visibleEvent).toBeNull();
+    expect(runtime().state.pointer.instructionIndex).toBe(0);
+  });
+
   it("stops auto-step at narration and dialogue events from a DSL v2 document", async () => {
     const document = compileScript(`character haruka name="Haruka"
 scene start:
