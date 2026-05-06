@@ -3,6 +3,14 @@
   "version": "0.15.0",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsuzuru-engine/tsuzuru.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru#readme",
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
