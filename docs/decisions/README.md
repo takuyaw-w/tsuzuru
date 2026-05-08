@@ -44,6 +44,7 @@ reintroduced.
 | 0015 | [Auto Mode MVP](0015-auto-mode-mvp.md) | Accepted |
 | 0016 | [Read Tracking MVP](0016-read-tracking-mvp.md) | Accepted |
 | 0017 | [Skip Mode MVP](0017-skip-mode-mvp.md) | Accepted |
+| 0018 | [Retained Message Save / Load](0018-retained-message-save-load.md) | Accepted |
 
 ## Reading Order
 

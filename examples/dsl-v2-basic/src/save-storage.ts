@@ -1,10 +1,19 @@
+import type { RuntimeEvent } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
+
+export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
+
+export interface ExampleSaveData {
+  readonly version: 1;
+  readonly runtime: RuntimeSaveData;
+  readonly retainedMessageEvent: RetainedMessageEvent | null;
+}
 
 export interface ExampleSaveSlot {
   readonly id: string;
   readonly label: string;
   readonly savedAt: string;
-  readonly data: RuntimeSaveData;
+  readonly data: ExampleSaveData;
 }
 
 export interface ExampleSaveSlotDefinition {
@@ -12,6 +21,7 @@ export interface ExampleSaveSlotDefinition {
   readonly label: string;
 }
 
+// The storage key stays v1; slot payloads accept both legacy RuntimeSaveData and ExampleSaveData.
 export const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
 
 export const SAVE_SLOT_DEFINITIONS = [
@@ -48,7 +58,18 @@ export function loadSaveSlots(): readonly ExampleSaveSlot[] {
   return sortBySlotOrder(dedupeSlots(slots));
 }
 
-export function saveToSlot(slotId: string, data: RuntimeSaveData): readonly ExampleSaveSlot[] {
+export function createExampleSaveData(
+  runtime: RuntimeSaveData,
+  retainedMessageEvent: RetainedMessageEvent | null,
+): ExampleSaveData {
+  return {
+    version: 1,
+    runtime,
+    retainedMessageEvent,
+  };
+}
+
+export function saveToSlot(slotId: string, data: ExampleSaveData): readonly ExampleSaveSlot[] {
   const definition = getSaveSlotDefinition(slotId);
   if (definition === null) {
     return loadSaveSlots();
@@ -82,6 +103,26 @@ export function getLatestSaveSlot(slots: readonly ExampleSaveSlot[]): ExampleSav
   return latestSlot;
 }
 
+export function isExampleSaveData(value: unknown): value is ExampleSaveData {
+  if (!isObjectRecord(value) || value.version !== 1 || !isRuntimeSaveData(value.runtime)) {
+    return false;
+  }
+
+  return value.retainedMessageEvent === null || isRetainedMessageEvent(value.retainedMessageEvent);
+}
+
+export function isRetainedMessageEvent(value: unknown): value is RetainedMessageEvent {
+  if (!isObjectRecord(value) || (value.type !== "narration" && value.type !== "dialogue")) {
+    return false;
+  }
+
+  if (!Array.isArray(value.lines) || !value.lines.every(isTextLineLike)) {
+    return false;
+  }
+
+  return value.type !== "dialogue" || typeof value.speaker === "string";
+}
+
 function readStorageValue(): string | null {
   try {
     return window.localStorage.getItem(SAVE_STORAGE_KEY);
@@ -104,7 +145,8 @@ function parseSaveSlot(value: unknown): ExampleSaveSlot | null {
   }
 
   const definition = typeof value.id === "string" ? getSaveSlotDefinition(value.id) : null;
-  if (definition === null || typeof value.savedAt !== "string" || !isRuntimeSaveData(value.data)) {
+  const data = parseExampleSaveData(value.data);
+  if (definition === null || typeof value.savedAt !== "string" || data === null) {
     return null;
   }
 
@@ -112,8 +154,20 @@ function parseSaveSlot(value: unknown): ExampleSaveSlot | null {
     id: definition.id,
     label: definition.label,
     savedAt: value.savedAt,
-    data: value.data,
+    data,
   };
+}
+
+function parseExampleSaveData(value: unknown): ExampleSaveData | null {
+  if (isExampleSaveData(value)) {
+    return value;
+  }
+
+  if (isRuntimeSaveData(value)) {
+    return createExampleSaveData(value, null);
+  }
+
+  return null;
 }
 
 function dedupeSlots(slots: readonly ExampleSaveSlot[]): readonly ExampleSaveSlot[] {
@@ -141,4 +195,8 @@ function getSaveSlotDefinition(slotId: string): ExampleSaveSlotDefinition | null
 
 function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === "object" && value !== null;
+}
+
+function isTextLineLike(value: unknown): value is { readonly text: string } {
+  return isObjectRecord(value) && typeof value.text === "string";
 }

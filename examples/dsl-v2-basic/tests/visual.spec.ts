@@ -80,6 +80,44 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(messageWindow).toContainText("ちゃんと見ておいて");
 });
 
+test("save and load restore retained message behind choices", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const retainedMessage = page.locator(".app__retained-message");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  const choiceLayer = page.locator(".tzr-choice-layer");
+
+  await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await messageWindow.click();
+  await expect(messageWindow).toContainText("スコアが増えた。", { timeout: 4000 });
+  await messageWindow.click();
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await expect(retainedMessage).toContainText("スコアが増えた。");
+
+  await runtimeMenu.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save Slot 1" }).click();
+  await runtimeMenu.getByRole("button", { name: "Title" }).click();
+
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await expect(retainedMessage).toContainText("スコアが増えた。");
+
+  await runtimeMenu.getByRole("button", { name: "Title" }).click();
+  await page.getByRole("button", { name: "Load" }).click();
+  await page.getByRole("button", { name: "Load Slot 1" }).click();
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await expect(retainedMessage).toContainText("スコアが増えた。");
+
+  await choiceLayer.getByRole("button", { name: "手帳を見る" }).click();
+  await expect(messageWindow).toContainText("ちゃんと見ておいて", { timeout: 3000 });
+  await runtimeMenu.getByRole("button", { name: "Load" }).click();
+  await page.getByRole("button", { name: "Load Slot 1" }).click();
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await expect(retainedMessage).toContainText("スコアが増えた。");
+});
+
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Start" }).click();
