@@ -1,10 +1,17 @@
 import type { RuntimeEvent } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
+import { scenarioIdentity } from "./scenario.js";
 
 export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 
+export interface ExampleScenarioIdentity {
+  readonly id: string;
+  readonly version: string;
+}
+
 export interface ExampleSaveData {
-  readonly version: 1;
+  readonly version: 2;
+  readonly scenario: ExampleScenarioIdentity;
   readonly runtime: RuntimeSaveData;
   readonly retainedMessageEvent: RetainedMessageEvent | null;
 }
@@ -63,7 +70,8 @@ export function createExampleSaveData(
   retainedMessageEvent: RetainedMessageEvent | null,
 ): ExampleSaveData {
   return {
-    version: 1,
+    version: 2,
+    scenario: scenarioIdentity,
     runtime,
     retainedMessageEvent,
   };
@@ -104,11 +112,7 @@ export function getLatestSaveSlot(slots: readonly ExampleSaveSlot[]): ExampleSav
 }
 
 export function isExampleSaveData(value: unknown): value is ExampleSaveData {
-  if (!isObjectRecord(value) || value.version !== 1 || !isRuntimeSaveData(value.runtime)) {
-    return false;
-  }
-
-  return value.retainedMessageEvent === null || isRetainedMessageEvent(value.retainedMessageEvent);
+  return isExampleSaveDataV2(value) && isCompatibleScenarioIdentity(value);
 }
 
 export function isRetainedMessageEvent(value: unknown): value is RetainedMessageEvent {
@@ -158,16 +162,52 @@ function parseSaveSlot(value: unknown): ExampleSaveSlot | null {
   };
 }
 
-function parseExampleSaveData(value: unknown): ExampleSaveData | null {
-  if (isExampleSaveData(value)) {
-    return value;
+export function parseExampleSaveData(value: unknown): ExampleSaveData | null {
+  if (isExampleSaveDataV2(value)) {
+    return isCompatibleScenarioIdentity(value) ? value : null;
   }
 
-  if (isRuntimeSaveData(value)) {
-    return createExampleSaveData(value, null);
+  return migrateExampleSaveDataV1(value) ?? migrateLegacyRuntimeSaveData(value);
+}
+
+function migrateExampleSaveDataV1(value: unknown): ExampleSaveData | null {
+  if (!isObjectRecord(value) || value.version !== 1 || !isRuntimeSaveData(value.runtime)) {
+    return null;
   }
 
-  return null;
+  if (value.retainedMessageEvent !== null && !isRetainedMessageEvent(value.retainedMessageEvent)) {
+    return null;
+  }
+
+  return createExampleSaveData(value.runtime, value.retainedMessageEvent);
+}
+
+function migrateLegacyRuntimeSaveData(value: unknown): ExampleSaveData | null {
+  if (!isRuntimeSaveData(value)) {
+    return null;
+  }
+
+  return createExampleSaveData(value, null);
+}
+
+function isExampleSaveDataV2(value: unknown): value is ExampleSaveData {
+  if (!isObjectRecord(value) || value.version !== 2 || !isScenarioIdentity(value.scenario)) {
+    return false;
+  }
+
+  if (!isRuntimeSaveData(value.runtime)) {
+    return false;
+  }
+
+  return value.retainedMessageEvent === null || isRetainedMessageEvent(value.retainedMessageEvent);
+}
+
+function isCompatibleScenarioIdentity(value: ExampleSaveData): boolean {
+  return value.scenario.id === scenarioIdentity.id && value.scenario.version === scenarioIdentity.version;
+}
+
+function isScenarioIdentity(value: unknown): value is ExampleScenarioIdentity {
+  return isObjectRecord(value) && typeof value.id === "string" && typeof value.version === "string";
 }
 
 function dedupeSlots(slots: readonly ExampleSaveSlot[]): readonly ExampleSaveSlot[] {

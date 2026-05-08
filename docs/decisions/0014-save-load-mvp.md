@@ -25,6 +25,7 @@ The implementation uses:
 
 - three fixed save slots: `slot-1`, `slot-2`, and `slot-3`
 - `RuntimeSaveData` as the persisted runtime data
+- an example-level scenario identity wrapper around `RuntimeSaveData`
 - Title Continue behavior that restores the latest saved slot
 - runtime Save / Load / Settings / Backlog overlays so `RuntimeApp` is not
   unmounted while opening those screens
@@ -113,6 +114,29 @@ The MVP lives in `examples/dsl-v2-basic`.
 invalid JSON, old data, unknown slot IDs, and values that fail
 `isRuntimeSaveData()` are ignored instead of crashing the app.
 
+The current example save wrapper is `ExampleSaveData.version: 2`. New saves
+include this scenario identity:
+
+```ts
+{
+  id: "tsuzuru.example.dsl-v2-basic",
+  version: "1"
+}
+```
+
+When loading slots, `version: 2` payloads must match both the current scenario id
+and scenario version. Mismatched slots are treated as unavailable load slots and
+are not considered by Continue, so `runtime.restoreSaveData()` is not called for
+data from another scenario or scenario version.
+
+Older `ExampleSaveData.version: 1` payloads and legacy raw `RuntimeSaveData`
+payloads do not carry scenario identity. The browser localStorage example
+migrates those payloads as current-scenario saves and attaches the current
+identity. Invalid JSON and malformed payloads are still ignored without throwing.
+
+This migration logic is an example-level MVP. It does not introduce a formal
+storage adapter, migration framework, or `@tsuzuru/config` schema field.
+
 `src/screens/SaveScreen.tsx` and `src/screens/LoadScreen.tsx` render the three
 fixed slots. Empty slots display `Empty`. Load and Delete are enabled only for
 saved slots. Save can overwrite an existing slot without confirmation.
@@ -150,8 +174,7 @@ storage policy for Tsuzuru as a whole.
 
 ## Future work
 
-- save data migration
-- scenario identity and scenario version
+- formal save data migration framework
 - screenshot thumbnail
 - quick save / quick load
 - auto save

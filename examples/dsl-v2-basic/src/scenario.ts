@@ -8,6 +8,11 @@ const scenarioModules = import.meta.glob<string>("../scenario/**/*.tzr", {
   eager: true,
 });
 
+export const scenarioIdentity = {
+  id: "tsuzuru.example.dsl-v2-basic",
+  version: "1",
+} as const;
+
 export const scenarioProject = compileTzrProject(
   {
     entryId: "scenario/main.tzr",
