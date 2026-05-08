@@ -12,10 +12,10 @@ Load as runtime overlays so the runtime is not unmounted while those screens are
 open. This localStorage storage is example-side host behavior, not Tsuzuru's
 engine-wide storage policy.
 
-Known limitation: if the player saves and loads while choices are visible, the
-choice itself is restored and can be selected normally, but the retained previous
-message window behind the choices is not restored. That retained message is
-example UI presentation state, not runtime save data.
+If the player saves and loads while choices are visible, the choice and the
+retained previous message window behind the choices are restored. The retained
+message is persisted in the example-side save data wrapper as host-owned
+presentation state; the `RuntimeSaveData` payload itself is unchanged.
 
 The runtime overlay Backlog screen records displayed narration and dialogue as
 message history. This is also example-side presentation state, not core runtime

@@ -1,7 +1,7 @@
 import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { getRenderableRuntimeEvent, type RuntimeSaveData, useRuntime } from "@tsuzuru/preact";
+import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
   GameShell,
@@ -25,7 +25,16 @@ import {
   type ReadTrackingState,
 } from "./read-tracking.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
-import { deleteSaveSlot, type ExampleSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot } from "./save-storage.js";
+import {
+  createExampleSaveData,
+  deleteSaveSlot,
+  type ExampleSaveData,
+  type ExampleSaveSlot,
+  getLatestSaveSlot,
+  loadSaveSlots,
+  type RetainedMessageEvent,
+  saveToSlot,
+} from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
@@ -54,7 +63,7 @@ export function App() {
   }, []);
   const [screen, setScreen] = useState<AppScreen>("title");
   const [saveSlots, setSaveSlots] = useState<readonly ExampleSaveSlot[]>(() => loadSaveSlots());
-  const [initialSaveData, setInitialSaveData] = useState<RuntimeSaveData | null>(null);
+  const [initialSaveData, setInitialSaveData] = useState<ExampleSaveData | null>(null);
   const [preferences, setPreferences] = useState<ExamplePreferences>(() => loadPreferences());
   const latestSaveSlot = useMemo(() => getLatestSaveSlot(saveSlots), [saveSlots]);
   const handleChangePreferences = useCallback((next: ExamplePreferences) => {
@@ -140,7 +149,7 @@ export function App() {
 
 interface RuntimeAppProps {
   readonly document: CompiledTzrDocument;
-  readonly initialSaveData: RuntimeSaveData | null;
+  readonly initialSaveData: ExampleSaveData | null;
   readonly saveSlots: readonly ExampleSaveSlot[];
   readonly preferences: ExamplePreferences;
   readonly onSaveSlotsChange: (slots: readonly ExampleSaveSlot[]) => void;
@@ -301,10 +310,15 @@ function RuntimeApp({
   );
   const handleSaveToSlot = useCallback(
     (slotId: string) => {
-      onSaveSlotsChange(saveToSlot(slotId, runtime.createSaveData()));
+      onSaveSlotsChange(
+        saveToSlot(
+          slotId,
+          createExampleSaveData(runtime.createSaveData(), getRetainedMessageForSave(lastMessageEvent)),
+        ),
+      );
       setOverlay(null);
     },
-    [onSaveSlotsChange, runtime],
+    [lastMessageEvent, onSaveSlotsChange, runtime],
   );
   const handleDeleteSaveSlot = useCallback(
     (slotId: string) => {
@@ -318,7 +332,8 @@ function RuntimeApp({
       if (slot === undefined) {
         return;
       }
-      runtime.restoreSaveData(slot.data);
+      runtime.restoreSaveData(slot.data.runtime);
+      setLastMessageEvent(slot.data.retainedMessageEvent);
       setOverlay(null);
     },
     [runtime, saveSlots],
@@ -377,7 +392,8 @@ function RuntimeApp({
       return;
     }
     hasRestoredInitialSaveDataRef.current = true;
-    runtime.restoreSaveData(initialSaveData);
+    runtime.restoreSaveData(initialSaveData.runtime);
+    setLastMessageEvent(initialSaveData.retainedMessageEvent);
   }, [initialSaveData, runtime]);
 
   useEffect(() => {
@@ -579,6 +595,13 @@ function isMessageEvent(
   event: RuntimeEvent,
 ): event is Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }> {
   return event.type === "narration" || event.type === "dialogue";
+}
+
+function getRetainedMessageForSave(event: RuntimeEvent | null): RetainedMessageEvent | null {
+  if (event === null || !isMessageEvent(event)) {
+    return null;
+  }
+  return event;
 }
 
 function getMessageLines(event: RuntimeEvent): readonly string[] | null {
