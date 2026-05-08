@@ -6,14 +6,16 @@ import {
   ChoiceLayer,
   GameShell,
   GameViewport,
+  type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
   RuntimeMessageLayer,
+  useAutoMode,
+  useMessageHistory,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { AudioLayer } from "./AudioLayer.js";
-import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEntry } from "./message-history.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
@@ -202,17 +204,10 @@ function RuntimeApp({
   });
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
-  const [autoModeEnabled, setAutoModeEnabled] = useState(false);
   const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
-  const [messageHistory, setMessageHistory] = useState<readonly MessageHistoryEntry[]>([]);
-  const [messageHistoryReadKeys, setMessageHistoryReadKeys] = useState<ReadonlyMap<number, ReadEntryKey>>(
-    () => new Map(),
-  );
   const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => loadReadTrackingState());
-  const recordedMessageHistoryKeyRef = useRef<string | null>(null);
   const recordedSkipReadCheckPresentationKeyRef = useRef<string | null>(null);
-  const nextMessageHistoryIdRef = useRef(1);
   const [currentMessageWasPreviouslyRead, setCurrentMessageWasPreviouslyRead] = useState(false);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
@@ -229,16 +224,27 @@ function RuntimeApp({
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
   });
+  const messageHistory = useMessageHistory({
+    event: runtime.visibleEvent,
+    eventKey: presentationKey,
+  });
+  const messageHistoryReadKeys = useMemo<ReadonlyMap<number, ReadEntryKey>>(
+    () =>
+      new Map(
+        messageHistory.entries.map((entry) => [entry.id, createReadEntryKeyFromMessageHistoryEntry(entry)] as const),
+      ),
+    [messageHistory.entries],
+  );
   const backlogEntries = useMemo<readonly BacklogViewEntry[]>(
     () =>
-      messageHistory.map((entry) => {
+      messageHistory.entries.map((entry) => {
         const readEntryKey = messageHistoryReadKeys.get(entry.id);
         return {
           ...entry,
           read: readEntryKey !== undefined && isRead(readTracking, readEntryKey),
         };
       }),
-    [messageHistory, messageHistoryReadKeys, readTracking],
+    [messageHistory.entries, messageHistoryReadKeys, readTracking],
   );
   const readCount = readTracking.readEntryKeys.size;
   const canAdvanceText =
@@ -248,7 +254,6 @@ function RuntimeApp({
     runtime.blockReason === null &&
     !runtime.state.isStopped;
   const canAutoAdvanceText =
-    autoModeEnabled &&
     !skipModeEnabled &&
     overlay === null &&
     choiceEvent === null &&
@@ -258,6 +263,11 @@ function RuntimeApp({
     canAdvanceText &&
     runtime.blockReason === null &&
     !runtime.state.isStopped;
+  const autoMode = useAutoMode({
+    canAdvance: canAutoAdvanceText,
+    onAdvance: runtime.step,
+    delayMs: AUTO_MODE_ADVANCE_DELAY_MS,
+  });
   const canSkipAdvanceText =
     skipModeEnabled &&
     overlay === null &&
@@ -375,20 +385,6 @@ function RuntimeApp({
   ]);
 
   useEffect(() => {
-    if (!canAutoAdvanceText) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      runtime.step();
-    }, AUTO_MODE_ADVANCE_DELAY_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [canAutoAdvanceText, presentationKey, runtime.step]);
-
-  useEffect(() => {
     if (initialSaveData === null || hasRestoredInitialSaveDataRef.current) {
       return;
     }
@@ -421,20 +417,6 @@ function RuntimeApp({
   }, [presentationKey, readTracking, runtime.visibleEvent]);
 
   useEffect(() => {
-    if (!isMessageHistoryEvent(runtime.visibleEvent) || recordedMessageHistoryKeyRef.current === presentationKey) {
-      return;
-    }
-
-    const entryId = nextMessageHistoryIdRef.current;
-    const entry = createMessageHistoryEntry(runtime.visibleEvent, entryId);
-    const readEntryKey = createReadEntryKey(runtime.visibleEvent);
-    nextMessageHistoryIdRef.current += 1;
-    recordedMessageHistoryKeyRef.current = presentationKey;
-    setMessageHistory((current) => [...current, entry]);
-    setMessageHistoryReadKeys((current) => new Map([...current, [entryId, readEntryKey]]));
-  }, [presentationKey, runtime.visibleEvent]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isKeyboardHandledTarget(event.target)) {
         return;
@@ -461,9 +443,9 @@ function RuntimeApp({
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <RuntimeControlBar
               readCount={readCount}
-              autoModeEnabled={autoModeEnabled}
+              autoModeEnabled={autoMode.enabled}
               skipModeEnabled={skipModeEnabled}
-              onToggleAutoMode={() => setAutoModeEnabled((current) => !current)}
+              onToggleAutoMode={autoMode.toggle}
               onToggleSkipMode={() => setSkipModeEnabled((current) => !current)}
               onOpenSave={() => setOverlay("save")}
               onOpenLoad={() => setOverlay("load")}
@@ -610,6 +592,13 @@ function getMessageLines(event: RuntimeEvent): readonly string[] | null {
     return null;
   }
   return event.lines.map((line) => line.text);
+}
+
+function createReadEntryKeyFromMessageHistoryEntry(entry: MessageHistoryEntry): ReadEntryKey {
+  if (entry.kind === "dialogue") {
+    return `dialogue:${entry.speakerName ?? ""}:${entry.text}`;
+  }
+  return `narration:${entry.text}`;
 }
 
 function buildLineRanges(lines: readonly string[]): readonly LineRange[] {

@@ -23,6 +23,8 @@
     "dist/index.*",
     "dist/screen-host.*",
     "dist/style.css",
+    "dist/useAutoMode.*",
+    "dist/useMessageHistory.*",
     "dist/useTextReveal.*"
   ],
   "repository": {

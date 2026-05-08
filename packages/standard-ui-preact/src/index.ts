@@ -20,6 +20,19 @@ export type {
   ScreenRegistry,
 } from "./screen-host.js";
 export { ScreenHost } from "./screen-host.js";
-
+export type { AutoModeState, UseAutoModeOptions } from "./useAutoMode.js";
+export { useAutoMode } from "./useAutoMode.js";
+export type {
+  MessageHistoryEntry,
+  MessageHistoryEvent,
+  MessageHistoryState,
+  UseMessageHistoryOptions,
+} from "./useMessageHistory.js";
+export {
+  createMessageHistoryEntry,
+  getMessageHistoryText,
+  isMessageHistoryEvent,
+  useMessageHistory,
+} from "./useMessageHistory.js";
 export type { TextRevealCharacterEvent, TextRevealState, UseTextRevealOptions } from "./useTextReveal.js";
 export { useTextReveal } from "./useTextReveal.js";
