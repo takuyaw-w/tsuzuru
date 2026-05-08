@@ -5,11 +5,17 @@ export type TextSpeedCharactersPerSecond = (typeof TEXT_SPEED_OPTIONS)[number];
 export interface ExamplePreferences {
   readonly textRevealEnabled: boolean;
   readonly textSpeedCharactersPerSecond: TextSpeedCharactersPerSecond;
+  readonly bgmVolume: number;
+  readonly seVolume: number;
+  readonly voiceVolume: number;
 }
 
 export const DEFAULT_EXAMPLE_PREFERENCES: ExamplePreferences = {
   textRevealEnabled: true,
   textSpeedCharactersPerSecond: 60,
+  bgmVolume: 0.6,
+  seVolume: 0.8,
+  voiceVolume: 0.9,
 };
 
 export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
@@ -60,11 +66,18 @@ export function normalizePreferences(value: unknown): ExamplePreferences {
     textSpeedCharactersPerSecond: isTextSpeedCharactersPerSecond(value.textSpeedCharactersPerSecond)
       ? value.textSpeedCharactersPerSecond
       : DEFAULT_EXAMPLE_PREFERENCES.textSpeedCharactersPerSecond,
+    bgmVolume: isUnitVolume(value.bgmVolume) ? value.bgmVolume : DEFAULT_EXAMPLE_PREFERENCES.bgmVolume,
+    seVolume: isUnitVolume(value.seVolume) ? value.seVolume : DEFAULT_EXAMPLE_PREFERENCES.seVolume,
+    voiceVolume: isUnitVolume(value.voiceVolume) ? value.voiceVolume : DEFAULT_EXAMPLE_PREFERENCES.voiceVolume,
   };
 }
 
 function isTextSpeedCharactersPerSecond(value: unknown): value is TextSpeedCharactersPerSecond {
   return typeof value === "number" && TEXT_SPEED_OPTIONS.includes(value as TextSpeedCharactersPerSecond);
+}
+
+function isUnitVolume(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

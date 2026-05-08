@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { AudioLayer } from "./AudioLayer.js";
 import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEntry } from "./message-history.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
+import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
   createInitialReadTrackingState,
   createReadEntryKey,
@@ -24,7 +25,6 @@ import {
   type ReadEntryKey,
   type ReadTrackingState,
 } from "./read-tracking.js";
-import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
   createExampleSaveData,
   deleteSaveSlot,
@@ -457,7 +457,7 @@ function RuntimeApp({
         <GameShell className="app__shell">
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} />
-            <AudioLayer runtimeState={runtime.state} />
+            <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <RuntimeControlBar
               readCount={readCount}
               autoModeEnabled={autoModeEnabled}

@@ -234,6 +234,10 @@ button {
   accent-color: #d89b52;
 }
 
+.settings__control[type="range"] {
+  accent-color: #d89b52;
+}
+
 .settings__control:not([type="checkbox"]) {
   min-width: 120px;
   padding: 7px 10px;
@@ -603,6 +607,12 @@ button {
 
 .audio-layer__row span {
   color: rgba(255, 255, 255, 0.66);
+}
+
+.audio-layer__notices {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: rgba(255, 220, 143, 0.9);
 }
 
 @media (max-width: 720px) {

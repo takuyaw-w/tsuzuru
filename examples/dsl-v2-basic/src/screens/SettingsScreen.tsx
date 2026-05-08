@@ -49,12 +49,69 @@ export function SettingsScreen({ preferences, onChangePreferences, onBack }: Set
               ))}
             </select>
           </label>
+          <VolumePreferenceField
+            label="BGM volume"
+            value={preferences.bgmVolume}
+            onChange={(bgmVolume) => {
+              onChangePreferences({
+                ...preferences,
+                bgmVolume,
+              });
+            }}
+          />
+          <VolumePreferenceField
+            label="SE volume"
+            value={preferences.seVolume}
+            onChange={(seVolume) => {
+              onChangePreferences({
+                ...preferences,
+                seVolume,
+              });
+            }}
+          />
+          <VolumePreferenceField
+            label="Voice volume"
+            value={preferences.voiceVolume}
+            onChange={(voiceVolume) => {
+              onChangePreferences({
+                ...preferences,
+                voiceVolume,
+              });
+            }}
+          />
         </div>
         <button type="button" className="screen__button" onClick={onBack}>
           Back
         </button>
       </div>
     </section>
+  );
+}
+
+interface VolumePreferenceFieldProps {
+  readonly label: string;
+  readonly value: number;
+  readonly onChange: (value: number) => void;
+}
+
+function VolumePreferenceField({ label, value, onChange }: VolumePreferenceFieldProps) {
+  return (
+    <label className="settings__field">
+      <span className="settings__label">{label}</span>
+      <input
+        type="range"
+        className="settings__control"
+        aria-label={label}
+        min="0"
+        max="1"
+        step="0.05"
+        value={value}
+        onChange={(event) => {
+          onChange(event.currentTarget.valueAsNumber);
+        }}
+      />
+      <span className="settings__hint">{Math.round(value * 100)}%</span>
+    </label>
   );
 }
 

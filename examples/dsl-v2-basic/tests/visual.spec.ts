@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 
 const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
@@ -29,18 +29,36 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByLabel("Text reveal", { exact: true }).uncheck();
   await page.getByLabel("Text speed", { exact: true }).selectOption("120");
+  await expect(page.getByLabel("BGM volume", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("SE volume", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Voice volume", { exact: true })).toBeVisible();
+  await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.35");
+  await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.45");
+  await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.55");
+  await expect(page.getByLabel("BGM volume", { exact: true })).toHaveValue("0.35");
+  await expect(page.getByLabel("SE volume", { exact: true })).toHaveValue("0.45");
+  await expect(page.getByLabel("Voice volume", { exact: true })).toHaveValue("0.55");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
+  const audioLayer = page.locator('[aria-label="std-audio state"]');
   await expect(messageWindow).toContainText("遅いよ。");
+  await expect(audioLayer).toContainText("BGM");
+  await expect(audioLayer).toContainText("daily_theme");
+  await expect(audioLayer).toContainText("SE");
+  await expect(audioLayer).toContainText("none");
+  await expect(audioLayer).toContainText("Voice");
 
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByLabel("Text reveal", { exact: true }).check();
   await page.getByLabel("Text speed", { exact: true }).selectOption("60");
+  await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.6");
+  await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.8");
+  await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.9");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toHaveCount(0);
   await expect(messageWindow).toContainText("遅いよ。");
@@ -78,6 +96,9 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await page.locator(".tzr-choice-layer").getByRole("button", { name: "手帳を見る" }).click();
   await expect(page.getByText("Waiting 250ms")).toHaveCount(0);
   await expect(messageWindow).toContainText("ちゃんと見ておいて");
+  await expect(audioLayer).toContainText("daily_theme");
+  await expect(audioLayer).toContainText("page #1");
+  await expect(audioLayer).toContainText("mio_001 #1");
 });
 
 test("save and load restore retained message behind choices", async ({ page }) => {
@@ -245,3 +266,14 @@ test("read tracking records current-session messages in runtime and backlog", as
   await expect(messageWindow).toContainText("スコアが増えた", { timeout: 4000 });
   await expect(readStatus).toHaveText("Read: 2");
 });
+
+async function setRangeValue(locator: Locator, value: string): Promise<void> {
+  await locator.evaluate((element, nextValue) => {
+    if (!(element instanceof HTMLInputElement)) {
+      throw new Error("Expected an input element.");
+    }
+    element.value = nextValue;
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+}
