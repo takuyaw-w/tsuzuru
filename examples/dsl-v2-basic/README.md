@@ -38,6 +38,14 @@ show a `Read` badge. This is example-side host state, not a core runtime
 feature, is not stored in save data yet, and is intended as a future Skip Mode
 building block.
 
+The runtime menu also includes a Skip Mode MVP. Skip Mode can be toggled from
+the `Skip` button and quickly advances narration or dialogue that was already
+read before it became visible. A first-time message is marked read when shown,
+but it is not skipped during that same display. Choices are never selected
+automatically. Skip Mode is example-side presentation behavior, not a core
+runtime feature, and the MVP uses only current-session Read Tracking rather than
+persistent read state.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
@@ -60,6 +68,8 @@ Controls:
 - After the full message is visible, Click, Enter, or Space advances to the next event.
 - The runtime `Auto` button toggles Auto Mode. When enabled, narration and
   dialogue advance automatically after full text display.
+- The runtime `Skip` button toggles Skip Mode. When enabled, narration and
+  dialogue that were read earlier in the current session advance quickly.
 - Choices are shown above the message window while the previous message remains visible. Click a choice button to select it.
 
 ```sh
