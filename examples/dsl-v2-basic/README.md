@@ -6,6 +6,17 @@ It demonstrates the current runnable DSL v2 subset: `include "./path.tzr"` compi
 
 Title, load, settings, backlog, and gallery screens are ordinary TSX components under `src/screens`. The `.tzr` files focus on the scenario body after Start.
 
+The example also includes a Save / Load MVP. It uses three localStorage-backed
+save slots, enables Title Continue when a latest save exists, and shows Save /
+Load as runtime overlays so the runtime is not unmounted while those screens are
+open. This localStorage storage is example-side host behavior, not Tsuzuru's
+engine-wide storage policy.
+
+Known limitation: if the player saves and loads while choices are visible, the
+choice itself is restored and can be selected normally, but the retained previous
+message window behind the choices is not restored. That retained message is
+example UI presentation state, not runtime save data.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
