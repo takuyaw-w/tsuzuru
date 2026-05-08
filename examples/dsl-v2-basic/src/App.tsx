@@ -1,7 +1,7 @@
 import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
+import { getRenderableRuntimeEvent, type RuntimeSaveData, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
   GameShell,
@@ -13,10 +13,12 @@ import {
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { AudioLayer } from "./AudioLayer.js";
+import { deleteSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot, type ExampleSaveSlot } from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import { BacklogScreen } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";
+import { SaveScreen } from "./screens/SaveScreen.js";
 import { SettingsScreen } from "./screens/SettingsScreen.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
 import { VisualLayer } from "./VisualLayer.js";
@@ -26,6 +28,7 @@ type DocumentResult =
   | { readonly ok: false; readonly message: string };
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
+type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
 
 export function App() {
   const documentResult = useMemo((): DocumentResult => {
@@ -35,6 +38,34 @@ export function App() {
     return { ok: true, document: scenarioProject.document };
   }, []);
   const [screen, setScreen] = useState<AppScreen>("title");
+  const [saveSlots, setSaveSlots] = useState<readonly ExampleSaveSlot[]>(() => loadSaveSlots());
+  const [initialSaveData, setInitialSaveData] = useState<RuntimeSaveData | null>(null);
+  const latestSaveSlot = useMemo(() => getLatestSaveSlot(saveSlots), [saveSlots]);
+  const handleStart = useCallback(() => {
+    setInitialSaveData(null);
+    setScreen("runtime");
+  }, []);
+  const handleContinue = useCallback(() => {
+    if (latestSaveSlot === null) {
+      return;
+    }
+    setInitialSaveData(latestSaveSlot.data);
+    setScreen("runtime");
+  }, [latestSaveSlot]);
+  const handleTitleLoad = useCallback(
+    (slotId: string) => {
+      const slot = saveSlots.find((candidate) => candidate.id === slotId);
+      if (slot === undefined) {
+        return;
+      }
+      setInitialSaveData(slot.data);
+      setScreen("runtime");
+    },
+    [saveSlots],
+  );
+  const handleDeleteSaveSlot = useCallback((slotId: string) => {
+    setSaveSlots(deleteSaveSlot(slotId));
+  }, []);
 
   if (!documentResult.ok) {
     return <pre className="app app--error">{documentResult.message}</pre>;
@@ -44,9 +75,10 @@ export function App() {
     return (
       <RuntimeApp
         document={documentResult.document}
+        initialSaveData={initialSaveData}
+        saveSlots={saveSlots}
+        onSaveSlotsChange={setSaveSlots}
         onTitle={() => setScreen("title")}
-        onSettings={() => setScreen("settings")}
-        onBacklog={() => setScreen("backlog")}
       />
     );
   }
@@ -55,14 +87,21 @@ export function App() {
     <ScreenFrame>
       {screen === "title" ? (
         <TitleScreen
-          onStart={() => setScreen("runtime")}
+          onStart={handleStart}
+          onContinue={handleContinue}
           onLoad={() => setScreen("load")}
           onSettings={() => setScreen("settings")}
           onBacklog={() => setScreen("backlog")}
           onGallery={() => setScreen("gallery")}
+          canContinue={latestSaveSlot !== null}
         />
       ) : screen === "load" ? (
-        <LoadScreen onBack={() => setScreen("title")} />
+        <LoadScreen
+          slots={saveSlots}
+          onLoad={handleTitleLoad}
+          onDelete={handleDeleteSaveSlot}
+          onBack={() => setScreen("title")}
+        />
       ) : screen === "settings" ? (
         <SettingsScreen onBack={() => setScreen("title")} />
       ) : screen === "backlog" ? (
@@ -76,9 +115,10 @@ export function App() {
 
 interface RuntimeAppProps {
   readonly document: CompiledTzrDocument;
+  readonly initialSaveData: RuntimeSaveData | null;
+  readonly saveSlots: readonly ExampleSaveSlot[];
+  readonly onSaveSlotsChange: (slots: readonly ExampleSaveSlot[]) => void;
   readonly onTitle: () => void;
-  readonly onSettings: () => void;
-  readonly onBacklog: () => void;
 }
 
 function ScreenFrame({ children }: { readonly children: ComponentChildren }) {
@@ -91,7 +131,7 @@ function ScreenFrame({ children }: { readonly children: ComponentChildren }) {
   );
 }
 
-function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProps) {
+function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, onTitle }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
     () => [createStdVisualPlugin(), createStdAudioPlugin()],
     [],
@@ -111,10 +151,12 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
     plugins,
     commandHandlers,
     onDiagnostic: recordDiagnostic,
-    autoStart: true,
+    autoStart: initialSaveData === null,
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const hasRestoredInitialSaveDataRef = useRef(false);
+  const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
@@ -178,10 +220,42 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
     },
     [lineRanges, textReveal.visibleText],
   );
+  const handleSaveToSlot = useCallback(
+    (slotId: string) => {
+      onSaveSlotsChange(saveToSlot(slotId, runtime.createSaveData()));
+      setOverlay(null);
+    },
+    [onSaveSlotsChange, runtime],
+  );
+  const handleDeleteSaveSlot = useCallback(
+    (slotId: string) => {
+      onSaveSlotsChange(deleteSaveSlot(slotId));
+    },
+    [onSaveSlotsChange],
+  );
+  const handleLoadFromSlot = useCallback(
+    (slotId: string) => {
+      const slot = saveSlots.find((candidate) => candidate.id === slotId);
+      if (slot === undefined) {
+        return;
+      }
+      runtime.restoreSaveData(slot.data);
+      setOverlay(null);
+    },
+    [runtime, saveSlots],
+  );
 
   useEffect(() => {
     textReveal.reset();
   }, [presentationKey, textReveal.reset]);
+
+  useEffect(() => {
+    if (initialSaveData === null || hasRestoredInitialSaveDataRef.current) {
+      return;
+    }
+    hasRestoredInitialSaveDataRef.current = true;
+    runtime.restoreSaveData(initialSaveData);
+  }, [initialSaveData, runtime]);
 
   useEffect(() => {
     if (runtime.visibleEvent !== null && isMessageEvent(runtime.visibleEvent)) {
@@ -215,10 +289,16 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
             <nav className="app__runtime-menu" aria-label="Runtime menu">
-              <button type="button" onClick={onBacklog}>
+              <button type="button" onClick={() => setOverlay("save")}>
+                Save
+              </button>
+              <button type="button" onClick={() => setOverlay("load")}>
+                Load
+              </button>
+              <button type="button" onClick={() => setOverlay("backlog")}>
                 Backlog
               </button>
-              <button type="button" onClick={onSettings}>
+              <button type="button" onClick={() => setOverlay("settings")}>
                 Settings
               </button>
               <button type="button" onClick={onTitle}>
@@ -260,6 +340,29 @@ function RuntimeApp({ document, onTitle, onSettings, onBacklog }: RuntimeAppProp
                 />
               )}
             </div>
+            {overlay === null ? null : (
+              <div className="app__overlay">
+                {overlay === "save" ? (
+                  <SaveScreen
+                    slots={saveSlots}
+                    onSave={handleSaveToSlot}
+                    onDelete={handleDeleteSaveSlot}
+                    onBack={() => setOverlay(null)}
+                  />
+                ) : overlay === "load" ? (
+                  <LoadScreen
+                    slots={saveSlots}
+                    onLoad={handleLoadFromSlot}
+                    onDelete={handleDeleteSaveSlot}
+                    onBack={() => setOverlay(null)}
+                  />
+                ) : overlay === "backlog" ? (
+                  <BacklogScreen onBack={() => setOverlay(null)} />
+                ) : (
+                  <SettingsScreen onBack={() => setOverlay(null)} />
+                )}
+              </div>
+            )}
           </div>
         </GameShell>
       </GameViewport>
@@ -299,14 +402,14 @@ interface LineRange {
 function isInteractiveClickTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+    target.closest(".screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
 }
 
 function isKeyboardHandledTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+    target.closest(".screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
 }
 

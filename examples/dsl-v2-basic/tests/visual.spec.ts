@@ -1,16 +1,33 @@
 import { expect, test } from "@playwright/test";
 
+const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
+
 test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
+  await page.addInitScript((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  }, SAVE_STORAGE_KEY);
   await page.goto("/");
 
   await expect(page.getByText("Step")).toHaveCount(0);
   await expect(page.locator(".debug-panel")).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
+  await expect(messageWindow).toContainText("遅いよ");
+
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  await runtimeMenu.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save Slot 1" }).click();
+  await runtimeMenu.getByRole("button", { name: "Title" }).click();
+
+  const continueButton = page.getByRole("button", { name: "Continue" });
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
+  await expect(messageWindow).toBeVisible();
   await expect(messageWindow).toContainText("遅いよ");
 
   await messageWindow.click();
