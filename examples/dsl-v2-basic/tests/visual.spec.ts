@@ -20,6 +20,13 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(messageWindow).toContainText("遅いよ");
 
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
+  await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
+  await expect(page.locator(".backlog")).toContainText("遅いよ。");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
+  await expect(messageWindow).toContainText("遅いよ");
+
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
   await runtimeMenu.getByRole("button", { name: "Title" }).click();
