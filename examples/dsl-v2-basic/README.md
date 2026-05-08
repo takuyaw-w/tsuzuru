@@ -27,6 +27,14 @@ example-side host state persisted with localStorage; `@tsuzuru/core`,
 `@tsuzuru/preact`, and `@tsuzuru/standard-ui-preact` do not own this preference
 policy.
 
+The example also includes an Audio Playback MVP. The std-audio plugin records
+BGM, SE, and Voice state/events, and the example-side `AudioLayer` resolves
+those asset IDs through `src/audio-assets.ts` and attempts playback with browser
+audio elements. BGM / SE / Voice volume can be changed from Settings. Audio files
+are not bundled; place files under `public/assets/audio/...` to match the asset
+map. Playback and asset resolution are host-owned presentation behavior, not
+core or plugin behavior.
+
 The runtime menu also includes an Auto Mode MVP. Auto Mode can be toggled from
 the `Auto` button and advances narration or dialogue after the full text is
 visible. It stops at choices and never selects an option automatically. This is
@@ -86,4 +94,6 @@ If Chromium has not been installed for Playwright yet, run:
 pnpm exec playwright install chromium
 ```
 
-The visual and audio layers intentionally use asset IDs as placeholders, so no image or audio files are required.
+The visual layer intentionally uses asset IDs as placeholders, so no image files
+are required. Audio asset IDs are mapped by the example, but audio files are not
+required for the smoke test; missing files are reported without stopping the app.
