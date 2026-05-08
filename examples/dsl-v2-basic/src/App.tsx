@@ -24,6 +24,7 @@ import {
   type ReadEntryKey,
   type ReadTrackingState,
 } from "./read-tracking.js";
+import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import { deleteSaveSlot, type ExampleSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot } from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
@@ -441,40 +442,18 @@ function RuntimeApp({
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
-            <nav className="app__runtime-menu" aria-label="Runtime menu">
-              <span className="read-status" aria-label="Read count">
-                Read: {readCount}
-              </span>
-              <button
-                type="button"
-                aria-pressed={autoModeEnabled}
-                onClick={() => setAutoModeEnabled((current) => !current)}
-              >
-                Auto
-              </button>
-              <button
-                type="button"
-                aria-pressed={skipModeEnabled}
-                onClick={() => setSkipModeEnabled((current) => !current)}
-              >
-                Skip
-              </button>
-              <button type="button" onClick={() => setOverlay("save")}>
-                Save
-              </button>
-              <button type="button" onClick={() => setOverlay("load")}>
-                Load
-              </button>
-              <button type="button" onClick={() => setOverlay("backlog")}>
-                Backlog
-              </button>
-              <button type="button" onClick={() => setOverlay("settings")}>
-                Settings
-              </button>
-              <button type="button" onClick={onTitle}>
-                Title
-              </button>
-            </nav>
+            <RuntimeControlBar
+              readCount={readCount}
+              autoModeEnabled={autoModeEnabled}
+              skipModeEnabled={skipModeEnabled}
+              onToggleAutoMode={() => setAutoModeEnabled((current) => !current)}
+              onToggleSkipMode={() => setSkipModeEnabled((current) => !current)}
+              onOpenSave={() => setOverlay("save")}
+              onOpenLoad={() => setOverlay("load")}
+              onOpenBacklog={() => setOverlay("backlog")}
+              onOpenSettings={() => setOverlay("settings")}
+              onTitle={onTitle}
+            />
             <div className="app__message-layer">
               {canStart ? null : choiceEvent !== null ? (
                 <>
