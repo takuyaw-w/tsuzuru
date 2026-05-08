@@ -21,6 +21,12 @@ The runtime overlay Backlog screen records displayed narration and dialogue as
 message history. This is also example-side presentation state, not core runtime
 state, and it is not persisted in save data yet.
 
+The Settings screen includes a Text Preferences MVP. It can turn text reveal on
+or off and choose slow, normal, or fast text speed. These preferences are
+example-side host state persisted with localStorage; `@tsuzuru/core`,
+`@tsuzuru/preact`, and `@tsuzuru/standard-ui-preact` do not own this preference
+policy.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need

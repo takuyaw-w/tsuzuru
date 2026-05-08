@@ -179,6 +179,54 @@ button {
   color: #fffaf0;
 }
 
+.settings {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.settings__field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(247, 242, 226, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.settings__label {
+  color: #fff8e8;
+}
+
+.settings__control {
+  min-height: 34px;
+  border: 1px solid rgba(247, 242, 226, 0.34);
+  border-radius: 6px;
+  background: rgba(8, 10, 13, 0.86);
+  color: #fffaf0;
+}
+
+.settings__control[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  accent-color: #d89b52;
+}
+
+.settings__control:not([type="checkbox"]) {
+  min-width: 120px;
+  padding: 7px 10px;
+}
+
+.settings__hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: rgba(255, 250, 240, 0.68);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
 .screen__gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

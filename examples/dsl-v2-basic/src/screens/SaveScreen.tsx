@@ -1,4 +1,4 @@
-import { SAVE_SLOT_DEFINITIONS, type ExampleSaveSlot } from "../save-storage.js";
+import { type ExampleSaveSlot, SAVE_SLOT_DEFINITIONS } from "../save-storage.js";
 
 interface SaveScreenProps {
   readonly slots: readonly ExampleSaveSlot[];
