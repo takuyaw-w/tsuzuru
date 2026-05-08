@@ -1,12 +1,22 @@
 interface TitleScreenProps {
   readonly onStart: () => void;
+  readonly onContinue: () => void;
   readonly onLoad: () => void;
   readonly onSettings: () => void;
   readonly onBacklog: () => void;
   readonly onGallery: () => void;
+  readonly canContinue: boolean;
 }
 
-export function TitleScreen({ onStart, onLoad, onSettings, onBacklog, onGallery }: TitleScreenProps) {
+export function TitleScreen({
+  onStart,
+  onContinue,
+  onLoad,
+  onSettings,
+  onBacklog,
+  onGallery,
+  canContinue,
+}: TitleScreenProps) {
   return (
     <section className="screen screen--title" aria-label="Title">
       <div className="screen__content">
@@ -16,7 +26,7 @@ export function TitleScreen({ onStart, onLoad, onSettings, onBacklog, onGallery 
           <button type="button" className="screen__button screen__button--primary" onClick={onStart}>
             Start
           </button>
-          <button type="button" className="screen__button" disabled>
+          <button type="button" className="screen__button" disabled={!canContinue} onClick={onContinue}>
             Continue
           </button>
           <button type="button" className="screen__button" onClick={onLoad}>

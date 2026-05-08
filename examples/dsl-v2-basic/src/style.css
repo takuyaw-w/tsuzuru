@@ -80,6 +80,12 @@ button {
   font-size: 0.86rem;
 }
 
+.app__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+}
+
 .app__runtime-menu button:hover,
 .app__runtime-menu button:focus-visible,
 .screen__button:hover,
@@ -183,6 +189,50 @@ button {
 .screen__gallery-item {
   aspect-ratio: 16 / 10;
   padding: 10px;
+}
+
+.save-slots {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.save-slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(247, 242, 226, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.save-slot__label,
+.save-slot__status {
+  margin: 0;
+}
+
+.save-slot__label {
+  color: #fff8e8;
+  font-size: 1rem;
+}
+
+.save-slot__status {
+  margin-top: 4px;
+  color: rgba(255, 250, 240, 0.68);
+  font-size: 0.86rem;
+}
+
+.save-slot__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.save-slot__actions .screen__button {
+  padding: 9px 12px;
+  text-align: center;
 }
 
 .app__message-layer .tzr-message-window {

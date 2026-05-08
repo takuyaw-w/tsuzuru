@@ -1,17 +1,17 @@
 import { SAVE_SLOT_DEFINITIONS, type ExampleSaveSlot } from "../save-storage.js";
 
-interface LoadScreenProps {
+interface SaveScreenProps {
   readonly slots: readonly ExampleSaveSlot[];
-  readonly onLoad: (slotId: string) => void;
+  readonly onSave: (slotId: string) => void;
   readonly onDelete: (slotId: string) => void;
   readonly onBack: () => void;
 }
 
-export function LoadScreen({ slots, onLoad, onDelete, onBack }: LoadScreenProps) {
+export function SaveScreen({ slots, onSave, onDelete, onBack }: SaveScreenProps) {
   return (
-    <section className="screen" aria-label="Load">
+    <section className="screen" aria-label="Save">
       <div className="screen__content screen__content--panel">
-        <h1 className="screen__heading">Load</h1>
+        <h1 className="screen__heading">Save</h1>
         <div className="save-slots">
           {SAVE_SLOT_DEFINITIONS.map((definition) => {
             const slot = slots.find((candidate) => candidate.id === definition.id) ?? null;
@@ -25,11 +25,10 @@ export function LoadScreen({ slots, onLoad, onDelete, onBack }: LoadScreenProps)
                   <button
                     type="button"
                     className="screen__button"
-                    disabled={slot === null}
-                    aria-label={`Load ${definition.label}`}
-                    onClick={() => onLoad(definition.id)}
+                    aria-label={`Save ${definition.label}`}
+                    onClick={() => onSave(definition.id)}
                   >
-                    Load
+                    Save
                   </button>
                   <button
                     type="button"
