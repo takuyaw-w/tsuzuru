@@ -31,7 +31,6 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 
 未実装または post-v0.1 候補:
 
-- `create-tsuzuru`
 - `@tsuzuru/vite`
 - cross-file jump existence validation
 - save data migration / compatibility metadata
@@ -138,7 +137,16 @@ pnpm --filter @tsuzuru/example-dsl-v2-basic build
 
 `examples/dsl-v2-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`create-tsuzuru` と `@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
+`create-tsuzuru` は basic template 用の project generator です。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
+
+Release smoke test:
+
+```sh
+pnpm run smoke:create-tsuzuru
+```
+
+This checks that the published `create-tsuzuru` package can generate a project
+that installs, validates its scenario, and builds.
 
 ## DSL v2 の例
 
@@ -298,7 +306,6 @@ v0.1 では、以下を目標にします。
 - arbitrary JavaScript / TypeScript inside `.tzr`
 - macro API
 - scenario-local macro definitions
-- `create-tsuzuru`
 - `@tsuzuru/vite`
 - cross-file jump existence validation
 - macro argument schema validation
