@@ -17,6 +17,10 @@ choice itself is restored and can be selected normally, but the retained previou
 message window behind the choices is not restored. That retained message is
 example UI presentation state, not runtime save data.
 
+The runtime overlay Backlog screen records displayed narration and dialogue as
+message history. This is also example-side presentation state, not core runtime
+state, and it is not persisted in save data yet.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need

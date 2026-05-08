@@ -235,6 +235,50 @@ button {
   text-align: center;
 }
 
+.backlog {
+  margin-bottom: 16px;
+}
+
+.backlog__list {
+  display: grid;
+  max-height: min(42vh, 320px);
+  margin: 0;
+  padding: 0;
+  gap: 10px;
+  overflow: auto;
+  list-style: none;
+}
+
+.backlog__entry {
+  padding: 12px;
+  border: 1px solid rgba(247, 242, 226, 0.26);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.backlog__speaker,
+.backlog__text,
+.backlog__empty {
+  margin: 0;
+}
+
+.backlog__speaker {
+  margin-bottom: 6px;
+  color: #ffe2a2;
+  font-size: 0.86rem;
+}
+
+.backlog__text,
+.backlog__empty {
+  color: rgba(255, 250, 240, 0.82);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.backlog__empty {
+  margin-bottom: 16px;
+}
+
 .app__message-layer .tzr-message-window {
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);

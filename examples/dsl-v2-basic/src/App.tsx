@@ -13,6 +13,7 @@ import {
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { AudioLayer } from "./AudioLayer.js";
+import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEntry } from "./message-history.js";
 import { deleteSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot, type ExampleSaveSlot } from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import { BacklogScreen } from "./screens/BacklogScreen.js";
@@ -105,7 +106,7 @@ export function App() {
       ) : screen === "settings" ? (
         <SettingsScreen onBack={() => setScreen("title")} />
       ) : screen === "backlog" ? (
-        <BacklogScreen onBack={() => setScreen("title")} />
+        <BacklogScreen entries={[]} onBack={() => setScreen("title")} />
       ) : (
         <GalleryScreen onBack={() => setScreen("title")} />
       )}
@@ -158,6 +159,9 @@ function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, o
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
+  const [messageHistory, setMessageHistory] = useState<readonly MessageHistoryEntry[]>([]);
+  const recordedMessageHistoryKeyRef = useRef<string | null>(null);
+  const nextMessageHistoryIdRef = useRef(1);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
   const retainedMessageEvent = runtime.visibleEvent?.type === "wait" ? lastMessageEvent : null;
@@ -264,6 +268,17 @@ function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, o
   }, [runtime.visibleEvent]);
 
   useEffect(() => {
+    if (!isMessageHistoryEvent(runtime.visibleEvent) || recordedMessageHistoryKeyRef.current === presentationKey) {
+      return;
+    }
+
+    const entry = createMessageHistoryEntry(runtime.visibleEvent, nextMessageHistoryIdRef.current);
+    nextMessageHistoryIdRef.current += 1;
+    recordedMessageHistoryKeyRef.current = presentationKey;
+    setMessageHistory((current) => [...current, entry]);
+  }, [presentationKey, runtime.visibleEvent]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isKeyboardHandledTarget(event.target)) {
         return;
@@ -357,7 +372,7 @@ function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, o
                     onBack={() => setOverlay(null)}
                   />
                 ) : overlay === "backlog" ? (
-                  <BacklogScreen onBack={() => setOverlay(null)} />
+                  <BacklogScreen entries={messageHistory} onBack={() => setOverlay(null)} />
                 ) : (
                   <SettingsScreen onBack={() => setOverlay(null)} />
                 )}
