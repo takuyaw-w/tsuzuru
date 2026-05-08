@@ -17,13 +17,14 @@ import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEn
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
-  createInitialReadTrackingState,
   createReadEntryKey,
   isRead,
   isReadTrackableEvent,
+  loadReadTrackingState,
   markRead,
   type ReadEntryKey,
   type ReadTrackingState,
+  saveReadTrackingState,
 } from "./read-tracking.js";
 import {
   createExampleSaveData,
@@ -208,7 +209,7 @@ function RuntimeApp({
   const [messageHistoryReadKeys, setMessageHistoryReadKeys] = useState<ReadonlyMap<number, ReadEntryKey>>(
     () => new Map(),
   );
-  const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => createInitialReadTrackingState());
+  const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => loadReadTrackingState());
   const recordedMessageHistoryKeyRef = useRef<string | null>(null);
   const recordedSkipReadCheckPresentationKeyRef = useRef<string | null>(null);
   const nextMessageHistoryIdRef = useRef(1);
@@ -416,7 +417,7 @@ function RuntimeApp({
 
     const readEntryKey = createReadEntryKey(runtime.visibleEvent);
     setCurrentMessageWasPreviouslyRead(isRead(readTracking, readEntryKey));
-    setReadTracking((current) => markRead(current, readEntryKey));
+    setReadTracking((current) => saveReadTrackingState(markRead(current, readEntryKey)));
   }, [presentationKey, readTracking, runtime.visibleEvent]);
 
   useEffect(() => {

@@ -2,16 +2,19 @@ import { expect, type Locator, test } from "@playwright/test";
 
 const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
+const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:read-tracking:v1";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
-    ({ saveStorageKey, preferencesStorageKey }) => {
+    ({ preferencesStorageKey, readTrackingStorageKey, saveStorageKey }) => {
       window.localStorage.removeItem(saveStorageKey);
       window.localStorage.removeItem(preferencesStorageKey);
+      window.localStorage.removeItem(readTrackingStorageKey);
     },
     {
-      saveStorageKey: SAVE_STORAGE_KEY,
       preferencesStorageKey: PREFERENCES_STORAGE_KEY,
+      readTrackingStorageKey: READ_TRACKING_STORAGE_KEY,
+      saveStorageKey: SAVE_STORAGE_KEY,
     },
   );
 });

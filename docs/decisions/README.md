@@ -46,6 +46,7 @@ reintroduced.
 | 0017 | [Skip Mode MVP](0017-skip-mode-mvp.md) | Accepted |
 | 0018 | [Retained Message Save / Load](0018-retained-message-save-load.md) | Accepted |
 | 0019 | [Audio Playback MVP](0019-audio-playback-mvp.md) | Accepted |
+| 0020 | [Read Tracking Persistence](0020-read-tracking-persistence.md) | Accepted |
 
 ## Reading Order
 
