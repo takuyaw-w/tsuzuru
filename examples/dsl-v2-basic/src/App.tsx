@@ -42,6 +42,7 @@ type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "galler
 type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
 
 const AUTO_MODE_ADVANCE_DELAY_MS = 1200;
+const SKIP_MODE_ADVANCE_DELAY_MS = 120;
 
 export function App() {
   const documentResult = useMemo((): DocumentResult => {
@@ -191,6 +192,7 @@ function RuntimeApp({
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const [autoModeEnabled, setAutoModeEnabled] = useState(false);
+  const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const [messageHistory, setMessageHistory] = useState<readonly MessageHistoryEntry[]>([]);
   const [messageHistoryReadKeys, setMessageHistoryReadKeys] = useState<ReadonlyMap<number, ReadEntryKey>>(
@@ -198,8 +200,9 @@ function RuntimeApp({
   );
   const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => createInitialReadTrackingState());
   const recordedMessageHistoryKeyRef = useRef<string | null>(null);
-  const recordedReadTrackingPresentationKeyRef = useRef<string | null>(null);
+  const recordedSkipReadCheckPresentationKeyRef = useRef<string | null>(null);
   const nextMessageHistoryIdRef = useRef(1);
+  const [currentMessageWasPreviouslyRead, setCurrentMessageWasPreviouslyRead] = useState(false);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
   const retainedMessageEvent = runtime.visibleEvent?.type === "wait" ? lastMessageEvent : null;
@@ -235,11 +238,22 @@ function RuntimeApp({
     !runtime.state.isStopped;
   const canAutoAdvanceText =
     autoModeEnabled &&
+    !skipModeEnabled &&
     overlay === null &&
     choiceEvent === null &&
     visiblePresentationEvent !== null &&
     isMessageEvent(visiblePresentationEvent) &&
     textReveal.isComplete &&
+    canAdvanceText &&
+    runtime.blockReason === null &&
+    !runtime.state.isStopped;
+  const canSkipAdvanceText =
+    skipModeEnabled &&
+    overlay === null &&
+    choiceEvent === null &&
+    visiblePresentationEvent !== null &&
+    isMessageEvent(visiblePresentationEvent) &&
+    currentMessageWasPreviouslyRead &&
     canAdvanceText &&
     runtime.blockReason === null &&
     !runtime.state.isStopped;
@@ -314,6 +328,36 @@ function RuntimeApp({
   }, [presentationKey, textReveal.reset]);
 
   useEffect(() => {
+    if (!canSkipAdvanceText) {
+      return;
+    }
+
+    if (textReveal.isRevealing) {
+      textReveal.revealAll();
+      return;
+    }
+
+    if (!textReveal.isComplete) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      runtime.step();
+    }, SKIP_MODE_ADVANCE_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    canSkipAdvanceText,
+    presentationKey,
+    runtime.step,
+    textReveal.isComplete,
+    textReveal.isRevealing,
+    textReveal.revealAll,
+  ]);
+
+  useEffect(() => {
     if (!canAutoAdvanceText) {
       return;
     }
@@ -342,17 +386,21 @@ function RuntimeApp({
   }, [runtime.visibleEvent]);
 
   useEffect(() => {
-    if (
-      !isReadTrackableEvent(runtime.visibleEvent) ||
-      recordedReadTrackingPresentationKeyRef.current === presentationKey
-    ) {
+    if (recordedSkipReadCheckPresentationKeyRef.current === presentationKey) {
       return;
     }
 
-    recordedReadTrackingPresentationKeyRef.current = presentationKey;
+    recordedSkipReadCheckPresentationKeyRef.current = presentationKey;
+
+    if (!isReadTrackableEvent(runtime.visibleEvent)) {
+      setCurrentMessageWasPreviouslyRead(false);
+      return;
+    }
+
     const readEntryKey = createReadEntryKey(runtime.visibleEvent);
+    setCurrentMessageWasPreviouslyRead(isRead(readTracking, readEntryKey));
     setReadTracking((current) => markRead(current, readEntryKey));
-  }, [presentationKey, runtime.visibleEvent]);
+  }, [presentationKey, readTracking, runtime.visibleEvent]);
 
   useEffect(() => {
     if (!isMessageHistoryEvent(runtime.visibleEvent) || recordedMessageHistoryKeyRef.current === presentationKey) {
@@ -403,6 +451,13 @@ function RuntimeApp({
                 onClick={() => setAutoModeEnabled((current) => !current)}
               >
                 Auto
+              </button>
+              <button
+                type="button"
+                aria-pressed={skipModeEnabled}
+                onClick={() => setSkipModeEnabled((current) => !current)}
+              >
+                Skip
               </button>
               <button type="button" onClick={() => setOverlay("save")}>
                 Save

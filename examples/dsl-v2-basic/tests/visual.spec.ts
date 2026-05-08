@@ -108,6 +108,82 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await expect(autoButton).toHaveAttribute("aria-pressed", "false");
 });
 
+test("skip mode does not skip unread messages", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
+  const readStatus = page.locator(".read-status");
+
+  await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await expect(readStatus).toHaveText("Read: 1");
+  await expect(skipButton).toHaveAttribute("aria-pressed", "false");
+
+  await skipButton.click();
+  await expect(skipButton).toHaveAttribute("aria-pressed", "true");
+  await page.waitForTimeout(700);
+
+  await expect(readStatus).toHaveText("Read: 1");
+  await expect(messageWindow).toContainText("遅いよ。");
+  await expect(messageWindow).not.toContainText("スコアが増えた");
+});
+
+test("skip mode skips previously read messages", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
+  const choiceLayer = page.locator(".tzr-choice-layer");
+
+  await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await runtimeMenu.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save Slot 1" }).click();
+  await expect(page.getByRole("heading", { name: "Save" })).toHaveCount(0);
+
+  await messageWindow.click();
+  await expect(messageWindow).toContainText("スコアが増えた。", { timeout: 4000 });
+
+  await skipButton.click();
+  await expect(skipButton).toHaveAttribute("aria-pressed", "true");
+  await runtimeMenu.getByRole("button", { name: "Load" }).click();
+  await page.getByRole("button", { name: "Load Slot 1" }).click();
+
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await expect(choiceLayer).toContainText("手帳を見る");
+});
+
+test("skip mode pauses at choices", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
+  const choiceLayer = page.locator(".tzr-choice-layer");
+
+  await skipButton.click();
+  await expect(skipButton).toHaveAttribute("aria-pressed", "true");
+
+  await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await page.waitForTimeout(700);
+  await expect(messageWindow).toContainText("遅いよ。");
+
+  await messageWindow.click();
+  await expect(messageWindow).toContainText("スコアが増えた。", { timeout: 4000 });
+  await page.waitForTimeout(700);
+  await expect(messageWindow).toContainText("スコアが増えた。");
+
+  await messageWindow.click();
+  await expect(choiceLayer).toContainText("どうする？", { timeout: 3000 });
+  await page.waitForTimeout(900);
+  await expect(choiceLayer).toContainText("どうする？");
+  await expect(choiceLayer).toContainText("立ち去る");
+});
+
 test("read tracking records current-session messages in runtime and backlog", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Start" }).click();
