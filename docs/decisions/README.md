@@ -39,6 +39,9 @@ reintroduced.
 | 0010 | [create-tsuzuru Package](0010-create-tsuzuru.md) | Accepted |
 | 0011 | [Include-Based Multi-File Scenario](0011-include-based-multi-file-scenario.md) | Accepted |
 | 0012 | [Text Preferences MVP](0012-text-preferences-mvp.md) | Accepted |
+| 0013 | [Backlog / Message History MVP](0013-backlog-message-history-mvp.md) | Accepted |
+| 0014 | [Save / Load MVP](0014-save-load-mvp.md) | Accepted |
+| 0015 | [Auto Mode MVP](0015-auto-mode-mvp.md) | Accepted |
 
 ## Reading Order
 

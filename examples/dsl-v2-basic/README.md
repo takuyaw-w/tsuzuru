@@ -27,6 +27,11 @@ example-side host state persisted with localStorage; `@tsuzuru/core`,
 `@tsuzuru/preact`, and `@tsuzuru/standard-ui-preact` do not own this preference
 policy.
 
+The runtime menu also includes an Auto Mode MVP. Auto Mode can be toggled from
+the `Auto` button and advances narration or dialogue after the full text is
+visible. It stops at choices and never selects an option automatically. This is
+example-side presentation behavior, not a core runtime feature.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
@@ -47,6 +52,8 @@ Controls:
 - The example opens on the TSX title screen. Click Start, then click, Enter, or Space to start and advance scenario messages.
 - While text is revealing, Click, Enter, or Space reveals the full message.
 - After the full message is visible, Click, Enter, or Space advances to the next event.
+- The runtime `Auto` button toggles Auto Mode. When enabled, narration and
+  dialogue advance automatically after full text display.
 - Choices are shown above the message window while the previous message remains visible. Click a choice button to select it.
 
 ```sh

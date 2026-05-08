@@ -32,6 +32,8 @@ type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
 type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
 
+const AUTO_MODE_ADVANCE_DELAY_MS = 1200;
+
 export function App() {
   const documentResult = useMemo((): DocumentResult => {
     if (!scenarioProject.ok) {
@@ -179,6 +181,7 @@ function RuntimeApp({
   });
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
+  const [autoModeEnabled, setAutoModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const [messageHistory, setMessageHistory] = useState<readonly MessageHistoryEntry[]>([]);
   const recordedMessageHistoryKeyRef = useRef<string | null>(null);
@@ -202,6 +205,16 @@ function RuntimeApp({
     visiblePresentationEvent !== null &&
     isMessageEvent(visiblePresentationEvent) &&
     currentRenderableEvent === runtime.visibleEvent &&
+    runtime.blockReason === null &&
+    !runtime.state.isStopped;
+  const canAutoAdvanceText =
+    autoModeEnabled &&
+    overlay === null &&
+    choiceEvent === null &&
+    visiblePresentationEvent !== null &&
+    isMessageEvent(visiblePresentationEvent) &&
+    textReveal.isComplete &&
+    canAdvanceText &&
     runtime.blockReason === null &&
     !runtime.state.isStopped;
   const canStart =
@@ -275,6 +288,20 @@ function RuntimeApp({
   }, [presentationKey, textReveal.reset]);
 
   useEffect(() => {
+    if (!canAutoAdvanceText) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      runtime.step();
+    }, AUTO_MODE_ADVANCE_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [canAutoAdvanceText, presentationKey, runtime.step]);
+
+  useEffect(() => {
     if (initialSaveData === null || hasRestoredInitialSaveDataRef.current) {
       return;
     }
@@ -325,6 +352,13 @@ function RuntimeApp({
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
             <nav className="app__runtime-menu" aria-label="Runtime menu">
+              <button
+                type="button"
+                aria-pressed={autoModeEnabled}
+                onClick={() => setAutoModeEnabled((current) => !current)}
+              >
+                Auto
+              </button>
               <button type="button" onClick={() => setOverlay("save")}>
                 Save
               </button>
