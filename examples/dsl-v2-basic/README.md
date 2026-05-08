@@ -32,6 +32,12 @@ the `Auto` button and advances narration or dialogue after the full text is
 visible. It stops at choices and never selects an option automatically. This is
 example-side presentation behavior, not a core runtime feature.
 
+Read Tracking MVP records narration and dialogue shown during the current
+runtime session as read. The runtime UI shows a read count, and Backlog entries
+show a `Read` badge. This is example-side host state, not a core runtime
+feature, is not stored in save data yet, and is intended as a future Skip Mode
+building block.
+
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need

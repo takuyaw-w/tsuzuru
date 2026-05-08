@@ -15,9 +15,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { AudioLayer } from "./AudioLayer.js";
 import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEntry } from "./message-history.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
+import {
+  createInitialReadTrackingState,
+  createReadEntryKey,
+  isRead,
+  isReadTrackableEvent,
+  markRead,
+  type ReadEntryKey,
+  type ReadTrackingState,
+} from "./read-tracking.js";
 import { deleteSaveSlot, type ExampleSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot } from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
-import { BacklogScreen } from "./screens/BacklogScreen.js";
+import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";
 import { SaveScreen } from "./screens/SaveScreen.js";
@@ -184,7 +193,12 @@ function RuntimeApp({
   const [autoModeEnabled, setAutoModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const [messageHistory, setMessageHistory] = useState<readonly MessageHistoryEntry[]>([]);
+  const [messageHistoryReadKeys, setMessageHistoryReadKeys] = useState<ReadonlyMap<number, ReadEntryKey>>(
+    () => new Map(),
+  );
+  const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => createInitialReadTrackingState());
   const recordedMessageHistoryKeyRef = useRef<string | null>(null);
+  const recordedReadTrackingPresentationKeyRef = useRef<string | null>(null);
   const nextMessageHistoryIdRef = useRef(1);
   const visiblePresentationEvent = toExamplePresentationEvent(runtime.visibleEvent);
   const choiceEvent = runtime.visibleEvent?.type === "choice" ? runtime.visibleEvent : null;
@@ -201,6 +215,18 @@ function RuntimeApp({
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
   });
+  const backlogEntries = useMemo<readonly BacklogViewEntry[]>(
+    () =>
+      messageHistory.map((entry) => {
+        const readEntryKey = messageHistoryReadKeys.get(entry.id);
+        return {
+          ...entry,
+          read: readEntryKey !== undefined && isRead(readTracking, readEntryKey),
+        };
+      }),
+    [messageHistory, messageHistoryReadKeys, readTracking],
+  );
+  const readCount = readTracking.readEntryKeys.size;
   const canAdvanceText =
     visiblePresentationEvent !== null &&
     isMessageEvent(visiblePresentationEvent) &&
@@ -316,14 +342,30 @@ function RuntimeApp({
   }, [runtime.visibleEvent]);
 
   useEffect(() => {
+    if (
+      !isReadTrackableEvent(runtime.visibleEvent) ||
+      recordedReadTrackingPresentationKeyRef.current === presentationKey
+    ) {
+      return;
+    }
+
+    recordedReadTrackingPresentationKeyRef.current = presentationKey;
+    const readEntryKey = createReadEntryKey(runtime.visibleEvent);
+    setReadTracking((current) => markRead(current, readEntryKey));
+  }, [presentationKey, runtime.visibleEvent]);
+
+  useEffect(() => {
     if (!isMessageHistoryEvent(runtime.visibleEvent) || recordedMessageHistoryKeyRef.current === presentationKey) {
       return;
     }
 
-    const entry = createMessageHistoryEntry(runtime.visibleEvent, nextMessageHistoryIdRef.current);
+    const entryId = nextMessageHistoryIdRef.current;
+    const entry = createMessageHistoryEntry(runtime.visibleEvent, entryId);
+    const readEntryKey = createReadEntryKey(runtime.visibleEvent);
     nextMessageHistoryIdRef.current += 1;
     recordedMessageHistoryKeyRef.current = presentationKey;
     setMessageHistory((current) => [...current, entry]);
+    setMessageHistoryReadKeys((current) => new Map([...current, [entryId, readEntryKey]]));
   }, [presentationKey, runtime.visibleEvent]);
 
   useEffect(() => {
@@ -352,6 +394,9 @@ function RuntimeApp({
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} />
             <nav className="app__runtime-menu" aria-label="Runtime menu">
+              <span className="read-status" aria-label="Read count">
+                Read: {readCount}
+              </span>
               <button
                 type="button"
                 aria-pressed={autoModeEnabled}
@@ -427,7 +472,7 @@ function RuntimeApp({
                     onBack={() => setOverlay(null)}
                   />
                 ) : overlay === "backlog" ? (
-                  <BacklogScreen entries={messageHistory} onBack={() => setOverlay(null)} />
+                  <BacklogScreen entries={backlogEntries} onBack={() => setOverlay(null)} />
                 ) : (
                   <SettingsScreen
                     preferences={preferences}
@@ -476,7 +521,9 @@ interface LineRange {
 function isInteractiveClickTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+    target.closest(
+      ".screen, .app__runtime-menu, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea",
+    ) !== null
   );
 }
 

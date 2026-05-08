@@ -62,6 +62,7 @@ button {
   z-index: 4;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .app__runtime-menu button,
@@ -83,6 +84,20 @@ button {
 .app__runtime-menu button[aria-pressed="true"] {
   border-color: rgba(255, 220, 143, 0.92);
   background: rgba(120, 76, 48, 0.72);
+}
+
+.read-status,
+.backlog__read-badge {
+  border: 1px solid rgba(238, 202, 120, 0.44);
+  border-radius: 999px;
+  background: rgba(8, 10, 13, 0.68);
+  color: #ffe2a2;
+  font-size: 0.78rem;
+}
+
+.read-status {
+  padding: 7px 10px;
+  white-space: nowrap;
 }
 
 .app__overlay {
@@ -309,6 +324,18 @@ button {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.backlog__entry-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.backlog__read-badge {
+  padding: 3px 8px;
+}
+
 .backlog__speaker,
 .backlog__text,
 .backlog__empty {
@@ -316,7 +343,6 @@ button {
 }
 
 .backlog__speaker {
-  margin-bottom: 6px;
   color: #ffe2a2;
   font-size: 0.86rem;
 }
