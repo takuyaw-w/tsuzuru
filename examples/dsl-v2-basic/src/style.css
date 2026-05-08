@@ -80,6 +80,11 @@ button {
   font-size: 0.86rem;
 }
 
+.app__runtime-menu button[aria-pressed="true"] {
+  border-color: rgba(255, 220, 143, 0.92);
+  background: rgba(120, 76, 48, 0.72);
+}
+
 .app__overlay {
   position: absolute;
   inset: 0;
