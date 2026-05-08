@@ -14,7 +14,8 @@ import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { AudioLayer } from "./AudioLayer.js";
 import { createMessageHistoryEntry, isMessageHistoryEvent, type MessageHistoryEntry } from "./message-history.js";
-import { deleteSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot, type ExampleSaveSlot } from "./save-storage.js";
+import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
+import { deleteSaveSlot, type ExampleSaveSlot, getLatestSaveSlot, loadSaveSlots, saveToSlot } from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import { BacklogScreen } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
@@ -41,7 +42,11 @@ export function App() {
   const [screen, setScreen] = useState<AppScreen>("title");
   const [saveSlots, setSaveSlots] = useState<readonly ExampleSaveSlot[]>(() => loadSaveSlots());
   const [initialSaveData, setInitialSaveData] = useState<RuntimeSaveData | null>(null);
+  const [preferences, setPreferences] = useState<ExamplePreferences>(() => loadPreferences());
   const latestSaveSlot = useMemo(() => getLatestSaveSlot(saveSlots), [saveSlots]);
+  const handleChangePreferences = useCallback((next: ExamplePreferences) => {
+    setPreferences(savePreferences(next));
+  }, []);
   const handleStart = useCallback(() => {
     setInitialSaveData(null);
     setScreen("runtime");
@@ -78,7 +83,9 @@ export function App() {
         document={documentResult.document}
         initialSaveData={initialSaveData}
         saveSlots={saveSlots}
+        preferences={preferences}
         onSaveSlotsChange={setSaveSlots}
+        onChangePreferences={handleChangePreferences}
         onTitle={() => setScreen("title")}
       />
     );
@@ -104,7 +111,11 @@ export function App() {
           onBack={() => setScreen("title")}
         />
       ) : screen === "settings" ? (
-        <SettingsScreen onBack={() => setScreen("title")} />
+        <SettingsScreen
+          preferences={preferences}
+          onChangePreferences={handleChangePreferences}
+          onBack={() => setScreen("title")}
+        />
       ) : screen === "backlog" ? (
         <BacklogScreen entries={[]} onBack={() => setScreen("title")} />
       ) : (
@@ -118,7 +129,9 @@ interface RuntimeAppProps {
   readonly document: CompiledTzrDocument;
   readonly initialSaveData: RuntimeSaveData | null;
   readonly saveSlots: readonly ExampleSaveSlot[];
+  readonly preferences: ExamplePreferences;
   readonly onSaveSlotsChange: (slots: readonly ExampleSaveSlot[]) => void;
+  readonly onChangePreferences: (preferences: ExamplePreferences) => void;
   readonly onTitle: () => void;
 }
 
@@ -132,7 +145,15 @@ function ScreenFrame({ children }: { readonly children: ComponentChildren }) {
   );
 }
 
-function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, onTitle }: RuntimeAppProps) {
+function RuntimeApp({
+  document,
+  initialSaveData,
+  saveSlots,
+  preferences,
+  onSaveSlotsChange,
+  onChangePreferences,
+  onTitle,
+}: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
     () => [createStdVisualPlugin(), createStdAudioPlugin()],
     [],
@@ -174,8 +195,8 @@ function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, o
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
   const textReveal = useTextReveal(revealText, {
-    enabled: messageLines !== null,
-    charactersPerSecond: 60,
+    enabled: messageLines !== null && preferences.textRevealEnabled,
+    charactersPerSecond: preferences.textSpeedCharactersPerSecond,
   });
   const canAdvanceText =
     visiblePresentationEvent !== null &&
@@ -374,7 +395,11 @@ function RuntimeApp({ document, initialSaveData, saveSlots, onSaveSlotsChange, o
                 ) : overlay === "backlog" ? (
                   <BacklogScreen entries={messageHistory} onBack={() => setOverlay(null)} />
                 ) : (
-                  <SettingsScreen onBack={() => setOverlay(null)} />
+                  <SettingsScreen
+                    preferences={preferences}
+                    onChangePreferences={onChangePreferences}
+                    onBack={() => setOverlay(null)}
+                  />
                 )}
               </div>
             )}

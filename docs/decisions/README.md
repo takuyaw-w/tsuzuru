@@ -38,6 +38,7 @@ reintroduced.
 | 0009 | [Tsuzuru Project Config](0009-tsuzuru-config.md) | Accepted |
 | 0010 | [create-tsuzuru Package](0010-create-tsuzuru.md) | Accepted |
 | 0011 | [Include-Based Multi-File Scenario](0011-include-based-multi-file-scenario.md) | Accepted |
+| 0012 | [Text Preferences MVP](0012-text-preferences-mvp.md) | Accepted |
 
 ## Reading Order
 

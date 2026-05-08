@@ -1,11 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
+const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
 
 test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
-  await page.addInitScript((storageKey) => {
-    window.localStorage.removeItem(storageKey);
-  }, SAVE_STORAGE_KEY);
+  await page.addInitScript(
+    ({ saveStorageKey, preferencesStorageKey }) => {
+      window.localStorage.removeItem(saveStorageKey);
+      window.localStorage.removeItem(preferencesStorageKey);
+    },
+    {
+      saveStorageKey: SAVE_STORAGE_KEY,
+      preferencesStorageKey: PREFERENCES_STORAGE_KEY,
+    },
+  );
   await page.goto("/");
 
   await expect(page.getByText("Step")).toHaveCount(0);
@@ -14,12 +22,26 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByLabel("Text reveal", { exact: true }).uncheck();
+  await page.getByLabel("Text speed", { exact: true }).selectOption("120");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
-  await expect(messageWindow).toContainText("遅いよ");
+  await expect(messageWindow).toContainText("遅いよ。");
 
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  await runtimeMenu.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByLabel("Text reveal", { exact: true }).check();
+  await page.getByLabel("Text speed", { exact: true }).selectOption("60");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toHaveCount(0);
+  await expect(messageWindow).toContainText("遅いよ。");
+
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
   await expect(page.locator(".backlog")).toContainText("遅いよ。");
