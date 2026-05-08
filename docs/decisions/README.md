@@ -42,6 +42,7 @@ reintroduced.
 | 0013 | [Backlog / Message History MVP](0013-backlog-message-history-mvp.md) | Accepted |
 | 0014 | [Save / Load MVP](0014-save-load-mvp.md) | Accepted |
 | 0015 | [Auto Mode MVP](0015-auto-mode-mvp.md) | Accepted |
+| 0016 | [Read Tracking MVP](0016-read-tracking-mvp.md) | Accepted |
 
 ## Reading Order
 

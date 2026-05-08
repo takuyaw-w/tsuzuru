@@ -48,6 +48,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
   await expect(page.locator(".backlog")).toContainText("遅いよ。");
+  await expect(page.locator(".backlog__read-badge")).toContainText("Read");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
   await expect(messageWindow).toContainText("遅いよ");
@@ -86,13 +87,16 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   const autoButton = runtimeMenu.getByRole("button", { name: "Auto", exact: true });
+  const readStatus = page.locator(".read-status");
 
   await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await expect(readStatus).toHaveText("Read: 1");
   await expect(autoButton).toHaveAttribute("aria-pressed", "false");
 
   await autoButton.click();
   await expect(autoButton).toHaveAttribute("aria-pressed", "true");
   await expect(messageWindow).toContainText("スコアが増えた", { timeout: 5000 });
+  await expect(readStatus).toHaveText("Read: 2");
 
   const choiceLayer = page.locator(".tzr-choice-layer");
   await expect(choiceLayer).toContainText("どうする？", { timeout: 6000 });
@@ -102,4 +106,28 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
 
   await autoButton.click();
   await expect(autoButton).toHaveAttribute("aria-pressed", "false");
+});
+
+test("read tracking records current-session messages in runtime and backlog", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+  const readStatus = page.locator(".read-status");
+
+  await expect(messageWindow).toContainText("遅いよ。", { timeout: 3000 });
+  await expect(readStatus).toHaveText("Read: 1");
+
+  await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
+  await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
+  await expect(page.locator(".backlog")).toContainText("遅いよ。");
+  await expect(page.locator(".backlog__read-badge")).toContainText("Read");
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
+
+  await messageWindow.click();
+  await expect(messageWindow).toContainText("スコアが増えた", { timeout: 4000 });
+  await expect(readStatus).toHaveText("Read: 2");
 });
