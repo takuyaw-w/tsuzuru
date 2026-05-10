@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "title": "Tsuzuru HTML Basic",
+  "scenario": {
+    "entryUrl": "/scenario/main.tzr",
+    "entryId": "public/scenario/main.tzr"
+  },
+  "assetsUrl": "/assets/assets.json",
+  "initialScreen": "title",
+  "storageKeyPrefix": "tsuzuru:example-html-basic"
+}

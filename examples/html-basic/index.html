@@ -6,7 +6,70 @@
     <title>Tsuzuru HTML Basic</title>
   </head>
   <body>
-    <main id="app"></main>
+    <main
+      id="app"
+      class="html-basic-app html-basic-app__viewport"
+      data-tsuzuru-html-app
+      data-config="/tsuzuru.app.json"
+    >
+      <section id="title" class="html-basic-screen html-basic-screen--title" data-tsuzuru-screen="title">
+        <div class="html-basic-title-art" aria-hidden="true">
+          <span class="html-basic-title-art__sun"></span>
+          <span class="html-basic-title-art__platform"></span>
+          <span class="html-basic-title-art__rail html-basic-title-art__rail--front"></span>
+          <span class="html-basic-title-art__rail html-basic-title-art__rail--back"></span>
+        </div>
+
+        <div class="html-basic-screen__content html-basic-screen__content--title">
+          <div class="html-basic-title-copy">
+            <p class="html-basic-screen__eyebrow">Tsuzuru</p>
+            <h1 class="html-basic-screen__title">Tsuzuru HTML Basic</h1>
+            <p class="html-basic-screen__subtitle">Preact なしで .tzr を再生する HTML adapter example。</p>
+          </div>
+
+          <nav class="html-basic-title-menu" aria-label="Title menu">
+            <a class="html-basic-screen__button html-basic-screen__button--primary" href="#runtime">Start</a>
+            <a class="html-basic-screen__button" href="#backlog">Backlog</a>
+            <a class="html-basic-screen__button" href="#settings">Settings</a>
+            <a class="html-basic-screen__button" href="#gallery">Gallery</a>
+          </nav>
+        </div>
+      </section>
+
+      <section id="runtime" class="html-basic-screen html-basic-runtime-screen" data-tsuzuru-screen="runtime">
+        <nav class="html-basic-runtime-menu" aria-label="Runtime menu">
+          <a href="#title">Title</a>
+          <a href="#backlog">Backlog</a>
+          <a href="#settings">Settings</a>
+          <a href="#gallery">Gallery</a>
+        </nav>
+        <div class="html-basic-runtime-root" data-tsuzuru-runtime></div>
+      </section>
+
+      <section id="backlog" class="html-basic-screen html-basic-screen--panel" data-tsuzuru-screen="backlog">
+        <div class="html-basic-screen__content html-basic-screen__content--panel">
+          <h1 class="html-basic-screen__heading">Backlog</h1>
+          <div class="html-basic-backlog" data-tsuzuru-backlog></div>
+          <a class="html-basic-screen__button" href="#runtime">Back</a>
+        </div>
+      </section>
+
+      <section
+        id="settings"
+        class="html-basic-screen html-basic-screen--panel"
+        data-tsuzuru-screen="settings"
+        data-src="/screens/settings.html"
+      ></section>
+
+      <section id="gallery" class="html-basic-screen html-basic-screen--panel" data-tsuzuru-screen="gallery">
+        <div class="html-basic-screen__content html-basic-screen__content--panel">
+          <h1 class="html-basic-screen__heading">Gallery</h1>
+          <div class="html-basic-gallery" data-tsuzuru-gallery></div>
+          <a class="html-basic-screen__button" href="#runtime">Back</a>
+        </div>
+      </section>
+    </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

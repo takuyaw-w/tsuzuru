@@ -19,19 +19,12 @@ input {
   font: inherit;
 }
 
-#app {
+body {
   display: grid;
-  width: 100%;
-  height: 100dvh;
   place-items: center;
-  overflow: hidden;
 }
 
 .html-basic-app {
-  display: grid;
-  width: 100%;
-  height: 100dvh;
-  place-items: center;
   color: #f7f7f3;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -48,20 +41,14 @@ input {
   filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.58));
 }
 
-.html-basic-main-layer,
-.html-basic-overlay-layer,
 .html-basic-screen,
 .html-basic-runtime-root,
-.html-basic-runtime-root > .html-basic-player {
+.html-basic-runtime-root > .tzr-html-player {
   position: absolute;
   inset: 0;
 }
 
-.html-basic-overlay-layer {
-  z-index: 10;
-}
-
-.html-basic-overlay-layer[hidden] {
+.html-basic-screen[hidden] {
   display: none;
 }
 
@@ -228,7 +215,11 @@ input {
 }
 
 .html-basic-screen__button,
-.html-basic-runtime-menu button {
+.html-basic-runtime-menu a {
+  display: inline-grid;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   border: 1px solid rgba(248, 244, 229, 0.34);
   border-radius: 6px;
@@ -236,6 +227,7 @@ input {
   color: #fffaf0;
   cursor: pointer;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-decoration: none;
 }
 
 .html-basic-screen__button {
@@ -256,8 +248,8 @@ input {
 
 .html-basic-screen__button:hover,
 .html-basic-screen__button:focus-visible,
-.html-basic-runtime-menu button:hover,
-.html-basic-runtime-menu button:focus-visible {
+.html-basic-runtime-menu a:hover,
+.html-basic-runtime-menu a:focus-visible {
   border-color: rgba(255, 220, 143, 0.92);
   outline: none;
   background: rgba(120, 76, 48, 0.62);
@@ -275,18 +267,18 @@ input {
   max-width: calc(100% - 28px);
 }
 
-.html-basic-runtime-menu button {
+.html-basic-runtime-menu a {
   min-height: 36px;
   padding: 7px 11px;
   font-size: clamp(0.72rem, 1.15vw, 0.84rem);
 }
 
-.html-basic-player {
+[data-tsuzuru-runtime] > .tzr-html-player {
   --tzr-html-background: linear-gradient(135deg, #0b1117 0%, #182631 55%, #090d12 100%);
   --tzr-html-stage-background: #111922;
   --tzr-html-color: #fff8e8;
   --tzr-html-muted-color: rgba(255, 248, 232, 0.72);
-  --tzr-html-panel-background: rgba(7, 12, 18, var(--html-basic-message-window-opacity, 0.78));
+  --tzr-html-panel-background: rgba(7, 12, 18, var(--tzr-html-app-message-window-opacity, 0.78));
   --tzr-html-accent-color: #f3d17a;
   --tzr-html-message-window-min-height: clamp(112px, 21%, 150px);
   width: 100%;
@@ -295,7 +287,7 @@ input {
   aspect-ratio: auto;
 }
 
-.html-basic-player .tzr-html-viewport {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-viewport {
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -305,33 +297,33 @@ input {
   background: rgba(5, 8, 11, 0.28);
 }
 
-.html-basic-player .tzr-html-title {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-title {
   font-size: clamp(1.25rem, 2.6vw, 2rem);
 }
 
-.html-basic-player .tzr-html-status {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-status {
   font-size: clamp(0.76rem, 1.5vw, 0.95rem);
 }
 
-.html-basic-player .tzr-html-message-window {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-message-window {
   padding: clamp(12px, 2vw, 20px);
 }
 
-.html-basic-player .tzr-html-message {
-  font-size: var(--html-basic-message-font-size, 1.08rem);
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-message {
+  font-size: var(--tzr-html-app-message-font-size, 1.08rem);
 }
 
-.html-basic-player .tzr-html-choice-layer {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-choice-layer {
   max-width: min(720px, 100%);
 }
 
-.html-basic-player .tzr-html-notice {
+[data-tsuzuru-runtime] > .tzr-html-player .tzr-html-notice {
   max-height: 4.8em;
   overflow: auto;
   font-size: clamp(0.72rem, 1.3vw, 0.86rem);
 }
 
-.html-basic-app--hide-audio-notices .tzr-html-notice {
+[data-tsuzuru-audio-notices="hidden"] .tzr-html-notice {
   display: none;
 }
 
@@ -339,7 +331,8 @@ input {
   margin-bottom: 16px;
 }
 
-.html-basic-backlog__list {
+.html-basic-backlog__list,
+.tzr-html-app-backlog__list {
   display: grid;
   max-height: min(42vh, 320px);
   margin: 0;
@@ -350,37 +343,47 @@ input {
 }
 
 .html-basic-backlog__entry,
+.tzr-html-app-backlog__entry,
 .html-basic-settings__field,
-.html-basic-gallery__item {
+.html-basic-gallery__item,
+.tzr-html-app-gallery__item {
   border: 1px solid rgba(247, 242, 226, 0.26);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.html-basic-backlog__entry {
+.html-basic-backlog__entry,
+.tzr-html-app-backlog__entry {
   padding: 12px;
 }
 
 .html-basic-backlog__speaker,
 .html-basic-backlog__text,
-.html-basic-backlog__empty {
+.html-basic-backlog__empty,
+.tzr-html-app-backlog__speaker,
+.tzr-html-app-backlog__text,
+.tzr-html-app-backlog__empty {
   margin: 0;
 }
 
-.html-basic-backlog__speaker {
+.html-basic-backlog__speaker,
+.tzr-html-app-backlog__speaker {
   margin-bottom: 6px;
   color: #ffe2a2;
   font-size: 0.86rem;
 }
 
 .html-basic-backlog__text,
-.html-basic-backlog__empty {
+.html-basic-backlog__empty,
+.tzr-html-app-backlog__text,
+.tzr-html-app-backlog__empty {
   color: rgba(255, 250, 240, 0.82);
   line-height: 1.6;
   white-space: pre-wrap;
 }
 
-.html-basic-backlog__empty {
+.html-basic-backlog__empty,
+.tzr-html-app-backlog__empty {
   margin-bottom: 16px;
 }
 
@@ -436,26 +439,30 @@ input {
   overflow: auto;
 }
 
-.html-basic-gallery__heading {
+.html-basic-gallery__heading,
+.tzr-html-app-gallery__heading {
   margin: 0 0 10px;
   color: #ffe2a2;
   font-size: 1rem;
 }
 
-.html-basic-gallery__grid {
+.html-basic-gallery__grid,
+.tzr-html-app-gallery__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-.html-basic-gallery__item {
+.html-basic-gallery__item,
+.tzr-html-app-gallery__item {
   display: grid;
   gap: 8px;
   min-height: 72px;
   padding: 10px;
 }
 
-.html-basic-gallery__image {
+.html-basic-gallery__image,
+.tzr-html-app-gallery__image {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
@@ -464,13 +471,16 @@ input {
 }
 
 .html-basic-gallery__id,
-.html-basic-gallery__empty {
+.html-basic-gallery__empty,
+.tzr-html-app-gallery__id,
+.tzr-html-app-gallery__empty {
   margin: 0;
   color: rgba(255, 250, 240, 0.82);
   overflow-wrap: anywhere;
 }
 
-.html-basic-gallery__id {
+.html-basic-gallery__id,
+.tzr-html-app-gallery__id {
   font-size: 0.86rem;
 }
 
@@ -485,7 +495,8 @@ input {
   }
 
   .html-basic-screen__actions--secondary,
-  .html-basic-gallery__grid {
+  .html-basic-gallery__grid,
+  .tzr-html-app-gallery__grid {
     grid-template-columns: 1fr;
   }
 }

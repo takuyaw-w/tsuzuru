@@ -11,6 +11,22 @@ export {
   normalizeTsuzuruHtmlAssetsManifest,
   TsuzuruHtmlAssetsLoadError,
 } from "./assets-loader.js";
+export type {
+  TsuzuruHtmlDeclarativeAppConfig,
+  TsuzuruHtmlDeclarativeAppConfigJson,
+  TsuzuruHtmlDeclarativeAppConfigLoadOptions,
+} from "./app-config.js";
+export {
+  loadTsuzuruHtmlDeclarativeAppConfig,
+  normalizeTsuzuruHtmlDeclarativeAppConfig,
+  TsuzuruHtmlDeclarativeAppConfigError,
+} from "./app-config.js";
+export type { TsuzuruHtmlDeclarativeApp, TsuzuruHtmlDeclarativeAppMountOptions } from "./declarative-app.js";
+export {
+  mountTsuzuruHtmlApp,
+  mountTsuzuruHtmlAppFromConfig,
+  mountTsuzuruHtmlAppsFromDocument,
+} from "./declarative-app.js";
 export type { TsuzuruHtmlApp, TsuzuruHtmlMountOptions } from "./mount.js";
 export { mountTsuzuruHtml } from "./mount.js";
 export type {

@@ -13,7 +13,9 @@
     "./style.css": "./dist/src/style.css"
   },
   "files": [
+    "dist/src/app-config.*",
     "dist/src/assets-loader.*",
+    "dist/src/declarative-app.*",
     "dist/src/dom-renderer.*",
     "dist/src/index.*",
     "dist/src/mount.*",
