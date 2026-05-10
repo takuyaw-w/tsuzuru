@@ -13,6 +13,7 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
   const background = visualState.background;
   const sprites = Object.entries(visualState.sprites);
   const backgroundTransition = toTransitionPresentation("visual-layer__background", background?.transition);
+  const backgroundPresentation = background === null ? null : getBackgroundPresentation(background.assetId);
 
   return (
     <div className="visual-layer" aria-label="std-visual placeholder layer">
@@ -21,11 +22,20 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
         className={joinClassNames(
           "visual-layer__background",
           background === null ? "visual-layer__background--empty" : undefined,
+          backgroundPresentation?.className,
           backgroundTransition.className,
         )}
         style={backgroundTransition.style}
       >
-        {background === null ? null : <span>{background.assetId}</span>}
+        {background === null || backgroundPresentation === null ? null : (
+          <div className="visual-layer__scene" aria-label={background.assetId}>
+            <span className="visual-layer__scene-sun" />
+            <span className="visual-layer__scene-platform" />
+            <span className="visual-layer__scene-rail visual-layer__scene-rail--front" />
+            <span className="visual-layer__scene-rail visual-layer__scene-rail--back" />
+            <span className="visual-layer__scene-sign">{backgroundPresentation.label}</span>
+          </div>
+        )}
       </div>
       <div className="visual-layer__sprites" aria-label="sprites">
         {sprites.map(([assetId, sprite]) => (
@@ -51,16 +61,57 @@ function SpritePlaceholder({
   readonly transition?: StdVisualTransition;
 }) {
   const presentation = toTransitionPresentation("visual-layer__sprite", transition);
+  const spritePresentation = getSpritePresentation(assetId);
 
   return (
     <div
-      className={joinClassNames("visual-layer__sprite", `visual-layer__sprite--${position}`, presentation.className)}
+      className={joinClassNames(
+        "visual-layer__sprite",
+        `visual-layer__sprite--${position}`,
+        spritePresentation.className,
+        presentation.className,
+      )}
       style={presentation.style}
+      aria-label={assetId}
     >
-      <span>{assetId}</span>
-      <small>{position}</small>
+      <span className="visual-layer__sprite-head" />
+      <span className="visual-layer__sprite-body" />
+      <span className="visual-layer__sprite-name">{spritePresentation.label}</span>
     </div>
   );
+}
+
+interface AssetPresentation {
+  readonly className: string;
+  readonly label: string;
+}
+
+type SpritePresentation = AssetPresentation;
+
+function getBackgroundPresentation(assetId: string): AssetPresentation {
+  if (assetId === "station") {
+    return {
+      className: "visual-layer__background--station",
+      label: "STATION",
+    };
+  }
+  return {
+    className: "visual-layer__background--generic",
+    label: assetId,
+  };
+}
+
+function getSpritePresentation(assetId: string): SpritePresentation {
+  if (assetId === "mio_smile") {
+    return {
+      className: "visual-layer__sprite--mio-smile",
+      label: "美緒",
+    };
+  }
+  return {
+    className: "visual-layer__sprite--generic",
+    label: assetId,
+  };
 }
 
 interface TransitionPresentation {
