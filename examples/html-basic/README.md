@@ -7,15 +7,26 @@ React, Vue, TSX, or JSX.
 
 The app is declarative: screens live in `index.html`, navigation uses hash links
 such as `href="#runtime"`, and project settings live in
-`public/tsuzuru.app.json`. The only TypeScript entrypoint mounts declarative
-apps from the document:
+`public/tsuzuru.app.json`. Source scenario files live in `scenario/`, screen
+fragments live in `src/screens/`, and `assets.ts` maps asset IDs to browser
+URLs. The TypeScript entrypoint only wires those source files into the
+declarative app:
 
 ```ts
-import { mountTsuzuruHtmlAppsFromDocument } from "@tsuzuru/html";
+import { mountTsuzuruHtmlAppsFromDocument, normalizeTsuzuruHtmlAssetsManifest } from "@tsuzuru/html";
 import "@tsuzuru/html/style.css";
+import { assets as assetsManifest } from "../assets.js";
+import settingsHtml from "./screens/settings.html?raw";
 import "./style.css";
 
-await mountTsuzuruHtmlAppsFromDocument();
+const assets = normalizeTsuzuruHtmlAssetsManifest(assetsManifest, new URL("../assets.ts", import.meta.url));
+
+await mountTsuzuruHtmlAppsFromDocument(document, {
+  assets,
+  screenFragments: {
+    settings: settingsHtml,
+  },
+});
 ```
 
 ## Commands
@@ -32,24 +43,27 @@ pnpm --filter @tsuzuru/example-html-basic build
 `dev`, `typecheck`, and `build` first build `@tsuzuru/html` so the example uses
 the package's exported JavaScript and CSS paths.
 
-`check:scenario` runs `tsuzuru check` through `tsuzuru.config.ts`. The browser
-loads `/scenario/main.tzr` from Vite's public directory, while the CLI validates
-the same files on disk from `public/scenario/main.tzr` and
-`public/scenario/**/*.tzr`.
+`check:scenario` runs `tsuzuru check` through `tsuzuru.config.ts`. The CLI
+validates `scenario/main.tzr` and `scenario/**/*.tzr`. The browser still loads
+the entry scenario as `/scenario/main.tzr`; `vite.config.ts` serves and copies
+the source `scenario/` directory to that browser URL.
 
 ## Files To Edit
 
-Most users should not need to edit TypeScript.
+Most users should not need to edit the TypeScript app implementation.
+`assets.ts` is a typed data table for asset IDs and browser URLs.
 
 Common editing targets:
 
 - `index.html`: title, runtime, backlog, and gallery screen markup
-- `public/tsuzuru.app.json`: title, scenario URL, assets URL, initial screen,
-  and storage key prefix
-- `public/screens/settings.html`: external Settings screen fragment
-- `public/scenario/**/*.tzr`: scenario text
-- `public/assets/assets.json`: asset ID to browser URL mapping
+- `public/tsuzuru.app.json`: title, scenario URL, initial screen, and storage
+  key prefix
+- `assets.ts`: asset ID to browser URL mapping
+- `scenario/**/*.tzr`: scenario text
+- `src/screens/*.html`: source screen fragments such as Settings
 - `src/style.css`: visual styling
+- `public/assets/images`: image files
+- `public/assets/audio`: audio file location when real audio is added
 
 Files usually left alone:
 
@@ -65,7 +79,6 @@ Files usually left alone:
 - `data-tsuzuru-html-app`: app root
 - `data-config="/tsuzuru.app.json"`: app config URL
 - `data-tsuzuru-screen="title"`: screen element
-- `data-src="/screens/settings.html"`: external screen fragment URL
 - `data-tsuzuru-runtime`: runtime mount point
 - `data-tsuzuru-backlog`: session backlog mount point
 - `data-tsuzuru-gallery`: gallery mount point
@@ -96,35 +109,44 @@ screen behavior they connect to.
   "title": "Tsuzuru HTML Basic",
   "scenario": {
     "entryUrl": "/scenario/main.tzr",
-    "entryId": "public/scenario/main.tzr"
+    "entryId": "scenario/main.tzr"
   },
-  "assetsUrl": "/assets/assets.json",
   "initialScreen": "title",
   "storageKeyPrefix": "tsuzuru:example-html-basic"
 }
 ```
 
+`assetsUrl` is not used by this example. Instead, `src/main.ts` imports
+`assets.ts`, normalizes it with `normalizeTsuzuruHtmlAssetsManifest`, and passes
+the normalized assets directly to `@tsuzuru/html`. `assetsUrl` remains supported
+by the package for apps that prefer a fetched JSON manifest.
+
 ## Scenario And Assets
 
 ```txt
-public/scenario/
+scenario/
   main.tzr
   chapters/
     01-opening.tzr
+assets.ts
+src/screens/
+  settings.html
 public/assets/
-  assets.json
   images/
     backgrounds/
       room.svg
     sprites/
       mio-smile.svg
+  audio/
 ```
 
 `main.tzr` includes the chapter file so the example exercises URL-based include
-resolution. `assets.json` maps visual and audio asset IDs to browser URLs.
+resolution. `assets.ts` maps visual and audio asset IDs to browser URLs. The
+actual image files stay under `public/assets/images`, and future audio files
+should be placed under `public/assets/audio`.
 
-Audio entries are present in `assets.json`, but the example intentionally does
-not ship audio files. Missing audio files and autoplay failures are treated as
+Audio entries are present in `assets.ts`, but the example intentionally does not
+ship audio files. Missing audio files and autoplay failures are treated as
 non-fatal notices by `@tsuzuru/html`.
 
 ## Current Limits

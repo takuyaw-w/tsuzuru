@@ -17,13 +17,13 @@ describe("loadTsuzuruHtmlScenario", () => {
     });
 
     const document = await loadTsuzuruHtmlScenario(
-      { entryUrl: "/scenario/main.tzr", entryId: "public/scenario/main.tzr" },
+      { entryUrl: "/scenario/main.tzr", entryId: "scenario/main.tzr" },
       { fetch, baseUrl: "https://example.test/game/" },
     );
     const scene = stepRuntime(document, createInitialRuntimeState(document));
     const narration = stepRuntime(document, scene.state);
 
-    expect(document.filePath).toBe("public/scenario/main.tzr");
+    expect(document.filePath).toBe("scenario/main.tzr");
     expect(narration.event).toMatchObject({
       type: "narration",
       lines: [{ text: "Loaded." }],
@@ -47,14 +47,14 @@ scene opening:
     });
 
     const documents = await loadScenarioDocumentsFromUrl(
-      { entryUrl: "/scenario/main.tzr", entryId: "public/scenario/main.tzr" },
+      { entryUrl: "/scenario/main.tzr", entryId: "scenario/main.tzr" },
       { fetch, baseUrl: "https://example.test/game/" },
     );
 
     expect(documents.map((document) => document.id)).toEqual([
-      "public/scenario/main.tzr",
-      "public/scenario/chapters/01-opening.tzr",
-      "public/scenario/chapters/02-common.tzr",
+      "scenario/main.tzr",
+      "scenario/chapters/01-opening.tzr",
+      "scenario/chapters/02-common.tzr",
     ]);
     expect(fetch.calls).toEqual([
       "https://example.test/scenario/main.tzr",
@@ -77,13 +77,13 @@ scene start:
     });
 
     const documents = await loadScenarioDocumentsFromUrl(
-      { entryUrl: "/scenario/main.tzr", entryId: "public/scenario/main.tzr" },
+      { entryUrl: "/scenario/main.tzr", entryId: "scenario/main.tzr" },
       { fetch, baseUrl: "https://example.test/" },
     );
 
     expect(documents.map((document) => document.id)).toEqual([
-      "public/scenario/main.tzr",
-      "public/scenario/chapters/a.tzr",
+      "scenario/main.tzr",
+      "scenario/chapters/a.tzr",
     ]);
     expect(fetch.calls.filter((url) => url.endsWith("/a.tzr"))).toHaveLength(1);
   });
@@ -100,7 +100,7 @@ scene a:
 
     await expect(
       loadScenarioDocumentsFromUrl(
-        { entryUrl: "/scenario/main.tzr", entryId: "public/scenario/main.tzr" },
+        { entryUrl: "/scenario/main.tzr", entryId: "scenario/main.tzr" },
         { fetch, baseUrl: "https://example.test/" },
       ),
     ).rejects.toMatchObject({

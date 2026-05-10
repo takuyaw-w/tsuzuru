@@ -14,7 +14,7 @@ describe("Tsuzuru HTML declarative app config", () => {
         title: "HTML Basic",
         scenario: {
           entryUrl: "/scenario/main.tzr",
-          entryId: "public/scenario/main.tzr",
+          entryId: "scenario/main.tzr",
         },
         assetsUrl: "/assets/assets.json",
         initialScreen: "runtime",
@@ -25,7 +25,7 @@ describe("Tsuzuru HTML declarative app config", () => {
       title: "HTML Basic",
       scenario: {
         entryUrl: "/scenario/main.tzr",
-        entryId: "public/scenario/main.tzr",
+        entryId: "scenario/main.tzr",
       },
       assetsUrl: "/assets/assets.json",
       initialScreen: "runtime",

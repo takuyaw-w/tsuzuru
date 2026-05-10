@@ -11,6 +11,8 @@ import type { TsuzuruHtmlFetch } from "./scenario-loader.js";
 export interface TsuzuruHtmlDeclarativeAppMountOptions {
   readonly config?: TsuzuruHtmlDeclarativeAppConfig;
   readonly configUrl?: string | URL;
+  readonly assets?: TsuzuruHtmlAssets;
+  readonly screenFragments?: Readonly<Record<string, string>>;
   readonly fetch?: TsuzuruHtmlFetch;
   readonly baseUrl?: string | URL;
 }
@@ -134,6 +136,12 @@ class DeclarativeApp implements TsuzuruHtmlDeclarativeApp {
     const screens = this.getScreens();
     await Promise.all(
       screens.map(async (screen) => {
+        const registryHtml = this.options.screenFragments?.[screen.id];
+        if (registryHtml !== undefined) {
+          this.replaceScreenWithHtml(screen, registryHtml);
+          return;
+        }
+
         const fragmentUrl = screen.getAttribute("data-src");
         if (fragmentUrl === null || fragmentUrl.length === 0) {
           return;
@@ -141,9 +149,7 @@ class DeclarativeApp implements TsuzuruHtmlDeclarativeApp {
 
         try {
           const html = await this.fetchText(fragmentUrl, "screen fragment");
-          const template = this.document.createElement("template");
-          template.innerHTML = html.trim();
-          screen.replaceChildren(template.content.cloneNode(true));
+          this.replaceScreenWithHtml(screen, html);
         } catch (error) {
           renderInlineError(this.document, screen, formatError(error));
         }
@@ -200,6 +206,7 @@ class DeclarativeApp implements TsuzuruHtmlDeclarativeApp {
     const mountedApp = await mountTsuzuruHtml(runtimeRoot, {
       title: this.config.title,
       scenario: this.config.scenario,
+      ...(this.options.assets === undefined ? {} : { assets: this.options.assets }),
       ...(this.config.assetsUrl === undefined ? {} : { assetsUrl: this.config.assetsUrl }),
       ...(this.options.fetch === undefined ? {} : { fetch: this.options.fetch }),
       ...(this.options.baseUrl === undefined ? {} : { baseUrl: this.options.baseUrl }),
@@ -364,6 +371,13 @@ class DeclarativeApp implements TsuzuruHtmlDeclarativeApp {
   }
 
   private async loadAssets(): Promise<void> {
+    if (this.options.assets !== undefined) {
+      this.assets = this.options.assets;
+      this.assetsError = null;
+      this.renderGallery();
+      return;
+    }
+
     if (this.config.assetsUrl === undefined) {
       this.assets = null;
       this.assetsError = null;
@@ -421,6 +435,12 @@ class DeclarativeApp implements TsuzuruHtmlDeclarativeApp {
       throw new Error(`Failed to fetch ${label} "${url}": ${response.status} ${response.statusText}.`);
     }
     return response.text();
+  }
+
+  private replaceScreenWithHtml(screen: HTMLElement, html: string): void {
+    const template = this.document.createElement("template");
+    template.innerHTML = html.trim();
+    screen.replaceChildren(template.content.cloneNode(true));
   }
 }
 

@@ -56,6 +56,23 @@ describe("Tsuzuru HTML declarative app", () => {
     expect(output.textContent).toBe("1.20rem");
   });
 
+  it("loads screen fragments from an injected registry", async () => {
+    const { root } = createAppFixture();
+    const settings = new TestElement("section", root.ownerDocument);
+    settings.id = "settings";
+    settings.setAttribute("data-tsuzuru-screen", "settings");
+    root.append(settings);
+
+    await mountTsuzuruHtmlApp(root as unknown as HTMLElement, {
+      config: testConfig,
+      screenFragments: {
+        settings: "<p>Settings from registry</p>",
+      },
+    });
+
+    expect(textContent(settings)).toContain("Settings from registry");
+  });
+
   it("renders gallery assets from assetsUrl", async () => {
     const { root } = createAppFixture();
 
@@ -78,6 +95,30 @@ describe("Tsuzuru HTML declarative app", () => {
     expect(textContent(root.queryById("gallery"))).toContain("room");
   });
 
+  it("renders gallery assets from injected assets", async () => {
+    const { root } = createAppFixture();
+
+    await mountTsuzuruHtmlApp(root as unknown as HTMLElement, {
+      config: { ...testConfig, initialScreen: "gallery" },
+      assets: {
+        version: 1,
+        visual: {
+          backgrounds: {
+            room: { src: "https://example.test/assets/room.svg", alt: "Room" },
+          },
+          sprites: {},
+        },
+        audio: {
+          bgm: {},
+          se: {},
+          voice: {},
+        },
+      },
+    });
+
+    expect(textContent(root.queryById("gallery"))).toContain("room");
+  });
+
   it("renders a clear error when runtime root is missing", async () => {
     const { root } = createAppFixture({ includeRuntimeRoot: false, initialHash: "#runtime" });
 
@@ -92,7 +133,7 @@ const testConfig: TsuzuruHtmlDeclarativeAppConfig = {
   title: "HTML Basic",
   scenario: {
     entryUrl: "/scenario/main.tzr",
-    entryId: "public/scenario/main.tzr",
+    entryId: "scenario/main.tzr",
   },
   initialScreen: "title",
   storageKeyPrefix: "tsuzuru:test",
@@ -212,15 +253,35 @@ class TestElement {
   public textContent = "";
   public value = "";
   public checked = false;
+  public readonly content: TestElement;
   public readonly style = new TestStyle();
   public readonly children: TestElement[] = [];
+  private html = "";
   private readonly attributes = new Map<string, string>();
   private readonly listeners = new Map<string, Set<(event: TestEvent) => void>>();
 
   public constructor(
     public readonly tagName: string,
     public readonly ownerDocument: TestDocument,
-  ) {}
+    skipTemplateContent = false,
+  ) {
+    this.content = tagName === "template" && !skipTemplateContent ? new TestElement("#fragment", ownerDocument, true) : this;
+  }
+
+  public get innerHTML(): string {
+    return this.html;
+  }
+
+  public set innerHTML(value: string) {
+    this.html = value;
+    if (this.tagName !== "template") {
+      return;
+    }
+
+    const child = new TestElement("p", this.ownerDocument);
+    child.textContent = value.replace(/<[^>]*>/g, "");
+    this.content.replaceChildren(child);
+  }
 
   public append(...children: TestElement[]): void {
     this.children.push(...children);
@@ -229,6 +290,20 @@ class TestElement {
   public replaceChildren(...children: TestElement[]): void {
     this.children.length = 0;
     this.append(...children);
+  }
+
+  public cloneNode(deep: boolean): TestElement {
+    const clone = new TestElement(this.tagName, this.ownerDocument);
+    clone.id = this.id;
+    clone.className = this.className;
+    clone.textContent = this.textContent;
+    for (const [name, value] of this.attributes) {
+      clone.setAttribute(name, value);
+    }
+    if (deep) {
+      clone.replaceChildren(...this.children.map((child) => child.cloneNode(true)));
+    }
+    return clone;
   }
 
   public setAttribute(name: string, value: string): void {

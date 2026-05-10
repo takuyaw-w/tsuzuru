@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("navigates title, runtime, backlog, settings, and gallery", async ({ page }) => {
   await page.goto("/");
+  await expect((await page.request.get("/scenario/main.tzr")).ok()).toBe(true);
 
   await expect(page.getByRole("heading", { name: "Tsuzuru HTML Basic" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start" })).toBeVisible();
