@@ -1,6 +1,6 @@
 import { access, cp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getBasicTemplateDir } from "./template.js";
+import { getTemplateDir } from "./template.js";
 
 const PACKAGE_JSON_PLACEHOLDER = "{{projectName}}";
 
@@ -8,6 +8,7 @@ export interface CreateProjectOptions {
   readonly projectName: string;
   readonly cwd?: string;
   readonly templateDir?: string;
+  readonly templateName?: string;
 }
 
 export interface CreateProjectResult {
@@ -30,7 +31,7 @@ export async function createProject(options: CreateProjectOptions): Promise<Crea
     throw new Error(`Target directory already exists: ${projectName}`);
   }
 
-  await cp(options.templateDir ?? (await getBasicTemplateDir()), targetDir, {
+  await cp(options.templateDir ?? (await getTemplateDir(options.templateName)), targetDir, {
     recursive: true,
     errorOnExist: true,
     force: false,

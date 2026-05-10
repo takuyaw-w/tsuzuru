@@ -7,7 +7,15 @@ import { createProject } from "./create-project.js";
 type PackageManager = "npm" | "pnpm" | "yarn";
 
 const USAGE = `Usage:
-  create-tsuzuru <project-name>`;
+  create-tsuzuru <project-name> [--template basic|preact|html]
+
+Options:
+  --template <name>  Project template to use. Defaults to basic.`;
+
+interface ParsedCliArgs {
+  readonly projectName: string;
+  readonly templateName?: string;
+}
 
 interface NextStepCommands {
   readonly install: string;
@@ -46,20 +54,23 @@ function getNextStepCommands(packageManager = detectPackageManager()): NextStepC
 }
 
 export async function runCli(args: readonly string[]): Promise<number> {
-  const [projectName, ...rest] = args;
-
-  if (projectName === "--help" || projectName === "-h") {
+  if (args.includes("--help") || args.includes("-h")) {
     console.log(USAGE);
     return 0;
   }
 
-  if (projectName === undefined || rest.length > 0) {
-    console.error(USAGE);
+  const parsedArgs = parseCliArgs(args);
+  if (typeof parsedArgs === "string") {
+    console.error(parsedArgs);
     return 1;
   }
 
   try {
-    const result = await createProject({ projectName });
+    const createOptions =
+      parsedArgs.templateName === undefined
+        ? { projectName: parsedArgs.projectName }
+        : { projectName: parsedArgs.projectName, templateName: parsedArgs.templateName };
+    const result = await createProject(createOptions);
     const nextSteps = getNextStepCommands();
     console.log(`Created Tsuzuru project in ${result.relativeTargetDir}.`);
     console.log("");
@@ -73,6 +84,55 @@ export async function runCli(args: readonly string[]): Promise<number> {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+function parseCliArgs(args: readonly string[]): ParsedCliArgs | string {
+  let projectName: string | undefined;
+  let templateName: string | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === "--template") {
+      if (templateName !== undefined) {
+        return "Template option can only be specified once.";
+      }
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return "Template name is required after --template.";
+      }
+      templateName = value;
+      index += 1;
+      continue;
+    }
+
+    if (arg?.startsWith("--template=") === true) {
+      if (templateName !== undefined) {
+        return "Template option can only be specified once.";
+      }
+      const value = arg.slice("--template=".length);
+      if (value.length === 0) {
+        return "Template name is required after --template.";
+      }
+      templateName = value;
+      continue;
+    }
+
+    if (arg?.startsWith("-") === true) {
+      return `Unknown option: ${arg}`;
+    }
+
+    if (projectName !== undefined) {
+      return USAGE;
+    }
+    projectName = arg;
+  }
+
+  if (projectName === undefined) {
+    return USAGE;
+  }
+
+  return templateName === undefined ? { projectName } : { projectName, templateName };
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {

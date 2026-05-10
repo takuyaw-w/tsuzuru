@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" role="img" aria-labelledby="title desc">
+  <title id="title">美緒</title>
+  <desc id="desc">A simple generated smiling character sprite for the Tsuzuru HTML example.</desc>
+  <defs>
+    <linearGradient id="hair" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#35283b"/>
+      <stop offset="1" stop-color="#161421"/>
+    </linearGradient>
+    <linearGradient id="dress" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5d7998"/>
+      <stop offset="1" stop-color="#263e5f"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="180" cy="606" rx="104" ry="18" fill="#000" opacity="0.25"/>
+  <path d="M104 170c-20 66-30 170-10 278 8 44 28 92 86 92s78-48 86-92c20-108 10-212-10-278-22-74-130-74-152 0z" fill="url(#hair)"/>
+  <circle cx="180" cy="170" r="76" fill="#f1c7aa"/>
+  <path d="M108 150c28-80 118-100 156-8-50-14-90-10-156 8z" fill="url(#hair)"/>
+  <circle cx="152" cy="178" r="7" fill="#27212b"/>
+  <circle cx="208" cy="178" r="7" fill="#27212b"/>
+  <path d="M160 216c14 14 28 14 42 0" fill="none" stroke="#8d4b55" stroke-width="5" stroke-linecap="round"/>
+  <path d="M120 292c18-48 102-48 120 0l48 238H72z" fill="url(#dress)"/>
+  <path d="M132 292h96l-18 84h-60z" fill="#f5f1e6"/>
+  <path d="M138 306l42 44 42-44" fill="none" stroke="#d66d78" stroke-width="10" stroke-linecap="round"/>
+  <path d="M102 324c-38 52-46 112-24 164" fill="none" stroke="#f1c7aa" stroke-width="28" stroke-linecap="round"/>
+  <path d="M258 324c38 52 46 112 24 164" fill="none" stroke="#f1c7aa" stroke-width="28" stroke-linecap="round"/>
+</svg>

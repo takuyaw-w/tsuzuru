@@ -1,0 +1,5 @@
+title "Tsuzuru HTML Project"
+
+character mio name="美緒"
+
+include "./chapters/01-opening.tzr"

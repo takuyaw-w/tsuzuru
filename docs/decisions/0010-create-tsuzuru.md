@@ -6,9 +6,13 @@ Tsuzuru will ship a dedicated `create-tsuzuru` package for project scaffolding.
 The package owns its templates under `packages/create-tsuzuru/templates` so a
 published generator does not depend on repository-only example paths.
 
-Initial behavior is intentionally small:
+Initial behavior is intentionally small, with template selection now limited to
+bundled templates:
 
 - `create-tsuzuru <project-name>` creates one project from the `basic` template.
+- `--template basic` and `--template preact` both select the existing Preact
+  template.
+- `--template html` selects the framework-free `@tsuzuru/html` template.
 - The generated project includes `tsuzuru.config.ts`.
 - The generated project wires `tsuzuru check` into `check:scenario` and
   `build`.
@@ -22,7 +26,6 @@ presentation commands.
 Out of scope for the first package:
 
 - interactive prompts
-- template selection
 - automatic install
 - package manager detection
 - git initialization

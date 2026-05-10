@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -81,6 +81,99 @@ describe("runCli", () => {
     } finally {
       process.chdir(previousCwd);
       restoreUserAgent();
+    }
+  });
+
+  it("prints template options in help", async () => {
+    const logs: string[] = [];
+    vi.spyOn(console, "log").mockImplementation((message?: unknown) => {
+      logs.push(String(message ?? ""));
+    });
+
+    const exitCode = await runCli(["--help"]);
+
+    expect(exitCode).toBe(0);
+    expect(logs.join("\n")).toContain("--template basic|preact|html");
+  });
+
+  it("creates the html template from --template html", async () => {
+    const root = await createTempRoot();
+    const previousCwd = process.cwd();
+
+    try {
+      process.chdir(root);
+
+      const exitCode = await runCli(["mypage", "--template", "html"]);
+      const packageJson = JSON.parse(await readFile(join(root, "mypage", "package.json"), "utf8")) as {
+        readonly dependencies: Record<string, string>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(packageJson.dependencies["@tsuzuru/html"]).toBeDefined();
+      expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
+      await expect(readFile(join(root, "mypage", "src", "screens", "settings.html"), "utf8")).resolves.toContain(
+        'data-tsuzuru-setting="textFontSize"',
+      );
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
+
+  it("keeps --template basic as the default Preact template alias", async () => {
+    const root = await createTempRoot();
+    const previousCwd = process.cwd();
+
+    try {
+      process.chdir(root);
+
+      const exitCode = await runCli(["mypage", "--template=basic"]);
+      const packageJson = JSON.parse(await readFile(join(root, "mypage", "package.json"), "utf8")) as {
+        readonly dependencies: Record<string, string>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
+
+  it("accepts --template preact as the existing Preact template", async () => {
+    const root = await createTempRoot();
+    const previousCwd = process.cwd();
+
+    try {
+      process.chdir(root);
+
+      const exitCode = await runCli(["mypage", "--template", "preact"]);
+      const packageJson = JSON.parse(await readFile(join(root, "mypage", "package.json"), "utf8")) as {
+        readonly dependencies: Record<string, string>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
+
+  it("reports an unknown template", async () => {
+    const root = await createTempRoot();
+    const previousCwd = process.cwd();
+    const errors: string[] = [];
+    vi.spyOn(console, "error").mockImplementation((message?: unknown) => {
+      errors.push(String(message ?? ""));
+    });
+
+    try {
+      process.chdir(root);
+
+      const exitCode = await runCli(["mypage", "--template", "unknown"]);
+
+      expect(exitCode).toBe(1);
+      expect(errors.join("\n")).toContain("Unknown template: unknown");
+    } finally {
+      process.chdir(previousCwd);
     }
   });
 });

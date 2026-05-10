@@ -1,9 +1,9 @@
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createProject, validateProjectName } from "../src/create-project.js";
-import { getBasicTemplateDir } from "../src/template.js";
+import { getBasicTemplateDir, getTemplateDir } from "../src/template.js";
 
 const tempRoots: string[] = [];
 
@@ -25,6 +25,60 @@ describe("createProject", () => {
 
     expect(result.relativeTargetDir).toBe("my-game");
     await expect(readFile(join(root, "my-game", "package.json"), "utf8")).resolves.toContain('"name": "my-game"');
+  });
+
+  it("uses the bundled basic template by default", async () => {
+    const root = await createTempRoot();
+
+    await createProject({ cwd: root, projectName: "my-game" });
+    const packageJson = JSON.parse(await readFile(join(root, "my-game", "package.json"), "utf8")) as {
+      readonly dependencies: Record<string, string>;
+    };
+
+    expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+    await expect(readFile(join(root, "my-game", "src", "main.tsx"), "utf8")).resolves.toContain("preact");
+  });
+
+  it("creates a project from the html template", async () => {
+    const root = await createTempRoot();
+
+    await createProject({ cwd: root, projectName: "html-game", templateName: "html" });
+    const packageJson = JSON.parse(await readFile(join(root, "html-game", "package.json"), "utf8")) as {
+      readonly name: string;
+      readonly dependencies: Record<string, string>;
+    };
+
+    expect(packageJson.name).toBe("html-game");
+    expect(packageJson.dependencies["@tsuzuru/html"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
+    expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeUndefined();
+    expect(packageJson.dependencies.preact).toBeUndefined();
+    await expect(readFile(join(root, "html-game", "scenario", "main.tzr"), "utf8")).resolves.toContain(
+      'title "Tsuzuru HTML Project"',
+    );
+    await expect(readFile(join(root, "html-game", "assets.ts"), "utf8")).resolves.toContain(
+      "satisfies TsuzuruHtmlAssetsManifest",
+    );
+    await expect(readFile(join(root, "html-game", "src", "screens", "settings.html"), "utf8")).resolves.toContain(
+      'data-tsuzuru-setting="textFontSize"',
+    );
+    await expect(readFile(join(root, "html-game", "tsuzuru.config.ts"), "utf8")).resolves.toContain(
+      'files: ["scenario/**/*.tzr"]',
+    );
+    await expect(readFile(join(root, "html-game", "public", "assets", "assets.json"), "utf8")).rejects.toThrow();
+    await expect(readFile(join(root, "html-game", "public", "scenario", "main.tzr"), "utf8")).rejects.toThrow();
+  });
+
+  it("keeps an explicit templateDir higher priority than templateName", async () => {
+    const root = await createTempRoot();
+    const templateDir = join(root, "template");
+    await mkdir(templateDir);
+    await writeFile(join(templateDir, "package.json"), '{ "name": "{{projectName}}" }\n');
+    await writeFile(join(templateDir, "marker.txt"), "custom template\n");
+
+    await createProject({ cwd: root, projectName: "custom-game", templateDir, templateName: "html" });
+
+    await expect(readFile(join(root, "custom-game", "marker.txt"), "utf8")).resolves.toBe("custom template\n");
   });
 
   it("replaces the package.json project name placeholder", async () => {
@@ -91,5 +145,15 @@ describe("createProject", () => {
     expect(source).not.toContain("label ");
     expect(source).not.toContain("->");
     expect(source).not.toContain("@jump");
+  });
+
+  it("resolves basic and preact to the existing basic template", async () => {
+    await expect(getTemplateDir("preact")).resolves.toBe(await getBasicTemplateDir());
+  });
+
+  it("rejects unknown template names", async () => {
+    await expect(
+      createProject({ cwd: await createTempRoot(), projectName: "my-game", templateName: "unknown" }),
+    ).rejects.toThrow("Unknown template: unknown");
   });
 });

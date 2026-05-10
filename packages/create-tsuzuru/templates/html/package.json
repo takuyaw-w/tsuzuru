@@ -1,0 +1,22 @@
+{
+  "name": "{{projectName}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsuzuru check && vite build",
+    "check:scenario": "tsuzuru check",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tsuzuru/cli": "^0.1.1",
+    "@tsuzuru/config": "^0.1.1",
+    "@tsuzuru/html": "^0.1.1",
+    "@tsuzuru/plugin-std-audio": "^0.1.1",
+    "@tsuzuru/plugin-std-visual": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
+  }
+}

@@ -308,48 +308,59 @@ The example demonstrates Tsuzuru without Preact:
 ```txt
 examples/html-basic/
   package.json
+  assets.ts
   index.html
   vite.config.ts
   tsconfig.json
   tsuzuru.config.ts
+  scenario/
+    main.tzr
+    chapters/
+      01-opening.tzr
   src/
     main.ts
     style.css
+    screens/
+      settings.html
   public/
-    scenario/
-      main.tzr
-      chapters/
-        01-opening.tzr
-        02-common.tzr
-        03-ending.tzr
     assets/
-      assets.json
       images/
       audio/
 ```
 
-`src/main.ts` should import `mountTsuzuruHtml`, import
-`@tsuzuru/html/style.css`, import example CSS, and mount into a root element.
+`src/main.ts` imports `mountTsuzuruHtmlAppsFromDocument`, imports
+`@tsuzuru/html/style.css`, imports example CSS, imports `assets.ts`, and wires
+screen fragments into the declarative app.
 
-The example should use browser-served scenario URLs:
+The example uses browser-served scenario URLs through `public/tsuzuru.app.json`:
+
+```json
+{
+  "scenario": {
+    "entryUrl": "/scenario/main.tzr",
+    "entryId": "scenario/main.tzr"
+  }
+}
+```
+
+The TypeScript entrypoint provides typed assets:
 
 ```ts
-await mountTsuzuruHtml(root, {
-  scenario: {
-    entryUrl: "/scenario/main.tzr",
-    entryId: "public/scenario/main.tzr",
+await mountTsuzuruHtmlAppsFromDocument(document, {
+  assets,
+  screenFragments: {
+    settings: settingsHtml,
   },
-  assetsUrl: "/assets/assets.json",
 });
 ```
 
-`tsuzuru.config.ts` should point the CLI at the source files under `public`:
+`tsuzuru.config.ts` should point the CLI at the source files under `scenario`:
 
 ```ts
-scenario: {
-  entry: "public/scenario/main.tzr",
-  files: ["public/scenario/**/*.tzr"],
-}
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
 ```
 
 The example should stay smaller than `examples/preact-basic`. It should show
@@ -357,23 +368,26 @@ title/start, message window, choices, std-visual, std-audio, and basic error
 reporting. Save/load, backlog persistence, skip mode, read tracking, gallery,
 and advanced settings are not required for the first HTML example.
 
-## Future create-tsuzuru Template
+## create-tsuzuru Template
 
-After `@tsuzuru/html` and `examples/html-basic` exist, `create-tsuzuru` can add
-template selection.
+After `@tsuzuru/html` and `examples/html-basic` were added, `create-tsuzuru`
+added bundled template selection.
 
-The future template name should be:
+The HTML template name is:
 
 ```txt
 html
 ```
 
-The existing Preact template can remain `basic` until a separate rename or
-alias decision is made. Template selection should be introduced in a later
-`create-tsuzuru` task with explicit CLI behavior such as `--template html`.
+The existing Preact template remains `basic`, with `preact` accepted as an
+alias. The explicit CLI behavior is:
 
-The future HTML template should copy from
-`packages/create-tsuzuru/templates/html`, not from `examples/html-basic`.
+```sh
+create-tsuzuru my-game --template html
+```
+
+The HTML template is maintained in `packages/create-tsuzuru/templates/html`, not
+copied at runtime from `examples/html-basic`.
 
 ## Non-Goals
 

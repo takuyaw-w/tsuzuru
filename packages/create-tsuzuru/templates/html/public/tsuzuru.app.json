@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "title": "Tsuzuru HTML Project",
+  "scenario": {
+    "entryUrl": "/scenario/main.tzr",
+    "entryId": "scenario/main.tzr"
+  },
+  "initialScreen": "title",
+  "storageKeyPrefix": "tsuzuru:html-project"
+}

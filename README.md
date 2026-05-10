@@ -140,7 +140,7 @@ pnpm --filter @tsuzuru/example-preact-basic build
 
 `examples/preact-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`create-tsuzuru` は basic template 用の project generator です。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
+`create-tsuzuru` は default の basic/Preact template と `--template html` の framework-free HTML template を生成できます。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、`@tsuzuru/html` の URL loading、またはホスト側の手動読み込みで文字列として渡します。
 
 Release smoke test:
 
