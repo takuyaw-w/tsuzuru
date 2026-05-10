@@ -146,6 +146,12 @@ importers:
       '@tsuzuru/core':
         specifier: workspace:^
         version: link:../core
+      '@tsuzuru/plugin-std-audio':
+        specifier: workspace:^
+        version: link:../plugin-std-audio
+      '@tsuzuru/plugin-std-visual':
+        specifier: workspace:^
+        version: link:../plugin-std-visual
     devDependencies:
       typescript:
         specifier: 'catalog:'

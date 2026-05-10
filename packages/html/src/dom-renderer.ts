@@ -1,14 +1,18 @@
 import type { RuntimeDocument, RuntimeEvent } from "@tsuzuru/core";
+import type { TsuzuruHtmlNotice } from "./notices.js";
 import type { TsuzuruHtmlRuntimeController } from "./runtime-controller.js";
+import { createTsuzuruHtmlVisualLayer, type TsuzuruHtmlVisualLayer } from "./std-visual-layer.js";
 
 export interface TsuzuruHtmlDomView {
   readonly viewport: HTMLElement;
+  readonly visualLayer: TsuzuruHtmlVisualLayer;
   readonly title: HTMLElement;
   readonly status: HTMLElement;
   readonly messageWindow: HTMLElement;
   readonly speaker: HTMLElement;
   readonly message: HTMLElement;
   readonly choices: HTMLElement;
+  readonly notices: HTMLElement;
   readonly error: HTMLElement;
 }
 
@@ -21,6 +25,8 @@ export interface TsuzuruHtmlDomRenderOptions {
 export function createTsuzuruHtmlDomView(document: Document, titleText: string): TsuzuruHtmlDomView {
   const viewport = document.createElement("div");
   viewport.className = "tzr-html-viewport";
+
+  const visualLayer = createTsuzuruHtmlVisualLayer(document);
 
   const title = document.createElement("h1");
   title.className = "tzr-html-title";
@@ -41,14 +47,18 @@ export function createTsuzuruHtmlDomView(document: Document, titleText: string):
   const choices = document.createElement("div");
   choices.className = "tzr-html-choice-layer";
 
+  const notices = document.createElement("ul");
+  notices.className = "tzr-html-notice";
+  notices.setAttribute("hidden", "");
+
   const error = document.createElement("pre");
   error.className = "tzr-html-error";
   error.setAttribute("hidden", "");
 
   messageWindow.append(speaker, message);
-  viewport.append(title, status, messageWindow, choices, error);
+  viewport.append(visualLayer.layer, title, status, messageWindow, choices, notices, error);
 
-  return { viewport, title, status, messageWindow, speaker, message, choices, error };
+  return { viewport, visualLayer, title, status, messageWindow, speaker, message, choices, notices, error };
 }
 
 export function renderTsuzuruHtmlRuntime(
@@ -74,11 +84,28 @@ export function renderTsuzuruHtmlRuntime(
   }
 }
 
+export function renderTsuzuruHtmlNotices(view: TsuzuruHtmlDomView, notices: readonly TsuzuruHtmlNotice[]): void {
+  view.notices.replaceChildren(
+    ...notices.map((notice) => {
+      const item = view.notices.ownerDocument.createElement("li");
+      item.textContent = notice.message;
+      return item;
+    }),
+  );
+
+  if (notices.length === 0) {
+    view.notices.setAttribute("hidden", "");
+  } else {
+    view.notices.removeAttribute("hidden");
+  }
+}
+
 export function renderTsuzuruHtmlLoading(view: TsuzuruHtmlDomView): void {
   view.status.textContent = "Loading scenario...";
   view.speaker.textContent = "";
   view.message.textContent = "Loading scenario...";
   view.choices.replaceChildren();
+  renderTsuzuruHtmlNotices(view, []);
   view.error.textContent = "";
   view.error.setAttribute("hidden", "");
 }
@@ -88,6 +115,7 @@ export function renderTsuzuruHtmlShell(view: TsuzuruHtmlDomView): void {
   view.speaker.textContent = "";
   view.message.textContent = "HTML adapter mounted.";
   view.choices.replaceChildren();
+  renderTsuzuruHtmlNotices(view, []);
   view.error.textContent = "";
   view.error.setAttribute("hidden", "");
 }
@@ -97,6 +125,7 @@ export function renderTsuzuruHtmlError(view: TsuzuruHtmlDomView, message: string
   view.speaker.textContent = "";
   view.message.textContent = "Scenario could not be loaded.";
   view.choices.replaceChildren();
+  renderTsuzuruHtmlNotices(view, []);
   view.error.textContent = message;
   view.error.removeAttribute("hidden");
 }

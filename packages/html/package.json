@@ -13,11 +13,15 @@
     "./style.css": "./dist/src/style.css"
   },
   "files": [
+    "dist/src/assets-loader.*",
     "dist/src/dom-renderer.*",
     "dist/src/index.*",
     "dist/src/mount.*",
+    "dist/src/notices.*",
     "dist/src/runtime-controller.*",
     "dist/src/scenario-loader.*",
+    "dist/src/std-audio-layer.*",
+    "dist/src/std-visual-layer.*",
     "dist/src/style.css"
   ],
   "repository": {
@@ -45,7 +49,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tsuzuru/core": "workspace:^"
+    "@tsuzuru/core": "workspace:^",
+    "@tsuzuru/plugin-std-audio": "workspace:^",
+    "@tsuzuru/plugin-std-visual": "workspace:^"
   },
   "devDependencies": {
     "typescript": "catalog:",

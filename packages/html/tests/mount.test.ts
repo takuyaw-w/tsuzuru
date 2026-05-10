@@ -1,6 +1,6 @@
 import { compileTzr, parseTzr, type RuntimeDocument } from "@tsuzuru/core";
-import { describe, expect, it } from "vitest";
-import { mountTsuzuruHtml } from "../src/index.js";
+import { describe, expect, it, vi } from "vitest";
+import { mountTsuzuruHtml, type TsuzuruHtmlAssets, type TsuzuruHtmlFetch } from "../src/index.js";
 
 describe("mountTsuzuruHtml", () => {
   it("mounts a minimal shell into the root", async () => {
@@ -99,6 +99,124 @@ describe("mountTsuzuruHtml", () => {
     expect(app.element.getAttribute("data-tsuzuru-html-state")).toBe("error");
     expect(toText(app.element as unknown as TestElement)).toContain("Failed to fetch scenario document");
   });
+
+  it("renders assetsUrl manifest errors inside the mounted player", async () => {
+    const document = new TestDocument();
+    const root = document.createElement("main") as unknown as HTMLElement;
+    const app = await mountTsuzuruHtml(root, {
+      scenario: {
+        entryUrl: "/scenario/main.tzr",
+      },
+      assetsUrl: "/assets/assets.json",
+      baseUrl: "https://example.test/game/",
+      fetch: createUrlFetch({
+        "https://example.test/assets/assets.json": JSON.stringify({ version: 2 }),
+        "https://example.test/scenario/main.tzr": `scene start:
+  narration:
+    Ready.
+`,
+      }),
+    });
+
+    expect(app.element.getAttribute("data-tsuzuru-html-state")).toBe("error");
+    expect(toText(app.element as unknown as TestElement)).toContain("Unsupported assets.json version: 2");
+  });
+
+  it("loads assets and renders std-visual plus std-audio from a URL scenario", async () => {
+    const document = new TestDocument();
+    const root = document.createElement("main") as unknown as HTMLElement;
+    const audioElements: FakeAudio[] = [];
+    const app = await mountTsuzuruHtml(root, {
+      scenario: {
+        entryUrl: "https://example.test/scenario/main.tzr",
+      },
+      assets: testAssets,
+      fetch: createScenarioFetch(`scene start:
+  bg room
+  show mio_smile at center
+  bgm daily_theme
+  se page
+  voice mio_001
+  narration:
+    Ready.
+`),
+      audioFactory: (src) => {
+        const audio = new FakeAudio(src);
+        audioElements.push(audio);
+        return audio;
+      },
+    });
+
+    app.step();
+    await Promise.resolve();
+
+    expect(toText(app.element as unknown as TestElement)).toContain("Ready.");
+    expect(
+      findByTagName(app.element as unknown as TestElement, "img").map((image) => image.getAttribute("src")),
+    ).toEqual(["https://example.test/assets/images/room.svg", "https://example.test/assets/images/mio.svg"]);
+    expect(audioElements.map((audio) => audio.src)).toEqual([
+      "https://example.test/assets/audio/bgm.mp3",
+      "https://example.test/assets/audio/page.mp3",
+      "https://example.test/assets/audio/mio.mp3",
+    ]);
+    expect(audioElements.map((audio) => audio.playCount)).toEqual([1, 1, 1]);
+  });
+
+  it("loads assetsUrl and resolves visual asset URLs during mount", async () => {
+    const document = new TestDocument();
+    const root = document.createElement("main") as unknown as HTMLElement;
+    const app = await mountTsuzuruHtml(root, {
+      scenario: {
+        entryUrl: "/scenario/main.tzr",
+      },
+      assetsUrl: "/assets/assets.json",
+      baseUrl: "https://example.test/game/",
+      fetch: createUrlFetch({
+        "https://example.test/scenario/main.tzr": `scene start:
+  bg room
+  narration:
+    Ready.
+`,
+        "https://example.test/assets/assets.json": JSON.stringify({
+          version: 1,
+          visual: { backgrounds: { room: { src: "images/room.svg" } } },
+        }),
+      }),
+    });
+
+    app.step();
+
+    expect(findByTagName(app.element as unknown as TestElement, "img")[0]?.getAttribute("src")).toBe(
+      "https://example.test/assets/images/room.svg",
+    );
+  });
+
+  it("renders missing visual assets as non-fatal notices and placeholders", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const document = new TestDocument();
+    const root = document.createElement("main") as unknown as HTMLElement;
+    const app = await mountTsuzuruHtml(root, {
+      scenario: {
+        entryUrl: "https://example.test/scenario/main.tzr",
+      },
+      assets: {
+        version: 1,
+        visual: { backgrounds: {}, sprites: {} },
+        audio: { bgm: {}, se: {}, voice: {} },
+      },
+      fetch: createScenarioFetch(`scene start:
+  bg missing_room
+  narration:
+    Ready.
+`),
+    });
+
+    app.step();
+
+    expect(toText(app.element as unknown as TestElement)).toContain("Missing background: missing_room");
+    expect(toText(app.element as unknown as TestElement)).toContain("Background asset is not mapped: missing_room");
+    warn.mockRestore();
+  });
 });
 
 class TestDocument {
@@ -179,6 +297,66 @@ function findByTagName(element: TestElement, tagName: string): TestElement[] {
     ...(element.tagName === tagName ? [element] : []),
     ...element.childNodes.flatMap((child) => findByTagName(child, tagName)),
   ];
+}
+
+const testAssets: TsuzuruHtmlAssets = {
+  version: 1,
+  visual: {
+    backgrounds: {
+      room: { src: "https://example.test/assets/images/room.svg", alt: "Room" },
+    },
+    sprites: {
+      mio_smile: { src: "https://example.test/assets/images/mio.svg", alt: "Mio" },
+    },
+  },
+  audio: {
+    bgm: { daily_theme: { src: "https://example.test/assets/audio/bgm.mp3" } },
+    se: { page: { src: "https://example.test/assets/audio/page.mp3" } },
+    voice: { mio_001: { src: "https://example.test/assets/audio/mio.mp3" } },
+  },
+};
+
+function createScenarioFetch(source: string): TsuzuruHtmlFetch {
+  return async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: async () => source,
+  });
+}
+
+function createUrlFetch(files: Readonly<Record<string, string>>): TsuzuruHtmlFetch {
+  return async (input) => {
+    const source = files[input.toString()];
+    return {
+      ok: source !== undefined,
+      status: source === undefined ? 404 : 200,
+      statusText: source === undefined ? "Not Found" : "OK",
+      text: async () => source ?? "",
+    };
+  };
+}
+
+class FakeAudio {
+  public loop = false;
+  public volume = 1;
+  public currentTime = 0;
+  public playCount = 0;
+  public pauseCount = 0;
+
+  public constructor(public readonly src: string) {}
+
+  public play(): void {
+    this.playCount += 1;
+  }
+
+  public pause(): void {
+    this.pauseCount += 1;
+  }
+
+  public addEventListener(): void {
+    // No-op for the fake audio element.
+  }
 }
 
 class TestEvent {

@@ -1,11 +1,21 @@
 import type { RuntimeDocument, RuntimeEvent, RuntimeState } from "@tsuzuru/core";
+import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
+import {
+  formatAssetsDiagnostics,
+  loadTsuzuruHtmlAssets,
+  type TsuzuruHtmlAssets,
+  TsuzuruHtmlAssetsLoadError,
+} from "./assets-loader.js";
 import {
   createTsuzuruHtmlDomView,
   renderTsuzuruHtmlError,
   renderTsuzuruHtmlLoading,
+  renderTsuzuruHtmlNotices,
   renderTsuzuruHtmlRuntime,
   renderTsuzuruHtmlShell,
 } from "./dom-renderer.js";
+import { createTsuzuruHtmlNoticeSink } from "./notices.js";
 import {
   createTsuzuruHtmlRuntimeController,
   type TsuzuruHtmlRuntimeController,
@@ -18,11 +28,15 @@ import {
   TsuzuruHtmlScenarioLoadError,
   type TsuzuruHtmlScenarioSource,
 } from "./scenario-loader.js";
+import { type TsuzuruHtmlAudioFactory, TsuzuruHtmlAudioLayer } from "./std-audio-layer.js";
+import { renderTsuzuruHtmlVisualLayer } from "./std-visual-layer.js";
 
 export interface TsuzuruHtmlMountOptions {
   readonly title?: string;
   readonly className?: string;
   readonly scenario?: TsuzuruHtmlScenarioSource;
+  readonly assets?: TsuzuruHtmlAssets;
+  readonly assetsUrl?: string | URL;
   readonly fetch?: TsuzuruHtmlFetch;
   readonly baseUrl?: string | URL;
   readonly plugins?: TsuzuruHtmlRuntimeControllerOptions["plugins"];
@@ -31,6 +45,7 @@ export interface TsuzuruHtmlMountOptions {
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
   readonly autoStepMaxSteps?: number;
+  readonly audioFactory?: TsuzuruHtmlAudioFactory;
 }
 
 export interface TsuzuruHtmlApp {
@@ -66,7 +81,22 @@ export async function mountTsuzuruHtml(
 
   let destroyed = false;
   let controller: TsuzuruHtmlRuntimeController | null = null;
+  let assets: TsuzuruHtmlAssets | null = options.assets ?? null;
+  let audioLayer: TsuzuruHtmlAudioLayer | null = null;
   const removeListeners: Array<() => void> = [];
+  const notices = createTsuzuruHtmlNoticeSink(() => {
+    renderTsuzuruHtmlNotices(view, notices.values());
+  });
+  const runtimePlugins = mergePlugins([createStdVisualPlugin(), createStdAudioPlugin()], options.plugins);
+  const commandHandlers = {
+    ...createStdVisualCommandHandlers(),
+    ...createStdAudioCommandHandlers(),
+    ...(options.commandHandlers ?? {}),
+  };
+  const onDiagnostic: TsuzuruHtmlRuntimeControllerOptions["onDiagnostic"] = (diagnostic) => {
+    notices.add(`runtime:${diagnostic.code}:${diagnostic.message}`, diagnostic.message);
+    options.onDiagnostic?.(diagnostic);
+  };
 
   const renderRuntime = () => {
     if (controller === null || destroyed) {
@@ -80,6 +110,9 @@ export async function mountTsuzuruHtml(
         renderRuntime();
       },
     });
+    renderTsuzuruHtmlVisualLayer(view.visualLayer, controller.getState(), assets, notices);
+    audioLayer?.sync(controller.getState());
+    renderTsuzuruHtmlNotices(view, notices.values());
   };
 
   let runtimeDocument: RuntimeDocument | undefined;
@@ -89,15 +122,21 @@ export async function mountTsuzuruHtml(
   } else {
     renderTsuzuruHtmlLoading(view);
     try {
+      if (options.assetsUrl !== undefined) {
+        assets = await loadTsuzuruHtmlAssets(options.assetsUrl, {
+          ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+          ...(options.baseUrl === undefined ? {} : { baseUrl: options.baseUrl }),
+        });
+      }
       runtimeDocument = await loadTsuzuruHtmlScenario(options.scenario, {
         ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
         ...(options.baseUrl === undefined ? {} : { baseUrl: options.baseUrl }),
-        ...(options.plugins === undefined ? {} : { plugins: options.plugins }),
+        plugins: runtimePlugins,
       });
       controller = createTsuzuruHtmlRuntimeController(runtimeDocument, {
-        ...(options.plugins === undefined ? {} : { plugins: options.plugins }),
-        ...(options.commandHandlers === undefined ? {} : { commandHandlers: options.commandHandlers }),
-        ...(options.onDiagnostic === undefined ? {} : { onDiagnostic: options.onDiagnostic }),
+        plugins: runtimePlugins,
+        commandHandlers,
+        onDiagnostic,
         autoClearWait: options.autoClearWait ?? true,
         autoStepTransientEvents: options.autoStepTransientEvents ?? true,
         ...(options.autoStepMaxSteps === undefined ? {} : { autoStepMaxSteps: options.autoStepMaxSteps }),
@@ -109,6 +148,11 @@ export async function mountTsuzuruHtml(
         clearTimeout: (timerId) => {
           globalThis.clearTimeout(timerId as ReturnType<typeof globalThis.setTimeout>);
         },
+      });
+      audioLayer = new TsuzuruHtmlAudioLayer({
+        assets,
+        notices,
+        ...(options.audioFactory === undefined ? {} : { audioFactory: options.audioFactory }),
       });
       attachRuntimeListeners(element, {
         onStep: () => {
@@ -152,6 +196,7 @@ export async function mountTsuzuruHtml(
       }
       removeListeners.length = 0;
       controller?.destroy();
+      audioLayer?.destroy();
       element.setAttribute("data-tsuzuru-html-state", "destroyed");
       if (element.parentNode === root) {
         root.replaceChildren();
@@ -191,8 +236,22 @@ function attachRuntimeListeners(
 }
 
 function formatMountError(error: unknown): string {
+  if (error instanceof TsuzuruHtmlAssetsLoadError) {
+    return formatAssetsDiagnostics(error.diagnostics);
+  }
   if (error instanceof TsuzuruHtmlScenarioLoadError) {
     return formatScenarioDiagnostics(error.diagnostics);
   }
   return error instanceof Error ? error.message : String(error);
+}
+
+function mergePlugins(
+  defaults: NonNullable<TsuzuruHtmlRuntimeControllerOptions["plugins"]>,
+  overrides: TsuzuruHtmlRuntimeControllerOptions["plugins"],
+): NonNullable<TsuzuruHtmlRuntimeControllerOptions["plugins"]> {
+  const plugins = new Map(defaults.map((plugin) => [plugin.name, plugin]));
+  for (const plugin of overrides ?? []) {
+    plugins.set(plugin.name, plugin);
+  }
+  return [...plugins.values()];
 }

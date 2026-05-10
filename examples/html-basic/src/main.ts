@@ -15,4 +15,5 @@ await mountTsuzuruHtml(root, {
     entryUrl: "/scenario/main.tzr",
     entryId: "public/scenario/main.tzr",
   },
+  assetsUrl: "/assets/assets.json",
 });

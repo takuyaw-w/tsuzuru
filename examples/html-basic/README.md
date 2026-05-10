@@ -7,8 +7,8 @@ React, Vue, TSX, or JSX.
 
 Current scope is intentionally small: this plays a `.tzr` scenario from browser
 URLs and demonstrates include-based multi-file loading, narration, dialogue,
-choices, timed waits, and end state rendering. It does not load `assets.json`
-yet, and it does not implement std-visual or std-audio rendering.
+choices, timed waits, std-visual background/sprite rendering, std-audio event
+handling, and end state rendering.
 
 The example mounts the HTML adapter with a scenario URL:
 
@@ -30,6 +30,7 @@ await mountTsuzuruHtml(root, {
     entryUrl: "/scenario/main.tzr",
     entryId: "public/scenario/main.tzr",
   },
+  assetsUrl: "/assets/assets.json",
 });
 ```
 
@@ -51,12 +52,24 @@ public/scenario/
   main.tzr
   chapters/
     01-opening.tzr
+public/assets/
+  assets.json
+  images/
+    backgrounds/
+      room.svg
+    sprites/
+      mio-smile.svg
 ```
 
 `main.tzr` includes the chapter file so the example exercises URL-based include
-resolution.
+resolution. `assets.json` maps visual and audio asset IDs to browser URLs.
+
+The image files are small SVG assets generated for this repository example.
+Audio entries are present in `assets.json`, but the example intentionally does
+not ship audio files. Missing audio files and autoplay failures are treated as
+non-fatal notices by `@tsuzuru/html`.
 
 ## Current Limits
 
-`assets.json`, std-visual DOM rendering, std-audio browser playback, save/load,
-backlog, and settings are still outside this example.
+Save/load, backlog, settings, rich visual transitions, and production audio
+policy are still outside this example.

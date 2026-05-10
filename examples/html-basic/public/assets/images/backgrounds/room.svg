@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Evening classroom</title>
+  <desc id="desc">A simple generated classroom background for the Tsuzuru HTML example.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#27384f"/>
+      <stop offset="0.55" stop-color="#654b4a"/>
+      <stop offset="1" stop-color="#d09157"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#26313a"/>
+      <stop offset="1" stop-color="#141a20"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="#151d27"/>
+  <rect x="72" y="62" width="1136" height="426" rx="10" fill="#202b35"/>
+  <rect x="108" y="94" width="324" height="258" rx="6" fill="url(#sky)"/>
+  <rect x="478" y="94" width="324" height="258" rx="6" fill="url(#sky)"/>
+  <rect x="848" y="94" width="324" height="258" rx="6" fill="url(#sky)"/>
+  <path d="M0 508h1280v212H0z" fill="url(#floor)"/>
+  <path d="M70 508h1140" stroke="#43505d" stroke-width="8"/>
+  <g fill="#2d3943" stroke="#67717a" stroke-width="5">
+    <path d="M130 562h180v36H130z"/>
+    <path d="M486 562h180v36H486z"/>
+    <path d="M842 562h180v36H842z"/>
+    <path d="M214 598h12v72h-12zM572 598h12v72h-12zM930 598h12v72h-12z"/>
+  </g>
+  <circle cx="1040" cy="172" r="62" fill="#ffd37c" opacity="0.88"/>
+  <path d="M108 366h1064" stroke="#44515f" stroke-width="12"/>
+</svg>
