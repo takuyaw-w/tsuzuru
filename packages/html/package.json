@@ -15,6 +15,7 @@
   "files": [
     "dist/src/index.*",
     "dist/src/mount.*",
+    "dist/src/runtime-controller.*",
     "dist/src/style.css"
   ],
   "repository": {
