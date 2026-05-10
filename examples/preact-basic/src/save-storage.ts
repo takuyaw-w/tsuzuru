@@ -29,7 +29,7 @@ export interface ExampleSaveSlotDefinition {
 }
 
 // The storage key stays v1; slot payloads accept both legacy RuntimeSaveData and ExampleSaveData.
-export const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
+export const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 
 export const SAVE_SLOT_DEFINITIONS = [
   { id: "slot-1", label: "Slot 1" },

@@ -1,5 +1,5 @@
 {
-  "name": "@tsuzuru/example-dsl-v2-basic",
+  "name": "@tsuzuru/example-preact-basic",
   "version": "0.1.1",
   "private": true,
   "type": "module",

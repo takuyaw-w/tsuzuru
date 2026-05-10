@@ -10,14 +10,14 @@ Accepted
 sequence events for SE and Voice. It intentionally does not load files or control
 browser playback.
 
-`examples/dsl-v2-basic` previously displayed that std-audio state for debugging,
+`examples/preact-basic` previously displayed that std-audio state for debugging,
 but did not attempt actual playback. The example needs a small browser playback
 MVP without changing public APIs in core, Preact, standard UI, or the std-audio
 plugin.
 
 ## Decision
 
-Implement audio playback in `examples/dsl-v2-basic` as host-owned presentation
+Implement audio playback in `examples/preact-basic` as host-owned presentation
 behavior.
 
 The example's `AudioLayer` reads std-audio runtime state, resolves asset IDs
@@ -26,7 +26,7 @@ browser audio elements. BGM / SE / Voice volume preferences are also
 example-owned Settings preferences.
 
 Audio files are not bundled. Users can place files under
-`examples/dsl-v2-basic/public/assets/audio/...` matching the example asset map.
+`examples/preact-basic/public/assets/audio/...` matching the example asset map.
 
 Missing asset mappings, missing files, and browser autoplay failures are reported
 with notices or console warnings. They must not stop the app.
@@ -51,7 +51,7 @@ current BGM asset ID, SE events, Voice events, and event sequences.
 `@tsuzuru/preact` and `@tsuzuru/standard-ui-preact` do not own audio playback or
 asset resolution.
 
-`examples/dsl-v2-basic` owns the playback controller, asset ID to URL map,
+`examples/preact-basic` owns the playback controller, asset ID to URL map,
 browser audio element lifecycle, volume preferences, and fallback behavior for
 missing or blocked audio.
 
@@ -80,4 +80,4 @@ moving host playback policy into core runtime semantics.
 
 - `AGENTS.md`
 - `docs/decisions/0005-std-audio-plugin.md`
-- `examples/dsl-v2-basic/README.md`
+- `examples/preact-basic/README.md`

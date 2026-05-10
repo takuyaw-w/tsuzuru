@@ -4,7 +4,7 @@ Status: accepted.
 
 ## Context
 
-`examples/dsl-v2-basic` now has Save / Load, Backlog / Message History, Text
+`examples/preact-basic` now has Save / Load, Backlog / Message History, Text
 Preferences, Auto Mode, and Read Tracking MVPs. Skip Mode is the next
 presentation behavior needed to let players move quickly through narration and
 dialogue they have already seen.
@@ -17,7 +17,7 @@ display from messages that just became read.
 
 ## Decision
 
-Skip Mode starts in `examples/dsl-v2-basic` as a host-owned presentation
+Skip Mode starts in `examples/preact-basic` as a host-owned presentation
 controller.
 
 The runtime menu exposes a `Skip` toggle. When enabled, the example advances
@@ -110,4 +110,4 @@ Owns:
 - `AGENTS.md`
 - `docs/decisions/0015-auto-mode-mvp.md`
 - `docs/decisions/0016-read-tracking-mvp.md`
-- `examples/dsl-v2-basic/README.md`
+- `examples/preact-basic/README.md`

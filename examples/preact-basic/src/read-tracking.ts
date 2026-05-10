@@ -18,7 +18,7 @@ export interface ReadTrackingState {
   readonly readEntryKeys: ReadonlySet<ReadEntryKey>;
 }
 
-export const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:read-tracking:v1";
+export const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
 
 export function createInitialReadTrackingState(): ReadTrackingState {
   return {

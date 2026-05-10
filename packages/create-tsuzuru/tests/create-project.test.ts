@@ -61,7 +61,7 @@ describe("createProject", () => {
       "defineTsuzuruConfig",
     );
     await expect(readFile(join(root, "my-game", "scenario", "main.tzr"), "utf8")).resolves.toContain(
-      'title "Tsuzuru DSL v2 Basic"',
+      'title "Tsuzuru Preact Basic"',
     );
   });
 

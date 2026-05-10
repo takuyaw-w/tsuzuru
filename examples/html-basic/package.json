@@ -6,10 +6,15 @@
   "scripts": {
     "dev": "pnpm --filter @tsuzuru/html build && vite",
     "build": "pnpm --filter @tsuzuru/html build && vite build",
-    "typecheck": "pnpm --filter @tsuzuru/html build && tsc -p tsconfig.json --noEmit"
+    "typecheck": "pnpm --filter @tsuzuru/html build && tsc -p tsconfig.json --noEmit",
+    "check:scenario": "tsuzuru check"
   },
   "dependencies": {
-    "@tsuzuru/html": "workspace:*"
+    "@tsuzuru/cli": "workspace:*",
+    "@tsuzuru/config": "workspace:*",
+    "@tsuzuru/html": "workspace:*",
+    "@tsuzuru/plugin-std-audio": "workspace:*",
+    "@tsuzuru/plugin-std-visual": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",

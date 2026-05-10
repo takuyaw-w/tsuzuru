@@ -11,7 +11,7 @@ export function TitleScreen({ onStart, onLoad, onSettings, onBacklog, onGallery 
     <section className="screen screen--title" aria-label="Title">
       <div className="screen__content">
         <p className="screen__eyebrow">Tsuzuru</p>
-        <h1 className="screen__title">DSL v2 Basic</h1>
+        <h1 className="screen__title">Preact Basic</h1>
         <div className="screen__actions">
           <button type="button" className="screen__button screen__button--primary" onClick={onStart}>
             Start

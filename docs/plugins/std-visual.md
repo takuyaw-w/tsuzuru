@@ -4,7 +4,7 @@
 > current, and `createStdVisualPlugin()` exposes metadata for compiler
 > validation. The
 > current runnable integration is
-> [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-visual` は、Tsuzuru 公式の標準 visual plugin です。
 

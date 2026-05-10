@@ -7,7 +7,7 @@
 
 This document is a short entry point for the currently supported `.tzr` syntax.
 For the fuller design notes, see [`docs/design/dsl-v2.md`](design/dsl-v2.md).
-For runnable code, see [`examples/dsl-v2-basic`](../examples/dsl-v2-basic/).
+For runnable code, see [`examples/preact-basic`](../examples/preact-basic/).
 
 ## Current API
 
@@ -71,7 +71,7 @@ The currently implemented runnable subset covers:
 - `end`
 
 Some design-level syntax in `docs/design/design/dsl-v2.md` may still be parser-only
-or not implemented at runtime. Treat `examples/dsl-v2-basic` as the current
+or not implemented at runtime. Treat `examples/preact-basic` as the current
 runnable reference.
 
 Current state authoring supports string, number, boolean, and `null` values:

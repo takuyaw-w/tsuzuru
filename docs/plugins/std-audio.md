@@ -4,7 +4,7 @@
 > current, and `createStdAudioPlugin()` exposes metadata for compiler
 > validation. The
 > current runnable integration is
-> [`examples/dsl-v2-basic`](../../examples/dsl-v2-basic/).
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-audio` は、Tsuzuru 公式の standard audio plugin です。
 

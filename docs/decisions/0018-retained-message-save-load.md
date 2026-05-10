@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The Save / Load MVP in `examples/dsl-v2-basic` restored runtime progress through
+The Save / Load MVP in `examples/preact-basic` restored runtime progress through
 `RuntimeSaveData`. When a player saved while a choice was visible, loading the
 slot restored the choice itself, but the previous message window retained behind
 the choice disappeared.
@@ -19,7 +19,7 @@ narration or dialogue visible.
 
 Keep `@tsuzuru/preact`'s `RuntimeSaveData` unchanged.
 
-`examples/dsl-v2-basic` wraps runtime save data in an example-owned
+`examples/preact-basic` wraps runtime save data in an example-owned
 `ExampleSaveData` payload:
 
 - `runtime`: the existing `RuntimeSaveData`
@@ -47,7 +47,7 @@ primitives.
 `@tsuzuru/preact` owns `RuntimeSaveData`, `createSaveData`, `restoreSaveData`,
 and adapter-level runtime restore wiring.
 
-`examples/dsl-v2-basic` owns save slots, localStorage persistence, title
+`examples/preact-basic` owns save slots, localStorage persistence, title
 Continue policy, and presentation state that is not part of runtime state.
 
 The retained message is persisted only as example-side presentation state.
@@ -75,4 +75,4 @@ runtime semantics unless a concrete cross-host API requirement emerges.
 
 - `AGENTS.md`
 - `docs/decisions/0014-save-load-mvp.md`
-- `examples/dsl-v2-basic/README.md`
+- `examples/preact-basic/README.md`

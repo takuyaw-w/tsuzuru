@@ -56,7 +56,7 @@ const files = [
   "packages/plugin-std-visual/package.json",
   "packages/plugin-std-audio/package.json",
   "packages/standard-ui-preact/package.json",
-  "examples/dsl-v2-basic/package.json",
+  "examples/preact-basic/package.json",
 ];
 
 for (const file of files) {

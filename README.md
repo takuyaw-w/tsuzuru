@@ -8,7 +8,7 @@ Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノ�
 
 Tsuzuru は現在、`feature/new-dsl` ブランチで DSL v2 へ移行中です。
 
-DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。
+DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/preact-basic`](examples/preact-basic/) です。
 
 旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
 
@@ -25,7 +25,8 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - plugin command metadata / runtime dispatch
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
-- DSL v2 basic example
+- Preact basic example
+- HTML basic example
 - DSL v2 design notes
 - legacy cleanup plan
 
@@ -73,9 +74,11 @@ runtime behavior、rendering、plugins、reusable logic は TypeScript に置く
 packages/
   core/
   preact/
+  html/
 
 examples/
-  dsl-v2-basic/
+  preact-basic/
+  html-basic/
 
 docs/
   design/
@@ -122,20 +125,20 @@ Preact 向け adapter です。
 
 ## Quickstart
 
-DSL v2 の current runnable example は [`examples/dsl-v2-basic`](examples/dsl-v2-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
+DSL v2 の current runnable example は [`examples/preact-basic`](examples/preact-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm --filter @tsuzuru/example-dsl-v2-basic dev
+pnpm --filter @tsuzuru/example-preact-basic dev
 ```
 
 ビルド確認:
 
 ```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-preact-basic build
 ```
 
-`examples/dsl-v2-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
+`examples/preact-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
 `create-tsuzuru` は basic template 用の project generator です。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import またはホスト側の手動読み込みで文字列として渡します。
 
@@ -178,7 +181,7 @@ API surface:
 
 関連ドキュメント:
 
-- [DSL v2 basic example](examples/dsl-v2-basic/)
+- [Preact basic example](examples/preact-basic/)
 - [DSL v2 design notes](docs/design/design/dsl-v2.md)
 - [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
 
@@ -222,24 +225,32 @@ pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/preact build
 ```
 
-### DSL v2 Example
+### Preact Basic Example
 
 開発サーバー:
 
 ```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic dev
+pnpm --filter @tsuzuru/example-preact-basic dev
 ```
 
 ビルド:
 
 ```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-preact-basic build
 ```
 
 型チェック:
 
 ```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic typecheck
+pnpm --filter @tsuzuru/example-preact-basic typecheck
+```
+
+### HTML Basic Example
+
+```sh
+pnpm --filter @tsuzuru/example-html-basic dev
+pnpm --filter @tsuzuru/example-html-basic check:scenario
+pnpm --filter @tsuzuru/example-html-basic build
 ```
 
 ## ドキュメント

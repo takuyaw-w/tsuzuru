@@ -352,7 +352,7 @@ scenario: {
 }
 ```
 
-The example should stay smaller than `examples/dsl-v2-basic`. It should show
+The example should stay smaller than `examples/preact-basic`. It should show
 title/start, message window, choices, std-visual, std-audio, and basic error
 reporting. Save/load, backlog persistence, skip mode, read tracking, gallery,
 and advanced settings are not required for the first HTML example.

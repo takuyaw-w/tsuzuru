@@ -28,7 +28,7 @@ export function TitleScreen({
       <div className="screen__content screen__content--title">
         <div className="screen__title-copy">
           <p className="screen__eyebrow">Tsuzuru</p>
-          <h1 className="screen__title">DSL v2 Basic</h1>
+          <h1 className="screen__title">Preact Basic</h1>
           <p className="screen__subtitle">夕暮れの駅から始まる、小さな分岐のサンプル。</p>
         </div>
         <div className="screen__title-menu">

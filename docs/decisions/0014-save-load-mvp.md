@@ -19,7 +19,7 @@ or save slot policy.
 
 ## Decision
 
-`examples/dsl-v2-basic` now includes a localStorage-based Save / Load MVP.
+`examples/preact-basic` now includes a localStorage-based Save / Load MVP.
 
 The implementation uses:
 
@@ -46,7 +46,7 @@ sufficient and keeps the behavior synchronous and easy to inspect.
 
 IndexedDB would introduce transactions, schema versioning, and async control
 flow before Tsuzuru has a settled storage adapter design. That would blur the
-purpose of `examples/dsl-v2-basic`, which is to demonstrate the current DSL and
+purpose of `examples/preact-basic`, which is to demonstrate the current DSL and
 runtime integration rather than a production save backend.
 
 Keeping persistence in the example makes it easier to replace later with
@@ -107,10 +107,10 @@ For the current example, the selected storage backend is localStorage.
 
 ## Current implementation
 
-The MVP lives in `examples/dsl-v2-basic`.
+The MVP lives in `examples/preact-basic`.
 
 `src/save-storage.ts` stores save slots under the example-specific key
-`tsuzuru:example-dsl-v2-basic:saves:v1`. It reads localStorage defensively:
+`tsuzuru:example-preact-basic:saves:v1`. It reads localStorage defensively:
 invalid JSON, old data, unknown slot IDs, and values that fail
 `isRuntimeSaveData()` are ignored instead of crashing the app.
 
@@ -119,7 +119,7 @@ include this scenario identity:
 
 ```ts
 {
-  id: "tsuzuru.example.dsl-v2-basic",
+  id: "tsuzuru.example.preact-basic",
   version: "1"
 }
 ```
@@ -209,5 +209,5 @@ storage policy for Tsuzuru as a whole.
 
 - `docs/architecture.md`
 - `docs/runtime.md`
-- `examples/dsl-v2-basic/README.md`
-- `examples/dsl-v2-basic/src/save-storage.ts`
+- `examples/preact-basic/README.md`
+- `examples/preact-basic/src/save-storage.ts`

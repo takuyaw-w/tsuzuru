@@ -36,7 +36,32 @@ importers:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@25.6.0)(vite@8.0.10(@types/node@25.6.0)(jiti@2.7.0))
 
-  examples/dsl-v2-basic:
+  examples/html-basic:
+    dependencies:
+      '@tsuzuru/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
+      '@tsuzuru/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@tsuzuru/html':
+        specifier: workspace:*
+        version: link:../../packages/html
+      '@tsuzuru/plugin-std-audio':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-audio
+      '@tsuzuru/plugin-std-visual':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-visual
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10(@types/node@25.6.0)(jiti@2.7.0)
+
+  examples/preact-basic:
     dependencies:
       '@tsuzuru/cli':
         specifier: workspace:*
@@ -72,19 +97,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@25.6.0)(vite@8.0.10(@types/node@25.6.0)(jiti@2.7.0))
-
-  examples/html-basic:
-    dependencies:
-      '@tsuzuru/html':
-        specifier: workspace:*
-        version: link:../../packages/html
-    devDependencies:
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vite:
-        specifier: ^8.0.10
-        version: 8.0.10(@types/node@25.6.0)(jiti@2.7.0)
 
   packages/cli:
     dependencies:

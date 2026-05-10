@@ -4,7 +4,7 @@ Status: accepted.
 
 ## Context
 
-`examples/dsl-v2-basic` already had a Settings screen, but it was placeholder UI.
+`examples/preact-basic` already had a Settings screen, but it was placeholder UI.
 The text reveal checkbox and related controls were not connected to runtime
 presentation behavior.
 
@@ -14,7 +14,7 @@ preferences flow without changing engine or adapter APIs.
 
 ## Decision
 
-Text preferences start as host-owned preferences in `examples/dsl-v2-basic`.
+Text preferences start as host-owned preferences in `examples/preact-basic`.
 
 The example stores:
 
@@ -81,7 +81,7 @@ Owns:
 ## Current limitations
 
 - Preferences are not stored in save data.
-- Preferences are local to `examples/dsl-v2-basic`.
+- Preferences are local to `examples/preact-basic`.
 - localStorage is synchronous and example-specific.
 - Audio volume, BGM volume, SE volume, and voice volume are out of scope.
 - Auto mode, skip mode, and read tracking are out of scope.

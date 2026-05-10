@@ -75,7 +75,8 @@ packages/
   plugin-std-audio/
 
 examples/
-  dsl-v2-basic/
+  preact-basic/
+  html-basic/
 ```
 
 Current design / planning docs:
@@ -93,10 +94,11 @@ docs/
   plans/
 ```
 
-Current runnable example:
+Current runnable examples:
 
 ```txt
-examples/dsl-v2-basic
+examples/preact-basic
+examples/html-basic
 ```
 
 Future package candidates such as `@tsuzuru/vite` or `create-tsuzuru` must not be documented as implemented until they exist and work.
@@ -253,7 +255,7 @@ Examples are integration checks and usage references.
 Current example:
 
 ```txt
-examples/dsl-v2-basic
+examples/preact-basic
 ```
 
 Example responsibilities:
@@ -283,7 +285,7 @@ The current DSL is indentation-based and line-oriented.
 Representative current syntax:
 
 ```txt
-title "DSL v2 Basic"
+title "Preact Basic"
 
 character mio name="美緒"
 
@@ -774,7 +776,7 @@ in text reveal timing.
 
 ## Example App Flow
 
-`examples/dsl-v2-basic` demonstrates the current architecture in one runnable example.
+`examples/preact-basic` demonstrates the current architecture in one runnable example.
 
 It should show:
 
@@ -810,7 +812,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-preact-basic build
 ```
 
 Biome owns formatting, linting, and import organization.
@@ -920,7 +922,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
 ```
 

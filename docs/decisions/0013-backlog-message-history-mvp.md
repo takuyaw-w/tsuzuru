@@ -4,7 +4,7 @@ Status: accepted.
 
 ## Context
 
-After the Save / Load MVP, `examples/dsl-v2-basic` needed a minimal Backlog
+After the Save / Load MVP, `examples/preact-basic` needed a minimal Backlog
 screen that displays messages the player has already seen.
 
 Tsuzuru already exposes renderable runtime events through `@tsuzuru/preact`'s
@@ -15,7 +15,7 @@ APIs.
 ## Decision
 
 Backlog / Message History MVP starts as host-owned presentation state in
-`examples/dsl-v2-basic`.
+`examples/preact-basic`.
 
 The example records `narration` and `dialogue` visible events during runtime and
 renders them through the existing Backlog screen. The implementation does not

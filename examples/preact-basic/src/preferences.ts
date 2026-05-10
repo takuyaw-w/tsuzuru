@@ -18,7 +18,7 @@ export const DEFAULT_EXAMPLE_PREFERENCES: ExamplePreferences = {
   voiceVolume: 0.9,
 };
 
-export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
+export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
 
 export function loadPreferences(): ExamplePreferences {
   const storage = getLocalStorage();

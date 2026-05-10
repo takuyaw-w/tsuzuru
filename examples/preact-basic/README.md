@@ -1,4 +1,4 @@
-# Tsuzuru DSL v2 Basic Fullscreen Example
+# Tsuzuru Preact Basic Fullscreen Example
 
 This example runs a multi-file scenario project from `scenario/main.tzr` as a fullscreen visual-novel style browser screen. It compiles the project with `compileTzrProject` and drives the compiled document through `@tsuzuru/preact`'s `useRuntime`.
 
@@ -81,10 +81,10 @@ Controls:
 - Choices are shown above the message window while the previous message remains visible. Click a choice button to select it.
 
 ```sh
-pnpm --filter @tsuzuru/example-dsl-v2-basic dev
-pnpm --filter @tsuzuru/example-dsl-v2-basic check:scenario
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
-pnpm --filter @tsuzuru/example-dsl-v2-basic test:ui
+pnpm --filter @tsuzuru/example-preact-basic dev
+pnpm --filter @tsuzuru/example-preact-basic check:scenario
+pnpm --filter @tsuzuru/example-preact-basic build
+pnpm --filter @tsuzuru/example-preact-basic test:ui
 ```
 
 The UI check uses Playwright to start the example dev server at `http://127.0.0.1:5173/`, capture a title-screen screenshot under `test-results`, and run a short click-through smoke check.

@@ -4,7 +4,7 @@ Status: accepted.
 
 ## Context
 
-`examples/dsl-v2-basic` now demonstrates title, save/load, backlog, gallery,
+`examples/preact-basic` now demonstrates title, save/load, backlog, gallery,
 settings, text reveal, and text preferences. A minimal Auto Mode is the next
 presentation behavior needed to make the example feel closer to a playable
 visual novel.
@@ -15,7 +15,7 @@ jumps, conditions, plugin commands, or save/restore primitives.
 
 ## Decision
 
-Auto Mode starts in `examples/dsl-v2-basic` as a host-owned presentation
+Auto Mode starts in `examples/preact-basic` as a host-owned presentation
 controller.
 
 The runtime menu exposes an `Auto` toggle. When enabled, the example waits for

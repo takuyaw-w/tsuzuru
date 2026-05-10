@@ -38,12 +38,18 @@ await mountTsuzuruHtml(root, {
 
 ```sh
 pnpm --filter @tsuzuru/example-html-basic dev
+pnpm --filter @tsuzuru/example-html-basic check:scenario
 pnpm --filter @tsuzuru/example-html-basic typecheck
 pnpm --filter @tsuzuru/example-html-basic build
 ```
 
 `dev`, `typecheck`, and `build` first build `@tsuzuru/html` so the example uses
 the package's exported JavaScript and CSS paths.
+
+`check:scenario` runs `tsuzuru check` through `tsuzuru.config.ts`. The browser
+loads `/scenario/main.tzr` from Vite's public directory, while the CLI validates
+the same files on disk from `public/scenario/main.tzr` and
+`public/scenario/**/*.tzr`.
 
 ## Scenario Files
 

@@ -1,8 +1,8 @@
 import { expect, type Locator, test } from "@playwright/test";
 
-const SAVE_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:saves:v1";
-const PREFERENCES_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:preferences:v1";
-const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-dsl-v2-basic:read-tracking:v1";
+const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
+const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
+const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
@@ -25,7 +25,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByText("Step")).toHaveCount(0);
   await expect(page.locator(".debug-panel")).toHaveCount(0);
 
-  await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Preact Basic" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
   await page.getByRole("button", { name: "Settings" }).click();
@@ -42,7 +42,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByLabel("SE volume", { exact: true })).toHaveValue("0.45");
   await expect(page.getByLabel("Voice volume", { exact: true })).toHaveValue("0.55");
   await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "DSL v2 Basic" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Preact Basic" })).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");

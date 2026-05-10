@@ -42,7 +42,7 @@ import { parseTzr, compileTzr } from "@tsuzuru/core";
 Current runnable example:
 
 ```txt
-examples/dsl-v2-basic
+examples/preact-basic
 ```
 
 ## Current Package Roles
@@ -60,7 +60,7 @@ packages/plugin-std-audio
 Current example:
 
 ```txt
-examples/dsl-v2-basic
+examples/preact-basic
 ```
 
 Package responsibilities:
@@ -117,7 +117,7 @@ Do not add general-purpose scripting features unless explicitly requested.
 Use the current DSL style.
 
 ```txt
-title "DSL v2 Basic"
+title "Preact Basic"
 
 character mio name="美緒"
 
@@ -290,7 +290,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
-pnpm --filter @tsuzuru/example-dsl-v2-basic build
+pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
 ```
 

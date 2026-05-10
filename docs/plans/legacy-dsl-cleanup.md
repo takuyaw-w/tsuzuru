@@ -12,7 +12,7 @@
 - Compiler: `packages/core/src/compiler.ts`
 - DSL AST: `packages/core/src/scenario-ast.ts`
 - Condition parser/evaluator: `packages/core/src/condition-parser.ts`, `packages/core/src/condition-evaluator.ts`
-- Runnable example: `examples/dsl-v2-basic`
+- Runnable example: `examples/preact-basic`
 
 The `packages/core/src/dsl-v2/` transition directory was removed. The DSL v2
 implementation now lives directly under `packages/core/src/`.

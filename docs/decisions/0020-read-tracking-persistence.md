@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-`examples/dsl-v2-basic` already tracks read narration and dialogue messages in
+`examples/preact-basic` already tracks read narration and dialogue messages in
 `RuntimeApp` state. Skip Mode uses that state to advance only messages that were
 already read before the current display.
 
@@ -16,7 +16,7 @@ unread after restart.
 
 ## Decision
 
-`examples/dsl-v2-basic` persists Read Tracking to localStorage.
+`examples/preact-basic` persists Read Tracking to localStorage.
 
 The stored data contains:
 
@@ -27,7 +27,7 @@ The stored data contains:
 The storage key is separate from save slots:
 
 ```txt
-tsuzuru:example-dsl-v2-basic:read-tracking:v1
+tsuzuru:example-preact-basic:read-tracking:v1
 ```
 
 Payloads with a mismatched scenario id or scenario version are ignored. Invalid
@@ -82,4 +82,4 @@ project storage policy, or a package-level Read Tracking hook.
 - `docs/decisions/0016-read-tracking-mvp.md`
 - `docs/decisions/0017-skip-mode-mvp.md`
 - `docs/plans/v0.11-read-tracking-persistence.md`
-- `examples/dsl-v2-basic/src/read-tracking.ts`
+- `examples/preact-basic/src/read-tracking.ts`

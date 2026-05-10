@@ -4,7 +4,7 @@ Status: accepted.
 
 ## Context
 
-`examples/dsl-v2-basic` already demonstrates Backlog / Message History and Auto
+`examples/preact-basic` already demonstrates Backlog / Message History and Auto
 Mode as host-owned presentation behavior. Skip Mode will need a way to know
 which narration and dialogue messages have already been shown to the player.
 
@@ -14,7 +14,7 @@ events and keep a current-session read set.
 
 ## Decision
 
-Read Tracking starts in `examples/dsl-v2-basic` as host-owned presentation
+Read Tracking starts in `examples/preact-basic` as host-owned presentation
 state.
 
 The MVP tracks only `narration` and `dialogue` visible events. When either kind

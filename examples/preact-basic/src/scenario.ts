@@ -9,7 +9,7 @@ const scenarioModules = import.meta.glob<string>("../scenario/**/*.tzr", {
 });
 
 export const scenarioIdentity = {
-  id: "tsuzuru.example.dsl-v2-basic",
+  id: "tsuzuru.example.preact-basic",
   version: "1",
 } as const;
 

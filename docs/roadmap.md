@@ -342,7 +342,7 @@ Potential scope:
 
 This is not part of v0.1 unless explicitly re-scoped.
 
-For v0.1, project creation is manual. Users should follow the root README quickstart or use `examples/dsl-v2-basic` as the current runnable Vite + Preact reference.
+For v0.1, project creation is manual. Users should follow the root README quickstart or use `examples/preact-basic` as the current runnable Vite + Preact reference.
 
 ## Vite Integration
 
@@ -438,7 +438,7 @@ v0.1 readiness requires:
 - `pnpm typecheck` passes
 - `pnpm --filter @tsuzuru/core build` passes
 - `pnpm --filter @tsuzuru/preact build` passes
-- `pnpm --filter @tsuzuru/example-dsl-v2-basic build` passes
+- `pnpm --filter @tsuzuru/example-preact-basic build` passes
 - examples work from a clean checkout
 - public exports are reviewed
 - README quickstart is accurate
