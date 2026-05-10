@@ -42,6 +42,8 @@ export interface TsuzuruHtmlMountOptions {
   readonly plugins?: TsuzuruHtmlRuntimeControllerOptions["plugins"];
   readonly commandHandlers?: TsuzuruHtmlRuntimeControllerOptions["commandHandlers"];
   readonly onDiagnostic?: TsuzuruHtmlRuntimeControllerOptions["onDiagnostic"];
+  readonly onRuntimeEventChange?: (event: RuntimeEvent | null) => void;
+  readonly onVisibleEventChange?: (event: RuntimeEvent | null) => void;
   readonly autoClearWait?: boolean;
   readonly autoStepTransientEvents?: boolean;
   readonly autoStepMaxSteps?: number;
@@ -84,6 +86,8 @@ export async function mountTsuzuruHtml(
   let assets: TsuzuruHtmlAssets | null = options.assets ?? null;
   let audioLayer: TsuzuruHtmlAudioLayer | null = null;
   const removeListeners: Array<() => void> = [];
+  let lastNotifiedRuntimeEvent: RuntimeEvent | null = null;
+  let lastNotifiedVisibleEvent: RuntimeEvent | null = null;
   const notices = createTsuzuruHtmlNoticeSink(() => {
     renderTsuzuruHtmlNotices(view, notices.values());
   });
@@ -96,6 +100,23 @@ export async function mountTsuzuruHtml(
   const onDiagnostic: TsuzuruHtmlRuntimeControllerOptions["onDiagnostic"] = (diagnostic) => {
     notices.add(`runtime:${diagnostic.code}:${diagnostic.message}`, diagnostic.message);
     options.onDiagnostic?.(diagnostic);
+  };
+  const notifyRuntimeEventChanges = () => {
+    if (controller === null) {
+      return;
+    }
+
+    const runtimeEvent = controller.getEvent();
+    if (runtimeEvent !== lastNotifiedRuntimeEvent) {
+      lastNotifiedRuntimeEvent = runtimeEvent;
+      options.onRuntimeEventChange?.(runtimeEvent);
+    }
+
+    const visibleEvent = controller.getVisibleEvent();
+    if (visibleEvent !== lastNotifiedVisibleEvent) {
+      lastNotifiedVisibleEvent = visibleEvent;
+      options.onVisibleEventChange?.(visibleEvent);
+    }
   };
 
   const renderRuntime = () => {
@@ -113,6 +134,7 @@ export async function mountTsuzuruHtml(
     renderTsuzuruHtmlVisualLayer(view.visualLayer, controller.getState(), assets, notices);
     audioLayer?.sync(controller.getState());
     renderTsuzuruHtmlNotices(view, notices.values());
+    notifyRuntimeEventChanges();
   };
 
   let runtimeDocument: RuntimeDocument | undefined;

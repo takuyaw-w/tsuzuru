@@ -52,6 +52,37 @@ describe("mountTsuzuruHtml", () => {
     expect(toText(app.element as unknown as TestElement)).toContain("Ready.");
   });
 
+  it("notifies runtime and visible event changes", async () => {
+    const document = new TestDocument();
+    const root = document.createElement("main") as unknown as HTMLElement;
+    const runtimeEvents: Array<string | null> = [];
+    const visibleEvents: Array<string | null> = [];
+    const app = await mountTsuzuruHtml(root, {
+      scenario: {
+        document: compileScript(`scene start:
+  narration:
+    Ready.
+  choice "Choose":
+    "Stay":
+      narration:
+        Stayed.
+`),
+      },
+      onRuntimeEventChange: (event) => {
+        runtimeEvents.push(event?.type ?? null);
+      },
+      onVisibleEventChange: (event) => {
+        visibleEvents.push(event?.type ?? null);
+      },
+    });
+
+    app.step();
+    app.step();
+
+    expect(runtimeEvents).toEqual(["narration", "choice"]);
+    expect(visibleEvents).toEqual(["narration", "choice"]);
+  });
+
   it("renders choices and resolves choice button clicks", async () => {
     const document = new TestDocument();
     const root = document.createElement("main") as unknown as HTMLElement;

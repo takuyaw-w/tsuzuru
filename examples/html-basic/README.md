@@ -1,16 +1,15 @@
 # Tsuzuru HTML Basic Example
 
-This example shows the first no-framework browser playback path for Tsuzuru.
+This example shows the no-framework browser playback path for Tsuzuru.
 
 It uses `@tsuzuru/html` directly from Vanilla DOM code. It does not use Preact,
 React, Vue, TSX, or JSX.
 
-Current scope is intentionally small: this plays a `.tzr` scenario from browser
-URLs and demonstrates include-based multi-file loading, narration, dialogue,
-choices, timed waits, std-visual background/sprite rendering, std-audio event
-handling, and end state rendering.
+The host app is also written with Vanilla DOM. It provides a title screen,
+runtime screen, session-only backlog, example-owned settings, and an asset
+gallery while keeping scenario playback inside `@tsuzuru/html`.
 
-The example mounts the HTML adapter with a scenario URL:
+The runtime screen mounts the HTML adapter with a scenario URL:
 
 ```ts
 import { mountTsuzuruHtml } from "@tsuzuru/html";
@@ -39,6 +38,8 @@ await mountTsuzuruHtml(root, {
 ```sh
 pnpm --filter @tsuzuru/example-html-basic dev
 pnpm --filter @tsuzuru/example-html-basic check:scenario
+pnpm --filter @tsuzuru/example-html-basic test
+pnpm --filter @tsuzuru/example-html-basic test:ui
 pnpm --filter @tsuzuru/example-html-basic typecheck
 pnpm --filter @tsuzuru/example-html-basic build
 ```
@@ -50,6 +51,9 @@ the package's exported JavaScript and CSS paths.
 loads `/scenario/main.tzr` from Vite's public directory, while the CLI validates
 the same files on disk from `public/scenario/main.tzr` and
 `public/scenario/**/*.tzr`.
+
+`test` covers small host-app helpers. `test:ui` runs a Playwright smoke test for
+the title/runtime/backlog/settings/gallery flow.
 
 ## Scenario Files
 
@@ -75,7 +79,19 @@ Audio entries are present in `assets.json`, but the example intentionally does
 not ship audio files. Missing audio files and autoplay failures are treated as
 non-fatal notices by `@tsuzuru/html`.
 
+## Screens
+
+- Title: starts runtime playback and links to Backlog / Settings / Gallery.
+- Runtime: mounts `@tsuzuru/html` and keeps a small Vanilla DOM control bar.
+- Backlog: records narration and dialogue visible events for the current
+  browser session only.
+- Settings: stores text font size, message window opacity, and notice display
+  preferences in `localStorage`, then applies them through CSS variables.
+- Gallery: reads `assets.json` and displays visual assets with thumbnails; audio
+  assets are listed by ID because the example does not ship audio files.
+
 ## Current Limits
 
-Save/load, backlog, settings, rich visual transitions, and production audio
-policy are still outside this example.
+Save/load, Auto, Skip, read tracking persistence, rich visual transitions, and
+production audio policy are still outside this example. Backlog is not persisted
+across reloads.

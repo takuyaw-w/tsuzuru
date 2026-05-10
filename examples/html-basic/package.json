@@ -7,7 +7,9 @@
     "dev": "pnpm --filter @tsuzuru/html build && vite",
     "build": "pnpm --filter @tsuzuru/html build && vite build",
     "typecheck": "pnpm --filter @tsuzuru/html build && tsc -p tsconfig.json --noEmit",
-    "check:scenario": "tsuzuru check"
+    "check:scenario": "tsuzuru check",
+    "test": "vitest run tests/*.test.ts",
+    "test:ui": "playwright test -c playwright.config.ts"
   },
   "dependencies": {
     "@tsuzuru/cli": "workspace:*",
@@ -17,7 +19,9 @@
     "@tsuzuru/plugin-std-visual": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "vite": "^8.0.10"
   }
 }
