@@ -1,6 +1,7 @@
 import type { RuntimeState } from "@tsuzuru/core";
 import { getStdVisualState, type StdVisualSpritePosition, type StdVisualTransition } from "@tsuzuru/plugin-std-visual";
 import type { ComponentProps } from "preact";
+import { assets } from "../assets.js";
 
 type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
 
@@ -89,11 +90,9 @@ interface AssetPresentation {
 type SpritePresentation = AssetPresentation;
 
 function getBackgroundPresentation(assetId: string): AssetPresentation {
-  if (assetId === "station") {
-    return {
-      className: "visual-layer__background--station",
-      label: "STATION",
-    };
+  const presentation = assets.visual.backgrounds[assetId as keyof typeof assets.visual.backgrounds];
+  if (presentation !== undefined) {
+    return presentation;
   }
   return {
     className: "visual-layer__background--generic",
@@ -102,11 +101,9 @@ function getBackgroundPresentation(assetId: string): AssetPresentation {
 }
 
 function getSpritePresentation(assetId: string): SpritePresentation {
-  if (assetId === "mio_smile") {
-    return {
-      className: "visual-layer__sprite--mio-smile",
-      label: "美緒",
-    };
+  const presentation = assets.visual.sprites[assetId as keyof typeof assets.visual.sprites];
+  if (presentation !== undefined) {
+    return presentation;
   }
   return {
     className: "visual-layer__sprite--generic",

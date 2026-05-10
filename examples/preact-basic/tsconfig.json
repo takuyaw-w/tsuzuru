@@ -7,5 +7,5 @@
     "jsxImportSource": "preact",
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "tsuzuru.config.ts"]
+  "include": ["assets.ts", "src/**/*.ts", "src/**/*.tsx", "tsuzuru.config.ts"]
 }

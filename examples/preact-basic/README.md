@@ -29,11 +29,11 @@ policy.
 
 The example also includes an Audio Playback MVP. The std-audio plugin records
 BGM, SE, and Voice state/events, and the example-side `AudioLayer` resolves
-those asset IDs through `src/audio-assets.ts` and attempts playback with browser
-audio elements. BGM / SE / Voice volume can be changed from Settings. Audio files
-are not bundled; place files under `public/assets/audio/...` to match the asset
-map. Playback and asset resolution are host-owned presentation behavior, not
-core or plugin behavior.
+those asset IDs through `assets.ts` and attempts playback with browser audio
+elements. BGM / SE / Voice volume can be changed from Settings. Audio files are
+not bundled; place files under `public/assets/audio/...` to match the asset map.
+Playback and asset resolution are host-owned presentation behavior, not core or
+plugin behavior.
 
 The runtime menu also includes an Auto Mode MVP. Auto Mode can be toggled from
 the `Auto` button and advances narration or dialogue after the full text is
@@ -55,7 +55,10 @@ runtime feature, and the MVP uses only current-session Read Tracking rather than
 persistent read state.
 
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
-them from `scenario/main.tzr` with `include "./path.tzr"`. `src/scenario.ts`
+them from `scenario/main.tzr` with `include "./path.tzr"`. Asset IDs and their
+example-side presentation mapping live in `assets.ts`; this mirrors
+`examples/html-basic/assets.ts`, although the Preact example stores CSS
+placeholder presentation in addition to audio URLs. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
 editing. Title, load, settings, backlog, and gallery UI belong in `src/screens`.
 

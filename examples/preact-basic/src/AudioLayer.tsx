@@ -1,7 +1,7 @@
 import type { RuntimeState } from "@tsuzuru/core";
 import { getStdAudioState } from "@tsuzuru/plugin-std-audio";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import { bgmAssets, seAssets, voiceAssets } from "./audio-assets.js";
+import { assets } from "../assets.js";
 import type { ExamplePreferences } from "./preferences.js";
 
 interface AudioLayerProps {
@@ -69,7 +69,7 @@ export function AudioLayer({ runtimeState, preferences }: AudioLayerProps) {
     bgmAudioRef.current = null;
     bgmAssetIdRef.current = assetId;
 
-    const src = resolveAudioAssetUrl(bgmAssets, "BGM", assetId, addNotice);
+    const src = resolveAudioAssetUrl(assets.audio.bgm, "BGM", assetId, addNotice);
     if (src === null) {
       return;
     }
@@ -108,7 +108,7 @@ export function AudioLayer({ runtimeState, preferences }: AudioLayerProps) {
         continue;
       }
       latestSeSequenceRef.current = event.sequence;
-      const src = resolveAudioAssetUrl(seAssets, "SE", event.assetId, addNotice);
+      const src = resolveAudioAssetUrl(assets.audio.se, "SE", event.assetId, addNotice);
       if (src === null) {
         continue;
       }
@@ -135,7 +135,7 @@ export function AudioLayer({ runtimeState, preferences }: AudioLayerProps) {
         continue;
       }
       latestVoiceSequenceRef.current = event.sequence;
-      const src = resolveAudioAssetUrl(voiceAssets, "Voice", event.assetId, addNotice);
+      const src = resolveAudioAssetUrl(assets.audio.voice, "Voice", event.assetId, addNotice);
       if (src === null) {
         continue;
       }
