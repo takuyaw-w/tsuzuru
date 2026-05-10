@@ -11,6 +11,7 @@ test("navigates title, runtime, backlog, settings, and gallery", async ({ page }
   await expect(viewport).toHaveJSProperty("clientHeight", 720);
 
   await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("navigation", { name: "Runtime menu" })).toBeVisible();
   await expect(page.locator(".tzr-html-message-window")).toBeVisible();
   await page.locator(".tzr-html-viewport").click({ position: { x: 640, y: 360 } });
   await expect(page.locator(".tzr-html-background")).toBeVisible();

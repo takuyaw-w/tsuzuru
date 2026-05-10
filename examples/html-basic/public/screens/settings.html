@@ -1,0 +1,46 @@
+<section class="html-basic-screen html-basic-screen--panel" aria-label="Settings">
+  <div class="html-basic-screen__content html-basic-screen__content--panel">
+    <h1 class="html-basic-screen__heading">Settings</h1>
+    <div class="html-basic-settings" data-slot="settings-form">
+      <label class="html-basic-settings__field">
+        <span class="html-basic-settings__label">Text font size</span>
+        <input
+          type="range"
+          class="html-basic-settings__control"
+          aria-label="Text font size"
+          min="0.95"
+          max="1.35"
+          step="0.05"
+          data-field="text-font-size"
+        />
+        <span class="html-basic-settings__hint" data-slot="text-font-size-value"></span>
+      </label>
+
+      <label class="html-basic-settings__field">
+        <span class="html-basic-settings__label">Message window opacity</span>
+        <input
+          type="range"
+          class="html-basic-settings__control"
+          aria-label="Message window opacity"
+          min="0.55"
+          max="0.95"
+          step="0.05"
+          data-field="message-window-opacity"
+        />
+        <span class="html-basic-settings__hint" data-slot="message-window-opacity-value"></span>
+      </label>
+
+      <label class="html-basic-settings__field">
+        <span class="html-basic-settings__label">Audio notices</span>
+        <input
+          type="checkbox"
+          class="html-basic-settings__control"
+          aria-label="Audio notices"
+          data-field="audio-notices-visible"
+        />
+        <span class="html-basic-settings__hint" data-slot="audio-notices-visible-value"></span>
+      </label>
+    </div>
+    <button type="button" class="html-basic-screen__button" data-action="back">Back</button>
+  </div>
+</section>

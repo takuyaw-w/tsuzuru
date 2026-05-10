@@ -8,4 +8,4 @@ if (!(root instanceof HTMLElement)) {
   throw new Error("Missing #app element.");
 }
 
-createHtmlBasicApp(root);
+await createHtmlBasicApp(root);

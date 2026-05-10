@@ -3,6 +3,11 @@ import { describe, expect, it } from "vitest";
 import { createHtmlBasicBacklogEntry } from "../src/backlog.js";
 import { createHtmlBasicGallerySections } from "../src/gallery.js";
 import {
+  createHtmlBasicScreenTemplateLoader,
+  HtmlBasicScreenTemplateError,
+  requireHtmlBasicTemplateElement,
+} from "../src/screen-template.js";
+import {
   HTML_BASIC_SETTINGS_STORAGE_KEY,
   loadHtmlBasicSettings,
   saveHtmlBasicSettings,
@@ -83,6 +88,39 @@ describe("html-basic helpers", () => {
     expect(sections[1]?.items[0]?.id).toBe("mio_smile");
     expect(sections[2]?.items.map((item) => item.id)).toEqual(["daily_theme", "page", "mio_001"]);
   });
+
+  it("loads screen templates through fetch once and returns cloned elements", async () => {
+    let fetchCount = 0;
+    const loader = createHtmlBasicScreenTemplateLoader({
+      document: {} as Document,
+      fetch: async (input) => {
+        fetchCount += 1;
+        expect(input).toBe("/screens/title.html");
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          text: async () => "<section></section>",
+        };
+      },
+      parse: () => new FakeElement() as unknown as HTMLElement,
+    });
+
+    const first = await loader.load("title");
+    const second = await loader.load("title");
+
+    expect(fetchCount).toBe(1);
+    expect(first).not.toBe(second);
+  });
+
+  it("reports missing template data selectors", () => {
+    expect(() =>
+      requireHtmlBasicTemplateElement(new FakeElement() as unknown as ParentNode, '[data-action="start"]', "title"),
+    ).toThrow(HtmlBasicScreenTemplateError);
+    expect(() =>
+      requireHtmlBasicTemplateElement(new FakeElement() as unknown as ParentNode, '[data-action="start"]', "title"),
+    ).toThrow('Template "title" is missing required selector: [data-action="start"]');
+  });
 });
 
 class MapStorage {
@@ -94,6 +132,16 @@ class MapStorage {
 
   public setItem(key: string, value: string): void {
     this.values.set(key, value);
+  }
+}
+
+class FakeElement {
+  public cloneNode(): FakeElement {
+    return new FakeElement();
+  }
+
+  public querySelector(): Element | null {
+    return null;
   }
 }
 

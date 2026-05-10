@@ -9,11 +9,12 @@ The host app is also written with Vanilla DOM. It provides a title screen,
 runtime screen, session-only backlog, example-owned settings, and an asset
 gallery while keeping scenario playback inside `@tsuzuru/html`.
 
-The runtime screen mounts the HTML adapter with a scenario URL:
+The app starts by loading HTML screen templates, then the runtime screen mounts
+the HTML adapter with a scenario URL:
 
 ```ts
-import { mountTsuzuruHtml } from "@tsuzuru/html";
 import "@tsuzuru/html/style.css";
+import { createHtmlBasicApp } from "./app.js";
 import "./style.css";
 
 const root = document.getElementById("app");
@@ -22,15 +23,7 @@ if (!(root instanceof HTMLElement)) {
   throw new Error("Missing #app element.");
 }
 
-await mountTsuzuruHtml(root, {
-  title: "Tsuzuru HTML Basic",
-  className: "html-basic-player",
-  scenario: {
-    entryUrl: "/scenario/main.tzr",
-    entryId: "public/scenario/main.tzr",
-  },
-  assetsUrl: "/assets/assets.json",
-});
+await createHtmlBasicApp(root);
 ```
 
 ## Commands
@@ -89,6 +82,47 @@ non-fatal notices by `@tsuzuru/html`.
   preferences in `localStorage`, then applies them through CSS variables.
 - Gallery: reads `assets.json` and displays visual assets with thumbnails; audio
   assets are listed by ID because the example does not ship audio files.
+
+## Editable Templates
+
+The screen structure lives in plain HTML files under `public/screens/`.
+Non-engineers can edit copy and markup in these files without touching
+TypeScript:
+
+- `public/screens/title.html`
+- `public/screens/backlog.html`
+- `public/screens/settings.html`
+- `public/screens/gallery.html`
+- `public/screens/runtime-menu.html`
+
+Other commonly edited files are:
+
+- `src/style.css` for visual styling
+- `public/scenario/**/*.tzr` for scenario text
+- `public/assets/assets.json` for asset IDs and browser URLs
+
+TypeScript in `src/app.ts` loads those templates and connects behavior through
+the following template contract:
+
+- `data-action="start"`
+- `data-action="back"`
+- `data-action="open-backlog"`
+- `data-action="open-settings"`
+- `data-action="open-gallery"`
+- `data-action="return-title"`
+- `data-slot="backlog-list"`
+- `data-slot="gallery-content"`
+- `data-slot="settings-form"`
+- `data-slot="runtime-root"`
+- `data-slot="runtime-menu"`
+- `data-field="text-font-size"`
+- `data-field="message-window-opacity"`
+- `data-field="audio-notices-visible"`
+
+Dynamic runtime text, backlog entries, settings values, and asset IDs are
+inserted with `textContent` or DOM attributes. Removing required `data-action`,
+`data-slot`, or `data-field` attributes will break the connected behavior and
+show a template error in the player.
 
 ## Current Limits
 
