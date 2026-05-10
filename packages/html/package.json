@@ -1,0 +1,51 @@
+{
+  "name": "@tsuzuru/html",
+  "version": "0.1.1",
+  "description": "Vanilla DOM runtime and UI adapter for Tsuzuru.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./style.css": "./dist/src/style.css"
+  },
+  "files": [
+    "dist/src/index.*",
+    "dist/src/mount.*",
+    "dist/src/style.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/html"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/html#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "html",
+    "dom",
+    "runtime"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
+    "test": "vitest run --dir tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

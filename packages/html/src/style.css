@@ -1,0 +1,41 @@
+.tzr-html-player {
+  display: grid;
+  min-height: 100%;
+  box-sizing: border-box;
+  place-items: center;
+  color: var(--tzr-html-color, #fffaf0);
+  background: var(--tzr-html-background, #101419);
+  font-family: var(
+    --tzr-html-font-family,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+}
+
+.tzr-html-viewport {
+  display: grid;
+  width: min(100%, var(--tzr-html-viewport-width, 960px));
+  min-height: min(100%, var(--tzr-html-viewport-min-height, 540px));
+  box-sizing: border-box;
+  place-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.tzr-html-title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.tzr-html-status {
+  margin: 0;
+  color: var(--tzr-html-muted-color, rgba(255, 250, 240, 0.72));
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
