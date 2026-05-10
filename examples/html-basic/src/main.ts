@@ -11,4 +11,8 @@ if (!(root instanceof HTMLElement)) {
 await mountTsuzuruHtml(root, {
   title: "Tsuzuru HTML Basic",
   className: "html-basic-player",
+  scenario: {
+    entryUrl: "/scenario/main.tzr",
+    entryId: "public/scenario/main.tzr",
+  },
 });

@@ -13,9 +13,11 @@
     "./style.css": "./dist/src/style.css"
   },
   "files": [
+    "dist/src/dom-renderer.*",
     "dist/src/index.*",
     "dist/src/mount.*",
     "dist/src/runtime-controller.*",
+    "dist/src/scenario-loader.*",
     "dist/src/style.css"
   ],
   "repository": {

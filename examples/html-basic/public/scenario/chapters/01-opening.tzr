@@ -1,0 +1,19 @@
+scene opening_start:
+  mio:
+    これは Preact も TSX も使わない HTML adapter の再生テストだよ。
+
+  narration:
+    .tzr ファイルを URL から読み込み、include 先の章も解決して再生している。
+
+  wait 300
+
+  choice "どうする？":
+    "もう一度見る" id=again:
+      narration:
+        もう一度、最初のメッセージへ戻る。
+      jump opening_start
+
+    "終わる" id=end:
+      narration:
+        HTML adapter の最小再生はここまで。
+      end

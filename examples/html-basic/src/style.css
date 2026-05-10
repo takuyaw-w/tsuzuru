@@ -16,16 +16,20 @@ body {
 
 .html-basic-player {
   --tzr-html-background:
-    radial-gradient(circle at 70% 18%, rgba(222, 178, 105, 0.26), transparent 28%),
-    linear-gradient(135deg, #142532 0%, #243d43 52%, #16191f 100%);
+    linear-gradient(rgba(8, 11, 15, 0.58), rgba(8, 11, 15, 0.82)),
+    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80");
   --tzr-html-color: #fff8e8;
   --tzr-html-muted-color: rgba(255, 248, 232, 0.72);
+  --tzr-html-panel-background: rgba(7, 12, 18, 0.78);
+  --tzr-html-accent-color: #f3d17a;
   min-height: 100dvh;
+  background-position: center;
+  background-size: cover;
 }
 
 .html-basic-player .tzr-html-viewport {
   border: 1px solid rgba(255, 248, 232, 0.22);
   border-radius: 8px;
-  background: rgba(5, 8, 11, 0.42);
+  background: rgba(5, 8, 11, 0.28);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.32);
 }
