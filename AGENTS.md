@@ -52,6 +52,7 @@ Core packages:
 ```txt
 packages/core
 packages/preact
+packages/vue
 packages/standard-ui-preact
 packages/plugin-std-visual
 packages/plugin-std-audio
@@ -78,6 +79,11 @@ Package responsibilities:
 - `@tsuzuru/preact`
   - connects the core runtime to Preact
   - provides hooks and runtime-facing UI integration
+  - must not own scenario semantics
+
+- `@tsuzuru/vue`
+  - connects the core runtime to Vue
+  - provides composables and runtime-facing UI integration
   - must not own scenario semantics
 
 - `@tsuzuru/standard-ui-preact`

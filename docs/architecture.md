@@ -8,6 +8,7 @@ Tsuzuru is a web-first visual novel engine built around:
 - a TypeScript parser / compiler
 - a browser-independent core runtime
 - Preact integration packages
+- Vue integration package
 - standard visual / audio plugins
 - a small runnable example
 
@@ -70,13 +71,14 @@ Current main packages:
 packages/
   core/
   preact/
+  vue/
   standard-ui-preact/
   plugin-std-visual/
   plugin-std-audio/
 
 examples/
   preact-basic/
-  html-basic/
+  vue-basic/
 ```
 
 Current design / planning docs:
@@ -98,7 +100,6 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
-examples/html-basic
 ```
 
 Future package candidates such as `@tsuzuru/vite` or `create-tsuzuru` must not be documented as implemented until they exist and work.
@@ -173,6 +174,35 @@ Responsibilities:
 If behavior belongs to scenario execution, it belongs in `@tsuzuru/core`.
 
 If behavior belongs to rendering or user interaction, it belongs in `@tsuzuru/preact` or userland UI.
+
+### `@tsuzuru/vue`
+
+`@tsuzuru/vue` connects the core runtime to Vue 3 Composition API.
+
+Responsibilities:
+
+- `useRuntime`
+- `useTsuzuruRuntime`
+- runtime event handling for Vue consumers
+- visible event management
+- transient event stepping
+- click-to-advance wiring
+- choice selection wiring
+- Vue-facing save/load adapter utilities
+- view restoration helpers
+
+`@tsuzuru/vue` must not own:
+
+- `.tzr` syntax
+- parser behavior
+- compiler diagnostics
+- IR generation
+- runtime stepping semantics
+- condition evaluation
+- scene jump semantics
+- core state model decisions
+
+There is no `@tsuzuru/standard-ui-vue` package yet. Vue UI layers currently live in `examples/vue-basic` or userland apps.
 
 ---
 

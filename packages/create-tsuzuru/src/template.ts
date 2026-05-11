@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const DEFAULT_TEMPLATE_NAME = "basic";
-export const SUPPORTED_TEMPLATE_NAMES = ["basic", "preact", "html"] as const;
+export const SUPPORTED_TEMPLATE_NAMES = ["basic", "preact"] as const;
 
 export type TemplateName = (typeof SUPPORTED_TEMPLATE_NAMES)[number];
 
@@ -28,13 +28,11 @@ export async function getTemplateDir(templateName: string = DEFAULT_TEMPLATE_NAM
   throw new Error(`Could not find bundled ${templateName} template.`);
 }
 
-function resolveTemplateDirName(templateName: string): "basic" | "html" {
+function resolveTemplateDirName(templateName: string): "basic" {
   switch (templateName) {
     case "basic":
     case "preact":
       return "basic";
-    case "html":
-      return "html";
     default:
       throw new Error(
         `Unknown template: ${templateName}. Supported templates: ${SUPPORTED_TEMPLATE_NAMES.join(", ")}.`,

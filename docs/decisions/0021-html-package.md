@@ -2,7 +2,14 @@
 
 ## Status
 
-Accepted
+Reverted / superseded.
+
+This decision is historical. The experimental framework-free HTML route was
+removed: `packages/html`, `examples/html-basic`, and
+`packages/create-tsuzuru/templates/html` no longer exist. `@tsuzuru/html` is not
+a current package, and `create-tsuzuru --template html` is not supported. The
+current non-Preact framework integration is `@tsuzuru/vue` with
+`examples/vue-basic`.
 
 ## Context
 

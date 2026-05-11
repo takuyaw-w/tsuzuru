@@ -7,7 +7,7 @@ import { createProject } from "./create-project.js";
 type PackageManager = "npm" | "pnpm" | "yarn";
 
 const USAGE = `Usage:
-  create-tsuzuru <project-name> [--template basic|preact|html]
+  create-tsuzuru <project-name> [--template basic|preact]
 
 Options:
   --template <name>  Project template to use. Defaults to basic.`;

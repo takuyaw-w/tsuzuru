@@ -57,7 +57,7 @@ persistent read state.
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
 them from `scenario/main.tzr` with `include "./path.tzr"`. Asset IDs and their
 example-side presentation mapping live in `assets.ts`; this mirrors
-`examples/html-basic/assets.ts`, although the Preact example stores CSS
+`examples/vue-basic/assets.ts`, although the Preact example stores CSS
 placeholder presentation in addition to audio URLs. `src/scenario.ts`
 automatically collects `scenario/**/*.tzr` with Vite and usually does not need
 editing. Title, load, settings, backlog, and gallery UI belong in `src/screens`.

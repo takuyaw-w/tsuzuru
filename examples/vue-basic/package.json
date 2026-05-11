@@ -1,0 +1,28 @@
+{
+  "name": "@tsuzuru/example-vue-basic",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/vue build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && vite build",
+    "check:scenario": "tsuzuru check",
+    "dev": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/vue build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && vite",
+    "test": "vitest run tests/*.test.ts",
+    "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/vue build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/cli": "workspace:*",
+    "@tsuzuru/config": "workspace:*",
+    "@tsuzuru/core": "workspace:*",
+    "@tsuzuru/plugin-std-audio": "workspace:*",
+    "@tsuzuru/plugin-std-visual": "workspace:*",
+    "@tsuzuru/vue": "workspace:*",
+    "vue": "^3.5.34"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.6",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vite": "^8.0.10"
+  }
+}

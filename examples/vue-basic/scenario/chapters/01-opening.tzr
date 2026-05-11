@@ -1,0 +1,42 @@
+scene start:
+  bg riverside
+  bgm vue_theme
+  show aoi_smile at center
+
+  narration:
+    Vue でも Tsuzuru の runtime document をそのまま再生できる。
+
+  voice aoi_001
+  aoi:
+    Composition API から step と choice を呼んでいるだけだよ。
+
+  set scenario.hasTicket = true
+  add scenario.score += 1
+
+  if scenario.score >= 1:
+    narration:
+      plugin state と scenario state が進んだ。
+  else:
+    narration:
+      まだ何も起きていない。
+
+  choice "次に見るものは？":
+    "Vue の画面構成" id=vueScreen if scenario.hasTicket:
+      se page
+      jump vueScreen
+
+    "終わる" id=finish:
+      jump finish
+
+scene vueScreen:
+  aoi:
+    VisualLayer と AudioLayer は example 側の Vue component として実装している。
+  wait 250
+  jump finish
+
+scene finish:
+  stopBgm
+  hide aoi_smile
+  narration:
+    Preact 以外の framework でも、core runtime の責務は変わらない。
+  end

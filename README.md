@@ -1,8 +1,8 @@
 # Tsuzuru
 
-Tsuzuru は、TypeScript / Vite / Preact を前提とした、Web-first なノベルゲームエンジンです。
+Tsuzuru は、TypeScript / Vite / Preact を主軸とした、Web-first なノベルゲームエンジンです。
 
-`.tzr` という読みやすいシナリオ DSL を使い、シナリオ記述・コンパイル・ランタイム実行・Preact による表示を分離することを目指しています。
+`.tzr` という読みやすいシナリオ DSL を使い、シナリオ記述・コンパイル・ランタイム実行・framework adapter による表示を分離することを目指しています。Preact が本流の integration で、Vue integration は `@tsuzuru/vue` と [`examples/vue-basic`](examples/vue-basic/) で検証しています。
 
 ## 現在のステータス
 
@@ -25,8 +25,9 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - plugin command metadata / runtime dispatch
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
+- `@tsuzuru/vue`
 - Preact basic example
-- HTML basic example
+- Vue basic example
 - DSL v2 design notes
 - legacy cleanup plan
 
@@ -43,6 +44,7 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - skip mode
 - auto mode
 - gallery
+- create-tsuzuru Vue template
 - cloud save
 
 ## 設計方針
@@ -74,11 +76,14 @@ runtime behavior、rendering、plugins、reusable logic は TypeScript に置く
 packages/
   core/
   preact/
-  html/
+  vue/
+  standard-ui-preact/
+  plugin-std-visual/
+  plugin-std-audio/
 
 examples/
   preact-basic/
-  html-basic/
+  vue-basic/
 
 docs/
   design/
@@ -123,6 +128,23 @@ Preact 向け adapter です。
 
 シナリオ実行の本質的なロジックは `@tsuzuru/core` に置きます。
 
+### `@tsuzuru/vue`
+
+Vue 3 向け adapter です。
+
+主な責務:
+
+- `useRuntime`
+- `useTsuzuruRuntime`
+- Vue component としての `RuntimeView`
+- visible event handling
+- auto-step behavior
+- click-to-advance
+- choice selection
+- save/load adapter utilities
+
+`@tsuzuru/standard-ui-vue` はまだありません。Vue UI は現時点では application/example 側で構成します。
+
 ## Quickstart
 
 DSL v2 の current runnable example は [`examples/preact-basic`](examples/preact-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
@@ -140,7 +162,7 @@ pnpm --filter @tsuzuru/example-preact-basic build
 
 `examples/preact-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`create-tsuzuru` は default の basic/Preact template と `--template html` の framework-free HTML template を生成できます。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、`@tsuzuru/html` の URL loading、またはホスト側の手動読み込みで文字列として渡します。
+`create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` は削除済みで、`--template vue` はまだありません。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、またはホスト側の手動読み込みで文字列として渡します。
 
 Release smoke test:
 
@@ -182,7 +204,7 @@ API surface:
 関連ドキュメント:
 
 - [Preact basic example](examples/preact-basic/)
-- [DSL v2 design notes](docs/design/design/dsl-v2.md)
+- [DSL v2 design notes](docs/design/dsl-v2.md)
 - [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
 
 Legacy DSL の `#scene(...)`, `#label(...)`, `@command(...)`, `$macro(...)`, `@if` / `@else` / `@endif` 構文は current supported path ではありません。旧 parser/compiler/API/tests/examples は削除済みで、DSL v2 を使用してください。
@@ -245,12 +267,21 @@ pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic typecheck
 ```
 
-### HTML Basic Example
+### Vue
 
 ```sh
-pnpm --filter @tsuzuru/example-html-basic dev
-pnpm --filter @tsuzuru/example-html-basic check:scenario
-pnpm --filter @tsuzuru/example-html-basic build
+pnpm --filter @tsuzuru/vue test
+pnpm --filter @tsuzuru/vue typecheck
+pnpm --filter @tsuzuru/vue build
+```
+
+### Vue Basic Example
+
+```sh
+pnpm --filter @tsuzuru/example-vue-basic dev
+pnpm --filter @tsuzuru/example-vue-basic check:scenario
+pnpm --filter @tsuzuru/example-vue-basic test
+pnpm --filter @tsuzuru/example-vue-basic build
 ```
 
 ## ドキュメント
@@ -259,7 +290,7 @@ pnpm --filter @tsuzuru/example-html-basic build
 
 ```txt
 docs/
-  design/design/dsl-v2.md
+  design/dsl-v2.md
   runtime.md
   plugin-api.md
   architecture.md
@@ -302,6 +333,7 @@ v0.1 では、以下を目標にします。
 - compile 時に主要な DSL エラーを検出できる
 - std visual/audio command を runtime handler に dispatch できる
 - Preact で runtime を表示・操作できる
+- Vue で runtime を表示・操作できる adapter と example がある
 - DSL v2 example が clean checkout から動く
 - README / docs が実装と一致している
 
@@ -318,6 +350,9 @@ v0.1 では、以下を目標にします。
 - macro API
 - scenario-local macro definitions
 - `@tsuzuru/vite`
+- `@tsuzuru/html`
+- `@tsuzuru/standard-ui-vue`
+- `create-tsuzuru --template vue`
 - cross-file jump existence validation
 - macro argument schema validation
 - save data scenario identity / version / migration

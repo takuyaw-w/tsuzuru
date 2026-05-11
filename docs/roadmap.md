@@ -15,7 +15,7 @@ This roadmap is the product and architecture scope boundary.
 
 ## Product Direction
 
-Tsuzuru is a web-first visual novel engine built with TypeScript, Vite-oriented workflows, and Preact.
+Tsuzuru is a web-first visual novel engine built with TypeScript, Vite-oriented workflows, and framework adapters. Preact remains the primary integration; Vue is covered by `@tsuzuru/vue` and `examples/vue-basic`.
 
 The goal is not to clone KAG, TyranoScript, or Ren'Py.
 
@@ -27,6 +27,7 @@ Tsuzuru should provide:
 - TypeScript-based plugins
 - future TypeScript-based reusable extensions if macro support is reintroduced
 - Preact-based UI customization
+- Vue runtime integration for projects that prefer Vue
 - static web app distribution
 
 The guiding principle:

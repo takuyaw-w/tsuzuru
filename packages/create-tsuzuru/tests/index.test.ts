@@ -93,27 +93,25 @@ describe("runCli", () => {
     const exitCode = await runCli(["--help"]);
 
     expect(exitCode).toBe(0);
-    expect(logs.join("\n")).toContain("--template basic|preact|html");
+    expect(logs.join("\n")).toContain("--template basic|preact");
   });
 
-  it("creates the html template from --template html", async () => {
+  it("reports html as an unknown template", async () => {
     const root = await createTempRoot();
     const previousCwd = process.cwd();
+    const errors: string[] = [];
+    vi.spyOn(console, "error").mockImplementation((message?: unknown) => {
+      errors.push(String(message ?? ""));
+    });
 
     try {
       process.chdir(root);
 
       const exitCode = await runCli(["mypage", "--template", "html"]);
-      const packageJson = JSON.parse(await readFile(join(root, "mypage", "package.json"), "utf8")) as {
-        readonly dependencies: Record<string, string>;
-      };
 
-      expect(exitCode).toBe(0);
-      expect(packageJson.dependencies["@tsuzuru/html"]).toBeDefined();
-      expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
-      await expect(readFile(join(root, "mypage", "src", "screens", "settings.html"), "utf8")).resolves.toContain(
-        'data-tsuzuru-setting="textFontSize"',
-      );
+      expect(exitCode).toBe(1);
+      expect(errors.join("\n")).toContain("Unknown template: html");
+      await expect(readFile(join(root, "mypage", "package.json"), "utf8")).rejects.toThrow();
     } finally {
       process.chdir(previousCwd);
     }

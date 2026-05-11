@@ -1,0 +1,5 @@
+title "Tsuzuru Vue Basic"
+
+character aoi name="葵"
+
+include "./chapters/01-opening.tzr"

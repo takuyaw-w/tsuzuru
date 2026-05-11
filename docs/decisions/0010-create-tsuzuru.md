@@ -1,6 +1,6 @@
 # 0010 create-tsuzuru Package
 
-Status: accepted.
+Status: accepted, amended.
 
 Tsuzuru will ship a dedicated `create-tsuzuru` package for project scaffolding.
 The package owns its templates under `packages/create-tsuzuru/templates` so a
@@ -12,7 +12,8 @@ bundled templates:
 - `create-tsuzuru <project-name>` creates one project from the `basic` template.
 - `--template basic` and `--template preact` both select the existing Preact
   template.
-- `--template html` selects the framework-free `@tsuzuru/html` template.
+- `--template html` was removed after the framework-free HTML adapter route was
+  reverted. It now returns an unknown template error.
 - The generated project includes `tsuzuru.config.ts`.
 - The generated project wires `tsuzuru check` into `check:scenario` and
   `build`.
@@ -34,3 +35,5 @@ Out of scope for the first package:
 - publish and provenance work
 - Vite plugin work
 - `tsuzuru dev` and `tsuzuru build`
+- Vue template work; the current Vue route is `@tsuzuru/vue` plus
+  `examples/vue-basic`

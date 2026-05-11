@@ -20,17 +20,6 @@ pnpm create tsuzuru my-game --template basic
 pnpm create tsuzuru my-game --template preact
 ```
 
-For a framework-free project that uses plain HTML and Vanilla DOM through
-`@tsuzuru/html`, use:
-
-```sh
-pnpm create tsuzuru my-game --template html
-cd my-game
-pnpm install
-pnpm check:scenario
-pnpm dev
-```
-
 Before the matching Tsuzuru packages are published to npm, installing a
 generated project outside this monorepo can fail because the template uses
 publishable semver dependencies.
@@ -51,8 +40,7 @@ The generator supports:
 - `create-tsuzuru <project-name>`
 - `create-tsuzuru <project-name> --template basic`
 - `create-tsuzuru <project-name> --template preact`
-- `create-tsuzuru <project-name> --template html`
-- the bundled `basic` and `html` templates
+- the bundled `basic` template
 - copying files into a new directory
 - replacing the `package.json` name placeholder
 - Vite projects with `tsuzuru.config.ts`
@@ -62,19 +50,9 @@ The `basic` and `preact` template names both generate the existing Vite +
 Preact project. It includes host TSX screens for title, load, settings, backlog,
 and gallery.
 
-The `html` template does not use Preact, React, Vue, TSX, or JSX. Common editing
-targets in generated HTML projects are:
-
-- `index.html`
-- `assets.ts`
-- `scenario/**/*.tzr`
-- `src/screens/*.html`
-- `src/style.css`
-- `public/assets`
-
-The HTML template keeps source scenarios in `scenario/`, screen fragments in
-`src/screens/`, the asset ID table in `assets.ts`, and real browser assets under
-`public/assets/`.
+The removed `html` template is no longer available. Passing `--template html`
+returns an unknown template error. Vue scaffolding is not implemented yet; the
+current Vue route is `@tsuzuru/vue` plus `examples/vue-basic`.
 
 The generated project keeps these scripts:
 

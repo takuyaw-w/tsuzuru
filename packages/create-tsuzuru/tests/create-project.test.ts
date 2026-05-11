@@ -39,36 +39,6 @@ describe("createProject", () => {
     await expect(readFile(join(root, "my-game", "src", "main.tsx"), "utf8")).resolves.toContain("preact");
   });
 
-  it("creates a project from the html template", async () => {
-    const root = await createTempRoot();
-
-    await createProject({ cwd: root, projectName: "html-game", templateName: "html" });
-    const packageJson = JSON.parse(await readFile(join(root, "html-game", "package.json"), "utf8")) as {
-      readonly name: string;
-      readonly dependencies: Record<string, string>;
-    };
-
-    expect(packageJson.name).toBe("html-game");
-    expect(packageJson.dependencies["@tsuzuru/html"]).toBeDefined();
-    expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
-    expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeUndefined();
-    expect(packageJson.dependencies.preact).toBeUndefined();
-    await expect(readFile(join(root, "html-game", "scenario", "main.tzr"), "utf8")).resolves.toContain(
-      'title "Tsuzuru HTML Project"',
-    );
-    await expect(readFile(join(root, "html-game", "assets.ts"), "utf8")).resolves.toContain(
-      "satisfies TsuzuruHtmlAssetsManifest",
-    );
-    await expect(readFile(join(root, "html-game", "src", "screens", "settings.html"), "utf8")).resolves.toContain(
-      'data-tsuzuru-setting="textFontSize"',
-    );
-    await expect(readFile(join(root, "html-game", "tsuzuru.config.ts"), "utf8")).resolves.toContain(
-      'files: ["scenario/**/*.tzr"]',
-    );
-    await expect(readFile(join(root, "html-game", "public", "assets", "assets.json"), "utf8")).rejects.toThrow();
-    await expect(readFile(join(root, "html-game", "public", "scenario", "main.tzr"), "utf8")).rejects.toThrow();
-  });
-
   it("keeps an explicit templateDir higher priority than templateName", async () => {
     const root = await createTempRoot();
     const templateDir = join(root, "template");
@@ -155,5 +125,11 @@ describe("createProject", () => {
     await expect(
       createProject({ cwd: await createTempRoot(), projectName: "my-game", templateName: "unknown" }),
     ).rejects.toThrow("Unknown template: unknown");
+  });
+
+  it("rejects the removed html template name", async () => {
+    await expect(
+      createProject({ cwd: await createTempRoot(), projectName: "my-game", templateName: "html" }),
+    ).rejects.toThrow("Unknown template: html");
   });
 });
