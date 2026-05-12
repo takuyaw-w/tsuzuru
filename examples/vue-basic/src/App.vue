@@ -7,6 +7,7 @@ import type {
   RuntimeState,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
 import { createStdEffectCommandHandlers, createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
 import {
   createStdTextSoundCommandHandlers,
@@ -66,12 +67,14 @@ const plugins: readonly RuntimePluginDefinition[] = [
   createStdAudioPlugin(),
   createStdTextSoundPlugin(),
   createStdEffectPlugin(),
+  createStdCameraPlugin(),
 ];
 const commandHandlers = {
   ...createStdVisualCommandHandlers(),
   ...createStdAudioCommandHandlers(),
   ...createStdTextSoundCommandHandlers(),
   ...createStdEffectCommandHandlers(),
+  ...createStdCameraCommandHandlers(),
 };
 const runtime = documentResult.ok
   ? useRuntime(documentResult.document, {

@@ -4,18 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && vite build",
+    "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && vite build",
     "check:scenario": "tsuzuru check",
-    "dev": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && vite",
+    "dev": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && vite",
     "test": "vitest run tests/*.test.ts",
     "test:ui": "playwright test -c playwright.config.ts",
-    "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && tsc -p tsconfig.json --noEmit"
+    "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@tsuzuru/cli": "workspace:*",
     "@tsuzuru/config": "workspace:*",
     "@tsuzuru/core": "workspace:*",
     "@tsuzuru/plugin-std-audio": "workspace:*",
+    "@tsuzuru/plugin-std-camera": "workspace:*",
     "@tsuzuru/plugin-std-effect": "workspace:*",
     "@tsuzuru/plugin-std-text-sound": "workspace:*",
     "@tsuzuru/plugin-std-visual": "workspace:*",

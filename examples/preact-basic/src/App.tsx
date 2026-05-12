@@ -7,6 +7,7 @@ import {
   type RuntimeState,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
 import {
   createStdEffectCommandHandlers,
   createStdEffectPlugin,
@@ -206,7 +207,13 @@ function RuntimeApp({
   onTitle,
 }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
-    () => [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin(), createStdEffectPlugin()],
+    () => [
+      createStdVisualPlugin(),
+      createStdAudioPlugin(),
+      createStdTextSoundPlugin(),
+      createStdEffectPlugin(),
+      createStdCameraPlugin(),
+    ],
     [],
   );
   const commandHandlers = useMemo(
@@ -215,6 +222,7 @@ function RuntimeApp({
       ...createStdAudioCommandHandlers(),
       ...createStdTextSoundCommandHandlers(),
       ...createStdEffectCommandHandlers(),
+      ...createStdCameraCommandHandlers(),
     }),
     [],
   );

@@ -49,6 +49,7 @@ reintroduced.
 | 0020 | [Read Tracking Persistence](0020-read-tracking-persistence.md) | Accepted |
 | 0022 | [Standard Text Sound Plugin](0022-std-text-sound-plugin.md) | Accepted |
 | 0023 | [Standard Effect Plugin](0023-std-effect-plugin.md) | Accepted |
+| 0024 | [Standard Camera Plugin](0024-std-camera-plugin.md) | Accepted |
 
 ## Reading Order
 

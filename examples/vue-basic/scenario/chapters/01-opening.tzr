@@ -190,7 +190,44 @@ scene effectChoiceAfter:
       jump effectChoice
 
     "Text Sound Lab に戻る" id=returnToLab:
+      jump cameraChoice
+
+scene cameraChoice:
+  choice "camera demo を試す？":
+    "camera focus を見る" id=tryCameraFocus:
+      jump cameraFocusDemo
+
+    "Text Sound Lab に戻る" id=skipCameraDemo:
       jump afterFocus
+
+scene cameraFocusDemo:
+  camera focus tone_stand zoom=1.2 duration=400
+
+  tone:
+    まずは、僕に寄ってみよう。
+
+  camera focus noize_stand zoom=1.2 duration=400
+
+  noize:
+    次は私。画面の重心が少し変わる。
+
+  camera focus mix_stand zoom=1.18 duration=400 easing=easeOut
+
+  mix:
+    focus は、会話の視線を作るための camera state。
+
+  pulse message intensity=light duration=180
+  camera x=0 y=-20 zoom=1.08 duration=500
+
+  narration:
+    三人を少し引き締めるように、画面全体が寄った。
+
+  reset camera duration=400
+
+  narration:
+    カメラは、元の位置へ戻った。
+
+  jump afterFocus
 
 scene afterFocus:
   narration:

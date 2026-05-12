@@ -100,6 +100,35 @@ const stdEffectPluginCommands = {
   }),
 };
 
+const stdCameraPluginCommands = {
+  camera: definePluginCommand("camera", {
+    kind: "named",
+    arguments: [
+      { name: "x", type: "number", optional: true },
+      { name: "y", type: "number", optional: true },
+      { name: "zoom", type: "number", optional: true, min: 0 },
+      { name: "duration", type: "number", optional: true, integer: true, min: 0 },
+      { name: "easing", type: "string", optional: true, values: ["linear", "ease", "easeIn", "easeOut"] },
+    ],
+  }),
+  cameraFocus: definePluginCommand("cameraFocus", {
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [
+      { name: "zoom", type: "number", optional: true, min: 0 },
+      { name: "duration", type: "number", optional: true, integer: true, min: 0 },
+      { name: "easing", type: "string", optional: true, values: ["linear", "ease", "easeIn", "easeOut"] },
+    ],
+  }),
+  resetCamera: definePluginCommand("resetCamera", {
+    kind: "named",
+    arguments: [
+      { name: "duration", type: "number", optional: true, integer: true, min: 0 },
+      { name: "easing", type: "string", optional: true, values: ["linear", "ease", "easeIn", "easeOut"] },
+    ],
+  }),
+};
+
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
@@ -1063,13 +1092,96 @@ scene start:
     ).toContain('Unknown plugin command "shake".');
   });
 
-  it("keeps std visual, audio, text sound, and effect command compilation compatible without plugin metadata", () => {
+  it("compiles and validates std camera plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  camera x=0 y=0 zoom=1 duration=300
+  camera zoom=1.08 duration=240
+  camera focus tone_stand zoom=1.2 duration=400
+  reset camera duration=300
+`,
+      { plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "camera",
+        args: [
+          { type: "NamedArgument", name: "x", value: { type: "NumberValue", value: 0 } },
+          { type: "NamedArgument", name: "y", value: { type: "NumberValue", value: 0 } },
+          { type: "NamedArgument", name: "zoom", value: { type: "NumberValue", value: 1 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "camera",
+        args: [
+          { type: "NamedArgument", name: "zoom", value: { type: "NumberValue", value: 1.08 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 240 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "cameraFocus",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "tone_stand" } },
+          { type: "NamedArgument", name: "zoom", value: { type: "NumberValue", value: 1.2 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+        ],
+      },
+      { type: "CommandInstruction", name: "resetCamera" },
+    ]);
+  });
+
+  it("rejects invalid std camera plugin command arguments when metadata is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  camera duration=100\n", {
+        plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }],
+      }),
+    ).toContain("camera statement requires at least one of x, y, or zoom.");
+    expect(
+      expectCompileFailure("scene start:\n  camera zoom=0 duration=100\n", {
+        plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }],
+      }),
+    ).toContain("camera zoom must be greater than 0.");
+    expect(
+      expectCompileFailure("scene start:\n  camera zoom=1 duration=-1\n", {
+        plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }],
+      }),
+    ).toContain('Plugin command "camera" named argument "duration" must be at least 0.');
+    expect(
+      expectCompileFailure("scene start:\n  camera focus tone_stand zoom=1 duration=100 easing=bounce\n", {
+        plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }],
+      }),
+    ).toContain(
+      'Plugin command "cameraFocus" named argument "easing" must be one of "linear", "ease", "easeIn", "easeOut".',
+    );
+    expect(
+      expectCompileFailure("scene start:\n  camera focus\n", {
+        plugins: [{ name: "stdCamera", commands: stdCameraPluginCommands }],
+      }),
+    ).toContain('Plugin command "cameraFocus" is missing required positional argument 1.');
+  });
+
+  it("rejects std camera sugar when plugin metadata is enabled but std camera is not registered", () => {
+    expect(
+      expectCompileFailure("scene start:\n  camera focus tone_stand zoom=1.2 duration=400\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "cameraFocus".');
+  });
+
+  it("keeps std visual, audio, text sound, effect, and camera command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
   bgm daily_theme
   textSound soft
   shake screen duration=180
+  camera focus tone_stand zoom=1.2 duration=400
 `);
 
     expect(document.instructions).toMatchObject([
@@ -1079,6 +1191,7 @@ scene start:
       { type: "CommandInstruction", name: "startBgm" },
       { type: "CommandInstruction", name: "textSound" },
       { type: "CommandInstruction", name: "shake" },
+      { type: "CommandInstruction", name: "cameraFocus" },
     ]);
   });
 

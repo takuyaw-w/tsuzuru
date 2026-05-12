@@ -163,6 +163,16 @@ test("effect demo choice exposes individual effect paths", async ({ page }) => {
   await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
   await messageWindow.click();
   await expect(messageWindow).toContainText("衝撃や落下", { timeout: 3000 });
+  await messageWindow.click();
+
+  await expect(choiceLayer).toContainText("もう一度 effect を試す？", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
+  await expect(choiceLayer).toContainText("camera demo を試す？", { timeout: 3000 });
+  await expect(choiceLayer.getByRole("button", { name: "camera focus を見る" })).toBeVisible();
+  await expect(choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" })).toBeVisible();
+
+  await choiceLayer.getByRole("button", { name: "camera focus を見る" }).click();
+  await expect(messageWindow).toContainText("まずは、僕に寄ってみよう", { timeout: 3000 });
 });
 
 test("auto mode advances messages and pauses at choices", async ({ page }) => {

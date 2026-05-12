@@ -77,6 +77,7 @@ packages/
   plugin-std-audio/
   plugin-std-text-sound/
   plugin-std-effect/
+  plugin-std-camera/
 
 examples/
   preact-basic/
@@ -327,6 +328,33 @@ It does not:
 - own runtime stepping
 
 Animation and reduced-motion policy belong to the app, renderer, or example.
+
+---
+
+### `@tsuzuru/plugin-std-camera`
+
+`@tsuzuru/plugin-std-camera` provides standard durable camera command handlers.
+
+Responsibilities:
+
+- maintain standard camera plugin state
+- store x / y / zoom / focusTarget presentation state
+- store the latest camera transition duration and easing
+- handle `camera`, `camera focus`, and `resetCamera` command instructions
+- allow camera state to be saved and restored with runtime snapshots
+
+It does not:
+
+- render DOM / Canvas / WebGL
+- run CSS transforms or timers
+- resolve exact focus target coordinates
+- own background or sprite state
+- own one-shot effect events such as shake
+- own scene flow
+- own runtime stepping
+
+Camera transform and reduced-motion policy belong to the app, renderer, or
+example.
 
 ---
 
@@ -1021,6 +1049,8 @@ pnpm --filter @tsuzuru/standard-ui-preact test
 pnpm --filter @tsuzuru/plugin-std-visual test
 pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-text-sound test
+pnpm --filter @tsuzuru/plugin-std-effect test
+pnpm --filter @tsuzuru/plugin-std-camera test
 ```
 
 If `rtk` is available, prefer equivalent `rtk` commands when they preserve the same verification intent and reduce output noise.

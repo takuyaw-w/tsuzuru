@@ -136,6 +136,15 @@ button:disabled {
   height: 100%;
 }
 
+.visual-layer__camera {
+  position: absolute;
+  inset: 0;
+  transform: translate(var(--tzr-camera-x, 0), var(--tzr-camera-y, 0)) scale(var(--tzr-camera-zoom, 1));
+  transform-origin: center center;
+  transition: transform var(--tzr-camera-duration, 0ms) var(--tzr-camera-easing, ease);
+  will-change: transform;
+}
+
 .visual-layer__background {
   object-fit: cover;
 }
@@ -594,6 +603,7 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .visual-layer__camera,
   .effect-layer__flash,
   .std-effect--shake-light,
   .std-effect--shake-normal,
@@ -603,5 +613,6 @@ button:disabled {
   .std-effect--pulse-strong,
   .std-effect--blur {
     animation-duration: 1ms;
+    transition-duration: 1ms;
   }
 }

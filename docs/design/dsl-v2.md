@@ -97,6 +97,11 @@ The following syntax is not Core. It is official standard plugin sugar.
   pulse
   blur
 
+@tsuzuru/plugin-std-camera:
+  camera
+  camera focus
+  reset camera
+
 @tsuzuru/plugin-std-system:
   system.*
   system.unlockEnding
@@ -1579,9 +1584,88 @@ EffectTarget
 
 ---
 
-## 25. `@tsuzuru/plugin-std-system`
+## 25. Camera Statements
 
-### 25.1 Position
+Camera statements are sugar for `@tsuzuru/plugin-std-camera`.
+
+Camera is durable presentation state. It is saved and restored with runtime
+snapshots and is not treated as a one-shot event.
+
+### 25.1 Syntax
+
+```txt
+camera [x=<number>] [y=<number>] [zoom=<number>] [duration=<ms>] [easing=<easing>]
+camera focus <assetId> [zoom=<number>] [duration=<ms>] [easing=<easing>]
+reset camera [duration=<ms>] [easing=<easing>]
+```
+
+### 25.2 Examples
+
+```txt
+camera x=0 y=0 zoom=1 duration=300
+camera x=80 y=-20 zoom=1.15 duration=500
+camera zoom=1.08 duration=240
+camera focus tone_stand zoom=1.2 duration=400
+reset camera duration=300
+```
+
+### 25.3 Rules
+
+- `camera` requires at least one of `x`, `y`, or `zoom`.
+- Omitted `x`, `y`, and `zoom` values keep the current camera value.
+- `camera` clears `focusTarget`.
+- `camera focus` requires a positional asset id.
+- `camera focus` stores `focusTarget` and resets x/y pan to `0`.
+- `zoom` must be greater than `0`.
+- `duration` uses milliseconds and must be an integer greater than or equal to
+  `0`.
+- `easing` is `linear`, `ease`, `easeIn`, or `easeOut`.
+- Actual transform and focus target coordinate policy are renderer / app
+  responsibility.
+
+### 25.4 Runtime Model
+
+The std-camera plugin stores state under `runtimeState.plugins.stdCamera`:
+
+```ts
+{
+  x: number,
+  y: number,
+  zoom: number,
+  focusTarget: string | null,
+  transition: {
+    durationMs: number,
+    easing: "linear" | "ease" | "easeIn" | "easeOut",
+  } | null,
+}
+```
+
+Initial state has `x: 0`, `y: 0`, `zoom: 1`, `focusTarget: null`, and
+`transition: null`. Camera commands store the latest transition object.
+
+### 25.5 BNF
+
+```bnf
+CameraStatement
+  ::= CameraMoveStatement
+   | CameraFocusStatement
+   | ResetCameraStatement
+
+CameraMoveStatement
+  ::= "camera" CameraNamedArgs NEWLINE
+
+CameraFocusStatement
+  ::= "camera" "focus" IDENT CameraNamedArgs NEWLINE
+
+ResetCameraStatement
+  ::= "reset" "camera" CameraNamedArgs? NEWLINE
+```
+
+---
+
+## 26. `@tsuzuru/plugin-std-system`
+
+### 26.1 Position
 
 ```txt
 scenario.* is Core
@@ -1590,7 +1674,7 @@ direct set/add mutation of system.* is prohibited
 system.* updates go through call system.*
 ```
 
-### 25.2 Minimal Semantic Actions
+### 26.2 Minimal Semantic Actions
 
 ```txt
 call system.unlockEnding(id=trueEnd)
@@ -1598,7 +1682,7 @@ call system.unlockCg(id=cg001)
 call system.unlockAchievement(id=firstClear)
 ```
 
-### 25.3 Meaning
+### 26.3 Meaning
 
 ```txt
 system.unlockEnding(id=<id>)
@@ -1611,7 +1695,7 @@ system.unlockAchievement(id=<id>)
   => unlock achievement
 ```
 
-### 25.4 Recommended System State Path
+### 26.4 Recommended System State Path
 
 ```txt
 system.endings.<id>.unlocked
@@ -1619,7 +1703,7 @@ system.gallery.cgs.<id>.unlocked
 system.achievements.<id>.unlocked
 ```
 
-### 24.5 Condition Examples
+### 26.5 Condition Examples
 
 ```txt
 if system.endings.trueEnd.unlocked:
@@ -1632,7 +1716,7 @@ if system.achievements.firstClear.unlocked:
   jump bonusScene
 ```
 
-### 24.6 Validation
+### 26.6 Validation
 
 - `id` is required.
 - `id` may be `IDENT` or `STRING`.
@@ -1641,7 +1725,7 @@ if system.achievements.firstClear.unlocked:
 - Re-unlocking the same ID is no-op.
 - No warning is emitted for re-unlock no-op.
 
-### 24.7 Not Adopted
+### 26.7 Not Adopted
 
 ```txt
 call system.set(path=..., value=...)
@@ -1651,9 +1735,9 @@ Generic `system.set` is not adopted.
 
 ---
 
-## 25. File Splitting and Assets
+## 27. File Splitting and Assets
 
-### 25.1 File Splitting
+### 27.1 File Splitting
 
 The following are not included in the DSL for now:
 
@@ -1669,7 +1753,7 @@ Policy:
 - Entry file and entry scene are handled by config.
 - Cross-file scene resolution is handled by compiler / config layer.
 
-### 25.2 Assets
+### 27.2 Assets
 
 Policy:
 
@@ -1679,9 +1763,9 @@ Policy:
 
 ---
 
-## 26. Reserved / Not Adopted
+## 28. Reserved / Not Adopted
 
-### 26.1 Not Adopted
+### 28.1 Not Adopted
 
 ```txt
 raw script
@@ -1697,7 +1781,7 @@ flags.*
 vars.*
 ```
 
-### 26.2 Reserved
+### 28.2 Reserved
 
 ```txt
 macro
@@ -1713,7 +1797,7 @@ named text preset / style
 
 ---
 
-## 27. Full Example
+## 29. Full Example
 
 ```txt
 title "雨の駅"

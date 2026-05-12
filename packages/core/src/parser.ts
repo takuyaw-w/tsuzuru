@@ -42,6 +42,8 @@ import type {
   TzrSetStatement,
   TzrShowStatement,
   TzrStatePath,
+  TzrStdCameraCommandName,
+  TzrStdCameraStatement,
   TzrStdEffectCommandName,
   TzrStdEffectStatement,
   TzrStopBgmStatement,
@@ -117,6 +119,7 @@ type CallWaitStatementKeyword = "call" | "wait";
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
 type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
 type EffectStatementKeyword = TzrStdEffectCommandName;
+type CameraStatementKeyword = "camera" | "camera focus" | "reset camera";
 type SystemUnlockStatementName = "system.unlockEnding" | "system.unlockCg" | "system.unlockAchievement";
 
 interface InlineRawAttribute {
@@ -454,6 +457,9 @@ class TzrParser {
     }
     if (isEffectStatementSource(source)) {
       return this.parseStdEffectStatement(line, source, statementColumn);
+    }
+    if (isCameraStatementSource(source)) {
+      return this.parseStdCameraStatement(line, source, statementColumn);
     }
     if (source === "system" || source.startsWith("system.")) {
       return this.parseSystemStatement(line, source, statementColumn);
@@ -2365,11 +2371,71 @@ class TzrParser {
     };
   }
 
+  private parseStdCameraStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrStdCameraStatement | undefined {
+    const parsed = this.parseStdCameraStatementHeader(source);
+    if (parsed === undefined) {
+      this.addError(line, statementColumn, "Invalid camera statement.");
+      this.cursor += 1;
+      return undefined;
+    }
+
+    const restColumn =
+      parsed.rest.length === 0 ? statementColumn + source.length : statementColumn + source.indexOf(parsed.rest);
+    const args = this.parseStdEffectArguments(line, parsed.rest, restColumn, parsed.keyword);
+    this.cursor += 1;
+    if (args === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StdCameraStatement",
+      name: parsed.name,
+      args,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseStdCameraStatementHeader(
+    source: string,
+  ):
+    | { readonly name: TzrStdCameraCommandName; readonly keyword: CameraStatementKeyword; readonly rest: string }
+    | undefined {
+    if (source === "reset camera" || source.startsWith("reset camera ")) {
+      return {
+        name: "resetCamera",
+        keyword: "reset camera",
+        rest: source.slice("reset camera".length).trim(),
+      };
+    }
+
+    if (source === "camera focus" || source.startsWith("camera focus ")) {
+      return {
+        name: "cameraFocus",
+        keyword: "camera focus",
+        rest: source.slice("camera focus".length).trim(),
+      };
+    }
+
+    if (source === "camera" || source.startsWith("camera ")) {
+      return {
+        name: "camera",
+        keyword: "camera",
+        rest: source.slice("camera".length).trim(),
+      };
+    }
+
+    return undefined;
+  }
+
   private parseStdEffectArguments(
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword,
   ): readonly TzrArgument[] | undefined {
     if (source.length === 0) {
       return [];
@@ -2398,7 +2464,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword,
   ): readonly { readonly source: string; readonly column: number }[] | undefined {
     const parts: { readonly source: string; readonly column: number }[] = [];
     let inString = false;
@@ -2446,7 +2512,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword,
   ): TzrArgument | undefined {
     const value = this.parseStdEffectArgumentValue(line, source, sourceColumn, keyword);
     if (value === undefined) {
@@ -2464,7 +2530,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword,
   ): TzrArgument | undefined {
     const equalsIndex = source.indexOf("=");
     const name = source.slice(0, equalsIndex).trim();
@@ -2508,7 +2574,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword,
   ): TzrValue | undefined {
     const loc = {
       start: this.location(line.line, sourceColumn),
@@ -3809,6 +3875,15 @@ function isEffectStatementSource(source: string): boolean {
     source.startsWith("pulse ") ||
     source === "blur" ||
     source.startsWith("blur ")
+  );
+}
+
+function isCameraStatementSource(source: string): boolean {
+  return (
+    source === "camera" ||
+    source.startsWith("camera ") ||
+    source === "reset camera" ||
+    source.startsWith("reset camera ")
   );
 }
 

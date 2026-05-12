@@ -40,6 +40,7 @@ import type {
   TzrSeStatement,
   TzrSetStatement,
   TzrShowStatement,
+  TzrStdCameraStatement,
   TzrStdEffectStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
@@ -440,6 +441,9 @@ class TzrCompiler {
           break;
         case "StdEffectStatement":
           instructions.push(...this.buildStdEffectInstruction(statement));
+          break;
+        case "StdCameraStatement":
+          instructions.push(...this.buildStdCameraInstruction(statement));
           break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
@@ -845,6 +849,19 @@ class TzrCompiler {
     ];
   }
 
+  private buildStdCameraInstruction(statement: TzrStdCameraStatement): readonly CommandInstruction[] {
+    this.validateStdCameraSugar(statement);
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: statement.name,
+        args: statement.args,
+        loc: statement.loc,
+      },
+    ];
+  }
+
   private validateStdEffectSugar(statement: TzrStdEffectStatement): void {
     if (statement.name !== "flash") {
       return;
@@ -857,6 +874,21 @@ class TzrCompiler {
 
     if (!STD_EFFECT_HEX_COLOR_PATTERN.test(color.value.value)) {
       this.addError(color.value.loc.start, "flash color must be a HEX color literal.");
+    }
+  }
+
+  private validateStdCameraSugar(statement: TzrStdCameraStatement): void {
+    if (statement.name === "camera" && !hasAnyNamedArgument(statement.args, ["x", "y", "zoom"])) {
+      this.addError(statement.loc.start, "camera statement requires at least one of x, y, or zoom.");
+    }
+
+    if (statement.name === "resetCamera") {
+      return;
+    }
+
+    const zoom = findNamedArgument(statement.args, "zoom");
+    if (zoom?.value.type === "NumberValue" && zoom.value.value <= 0) {
+      this.addError(zoom.value.loc.start, "camera zoom must be greater than 0.");
     }
   }
 
@@ -1088,6 +1120,19 @@ class TzrCompiler {
     const sourceLines = this.document.sourceLineMap?.[location.filePath] ?? this.document.sourceLines;
     return sourceLines[location.line - 1] ?? "";
   }
+}
+
+function findNamedArgument(
+  args: readonly TzrArgument[],
+  name: string,
+): Extract<TzrArgument, { readonly type: "NamedArgument" }> | undefined {
+  return args.find((arg): arg is Extract<TzrArgument, { readonly type: "NamedArgument" }> => {
+    return arg.type === "NamedArgument" && arg.name === name;
+  });
+}
+
+function hasAnyNamedArgument(args: readonly TzrArgument[], names: readonly string[]): boolean {
+  return names.some((name) => findNamedArgument(args, name) !== undefined);
 }
 
 function buildSceneIndexes(instructions: readonly TzrInstruction[]): Readonly<Record<string, DeclarationIndexEntry>> {

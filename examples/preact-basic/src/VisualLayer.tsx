@@ -1,4 +1,5 @@
 import type { RuntimeState } from "@tsuzuru/core";
+import { getStdCameraState, type StdCameraEasing } from "@tsuzuru/plugin-std-camera";
 import { getStdVisualState, type StdVisualSpritePosition, type StdVisualTransition } from "@tsuzuru/plugin-std-visual";
 import type { ComponentProps } from "preact";
 import { assets } from "../assets.js";
@@ -11,42 +12,46 @@ interface VisualLayerProps {
 
 export function VisualLayer({ runtimeState }: VisualLayerProps) {
   const visualState = getStdVisualState(runtimeState);
+  const cameraState = getStdCameraState(runtimeState);
   const background = visualState.background;
   const sprites = Object.entries(visualState.sprites);
   const backgroundTransition = toTransitionPresentation("visual-layer__background", background?.transition);
   const backgroundPresentation = background === null ? null : getBackgroundPresentation(background.assetId);
+  const cameraPresentation = toCameraPresentation(cameraState, visualState.sprites);
 
   return (
     <div className="visual-layer" aria-label="std-visual placeholder layer">
-      <div
-        key={background === null ? "empty" : transitionKey(background.assetId, background.transition)}
-        className={joinClassNames(
-          "visual-layer__background",
-          background === null ? "visual-layer__background--empty" : undefined,
-          backgroundPresentation?.className,
-          backgroundTransition.className,
-        )}
-        style={backgroundTransition.style}
-      >
-        {background === null || backgroundPresentation === null ? null : (
-          <div className="visual-layer__scene" aria-label={background.assetId}>
-            <span className="visual-layer__scene-sun" />
-            <span className="visual-layer__scene-platform" />
-            <span className="visual-layer__scene-rail visual-layer__scene-rail--front" />
-            <span className="visual-layer__scene-rail visual-layer__scene-rail--back" />
-            <span className="visual-layer__scene-sign">{backgroundPresentation.label}</span>
-          </div>
-        )}
-      </div>
-      <div className="visual-layer__sprites" aria-label="sprites">
-        {sprites.map(([assetId, sprite]) => (
-          <SpritePlaceholder
-            key={transitionKey(assetId, sprite.transition)}
-            assetId={assetId}
-            position={sprite.position}
-            {...(sprite.transition === undefined ? {} : { transition: sprite.transition })}
-          />
-        ))}
+      <div className="visual-layer__camera" style={cameraPresentation.style}>
+        <div
+          key={background === null ? "empty" : transitionKey(background.assetId, background.transition)}
+          className={joinClassNames(
+            "visual-layer__background",
+            background === null ? "visual-layer__background--empty" : undefined,
+            backgroundPresentation?.className,
+            backgroundTransition.className,
+          )}
+          style={backgroundTransition.style}
+        >
+          {background === null || backgroundPresentation === null ? null : (
+            <div className="visual-layer__scene" aria-label={background.assetId}>
+              <span className="visual-layer__scene-sun" />
+              <span className="visual-layer__scene-platform" />
+              <span className="visual-layer__scene-rail visual-layer__scene-rail--front" />
+              <span className="visual-layer__scene-rail visual-layer__scene-rail--back" />
+              <span className="visual-layer__scene-sign">{backgroundPresentation.label}</span>
+            </div>
+          )}
+        </div>
+        <div className="visual-layer__sprites" aria-label="sprites">
+          {sprites.map(([assetId, sprite]) => (
+            <SpritePlaceholder
+              key={transitionKey(assetId, sprite.transition)}
+              assetId={assetId}
+              position={sprite.position}
+              {...(sprite.transition === undefined ? {} : { transition: sprite.transition })}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -114,6 +119,53 @@ function getSpritePresentation(assetId: string): SpritePresentation {
 interface TransitionPresentation {
   readonly className?: string;
   readonly style?: DivStyle;
+}
+
+interface CameraPresentation {
+  readonly style: DivStyle;
+}
+
+function toCameraPresentation(
+  camera: ReturnType<typeof getStdCameraState>,
+  sprites: ReturnType<typeof getStdVisualState>["sprites"],
+): CameraPresentation {
+  const focusOffsetX = camera.focusTarget === null ? 0 : cameraFocusOffsetX(sprites[camera.focusTarget]?.position);
+  const transition = camera.transition;
+
+  return {
+    style: {
+      "--tzr-camera-x": `${camera.x + focusOffsetX}px`,
+      "--tzr-camera-y": `${camera.y}px`,
+      "--tzr-camera-zoom": String(camera.zoom),
+      "--tzr-camera-duration": transition === null ? "0ms" : `${transition.durationMs}ms`,
+      "--tzr-camera-easing": transition === null ? "ease" : toCssCameraEasing(transition.easing),
+    } as DivStyle,
+  };
+}
+
+function cameraFocusOffsetX(position: StdVisualSpritePosition | undefined): number {
+  switch (position) {
+    case "left":
+      return 160;
+    case "right":
+      return -160;
+    case "center":
+    case undefined:
+      return 0;
+  }
+}
+
+function toCssCameraEasing(easing: StdCameraEasing): string {
+  switch (easing) {
+    case "linear":
+      return "linear";
+    case "easeIn":
+      return "ease-in";
+    case "easeOut":
+      return "ease-out";
+    case "ease":
+      return "ease";
+  }
 }
 
 function toTransitionPresentation(
