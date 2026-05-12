@@ -1,4 +1,4 @@
-import type { SourceLocation, SourceRange } from "./ast.js";
+import type { SourceLocation, SourceRange, TzrArgument, TzrValue } from "./ast.js";
 import { parseTzrConditionExpression } from "./condition-parser.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
 import type {
@@ -42,6 +42,8 @@ import type {
   TzrSetStatement,
   TzrShowStatement,
   TzrStatePath,
+  TzrStdEffectCommandName,
+  TzrStdEffectStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrStringValue,
@@ -114,6 +116,7 @@ type StateStatementKeyword = "set" | "add";
 type CallWaitStatementKeyword = "call" | "wait";
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
 type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
+type EffectStatementKeyword = TzrStdEffectCommandName;
 type SystemUnlockStatementName = "system.unlockEnding" | "system.unlockCg" | "system.unlockAchievement";
 
 interface InlineRawAttribute {
@@ -448,6 +451,9 @@ class TzrParser {
     }
     if (source === "stopTextSound" || source.startsWith("stopTextSound ")) {
       return this.parseStopTextSoundStatement(line, source, statementColumn);
+    }
+    if (isEffectStatementSource(source)) {
+      return this.parseStdEffectStatement(line, source, statementColumn);
     }
     if (source === "system" || source.startsWith("system.")) {
       return this.parseSystemStatement(line, source, statementColumn);
@@ -2338,6 +2344,205 @@ class TzrParser {
     };
   }
 
+  private parseStdEffectStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrStdEffectStatement | undefined {
+    const name = source.match(/^\S+/)?.[0] as TzrStdEffectCommandName;
+    const rest = source.slice(name.length).trim();
+    const args = this.parseStdEffectArguments(line, rest, statementColumn + source.indexOf(rest), name);
+    this.cursor += 1;
+    if (args === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StdEffectStatement",
+      name,
+      args,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseStdEffectArguments(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: EffectStatementKeyword,
+  ): readonly TzrArgument[] | undefined {
+    if (source.length === 0) {
+      return [];
+    }
+
+    const parts = this.splitWhitespaceArguments(line, source, sourceColumn, keyword);
+    if (parts === undefined) {
+      return undefined;
+    }
+
+    const args: TzrArgument[] = [];
+    for (const part of parts) {
+      const arg = part.source.includes("=")
+        ? this.parseStdEffectNamedArgument(line, part.source, part.column, keyword)
+        : this.parseStdEffectPositionalArgument(line, part.source, part.column, keyword);
+      if (arg === undefined) {
+        return undefined;
+      }
+      args.push(arg);
+    }
+
+    return args;
+  }
+
+  private splitWhitespaceArguments(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: EffectStatementKeyword,
+  ): readonly { readonly source: string; readonly column: number }[] | undefined {
+    const parts: { readonly source: string; readonly column: number }[] = [];
+    let inString = false;
+    let escaped = false;
+    let partStart: number | null = null;
+
+    for (let index = 0; index < source.length; index += 1) {
+      const char = source[index] ?? "";
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = inString;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        partStart ??= index;
+        continue;
+      }
+      if (/\s/.test(char) && !inString) {
+        if (partStart !== null) {
+          parts.push({ source: source.slice(partStart, index), column: sourceColumn + partStart });
+          partStart = null;
+        }
+        continue;
+      }
+      partStart ??= index;
+    }
+
+    if (inString) {
+      this.addError(line, sourceColumn + source.length, `${keyword} string argument is missing closing quote.`);
+      return undefined;
+    }
+
+    if (partStart !== null) {
+      parts.push({ source: source.slice(partStart), column: sourceColumn + partStart });
+    }
+
+    return parts;
+  }
+
+  private parseStdEffectPositionalArgument(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: EffectStatementKeyword,
+  ): TzrArgument | undefined {
+    const value = this.parseStdEffectArgumentValue(line, source, sourceColumn, keyword);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "PositionalArgument",
+      value,
+      loc: value.loc,
+    };
+  }
+
+  private parseStdEffectNamedArgument(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: EffectStatementKeyword,
+  ): TzrArgument | undefined {
+    const equalsIndex = source.indexOf("=");
+    const name = source.slice(0, equalsIndex).trim();
+    if (name.length === 0) {
+      this.addError(line, sourceColumn, `Invalid ${keyword} argument name.`);
+      return undefined;
+    }
+
+    const nameColumn = sourceColumn + source.indexOf(name);
+    if (!isValidTzrIdentifier(name)) {
+      this.addError(line, nameColumn, `Invalid ${keyword} argument name.`);
+      return undefined;
+    }
+
+    const valueRest = source.slice(equalsIndex + 1);
+    const valueOffset = valueRest.search(/\S/);
+    if (valueOffset === -1) {
+      this.addError(line, sourceColumn + equalsIndex + 1, `${keyword} argument value is required.`);
+      return undefined;
+    }
+
+    const valueSource = valueRest.slice(valueOffset).trimEnd();
+    const valueColumn = sourceColumn + equalsIndex + 1 + valueOffset;
+    const value = this.parseStdEffectArgumentValue(line, valueSource, valueColumn, keyword);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "NamedArgument",
+      name,
+      value,
+      loc: {
+        start: this.location(line.line, nameColumn),
+        end: value.loc.end,
+      },
+    };
+  }
+
+  private parseStdEffectArgumentValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: EffectStatementKeyword,
+  ): TzrValue | undefined {
+    const loc = {
+      start: this.location(line.line, sourceColumn),
+      end: this.location(line.line, sourceColumn + source.length),
+    };
+
+    if (source.startsWith("'") || source.startsWith("`")) {
+      this.parseStringLiteral(line, source, sourceColumn);
+      return undefined;
+    }
+    if (source.startsWith('"')) {
+      const value = this.parseStringLiteral(line, source, sourceColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+      return { type: "StringValue", value, loc };
+    }
+    if (NUMBER_LITERAL_PATTERN.test(source)) {
+      return { type: "NumberValue", value: Number(source), loc };
+    }
+    if (source === "true" || source === "false") {
+      return { type: "BooleanValue", value: source === "true", loc };
+    }
+    if (source === "null") {
+      return { type: "NullValue", value: null, loc };
+    }
+    if (isValidTzrDottedIdentifier(source)) {
+      return { type: "StringValue", value: source, loc };
+    }
+
+    this.addError(line, sourceColumn, `Invalid ${keyword} argument value.`);
+    return undefined;
+  }
+
   private parseSystemStatement(
     line: SourceLine,
     source: string,
@@ -3592,6 +3797,19 @@ function findVisualStandaloneToken(source: string, token: string): number | unde
 
 function isSystemUnlockStatementName(value: string): value is SystemUnlockStatementName {
   return value === "system.unlockEnding" || value === "system.unlockCg" || value === "system.unlockAchievement";
+}
+
+function isEffectStatementSource(source: string): boolean {
+  return (
+    source === "shake" ||
+    source.startsWith("shake ") ||
+    source === "flash" ||
+    source.startsWith("flash ") ||
+    source === "pulse" ||
+    source.startsWith("pulse ") ||
+    source === "blur" ||
+    source.startsWith("blur ")
+  );
 }
 
 function systemUnlockKind(statementName: SystemUnlockStatementName): TzrSystemUnlockKind {

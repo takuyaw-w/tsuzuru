@@ -40,6 +40,7 @@ import type {
   TzrSeStatement,
   TzrSetStatement,
   TzrShowStatement,
+  TzrStdEffectStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrTextBlockItem,
@@ -55,6 +56,7 @@ import type {
 
 const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
+const STD_EFFECT_HEX_COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 
 export interface TzrCompilePluginDefinition {
   readonly name: string;
@@ -435,6 +437,9 @@ class TzrCompiler {
           break;
         case "StopTextSoundStatement":
           instructions.push(this.buildStopTextSoundInstruction(statement));
+          break;
+        case "StdEffectStatement":
+          instructions.push(...this.buildStdEffectInstruction(statement));
           break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
@@ -825,6 +830,34 @@ class TzrCompiler {
       args: [],
       loc: statement.loc,
     };
+  }
+
+  private buildStdEffectInstruction(statement: TzrStdEffectStatement): readonly CommandInstruction[] {
+    this.validateStdEffectSugar(statement);
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: statement.name,
+        args: statement.args,
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private validateStdEffectSugar(statement: TzrStdEffectStatement): void {
+    if (statement.name !== "flash") {
+      return;
+    }
+
+    const color = statement.args.find((arg) => arg.type === "NamedArgument" && arg.name === "color");
+    if (color?.type !== "NamedArgument" || color.value.type !== "StringValue") {
+      return;
+    }
+
+    if (!STD_EFFECT_HEX_COLOR_PATTERN.test(color.value.value)) {
+      this.addError(color.value.loc.start, "flash color must be a HEX color literal.");
+    }
   }
 
   private audioAssetRefValue(assetRef: TzrAudioAssetRef): string {

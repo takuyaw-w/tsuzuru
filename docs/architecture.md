@@ -76,6 +76,7 @@ packages/
   plugin-std-visual/
   plugin-std-audio/
   plugin-std-text-sound/
+  plugin-std-effect/
 
 examples/
   preact-basic/
@@ -301,6 +302,31 @@ It does not:
 
 The optional browser player lives in the `@tsuzuru/plugin-std-text-sound/browser`
 subpath. Playback timing still belongs to the app, renderer, or example.
+
+---
+
+### `@tsuzuru/plugin-std-effect`
+
+`@tsuzuru/plugin-std-effect` provides standard one-shot effect command handlers.
+
+Responsibilities:
+
+- maintain standard effect plugin state
+- append shake / flash / pulse / blur events
+- expose sequence-based event consumption state
+- prepare effect state for snapshots by clearing one-shot events
+- handle standard effect command instructions
+
+It does not:
+
+- render DOM / Canvas / WebGL
+- run CSS animations or timers
+- resolve presentation styling
+- own persistent visual state
+- own scene flow
+- own runtime stepping
+
+Animation and reduced-motion policy belong to the app, renderer, or example.
 
 ---
 

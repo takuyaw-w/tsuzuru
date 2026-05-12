@@ -5,6 +5,11 @@ scene opening_start:
   show noize_stand at center with dissolve(duration=250)
   show mix_stand at right with dissolve(duration=250)
 
+  shake screen intensity=light duration=180
+  flash color="#ffffff" duration=120
+  pulse message intensity=normal duration=220
+  blur screen amount=6 duration=300
+
   narration:
     夜の旧校舎に、視聴覚室だけがまだ明るく残っていた。
     机の上には小さなスピーカーと、文字送りを測るための古いメトロノームが置かれている。

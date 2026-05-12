@@ -1,11 +1,17 @@
-import type {
-  CompiledTzrDocument,
-  RuntimeDiagnostic,
-  RuntimeEvent,
-  RuntimePluginDefinition,
-  RuntimeState,
+import {
+  type CompiledTzrDocument,
+  createRuntimeSnapshot,
+  type RuntimeDiagnostic,
+  type RuntimeEvent,
+  type RuntimePluginDefinition,
+  type RuntimeState,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import {
+  createStdEffectCommandHandlers,
+  createStdEffectPlugin,
+  prepareStdEffectStateForSnapshot,
+} from "@tsuzuru/plugin-std-effect";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
@@ -17,7 +23,7 @@ import {
 } from "@tsuzuru/plugin-std-text-sound";
 import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
+import { createRuntimeSaveData, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
   GameShell,
@@ -34,6 +40,7 @@ import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
 import { AudioLayer } from "./AudioLayer.js";
+import { EffectLayer } from "./EffectLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
@@ -199,7 +206,7 @@ function RuntimeApp({
   onTitle,
 }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
-    () => [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin()],
+    () => [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin(), createStdEffectPlugin()],
     [],
   );
   const commandHandlers = useMemo(
@@ -207,6 +214,7 @@ function RuntimeApp({
       ...createStdVisualCommandHandlers(),
       ...createStdAudioCommandHandlers(),
       ...createStdTextSoundCommandHandlers(),
+      ...createStdEffectCommandHandlers(),
     }),
     [],
   );
@@ -381,7 +389,13 @@ function RuntimeApp({
       onSaveSlotsChange(
         saveToSlot(
           slotId,
-          createExampleSaveData(runtime.createSaveData(), getRetainedMessageForSave(lastMessageEvent)),
+          createExampleSaveData(
+            createRuntimeSaveData(
+              createRuntimeSnapshot(prepareStdEffectStateForSnapshot(runtime.state)),
+              runtime.visibleEvent,
+            ),
+            getRetainedMessageForSave(lastMessageEvent),
+          ),
         ),
       );
       setOverlay(null);
@@ -504,6 +518,7 @@ function RuntimeApp({
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
+            <EffectLayer runtimeState={runtime.state} />
             <RuntimeControlBar
               readCount={readCount}
               autoModeEnabled={autoMode.enabled}

@@ -811,6 +811,49 @@ button {
   color: rgba(255, 220, 143, 0.9);
 }
 
+.effect-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.effect-layer__flash {
+  position: absolute;
+  inset: 0;
+  background: var(--tzr-effect-flash-color, #fff);
+  animation: std-effect-flash var(--tzr-effect-duration, 120ms) ease-out both;
+}
+
+.std-effect--shake-light {
+  animation: std-effect-shake-light var(--tzr-effect-duration, 180ms) ease-in-out both;
+}
+
+.std-effect--shake-normal {
+  animation: std-effect-shake-normal var(--tzr-effect-duration, 220ms) ease-in-out both;
+}
+
+.std-effect--shake-strong {
+  animation: std-effect-shake-strong var(--tzr-effect-duration, 260ms) ease-in-out both;
+}
+
+.std-effect--pulse-light {
+  animation: std-effect-pulse-light var(--tzr-effect-duration, 180ms) ease-out both;
+}
+
+.std-effect--pulse-normal {
+  animation: std-effect-pulse-normal var(--tzr-effect-duration, 220ms) ease-out both;
+}
+
+.std-effect--pulse-strong {
+  animation: std-effect-pulse-strong var(--tzr-effect-duration, 260ms) ease-out both;
+}
+
+.std-effect--blur {
+  animation: std-effect-blur var(--tzr-effect-duration, 300ms) ease-in-out both;
+}
+
 @media (max-width: 720px) {
   .app__viewport {
     width: min(100vw, calc(100dvh * 16 / 9));
@@ -867,11 +910,142 @@ button {
   }
 }
 
+@keyframes std-effect-flash {
+  from {
+    opacity: 0.86;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes std-effect-shake-light {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+
+  50% {
+    transform: translate3d(2px, -1px, 0);
+  }
+
+  75% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+}
+
+@keyframes std-effect-shake-normal {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  20% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+
+  40% {
+    transform: translate3d(4px, -2px, 0);
+  }
+
+  60% {
+    transform: translate3d(-3px, 1px, 0);
+  }
+
+  80% {
+    transform: translate3d(3px, -1px, 0);
+  }
+}
+
+@keyframes std-effect-shake-strong {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  16% {
+    transform: translate3d(-8px, 4px, 0);
+  }
+
+  32% {
+    transform: translate3d(8px, -4px, 0);
+  }
+
+  48% {
+    transform: translate3d(-7px, 3px, 0);
+  }
+
+  64% {
+    transform: translate3d(7px, -3px, 0);
+  }
+
+  80% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+}
+
+@keyframes std-effect-pulse-light {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes std-effect-pulse-normal {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes std-effect-pulse-strong {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes std-effect-blur {
+  0%,
+  100% {
+    filter: blur(0);
+  }
+
+  45% {
+    filter: blur(var(--tzr-effect-blur-amount, 6px));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .visual-layer__background--transition-fade,
   .visual-layer__background--transition-dissolve,
   .visual-layer__sprite--transition-fade,
-  .visual-layer__sprite--transition-dissolve {
+  .visual-layer__sprite--transition-dissolve,
+  .effect-layer__flash,
+  .std-effect--shake-light,
+  .std-effect--shake-normal,
+  .std-effect--shake-strong,
+  .std-effect--pulse-light,
+  .std-effect--pulse-normal,
+  .std-effect--pulse-strong,
+  .std-effect--blur {
     animation-duration: 1ms;
   }
 }

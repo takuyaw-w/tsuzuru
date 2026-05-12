@@ -7,6 +7,7 @@ import type {
   RuntimeState,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdEffectCommandHandlers, createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
@@ -23,6 +24,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { assets } from "../assets.js";
 import AudioLayer from "./components/AudioLayer.vue";
 import ChoiceLayer from "./components/ChoiceLayer.vue";
+import EffectLayer from "./components/EffectLayer.vue";
 import MessageWindow from "./components/MessageWindow.vue";
 import RuntimeControlBar from "./components/RuntimeControlBar.vue";
 import VisualLayer from "./components/VisualLayer.vue";
@@ -63,11 +65,13 @@ const plugins: readonly RuntimePluginDefinition[] = [
   createStdVisualPlugin(),
   createStdAudioPlugin(),
   createStdTextSoundPlugin(),
+  createStdEffectPlugin(),
 ];
 const commandHandlers = {
   ...createStdVisualCommandHandlers(),
   ...createStdAudioCommandHandlers(),
   ...createStdTextSoundCommandHandlers(),
+  ...createStdEffectCommandHandlers(),
 };
 const runtime = documentResult.ok
   ? useRuntime(documentResult.document, {
@@ -273,6 +277,7 @@ function getExampleTextSoundContext(event: RuntimeEvent | null): ResolveStdTextS
         :event="runtime.event.value"
         @notice="addAudioNotice"
       />
+      <EffectLayer v-if="runtime !== null" :state="runtime.state.value" />
       <RuntimeControlBar
         :status="runtimeStatus"
         @title="screen = 'title'"

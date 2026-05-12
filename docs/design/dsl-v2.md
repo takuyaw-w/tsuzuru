@@ -91,6 +91,12 @@ The following syntax is not Core. It is official standard plugin sugar.
   textSound
   stopTextSound
 
+@tsuzuru/plugin-std-effect:
+  shake
+  flash
+  pulse
+  blur
+
 @tsuzuru/plugin-std-system:
   system.*
   system.unlockEnding
@@ -1486,9 +1492,96 @@ These are responsibilities of the audio plugin, renderer, or audio layer.
 
 ---
 
-## 24. `@tsuzuru/plugin-std-system`
+## 24. Effect Statements
 
-### 24.1 Position
+Effect statements are sugar for `@tsuzuru/plugin-std-effect`.
+
+Effects are one-shot events. They are not durable visual state and should not be
+stored as replayable save data.
+
+### 24.1 Syntax
+
+```txt
+shake <target> [intensity=<intensity>] duration=<ms>
+flash color="<hex>" duration=<ms>
+pulse <target> [intensity=<intensity>] duration=<ms>
+blur screen amount=<number> duration=<ms>
+```
+
+### 24.2 Examples
+
+```txt
+shake screen intensity=strong duration=400
+shake message intensity=light duration=180
+shake sprites duration=240
+
+flash color="#ffffff" duration=120
+flash color="#ff3333" duration=180
+
+pulse screen intensity=normal duration=240
+pulse message intensity=light duration=180
+pulse sprites intensity=strong duration=260
+
+blur screen amount=6 duration=300
+```
+
+### 24.3 Rules
+
+- `shake` and `pulse` target is `screen`, `message`, or `sprites`.
+- `intensity` is `light`, `normal`, or `strong`.
+- `intensity` defaults to `normal` when omitted.
+- `duration` uses milliseconds and must be an integer greater than or equal to
+  `0`.
+- `flash color` must be HEX: `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+- MVP `blur` only accepts `screen`.
+- `blur amount` must be a number greater than or equal to `0`.
+- Actual animation is renderer / app responsibility.
+
+### 24.4 Runtime Model
+
+The std-effect plugin stores events under `runtimeState.plugins.stdEffect`:
+
+```ts
+{
+  events: StdEffectEvent[],
+  nextSequence: number,
+}
+```
+
+Each command appends an event using `nextSequence`, then increments
+`nextSequence`. Renderers consume events by sequence and run CSS or native
+animations. Snapshot preparation clears `events` and preserves `nextSequence`.
+
+### 24.5 BNF
+
+```bnf
+EffectStatement
+  ::= ShakeStatement
+   | FlashStatement
+   | PulseStatement
+   | BlurStatement
+
+ShakeStatement
+  ::= "shake" EffectTarget EffectNamedArgs NEWLINE
+
+FlashStatement
+  ::= "flash" EffectNamedArgs NEWLINE
+
+PulseStatement
+  ::= "pulse" EffectTarget EffectNamedArgs NEWLINE
+
+BlurStatement
+  ::= "blur" "screen" EffectNamedArgs NEWLINE
+
+EffectTarget
+  ::= "screen" | "message" | "sprites"
+```
+
+---
+
+## 25. `@tsuzuru/plugin-std-system`
+
+### 25.1 Position
 
 ```txt
 scenario.* is Core
@@ -1497,7 +1590,7 @@ direct set/add mutation of system.* is prohibited
 system.* updates go through call system.*
 ```
 
-### 24.2 Minimal Semantic Actions
+### 25.2 Minimal Semantic Actions
 
 ```txt
 call system.unlockEnding(id=trueEnd)
@@ -1505,7 +1598,7 @@ call system.unlockCg(id=cg001)
 call system.unlockAchievement(id=firstClear)
 ```
 
-### 24.3 Meaning
+### 25.3 Meaning
 
 ```txt
 system.unlockEnding(id=<id>)
@@ -1518,7 +1611,7 @@ system.unlockAchievement(id=<id>)
   => unlock achievement
 ```
 
-### 24.4 Recommended System State Path
+### 25.4 Recommended System State Path
 
 ```txt
 system.endings.<id>.unlocked
@@ -1762,6 +1855,10 @@ Phase 9:
   textSound / stopTextSound
 
 Phase 10:
+  std-effect sugar
+  shake / flash / pulse / blur
+
+Phase 11:
   std-system plugin
   system.*
   unlockEnding / unlockCg / unlockAchievement

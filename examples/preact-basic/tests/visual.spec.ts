@@ -1,4 +1,4 @@
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
@@ -51,6 +51,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
 
   const messageWindow = page.locator(".tzr-message-window");
   const audioLayer = page.locator('[aria-label="std-audio state"]');
+  await expect(page.locator(".effect-layer")).toBeAttached();
   await expect(messageWindow).toContainText("夜の旧校舎");
   await expect(audioLayer).toContainText("BGM");
   await expect(audioLayer).toContainText("daily_theme");
@@ -101,6 +102,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
 
 test("save and load restore retained message behind choices", async ({ page }) => {
   await page.goto("/");
+  await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
@@ -137,6 +139,7 @@ test("save and load restore retained message behind choices", async ({ page }) =
 
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await page.goto("/");
+  await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
@@ -154,7 +157,7 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await expect(readStatus).toHaveText("Read: 2");
 
   const choiceLayer = page.locator(".tzr-choice-layer");
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 10000 });
+  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 16000 });
   await page.waitForTimeout(1800);
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
   await expect(messageWindow).not.toContainText("では tone をもう少し詳しく");
@@ -187,6 +190,7 @@ test("skip mode does not skip unread messages", async ({ page }) => {
 
 test("skip mode skips previously read messages", async ({ page }) => {
   await page.goto("/");
+  await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
@@ -199,8 +203,8 @@ test("skip mode skips previously read messages", async ({ page }) => {
   await page.getByRole("button", { name: "Save Slot 1" }).click();
   await expect(page.getByRole("heading", { name: "Save" })).toHaveCount(0);
 
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("ようこそ、Text Sound Lab", { timeout: 4000 });
+  await advanceMessages(messageWindow, 8);
+  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
 
   await skipButton.click();
   await expect(skipButton).toHaveAttribute("aria-pressed", "true");
@@ -213,6 +217,7 @@ test("skip mode skips previously read messages", async ({ page }) => {
 
 test("skip mode pauses at choices", async ({ page }) => {
   await page.goto("/");
+  await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
@@ -232,7 +237,7 @@ test("skip mode pauses at choices", async ({ page }) => {
   await page.waitForTimeout(700);
   await expect(messageWindow).toContainText("ようこそ、Text Sound Lab");
 
-  await advanceMessages(messageWindow, 6);
+  await advanceMessages(messageWindow, 7);
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
   await page.waitForTimeout(900);
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
@@ -241,6 +246,7 @@ test("skip mode pauses at choices", async ({ page }) => {
 
 test("read tracking records current-session messages in runtime and backlog", async ({ page }) => {
   await page.goto("/");
+  await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
 
   const messageWindow = page.locator(".tzr-message-window");
@@ -272,6 +278,12 @@ async function setRangeValue(locator: Locator, value: string): Promise<void> {
     element.dispatchEvent(new Event("input", { bubbles: true }));
     element.dispatchEvent(new Event("change", { bubbles: true }));
   }, value);
+}
+
+async function disableTextReveal(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Text reveal", { exact: true }).uncheck();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
 }
 
 async function advanceMessages(messageWindow: Locator, count: number): Promise<void> {

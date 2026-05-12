@@ -26,13 +26,15 @@ const sprites = computed(() =>
   <div class="visual-layer" aria-hidden="true">
     <img v-if="background !== null" class="visual-layer__background" :src="background.url" :alt="background.label" />
     <div v-else class="visual-layer__fallback">Vue Basic</div>
-    <img
-      v-for="sprite in sprites"
-      :key="sprite.assetId"
-      class="visual-layer__sprite"
-      :class="`visual-layer__sprite--${sprite.position}`"
-      :src="sprite.asset?.url"
-      :alt="sprite.asset?.label ?? sprite.assetId"
-    />
+    <div class="visual-layer__sprites" aria-hidden="true">
+      <img
+        v-for="sprite in sprites"
+        :key="sprite.assetId"
+        class="visual-layer__sprite"
+        :class="`visual-layer__sprite--${sprite.position}`"
+        :src="sprite.asset?.url"
+        :alt="sprite.asset?.label ?? sprite.assetId"
+      />
+    </div>
   </div>
 </template>

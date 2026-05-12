@@ -301,7 +301,7 @@ The tradeoffs are:
 
 `RuntimeSaveData` does not include scenario identity, scenario version, or migration metadata in current v0.x releases. Save data compatibility is not guaranteed before v1.0, and compatibility is especially weak if the scenario document, compiled instruction order, runtime model, or event shape changes after saving.
 
-Plugin state is saved as generic JSON-compatible runtime state. Plugin-specific save policy remains plugin-owned. For example, std-audio provides `prepareStdAudioStateForSnapshot(runtimeState)` so BGM state is retained while one-shot SE and voice events are cleared before the core snapshot is created.
+Plugin state is saved as generic JSON-compatible runtime state. Plugin-specific save policy remains plugin-owned. For example, std-audio provides `prepareStdAudioStateForSnapshot(runtimeState)` so BGM state is retained while one-shot SE and voice events are cleared before the core snapshot is created. std-effect provides `prepareStdEffectStateForSnapshot(runtimeState)` so one-shot shake / flash / pulse / blur events are not replayed after load while the sequence counter is preserved.
 
 A future snapshot format may store a scenario identity, scenario version, migration version, branch path, frame id, instruction index, or similar reference instead of embedding instructions. Restore would then re-resolve branch instructions from the current `RuntimeDocument`.
 

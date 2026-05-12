@@ -15,6 +15,7 @@ describe("vue-basic example", () => {
     };
 
     expect(packageJson.dependencies["@tsuzuru/vue"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/plugin-std-effect"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
     expect(packageJson.dependencies.preact).toBeUndefined();
   });

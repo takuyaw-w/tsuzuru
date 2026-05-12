@@ -66,6 +66,40 @@ const stdTextSoundPluginCommands = {
   stopTextSound: definePluginCommand("stopTextSound", { kind: "none" }),
 };
 
+const stdEffectPluginCommands = {
+  shake: definePluginCommand("shake", {
+    kind: "mixed",
+    positional: [{ type: "string", values: ["screen", "message", "sprites"] }],
+    named: [
+      { name: "intensity", type: "string", optional: true, values: ["light", "normal", "strong"] },
+      { name: "duration", type: "number", integer: true, min: 0 },
+    ],
+  }),
+  flash: definePluginCommand("flash", {
+    kind: "named",
+    arguments: [
+      { name: "color", type: "string", nonEmpty: true },
+      { name: "duration", type: "number", integer: true, min: 0 },
+    ],
+  }),
+  pulse: definePluginCommand("pulse", {
+    kind: "mixed",
+    positional: [{ type: "string", values: ["screen", "message", "sprites"] }],
+    named: [
+      { name: "intensity", type: "string", optional: true, values: ["light", "normal", "strong"] },
+      { name: "duration", type: "number", integer: true, min: 0 },
+    ],
+  }),
+  blur: definePluginCommand("blur", {
+    kind: "mixed",
+    positional: [{ type: "string", values: ["screen"] }],
+    named: [
+      { name: "amount", type: "number", min: 0 },
+      { name: "duration", type: "number", integer: true, min: 0 },
+    ],
+  }),
+};
+
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
@@ -761,6 +795,54 @@ scene start:
     ]);
   });
 
+  it("compiles std effect sugar to plugin command instructions", () => {
+    const document = compileSource(`scene start:
+  shake screen intensity=strong duration=400
+  flash color="#ffffff" duration=120
+  pulse message intensity=light duration=180
+  blur screen amount=6 duration=300
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "shake",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "screen" } },
+          { type: "NamedArgument", name: "intensity", value: { type: "StringValue", value: "strong" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "flash",
+        args: [
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 120 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "pulse",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "message" } },
+          { type: "NamedArgument", name: "intensity", value: { type: "StringValue", value: "light" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 180 } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "blur",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "screen" } },
+          { type: "NamedArgument", name: "amount", value: { type: "NumberValue", value: 6 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
+        ],
+      },
+    ]);
+  });
+
   it("compiles visual statements inside body choice branches", () => {
     const document = compileSource(`scene start:
   choice "Choose":
@@ -915,12 +997,79 @@ scene start:
     ]);
   });
 
-  it("keeps std visual, audio, and text sound command compilation compatible without plugin metadata", () => {
+  it("compiles and validates std effect plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  shake screen intensity=strong duration=400
+  flash color="#ffffff" duration=120
+  pulse sprites duration=240
+  blur screen amount=6 duration=300
+`,
+      { plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "shake" },
+      { type: "CommandInstruction", name: "flash" },
+      { type: "CommandInstruction", name: "pulse" },
+      { type: "CommandInstruction", name: "blur" },
+    ]);
+  });
+
+  it("rejects invalid std effect plugin command arguments when metadata is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  shake stage duration=100\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "shake" positional argument 1 must be one of "screen", "message", "sprites".');
+    expect(
+      expectCompileFailure("scene start:\n  pulse screen intensity=huge duration=100\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "pulse" named argument "intensity" must be one of "light", "normal", "strong".');
+    expect(
+      expectCompileFailure("scene start:\n  shake screen\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "shake" is missing required named argument "duration".');
+    expect(
+      expectCompileFailure("scene start:\n  shake screen duration=-1\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "shake" named argument "duration" must be at least 0.');
+    expect(
+      expectCompileFailure("scene start:\n  blur message amount=6 duration=300\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "blur" positional argument 1 must be one of "screen".');
+    expect(
+      expectCompileFailure("scene start:\n  blur screen amount=-1 duration=300\n", {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain('Plugin command "blur" named argument "amount" must be at least 0.');
+    expect(
+      expectCompileFailure('scene start:\n  flash color="white" duration=120\n', {
+        plugins: [{ name: "stdEffect", commands: stdEffectPluginCommands }],
+      }),
+    ).toContain("flash color must be a HEX color literal.");
+  });
+
+  it("rejects std effect sugar when plugin metadata is enabled but std effect is not registered", () => {
+    expect(
+      expectCompileFailure("scene start:\n  shake screen intensity=strong duration=400\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "shake".');
+  });
+
+  it("keeps std visual, audio, text sound, and effect command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
   bgm daily_theme
   textSound soft
+  shake screen duration=180
 `);
 
     expect(document.instructions).toMatchObject([
@@ -929,6 +1078,7 @@ scene start:
       { type: "CommandInstruction", name: "clearBg" },
       { type: "CommandInstruction", name: "startBgm" },
       { type: "CommandInstruction", name: "textSound" },
+      { type: "CommandInstruction", name: "shake" },
     ]);
   });
 

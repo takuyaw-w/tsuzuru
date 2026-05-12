@@ -1,4 +1,4 @@
-import type { SourceRange } from "./ast.js";
+import type { SourceRange, TzrArgument } from "./ast.js";
 import type { ParseDiagnostic } from "./diagnostic.js";
 
 export type TzrParseResult =
@@ -73,6 +73,7 @@ export type TzrSceneStatement =
   | TzrVoiceStatement
   | TzrTextSoundStatement
   | TzrStopTextSoundStatement
+  | TzrStdEffectStatement
   | TzrSystemUnlockStatement
   | TzrJumpStatement
   | TzrEndStatement;
@@ -318,6 +319,15 @@ export interface TzrTextSoundStatement {
 
 export interface TzrStopTextSoundStatement {
   readonly type: "StopTextSoundStatement";
+  readonly loc: SourceRange;
+}
+
+export type TzrStdEffectCommandName = "shake" | "flash" | "pulse" | "blur";
+
+export interface TzrStdEffectStatement {
+  readonly type: "StdEffectStatement";
+  readonly name: TzrStdEffectCommandName;
+  readonly args: readonly TzrArgument[];
   readonly loc: SourceRange;
 }
 

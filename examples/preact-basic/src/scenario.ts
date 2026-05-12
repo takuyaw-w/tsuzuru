@@ -1,5 +1,6 @@
 import { compileTzrProject } from "@tsuzuru/core";
 import { createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
 import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 
@@ -22,7 +23,7 @@ export const scenarioProject = compileTzrProject(
       source,
     })),
   },
-  { plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin()] },
+  { plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin(), createStdEffectPlugin()] },
 );
 
 function toScenarioDocumentId(path: string): string {
