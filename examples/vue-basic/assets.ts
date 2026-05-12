@@ -6,9 +6,22 @@ const textSound = {
       type: "noise",
       color: "white",
       duration: "short",
-      volume: 0.18,
+      volume: 0.16,
     },
-    aoi: {
+    tone: {
+      type: "tone",
+      note: "C5",
+      waveform: "sine",
+      duration: "short",
+      volume: 0.5,
+    },
+    noize: {
+      type: "noise",
+      color: "white",
+      duration: "short",
+      volume: 0.22,
+    },
+    mix: {
       type: "mix",
       duration: "short",
       volume: 0.55,
@@ -20,9 +33,11 @@ const textSound = {
   },
   defaults: {
     narration: "narration",
-    dialogue: "aoi",
+    dialogue: "tone",
     characters: {
-      aoi: "aoi",
+      tone: "tone",
+      noize: "noize",
+      mix: "mix",
     },
   },
 } satisfies StdTextSoundConfig;
@@ -36,9 +51,17 @@ export const assets = {
       },
     },
     sprites: {
-      aoi_smile: {
+      tone_stand: {
         url: "/assets/images/sprites/aoi-smile.svg",
-        label: "葵",
+        label: "トーン",
+      },
+      noize_stand: {
+        url: "/assets/images/sprites/aoi-smile.svg",
+        label: "ノイズ",
+      },
+      mix_stand: {
+        url: "/assets/images/sprites/aoi-smile.svg",
+        label: "ミックス",
       },
     },
   },

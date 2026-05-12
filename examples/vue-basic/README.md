@@ -26,8 +26,9 @@ pnpm --filter @tsuzuru/example-vue-basic dev
 
 Audio files are intentionally represented by `.gitkeep` placeholders. Missing
 audio playback is reported as a non-fatal browser notice by `AudioLayer.vue`.
-Text sound uses generated Web Audio `noise` / `mix` profiles from `assets.ts`,
-resolved from narration / character defaults during text reveal. No real text
-sound assets are bundled.
+Text Sound Lab uses three characters, `tone`, `noize`, and `mix`, to demonstrate
+generated Web Audio `tone`, `noise`, and `mix` profiles from `assets.ts`.
+Profiles are resolved from narration / character defaults during text reveal. No
+real text sound assets are bundled.
 
 `create-tsuzuru --template vue` is not implemented yet.

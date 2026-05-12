@@ -21,9 +21,13 @@ describe("vue-basic example", () => {
 
   it("keeps visual and audio assets in one manifest", () => {
     expect(assets.visual.backgrounds.riverside.url).toContain("/assets/images/backgrounds/");
-    expect(assets.visual.sprites.aoi_smile.url).toContain("/assets/images/sprites/");
+    expect(assets.visual.sprites.tone_stand.url).toContain("/assets/images/sprites/");
+    expect(assets.visual.sprites.noize_stand.url).toContain("/assets/images/sprites/");
+    expect(assets.visual.sprites.mix_stand.url).toContain("/assets/images/sprites/");
     expect(assets.audio.bgm.vue_theme).toContain("/assets/audio/bgm/");
     expect(assets.textSound.profiles.narration.type).toBe("noise");
-    expect(assets.textSound.profiles.aoi.type).toBe("mix");
+    expect(assets.textSound.profiles.tone.type).toBe("tone");
+    expect(assets.textSound.profiles.noize.type).toBe("noise");
+    expect(assets.textSound.profiles.mix.type).toBe("mix");
   });
 });

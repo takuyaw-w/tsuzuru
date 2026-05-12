@@ -1,6 +1,8 @@
-title "Tsuzuru Preact Basic"
+title "Text Sound Lab"
 
-character mio name="美緒"
+character tone name="トーン"
+character noize name="ノイズ"
+character mix name="ミックス"
 
 include "./chapters/01-opening.tzr"
 include "./chapters/02-common.tzr"

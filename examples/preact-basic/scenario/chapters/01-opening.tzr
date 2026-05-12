@@ -1,23 +1,56 @@
 scene opening_start:
   bg station with fade(duration=300)
   bgm daily_theme
-  show mio_smile at center with dissolve(duration=250)
+  show tone_stand at left with dissolve(duration=250)
+  show noize_stand at center with dissolve(duration=250)
+  show mix_stand at right with dissolve(duration=250)
 
-  mio:
-    遅いよ。あなたはいったいなにをしていたの。
-    わたしはさみしかった
+  narration:
+    夜の旧校舎に、視聴覚室だけがまだ明るく残っていた。
+    机の上には小さなスピーカーと、文字送りを測るための古いメトロノームが置かれている。
 
-  set scenario.hasNotebook = true
-  set scenario.selectedItem = null
-  set scenario.currentSpeaker = "mio"
-  set scenario.lastSpeaker = scenario.currentSpeaker
-  add scenario.score += 1
+  tone:
+    ようこそ、Text Sound Lab へ。
+    僕はトーン。澄んだ音高を担当している。
+    文字が一つ進むたびに、短い C5 の音が鳴るようにしてある。
+    丸いサイン波だから、耳に触れた瞬間にすっと消えるはずだよ。
 
-  if scenario.score >= 1:
-    narration:
-      スコアが増えた。
-  else:
-    narration:
-      まだ何も起きていない。
+  noize:
+    そして私はノイズ。
+    名前は noize だけど、profile type はちゃんと noise。
+    ざらっとした空気、紙をこする音、古いラジオの隙間みたいな成分を担当する。
+    音高は持たない。だから言葉の輪郭だけが、ささっと残る。
 
-  jump common_choice
+  mix:
+    私はミックス。
+    tone と noise を重ねて、説明にも会話にも使いやすい音を探す係。
+    透明な芯に、少しだけ息の粒を足す。
+    主張しすぎず、でも読んでいる手元にはちゃんと合図が届くようにする。
+
+  narration:
+    三人の声は同じ文章でも、文字が現れるたびに違う手触りを残す。
+    まずは一人ずつ、長めに話してもらうことになった。
+
+  tone:
+    tone profile は、音の高さを明確に決められる。
+    このデモでは note を C5 にして、waveform は sine にした。
+    数値の周波数を直接書かなくても、音名で雰囲気を指定できる。
+    低い音なら落ち着き、高い音なら軽さが出る。
+    ただし長く鳴らすと文章を邪魔するから、短く、控えめに、文字の後ろへ置く。
+
+  noize:
+    noise profile は、音というより質感に近い。
+    白いノイズを短く切ると、鉛筆の芯が紙に触れるみたいになる。
+    ピッチがないぶん、声の高さを想像させない。
+    語り手を中立にしたいときや、環境音のように馴染ませたいときに向いている。
+    句読点や空白では鳴らないから、文章の呼吸はちゃんと残る。
+
+  mix:
+    mix profile は、両方のよさを少しずつ借りる。
+    tone layer で読点までの流れに芯を作る。
+    noise layer で画面の空気と指先の感触を足す。
+    layer ごとに volume を変えられるから、音色の主役を決めやすい。
+    物語の常用音にするなら、私はこの形がいちばん扱いやすいと思う。
+
+  se page
+  jump focus_choice

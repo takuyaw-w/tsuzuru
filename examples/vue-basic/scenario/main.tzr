@@ -1,5 +1,7 @@
-title "Tsuzuru Vue Basic"
+title "Text Sound Lab"
 
-character aoi name="葵"
+character tone name="トーン"
+character noize name="ノイズ"
+character mix name="ミックス"
 
 include "./chapters/01-opening.tzr"

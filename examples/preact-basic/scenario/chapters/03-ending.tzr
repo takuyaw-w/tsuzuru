@@ -1,15 +1,59 @@
-scene notebook:
-  wait 250
-  voice mio_001
-  mio:
-    ちゃんと見ておいてね。
-  clear sprites
-  clear bg
-  stopBgm
-  end
+scene like_tone:
+  tone:
+    ありがとう。
+    澄んだ音は、文章に小さな灯りを置く。
+    読む速度が変わっても、音の高さが道しるべになる。
 
-scene leave:
+  noize:
+    そのぶん、音量は控えめがいい。
+    きれいな音ほど、強いとすぐ目立つから。
+
+  mix:
+    トーンを主役にするなら、noise はほんの少しだけで十分。
+  jump lab_end
+
+scene like_noize:
+  noize:
+    いい選択。
+    ざらつきは、文字の背後に空気を作る。
+    声を決めすぎないから、読み手の想像がそのまま残る。
+
+  tone:
+    音高を使わない勇気、という感じだね。
+
+  mix:
+    静かな場面やモノローグでは、noise の控えめさがよく効く。
+  jump lab_end
+
+scene like_mix:
+  mix:
+    うれしい。
+    重ねた音は、説明しすぎないけれど印象を残せる。
+    tone の芯と noise の手触りを、場面に合わせて配合できる。
+
+  tone:
+    音名で芯を決めて、波形で丸める。
+
+  noize:
+    そこに白い粒を少しだけ足す。
+  jump lab_end
+
+scene lab_end:
   narration:
-    駅をあとにした。
+    視聴覚室の明かりが落ち、スピーカーの残響も静かに消えていく。
+
+  tone:
+    次は note を変えて、低い音も試してみよう。
+
+  noize:
+    pink noise も、きっと別の手触りになる。
+
+  mix:
+    そして物語に合う音を、必要なだけ選べばいい。
+
+  hide tone_stand
+  hide noize_stand
+  hide mix_stand
+  clear bg
   stopBgm
   end

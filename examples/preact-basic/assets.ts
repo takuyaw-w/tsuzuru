@@ -6,9 +6,22 @@ const textSound = {
       type: "noise",
       color: "white",
       duration: "short",
-      volume: 0.18,
+      volume: 0.16,
     },
-    mio: {
+    tone: {
+      type: "tone",
+      note: "C5",
+      waveform: "sine",
+      duration: "short",
+      volume: 0.5,
+    },
+    noize: {
+      type: "noise",
+      color: "white",
+      duration: "short",
+      volume: 0.22,
+    },
+    mix: {
       type: "mix",
       duration: "short",
       volume: 0.55,
@@ -20,9 +33,11 @@ const textSound = {
   },
   defaults: {
     narration: "narration",
-    dialogue: "mio",
+    dialogue: "tone",
     characters: {
-      mio: "mio",
+      tone: "tone",
+      noize: "noize",
+      mix: "mix",
     },
   },
 } satisfies StdTextSoundConfig;
@@ -36,9 +51,17 @@ export const assets = {
       },
     },
     sprites: {
-      mio_smile: {
-        className: "visual-layer__sprite--mio-smile",
-        label: "美緒",
+      tone_stand: {
+        className: "visual-layer__sprite--tone",
+        label: "トーン",
+      },
+      noize_stand: {
+        className: "visual-layer__sprite--noize",
+        label: "ノイズ",
+      },
+      mix_stand: {
+        className: "visual-layer__sprite--mix",
+        label: "ミックス",
       },
     },
   },
