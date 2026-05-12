@@ -1,5 +1,16 @@
-import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
+import type {
+  CompiledTzrDocument,
+  RuntimeDiagnostic,
+  RuntimeEvent,
+  RuntimePluginDefinition,
+  RuntimeState,
+} from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import {
+  createStdTextSoundCommandHandlers,
+  createStdTextSoundPlugin,
+  getStdTextSoundState,
+} from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
@@ -9,12 +20,14 @@ import {
   type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
   RuntimeMessageLayer,
+  type TextRevealCharacterEvent,
   useAutoMode,
   useMessageHistory,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { assets } from "../assets.js";
 import { AudioLayer } from "./AudioLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
@@ -56,6 +69,8 @@ type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
 
 const AUTO_MODE_ADVANCE_DELAY_MS = 1200;
 const SKIP_MODE_ADVANCE_DELAY_MS = 120;
+const TEXT_SOUND_MIN_INTERVAL_MS = 45;
+const TEXT_SOUND_SKIPPED_CHARACTERS = new Set("。、，．,.!?！？;；:：…・\"'「」『』（）()[]【】");
 
 export function App() {
   const documentResult = useMemo((): DocumentResult => {
@@ -180,13 +195,14 @@ function RuntimeApp({
   onTitle,
 }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
-    () => [createStdVisualPlugin(), createStdAudioPlugin()],
+    () => [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin()],
     [],
   );
   const commandHandlers = useMemo(
     () => ({
       ...createStdVisualCommandHandlers(),
       ...createStdAudioCommandHandlers(),
+      ...createStdTextSoundCommandHandlers(),
     }),
     [],
   );
@@ -220,9 +236,11 @@ function RuntimeApp({
   );
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
+  const playTextSoundForCharacter = useTextSoundPlayback(runtime.state, preferences, recordDiagnostic);
   const textReveal = useTextReveal(revealText, {
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
+    onCharacterReveal: playTextSoundForCharacter,
   });
   const messageHistory = useMessageHistory({
     event: runtime.visibleEvent,
@@ -612,6 +630,76 @@ function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
   return ranges;
 }
 
+function useTextSoundPlayback(
+  runtimeState: RuntimeState,
+  preferences: ExamplePreferences,
+  onNotice: (diagnostic: RuntimeDiagnostic) => void,
+): (event: TextRevealCharacterEvent) => void {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const lastPlayedAtRef = useRef(0);
+  const noticedKeysRef = useRef<Set<string>>(new Set());
+  const currentTextSoundAssetId = getExampleTextSoundAssetId(runtimeState);
+
+  const addNotice = useCallback(
+    (code: string, message: string, detail?: unknown) => {
+      if (noticedKeysRef.current.has(code)) {
+        return;
+      }
+      noticedKeysRef.current.add(code);
+      onNotice({ severity: "warning", code, message });
+      if (detail === undefined) {
+        console.warn(message);
+      } else {
+        console.warn(message, detail);
+      }
+    },
+    [onNotice],
+  );
+
+  return useCallback(
+    (event: TextRevealCharacterEvent) => {
+      if (!preferences.textRevealEnabled || !preferences.textSoundEnabled || currentTextSoundAssetId === null) {
+        return;
+      }
+      if (!shouldPlayTextSoundForCharacter(event.character)) {
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastPlayedAtRef.current < TEXT_SOUND_MIN_INTERVAL_MS) {
+        return;
+      }
+      lastPlayedAtRef.current = now;
+
+      const profile = assets.textSound[currentTextSoundAssetId as keyof typeof assets.textSound];
+      if (profile === undefined) {
+        addNotice(
+          `example.textSound.missing.${currentTextSoundAssetId}`,
+          `Text sound asset is not mapped: ${currentTextSoundAssetId}`,
+        );
+        return;
+      }
+
+      void playTextSoundTone(profile, preferences.textSoundVolume, audioContextRef, addNotice);
+    },
+    [
+      addNotice,
+      currentTextSoundAssetId,
+      preferences.textRevealEnabled,
+      preferences.textSoundEnabled,
+      preferences.textSoundVolume,
+    ],
+  );
+}
+
+function getExampleTextSoundAssetId(runtimeState: RuntimeState): string | null {
+  try {
+    return getStdTextSoundState(runtimeState).current?.assetId ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getRuntimeEventTextKey(event: RuntimeEvent): string {
   if (event.type === "narration" || event.type === "dialogue") {
     return event.lines.map((line) => line.text).join("\u0000");
@@ -620,6 +708,50 @@ function getRuntimeEventTextKey(event: RuntimeEvent): string {
     return event.items.map((item) => item.text).join("\u0000");
   }
   return "";
+}
+
+type TextSoundProfile = (typeof assets.textSound)[keyof typeof assets.textSound];
+
+function shouldPlayTextSoundForCharacter(character: string): boolean {
+  return character.trim().length > 0 && !TEXT_SOUND_SKIPPED_CHARACTERS.has(character);
+}
+
+async function playTextSoundTone(
+  profile: TextSoundProfile,
+  volume: number,
+  audioContextRef: { current: AudioContext | null },
+  addNotice: (code: string, message: string, detail?: unknown) => void,
+): Promise<void> {
+  if (typeof AudioContext === "undefined") {
+    addNotice("example.textSound.audioContextUnavailable", "Text sound skipped because AudioContext is unavailable.");
+    return;
+  }
+
+  try {
+    const context = audioContextRef.current ?? new AudioContext();
+    audioContextRef.current = context;
+    if (context.state === "suspended") {
+      await context.resume();
+    }
+
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const now = context.currentTime;
+    const durationSeconds = profile.durationMs / 1000;
+    const outputVolume = Math.max(0, Math.min(volume, 1));
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(profile.frequencyHz, now);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(outputVolume * 0.18, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + durationSeconds);
+  } catch (error) {
+    addNotice("example.textSound.playbackFailed", "Text sound playback was blocked or failed.", error);
+  }
 }
 
 interface DiagnosticLike {

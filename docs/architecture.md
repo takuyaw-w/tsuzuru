@@ -75,6 +75,7 @@ packages/
   standard-ui-preact/
   plugin-std-visual/
   plugin-std-audio/
+  plugin-std-text-sound/
 
 examples/
   preact-basic/
@@ -275,6 +276,29 @@ It does not:
 - own runtime stepping
 
 Playback and asset resolution belong to the app, renderer, or example.
+
+---
+
+### `@tsuzuru/plugin-std-text-sound`
+
+`@tsuzuru/plugin-std-text-sound` provides standard text blip sound state and command handlers.
+
+Responsibilities:
+
+- maintain standard text sound plugin state
+- set or clear the current text sound asset ID
+- handle standard text sound command instructions
+
+It does not:
+
+- create audio elements or audio contexts
+- own text reveal timing
+- resolve asset IDs to URLs or tone profiles
+- own volume, interval, punctuation skip, or speaker mapping policy
+- own scene flow
+- own runtime stepping
+
+Playback policy belongs to the app, renderer, or example.
 
 ---
 
@@ -968,6 +992,7 @@ pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/standard-ui-preact test
 pnpm --filter @tsuzuru/plugin-std-visual test
 pnpm --filter @tsuzuru/plugin-std-audio test
+pnpm --filter @tsuzuru/plugin-std-text-sound test
 ```
 
 If `rtk` is available, prefer equivalent `rtk` commands when they preserve the same verification intent and reduce output noise.

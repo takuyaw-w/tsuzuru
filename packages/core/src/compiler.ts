@@ -41,8 +41,10 @@ import type {
   TzrSetStatement,
   TzrShowStatement,
   TzrStopBgmStatement,
+  TzrStopTextSoundStatement,
   TzrTextBlockItem,
   TzrTextLine,
+  TzrTextSoundStatement,
   TzrTitleDeclaration,
   TzrValueExpression,
   TzrVisualAssetRef,
@@ -428,6 +430,12 @@ class TzrCompiler {
         case "VoiceStatement":
           instructions.push(this.buildVoiceInstruction(statement));
           break;
+        case "TextSoundStatement":
+          instructions.push(this.buildTextSoundInstruction(statement));
+          break;
+        case "StopTextSoundStatement":
+          instructions.push(this.buildStopTextSoundInstruction(statement));
+          break;
         default:
           this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
           break;
@@ -792,6 +800,29 @@ class TzrCompiler {
           statement.assetRef.loc,
         ),
       ],
+      loc: statement.loc,
+    };
+  }
+
+  private buildTextSoundInstruction(statement: TzrTextSoundStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "textSound",
+      args: [
+        this.positionalArgument(
+          this.stringValue(this.audioAssetRefValue(statement.assetRef), statement.assetRef.loc),
+          statement.assetRef.loc,
+        ),
+      ],
+      loc: statement.loc,
+    };
+  }
+
+  private buildStopTextSoundInstruction(statement: TzrStopTextSoundStatement): CommandInstruction {
+    return {
+      type: "CommandInstruction",
+      name: "stopTextSound",
+      args: [],
       loc: statement.loc,
     };
   }

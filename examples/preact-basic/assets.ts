@@ -24,6 +24,13 @@ export const assets = {
       mio_001: "/assets/audio/voice/mio_001.mp3",
     },
   },
+  textSound: {
+    soft: {
+      type: "tone",
+      frequencyHz: 660,
+      durationMs: 32,
+    },
+  },
 } as const;
 
 export type ExampleAssets = typeof assets;

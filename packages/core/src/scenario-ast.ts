@@ -71,6 +71,8 @@ export type TzrSceneStatement =
   | TzrStopBgmStatement
   | TzrSeStatement
   | TzrVoiceStatement
+  | TzrTextSoundStatement
+  | TzrStopTextSoundStatement
   | TzrSystemUnlockStatement
   | TzrJumpStatement
   | TzrEndStatement;
@@ -305,6 +307,17 @@ export interface TzrSeStatement {
 export interface TzrVoiceStatement {
   readonly type: "VoiceStatement";
   readonly assetRef: TzrAudioAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrTextSoundStatement {
+  readonly type: "TextSoundStatement";
+  readonly assetRef: TzrAudioAssetRef;
+  readonly loc: SourceRange;
+}
+
+export interface TzrStopTextSoundStatement {
+  readonly type: "StopTextSoundStatement";
   readonly loc: SourceRange;
 }
 

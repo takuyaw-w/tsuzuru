@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import {
+  createStdTextSoundCommandHandlers,
+  createStdTextSoundPlugin,
+  getStdTextSoundState,
+} from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/vue";
 import { computed, ref, watch } from "vue";
@@ -9,11 +14,13 @@ import ChoiceLayer from "./components/ChoiceLayer.vue";
 import MessageWindow from "./components/MessageWindow.vue";
 import RuntimeControlBar from "./components/RuntimeControlBar.vue";
 import VisualLayer from "./components/VisualLayer.vue";
+import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { scenarioProject } from "./scenario.js";
 import BacklogScreen from "./screens/BacklogScreen.vue";
 import GalleryScreen from "./screens/GalleryScreen.vue";
 import SettingsScreen from "./screens/SettingsScreen.vue";
 import TitleScreen from "./screens/TitleScreen.vue";
+import { createTextSoundPlayer, type TextSoundCharacterEvent } from "./text-sound.js";
 
 type DocumentResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument }
@@ -26,27 +33,24 @@ interface BacklogEntry {
   readonly text: string;
 }
 
-interface Preferences {
-  readonly messageScale: number;
-  readonly showAudioNotices: boolean;
-}
-
 const documentResult: DocumentResult = scenarioProject.ok
   ? { ok: true, document: scenarioProject.document }
   : { ok: false, message: formatDiagnostics(scenarioProject.errors) };
 const screen = ref<AppScreen>("title");
-const preferences = ref<Preferences>({
-  messageScale: 1,
-  showAudioNotices: true,
-});
+const preferences = ref<ExamplePreferences>(loadPreferences());
 const diagnostics = ref<readonly RuntimeDiagnostic[]>([]);
 const audioNotices = ref<readonly string[]>([]);
 const backlog = ref<readonly BacklogEntry[]>([]);
 
-const plugins: readonly RuntimePluginDefinition[] = [createStdVisualPlugin(), createStdAudioPlugin()];
+const plugins: readonly RuntimePluginDefinition[] = [
+  createStdVisualPlugin(),
+  createStdAudioPlugin(),
+  createStdTextSoundPlugin(),
+];
 const commandHandlers = {
   ...createStdVisualCommandHandlers(),
   ...createStdAudioCommandHandlers(),
+  ...createStdTextSoundCommandHandlers(),
 };
 const runtime = documentResult.ok
   ? useRuntime(documentResult.document, {
@@ -80,6 +84,17 @@ const runtimeStatus = computed(() => {
   }
   return runtime.event.value === null ? "Ready" : `Event: ${runtime.event.value.type}`;
 });
+const textSoundAssetId = computed(() => {
+  if (runtime === null) {
+    return null;
+  }
+  try {
+    return getStdTextSoundState(runtime.state.value).current?.assetId ?? null;
+  } catch {
+    return null;
+  }
+});
+const textSoundPlayer = createTextSoundPlayer(addAudioNotice);
 
 watch(
   messageEvent,
@@ -143,12 +158,19 @@ function chooseRuntimeItem(itemIndex: number): void {
   runtime?.choose(itemIndex);
 }
 
-function updatePreferences(nextPreferences: Preferences): void {
-  preferences.value = nextPreferences;
+function updatePreferences(nextPreferences: ExamplePreferences): void {
+  preferences.value = savePreferences(nextPreferences);
 }
 
 function addAudioNotice(message: string): void {
   audioNotices.value = [...audioNotices.value.slice(-4), message];
+}
+
+function handleTextSoundCharacterReveal(event: TextSoundCharacterEvent): void {
+  textSoundPlayer.playCharacter(event, {
+    assetId: textSoundAssetId.value,
+    preferences: preferences.value,
+  });
 }
 
 function formatDiagnostics(errors: readonly { readonly message: string }[]): string {
@@ -212,7 +234,10 @@ function formatDiagnostics(errors: readonly { readonly message: string }[]): str
       <MessageWindow
         :event="visibleEvent"
         :message-scale="preferences.messageScale"
+        :reveal-enabled="preferences.textRevealEnabled"
+        :characters-per-second="preferences.textSpeedCharactersPerSecond"
         @advance="advanceRuntime"
+        @character-reveal="handleTextSoundCharacterReveal"
       />
       <ChoiceLayer :event="choiceEvent" @choose="chooseRuntimeItem" />
     </section>

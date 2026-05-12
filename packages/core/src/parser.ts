@@ -43,6 +43,7 @@ import type {
   TzrShowStatement,
   TzrStatePath,
   TzrStopBgmStatement,
+  TzrStopTextSoundStatement,
   TzrStringValue,
   TzrSystemUnlockId,
   TzrSystemUnlockKind,
@@ -50,6 +51,7 @@ import type {
   TzrTextBlockItem,
   TzrTextBlockMeta,
   TzrTextBlockMetaAttribute,
+  TzrTextSoundStatement,
   TzrTitleDeclaration,
   TzrTopLevelDeclaration,
   TzrValueExpression,
@@ -111,7 +113,7 @@ interface ParsedVisualStatementBody {
 type StateStatementKeyword = "set" | "add";
 type CallWaitStatementKeyword = "call" | "wait";
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
-type AudioAssetStatementKeyword = "bgm" | "se" | "voice";
+type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
 type SystemUnlockStatementName = "system.unlockEnding" | "system.unlockCg" | "system.unlockAchievement";
 
 interface InlineRawAttribute {
@@ -440,6 +442,12 @@ class TzrParser {
     }
     if (source === "voice" || source.startsWith("voice ")) {
       return this.parseVoiceStatement(line, source, statementColumn);
+    }
+    if (source === "textSound" || source.startsWith("textSound ")) {
+      return this.parseTextSoundStatement(line, source, statementColumn);
+    }
+    if (source === "stopTextSound" || source.startsWith("stopTextSound ")) {
+      return this.parseStopTextSoundStatement(line, source, statementColumn);
     }
     if (source === "system" || source.startsWith("system.")) {
       return this.parseSystemStatement(line, source, statementColumn);
@@ -2183,6 +2191,24 @@ class TzrParser {
     };
   }
 
+  private parseTextSoundStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrTextSoundStatement | undefined {
+    const assetRef = this.parseSingleAudioAssetStatement(line, source, "textSound", statementColumn);
+    this.cursor += 1;
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "TextSoundStatement",
+      assetRef,
+      loc: this.lineRange(line),
+    };
+  }
+
   private parseSingleAudioAssetStatement(
     line: SourceLine,
     source: string,
@@ -2286,6 +2312,28 @@ class TzrParser {
     this.cursor += 1;
     return {
       type: "StopBgmStatement",
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseStopTextSoundStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrStopTextSoundStatement | undefined {
+    if (source !== "stopTextSound") {
+      this.addError(
+        line,
+        statementColumn + "stopTextSound".length + 1,
+        "stopTextSound statement must not have extra trailing tokens.",
+      );
+      this.cursor += 1;
+      return undefined;
+    }
+
+    this.cursor += 1;
+    return {
+      type: "StopTextSoundStatement",
       loc: this.lineRange(line),
     };
   }

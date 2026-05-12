@@ -26,6 +26,9 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
 - `@tsuzuru/vue`
+- `@tsuzuru/plugin-std-visual`
+- `@tsuzuru/plugin-std-audio`
+- `@tsuzuru/plugin-std-text-sound`
 - Preact basic example
 - Vue basic example
 - DSL v2 design notes
@@ -80,6 +83,7 @@ packages/
   standard-ui-preact/
   plugin-std-visual/
   plugin-std-audio/
+  plugin-std-text-sound/
 
 examples/
   preact-basic/

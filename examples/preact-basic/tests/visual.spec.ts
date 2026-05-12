@@ -32,12 +32,16 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByLabel("Text reveal", { exact: true }).uncheck();
   await page.getByLabel("Text speed", { exact: true }).selectOption("120");
+  await page.getByLabel("Text sound", { exact: true }).uncheck();
+  await expect(page.getByLabel("Text sound volume", { exact: true })).toBeVisible();
   await expect(page.getByLabel("BGM volume", { exact: true })).toBeVisible();
   await expect(page.getByLabel("SE volume", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Voice volume", { exact: true })).toBeVisible();
+  await setRangeValue(page.getByLabel("Text sound volume", { exact: true }), "0.4");
   await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.35");
   await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.45");
   await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.55");
+  await expect(page.getByLabel("Text sound volume", { exact: true })).toHaveValue("0.4");
   await expect(page.getByLabel("BGM volume", { exact: true })).toHaveValue("0.35");
   await expect(page.getByLabel("SE volume", { exact: true })).toHaveValue("0.45");
   await expect(page.getByLabel("Voice volume", { exact: true })).toHaveValue("0.55");
@@ -59,6 +63,8 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByLabel("Text reveal", { exact: true }).check();
   await page.getByLabel("Text speed", { exact: true }).selectOption("60");
+  await page.getByLabel("Text sound", { exact: true }).check();
+  await setRangeValue(page.getByLabel("Text sound volume", { exact: true }), "0.55");
   await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.6");
   await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.8");
   await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.9");

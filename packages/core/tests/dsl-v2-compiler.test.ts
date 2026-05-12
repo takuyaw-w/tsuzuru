@@ -58,6 +58,14 @@ const stdAudioPluginCommands = {
   }),
 };
 
+const stdTextSoundPluginCommands = {
+  textSound: definePluginCommand("textSound", {
+    kind: "positional",
+    arguments: [{ type: "string", nonEmpty: true }],
+  }),
+  stopTextSound: definePluginCommand("stopTextSound", { kind: "none" }),
+};
+
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
@@ -887,11 +895,32 @@ scene start:
     ]);
   });
 
-  it("keeps std visual and audio command compilation compatible without plugin metadata", () => {
+  it("compiles and validates std text sound plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  textSound soft
+  stopTextSound
+`,
+      { plugins: [{ name: "stdTextSound", commands: stdTextSoundPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "textSound",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "soft" } }],
+      },
+      { type: "CommandInstruction", name: "stopTextSound", args: [] },
+    ]);
+  });
+
+  it("keeps std visual, audio, and text sound command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
   bgm daily_theme
+  textSound soft
 `);
 
     expect(document.instructions).toMatchObject([
@@ -899,6 +928,7 @@ scene start:
       { type: "CommandInstruction", name: "bg" },
       { type: "CommandInstruction", name: "clearBg" },
       { type: "CommandInstruction", name: "startBgm" },
+      { type: "CommandInstruction", name: "textSound" },
     ]);
   });
 

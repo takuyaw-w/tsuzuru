@@ -50,6 +50,32 @@ export function SettingsScreen({ preferences, onChangePreferences, onBack }: Set
             </select>
           </label>
           <VolumePreferenceField
+            label="Text sound volume"
+            value={preferences.textSoundVolume}
+            onChange={(textSoundVolume) => {
+              onChangePreferences({
+                ...preferences,
+                textSoundVolume,
+              });
+            }}
+          />
+          <label className="settings__field">
+            <span className="settings__label">Text sound</span>
+            <input
+              type="checkbox"
+              className="settings__control"
+              aria-label="Text sound"
+              checked={preferences.textSoundEnabled}
+              onChange={(event) => {
+                onChangePreferences({
+                  ...preferences,
+                  textSoundEnabled: event.currentTarget.checked,
+                });
+              }}
+            />
+            <span className="settings__hint">Play short blips during text reveal.</span>
+          </label>
+          <VolumePreferenceField
             label="BGM volume"
             value={preferences.bgmVolume}
             onChange={(bgmVolume) => {

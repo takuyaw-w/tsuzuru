@@ -3,26 +3,24 @@ export const TEXT_SPEED_OPTIONS = [30, 60, 120] as const;
 export type TextSpeedCharactersPerSecond = (typeof TEXT_SPEED_OPTIONS)[number];
 
 export interface ExamplePreferences {
+  readonly messageScale: number;
+  readonly showAudioNotices: boolean;
   readonly textRevealEnabled: boolean;
   readonly textSpeedCharactersPerSecond: TextSpeedCharactersPerSecond;
   readonly textSoundEnabled: boolean;
   readonly textSoundVolume: number;
-  readonly bgmVolume: number;
-  readonly seVolume: number;
-  readonly voiceVolume: number;
 }
 
 export const DEFAULT_EXAMPLE_PREFERENCES: ExamplePreferences = {
+  messageScale: 1,
+  showAudioNotices: true,
   textRevealEnabled: true,
   textSpeedCharactersPerSecond: 60,
   textSoundEnabled: true,
   textSoundVolume: 0.55,
-  bgmVolume: 0.6,
-  seVolume: 0.8,
-  voiceVolume: 0.9,
 };
 
-export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
+export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-vue-basic:preferences:v1";
 
 export function loadPreferences(): ExamplePreferences {
   const storage = getLocalStorage();
@@ -63,6 +61,11 @@ export function normalizePreferences(value: unknown): ExamplePreferences {
   }
 
   return {
+    messageScale: isMessageScale(value.messageScale) ? value.messageScale : DEFAULT_EXAMPLE_PREFERENCES.messageScale,
+    showAudioNotices:
+      typeof value.showAudioNotices === "boolean"
+        ? value.showAudioNotices
+        : DEFAULT_EXAMPLE_PREFERENCES.showAudioNotices,
     textRevealEnabled:
       typeof value.textRevealEnabled === "boolean"
         ? value.textRevealEnabled
@@ -77,14 +80,15 @@ export function normalizePreferences(value: unknown): ExamplePreferences {
     textSoundVolume: isUnitVolume(value.textSoundVolume)
       ? value.textSoundVolume
       : DEFAULT_EXAMPLE_PREFERENCES.textSoundVolume,
-    bgmVolume: isUnitVolume(value.bgmVolume) ? value.bgmVolume : DEFAULT_EXAMPLE_PREFERENCES.bgmVolume,
-    seVolume: isUnitVolume(value.seVolume) ? value.seVolume : DEFAULT_EXAMPLE_PREFERENCES.seVolume,
-    voiceVolume: isUnitVolume(value.voiceVolume) ? value.voiceVolume : DEFAULT_EXAMPLE_PREFERENCES.voiceVolume,
   };
 }
 
 function isTextSpeedCharactersPerSecond(value: unknown): value is TextSpeedCharactersPerSecond {
   return typeof value === "number" && TEXT_SPEED_OPTIONS.includes(value as TextSpeedCharactersPerSecond);
+}
+
+function isMessageScale(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0.9 && value <= 1.3;
 }
 
 function isUnitVolume(value: unknown): value is number {

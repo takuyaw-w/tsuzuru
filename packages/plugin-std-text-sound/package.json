@@ -1,0 +1,47 @@
+{
+  "name": "@tsuzuru/plugin-std-text-sound",
+  "version": "0.1.1",
+  "description": "Standard text sound plugin state and command handlers for Tsuzuru.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/src/index.*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-text-sound"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-text-sound#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "plugin",
+    "text-sound"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

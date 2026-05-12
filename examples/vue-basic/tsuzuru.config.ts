@@ -1,5 +1,6 @@
 import { defineTsuzuruConfig } from "@tsuzuru/config";
 import { createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 
 export default defineTsuzuruConfig({
@@ -7,5 +8,5 @@ export default defineTsuzuruConfig({
     entry: "scenario/main.tzr",
     files: ["scenario/**/*.tzr"],
   },
-  plugins: [createStdVisualPlugin(), createStdAudioPlugin()],
+  plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin()],
 });

@@ -1,5 +1,6 @@
 import { compileTzrProject } from "@tsuzuru/core";
 import { createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 
 const scenarioModules = import.meta.glob<string>("../scenario/**/*.tzr", {
@@ -21,7 +22,7 @@ export const scenarioProject = compileTzrProject(
       source,
     })),
   },
-  { plugins: [createStdVisualPlugin(), createStdAudioPlugin()] },
+  { plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdTextSoundPlugin()] },
 );
 
 function toScenarioDocumentId(path: string): string {

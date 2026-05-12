@@ -87,6 +87,10 @@ The following syntax is not Core. It is official standard plugin sugar.
   inline {se}
   inline {voice}
 
+@tsuzuru/plugin-std-text-sound:
+  textSound
+  stopTextSound
+
 @tsuzuru/plugin-std-system:
   system.*
   system.unlockEnding
@@ -1389,7 +1393,22 @@ Rules:
 - Statement-level `se` and `voice` are supported.
 - `se` and `voice` do not have transitions.
 
-### 23.4 AssetRef
+### 23.4 Text Sound
+
+```txt
+textSound soft
+stopTextSound
+```
+
+Rules:
+
+- `textSound` and `stopTextSound` are sugar for `@tsuzuru/plugin-std-text-sound`.
+- `textSound` sets the current renderer-neutral text sound asset ID.
+- `stopTextSound` clears the current text sound.
+- Actual playback is renderer / app policy tied to text reveal.
+- Volume, interval, punctuation skip, and speaker mapping are not DSL syntax.
+
+### 23.5 AssetRef
 
 ```bnf
 AssetRef ::= DOTTED_IDENT | STRING
@@ -1737,6 +1756,10 @@ Phase 8:
   audio transition
 
 Phase 9:
+  std-text-sound sugar
+  textSound / stopTextSound
+
+Phase 10:
   std-system plugin
   system.*
   unlockEnding / unlockCg / unlockAchievement
