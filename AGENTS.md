@@ -9,13 +9,15 @@ The project aims to let creators:
 - Write scenarios in readable `.tzr` files
 - Compile scenarios into a runtime document
 - Run visual novel scenarios in a browser-first runtime
-- Build UI with Preact
+- Build UI with framework adapters such as Preact and Vue
 - Extend presentation behavior with TypeScript plugins
 - Distribute games as static web applications
 
 Scenario files must describe narrative flow. They must not become a general-purpose programming language.
 
-## Current Repository State
+## Source of Truth
+
+Treat `main` as the source of truth unless the user explicitly specifies another branch.
 
 The current supported DSL path is the modern `.tzr` DSL implemented under `packages/core/src`.
 
@@ -39,18 +41,15 @@ Current public parser/compiler API:
 import { parseTzr, compileTzr } from "@tsuzuru/core";
 ```
 
-Current runnable example:
-
-```txt
-examples/preact-basic
-```
-
 ## Current Package Roles
 
-Core packages:
+Current packages:
 
 ```txt
 packages/core
+packages/config
+packages/cli
+packages/create-tsuzuru
 packages/preact
 packages/vue
 packages/standard-ui-preact
@@ -58,7 +57,14 @@ packages/plugin-std-visual
 packages/plugin-std-audio
 ```
 
-Current example:
+Current examples:
+
+```txt
+examples/preact-basic
+examples/vue-basic
+```
+
+Primary runnable example:
 
 ```txt
 examples/preact-basic
@@ -73,8 +79,34 @@ Package responsibilities:
   - runtime document / IR
   - runtime stepping
   - runtime state
+  - runtime events
+  - choices
+  - jumps
+  - conditional branching
+  - scenario state updates
   - snapshot / restore
   - command dispatch infrastructure
+  - diagnostics
+
+- `@tsuzuru/config`
+  - project configuration helpers
+  - `defineTsuzuruConfig`
+  - config-related public types
+  - must not own parser/compiler/runtime semantics
+
+- `@tsuzuru/cli`
+  - command line tools such as `tsuzuru check`
+  - config loading orchestration
+  - scenario file discovery
+  - scenario validation entry points
+  - must not duplicate core parser/compiler semantics
+
+- `create-tsuzuru`
+  - project scaffolding
+  - default project templates
+  - generated examples and starter files
+  - generated templates must use the current DSL
+  - must not generate legacy DSL syntax
 
 - `@tsuzuru/preact`
   - connects the core runtime to Preact
@@ -88,23 +120,27 @@ Package responsibilities:
 
 - `@tsuzuru/standard-ui-preact`
   - provides reusable Preact UI components
+  - may provide layout, message, choice, control, and helper UI components
   - must not own parser/compiler/runtime semantics
 
 - `@tsuzuru/plugin-std-visual`
   - provides standard visual command handlers
   - owns visual plugin state updates
   - does not resolve asset paths
+  - does not render DOM or framework components
 
 - `@tsuzuru/plugin-std-audio`
   - provides standard audio command handlers
   - owns audio plugin state updates
   - does not load or bundle audio assets
+  - does not own browser audio playback policy
 
 ## Current DSL Direction
 
 The `.tzr` DSL should be:
 
 - readable
+- indentation-based where useful
 - line-oriented where practical
 - statically analyzable
 - friendly to syntax highlighting
@@ -195,9 +231,13 @@ The runtime must not depend on:
 
 - DOM
 - Preact
+- Vue
 - CSS
+- Vite
 - browser storage
 - application-specific assets
+
+Framework adapters and examples may depend on browser/framework APIs. Core must not.
 
 ## Plugin Policy
 
@@ -210,7 +250,7 @@ Plugins may own presentation-related behavior such as:
 - BGM state
 - sound effect events
 - voice events
-- transitions in future versions
+- transitions
 - camera or screen effects in future versions
 
 Plugins must not own core narrative flow.
@@ -227,7 +267,12 @@ Core owns:
 - runtime stepping
 - snapshot / restore
 
-Plugin command validation policy is still a deferred design topic. Do not introduce a new validation framework unless explicitly requested.
+Plugin command validation policy:
+
+- Use the existing plugin command metadata validation when available.
+- Do not introduce a new validation framework or incompatible schema system unless explicitly requested.
+- Changes to plugin command metadata must update core compiler tests and relevant plugin tests.
+- Plugin validation must not move narrative semantics out of core.
 
 ## Macro / Preset Policy
 
@@ -265,6 +310,8 @@ Do not implement these unless explicitly requested:
 - achievements
 - gallery
 - advanced animation editor
+- save data migration system
+- cross-runtime save compatibility guarantees
 
 ## Development Workflow
 
@@ -278,16 +325,20 @@ Prefer focused tasks:
 - docs-only changes
 - example-only changes
 - test-only changes
+- package-only changes
+- template-only changes
 
 Do not combine unrelated refactors with feature work.
 
 Do not revive deleted legacy files to make tests pass.
 
+Do not update generated templates without checking that they still use the current DSL.
+
 When unsure, preserve the current public API and report the uncertainty.
 
 ## Verification Commands
 
-Use these commands before reporting completion:
+Use these commands before reporting completion for broad repository changes:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -296,24 +347,86 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
+pnpm --filter @tsuzuru/example-preact-basic check:scenario
 pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
 ```
 
-For package-specific changes, also run the relevant filtered checks.
+If `rtk` is available, prefer the equivalent `rtk` command where it reduces token usage and preserves the same verification intent.
+
+Example:
+
+```sh
+rtk pnpm install --frozen-lockfile
+rtk pnpm format:check
+rtk pnpm lint
+rtk pnpm check
+rtk pnpm test
+rtk pnpm typecheck
+rtk pnpm --filter @tsuzuru/example-preact-basic check:scenario
+rtk pnpm --filter @tsuzuru/example-preact-basic build
+rtk git diff --check
+```
+
+For package-specific changes, run the relevant filtered checks first.
 
 Examples:
 
 ```sh
 pnpm --filter @tsuzuru/core test
 pnpm --filter @tsuzuru/core typecheck
+
+pnpm --filter @tsuzuru/config test
+pnpm --filter @tsuzuru/config typecheck
+
+pnpm --filter @tsuzuru/cli test
+pnpm --filter @tsuzuru/cli typecheck
+
+pnpm --filter create-tsuzuru test
+pnpm --filter create-tsuzuru typecheck
+
 pnpm --filter @tsuzuru/preact test
+pnpm --filter @tsuzuru/preact typecheck
+
+pnpm --filter @tsuzuru/vue test
+pnpm --filter @tsuzuru/vue typecheck
+
 pnpm --filter @tsuzuru/standard-ui-preact test
+pnpm --filter @tsuzuru/standard-ui-preact typecheck
+
 pnpm --filter @tsuzuru/plugin-std-visual test
+pnpm --filter @tsuzuru/plugin-std-visual typecheck
+
 pnpm --filter @tsuzuru/plugin-std-audio test
+pnpm --filter @tsuzuru/plugin-std-audio typecheck
 ```
 
-If `rtk` is available, prefer the equivalent `rtk` command where it reduces token usage and preserves the same verification intent.
+For scenario or Preact example changes, also run:
+
+```sh
+pnpm --filter @tsuzuru/example-preact-basic check:scenario
+pnpm --filter @tsuzuru/example-preact-basic test
+pnpm --filter @tsuzuru/example-preact-basic typecheck
+pnpm --filter @tsuzuru/example-preact-basic build
+```
+
+For Vue adapter or Vue example changes, also run:
+
+```sh
+pnpm --filter @tsuzuru/example-vue-basic check:scenario
+pnpm --filter @tsuzuru/example-vue-basic test
+pnpm --filter @tsuzuru/example-vue-basic typecheck
+pnpm --filter @tsuzuru/example-vue-basic build
+```
+
+For package publishing, package exports, `files`, generated templates, or release-readiness changes, also run:
+
+```sh
+pnpm run pack:dry-run
+pnpm run smoke:create-tsuzuru
+```
+
+If any verification is skipped, report the skipped command and the reason.
 
 ## Documentation Rules
 
@@ -339,6 +452,10 @@ The current DSL design document should live at:
 docs/design/dsl-v2.md
 ```
 
+When changing public syntax, public APIs, examples, templates, or package behavior, update relevant docs in the same change.
+
+When changing implementation status, ensure README and design docs do not contradict `main` as the current source of truth.
+
 ## Coding Guidelines
 
 Use strict TypeScript.
@@ -352,6 +469,8 @@ Prefer:
 - immutable data where practical
 - clear runtime instruction types
 - compile-time validation where practical
+- deterministic diagnostics
+- source-location-aware errors where practical
 
 Avoid:
 
@@ -359,9 +478,12 @@ Avoid:
 - hidden global mutable state
 - DOM dependency in core
 - Preact dependency in core
+- Vue dependency in core
+- Vite dependency in core
 - parsing via fragile ad-hoc string splitting when grammar-aware parsing is needed
 - scenario execution logic inside UI components
 - plugin APIs that freely mutate runtime internals
+- duplicating parser/compiler behavior in CLI, examples, adapters, or templates
 
 ## Testing Policy
 
@@ -375,8 +497,11 @@ Prioritize tests for:
 - jumps
 - state updates
 - plugin command dispatch
+- plugin command metadata validation
 - snapshot / restore
 - invalid DSL diagnostics
+- CLI scenario checking
+- generated project templates when templates change
 
 When changing syntax, update parser tests first.
 
@@ -385,6 +510,14 @@ When changing compiled output, update compiler tests.
 When changing runtime behavior, update runtime tests.
 
 When changing public API names, update examples and docs in the same change.
+
+When changing templates, verify that generated projects:
+
+- use the current DSL
+- do not include legacy syntax
+- can install dependencies
+- can run scenario checks
+- can build
 
 ## Agent Instructions
 
@@ -396,7 +529,19 @@ When working in this repository:
 - Do not introduce macros, presets, or stage syntax unless explicitly requested.
 - Do not restore deleted examples.
 - Do not rename public APIs without explicit approval.
+- Do not duplicate core semantics in CLI, adapters, examples, or templates.
 - Keep diffs minimal.
 - Report commands run and their results.
 - Report any skipped verification and the reason.
 - Prefer concrete file paths and commands over general explanations.
+- Preserve user changes already present in the worktree.
+- Do not treat prompt templates under `.agents/prompts/` as task requirements.
+- Use area-specific skills under `.agents/skills/` when relevant.
+
+## Japanese Prompt Note
+
+User tasks may be written in Japanese.
+
+Interpret Japanese prompts according to the constraints in this file.
+
+Do not translate, weaken, or ignore these constraints because the user prompt is casual or abbreviated.
