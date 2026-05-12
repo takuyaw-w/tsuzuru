@@ -290,6 +290,53 @@ describe("useTextReveal", () => {
     expect(harness.getState().isRevealing).toBe(true);
   });
 
+  it("ignores stale timeout callbacks after text and resetKey change", async () => {
+    const onCharacterReveal = vi.fn();
+    const scheduledCallbacks: Array<() => void> = [];
+    const originalSetTimeout = globalThis.setTimeout;
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation((handler, timeout, ...args) => {
+      if (typeof handler === "function") {
+        scheduledCallbacks.push(() => {
+          handler(...args);
+        });
+      }
+      return originalSetTimeout(handler, timeout, ...args);
+    });
+
+    try {
+      const harness = await mountReveal("ab", {
+        charactersPerSecond: 10,
+        resetKey: "message-1",
+        onCharacterReveal,
+      });
+      const staleCallback = scheduledCallbacks[0];
+      if (staleCallback === undefined) {
+        throw new Error("expected a scheduled reveal callback");
+      }
+
+      await harness.update("xy", {
+        charactersPerSecond: 10,
+        resetKey: "message-2",
+        onCharacterReveal,
+      });
+
+      act(() => {
+        staleCallback();
+      });
+      await flushUpdates();
+
+      expect(onCharacterReveal).not.toHaveBeenCalled();
+      expect(harness.getState().visibleText).toBe("");
+
+      await advanceTimersByTime(100);
+      expect(onCharacterReveal).toHaveBeenCalledTimes(1);
+      expect(onCharacterReveal).toHaveBeenCalledWith({ character: "x", index: 0, text: "xy" });
+      expect(harness.getState().visibleText).toBe("x");
+    } finally {
+      setTimeoutSpy.mockRestore();
+    }
+  });
+
   it("revealAll shows full text", async () => {
     const harness = await mountReveal("abc");
 
