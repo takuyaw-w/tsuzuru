@@ -9,9 +9,14 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./browser": {
+      "types": "./dist/src/browser.d.ts",
+      "import": "./dist/src/browser.js"
     }
   },
   "files": [
+    "dist/src/browser.*",
     "dist/src/index.*"
   ],
   "repository": {

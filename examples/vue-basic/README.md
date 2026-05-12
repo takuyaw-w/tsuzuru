@@ -8,6 +8,7 @@ This example uses:
 - Vue SFC components for the title, runtime, backlog, settings, and gallery
 - `@tsuzuru/plugin-std-visual` for background and sprite state
 - `@tsuzuru/plugin-std-audio` for BGM, SE, and voice state
+- `@tsuzuru/plugin-std-text-sound` for text blip profile defaults and playback helpers
 
 The primary runnable example remains `examples/preact-basic`. This example shows
 that Tsuzuru's core runtime can be connected to another framework without
@@ -25,5 +26,8 @@ pnpm --filter @tsuzuru/example-vue-basic dev
 
 Audio files are intentionally represented by `.gitkeep` placeholders. Missing
 audio playback is reported as a non-fatal browser notice by `AudioLayer.vue`.
+Text sound uses generated Web Audio `noise` / `mix` profiles from `assets.ts`,
+resolved from narration / character defaults during text reveal. No real text
+sound assets are bundled.
 
 `create-tsuzuru --template vue` is not implemented yet.

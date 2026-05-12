@@ -10,7 +10,12 @@ import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
   getStdTextSoundState,
+  type ResolveStdTextSoundProfileContext,
+  resolveStdTextSoundProfile,
+  type StdTextSoundState,
+  shouldPlayStdTextSoundCharacter,
 } from "@tsuzuru/plugin-std-text-sound";
+import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
@@ -70,7 +75,6 @@ type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
 const AUTO_MODE_ADVANCE_DELAY_MS = 1200;
 const SKIP_MODE_ADVANCE_DELAY_MS = 120;
 const TEXT_SOUND_MIN_INTERVAL_MS = 45;
-const TEXT_SOUND_SKIPPED_CHARACTERS = new Set("。、，．,.!?！？;；:：…・\"'「」『』（）()[]【】");
 
 export function App() {
   const documentResult = useMemo((): DocumentResult => {
@@ -207,9 +211,39 @@ function RuntimeApp({
     [],
   );
   const [diagnostics, setDiagnostics] = useState<readonly RuntimeDiagnostic[]>([]);
+  const textSoundNoticeKeysRef = useRef<Set<string>>(new Set());
   const recordDiagnostic = useCallback((diagnostic: RuntimeDiagnostic) => {
     setDiagnostics((current) => [...current, diagnostic]);
   }, []);
+  const recordTextSoundNotice = useCallback(
+    (code: string, message: string, detail?: unknown) => {
+      if (textSoundNoticeKeysRef.current.has(code)) {
+        return;
+      }
+      textSoundNoticeKeysRef.current.add(code);
+      recordDiagnostic({ severity: "warning", code, message });
+      if (detail === undefined) {
+        console.warn(message);
+      } else {
+        console.warn(message, detail);
+      }
+    },
+    [recordDiagnostic],
+  );
+  const textSoundPlayer = useMemo(
+    () =>
+      createStdTextSoundPlayer({
+        defaultMinIntervalMs: TEXT_SOUND_MIN_INTERVAL_MS,
+        onError: (error) => {
+          recordTextSoundNotice(
+            "example.textSound.playbackFailed",
+            "Text sound playback was blocked or failed.",
+            error,
+          );
+        },
+      }),
+    [recordTextSoundNotice],
+  );
   const runtime = useRuntime(document, {
     plugins,
     commandHandlers,
@@ -236,7 +270,12 @@ function RuntimeApp({
   );
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
-  const playTextSoundForCharacter = useTextSoundPlayback(runtime.state, preferences, recordDiagnostic);
+  const playTextSoundForCharacter = useTextSoundPlayback(
+    runtime.state,
+    visiblePresentationEvent,
+    preferences,
+    textSoundPlayer,
+  );
   const textReveal = useTextReveal(revealText, {
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
@@ -401,6 +440,12 @@ function RuntimeApp({
     textReveal.isRevealing,
     textReveal.revealAll,
   ]);
+
+  useEffect(() => {
+    return () => {
+      textSoundPlayer.destroy();
+    };
+  }, [textSoundPlayer]);
 
   useEffect(() => {
     if (initialSaveData === null || hasRestoredInitialSaveDataRef.current) {
@@ -632,72 +677,49 @@ function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
 
 function useTextSoundPlayback(
   runtimeState: RuntimeState,
+  visibleEvent: RuntimeEvent | null,
   preferences: ExamplePreferences,
-  onNotice: (diagnostic: RuntimeDiagnostic) => void,
+  player: StdTextSoundPlayer,
 ): (event: TextRevealCharacterEvent) => void {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const lastPlayedAtRef = useRef(0);
-  const noticedKeysRef = useRef<Set<string>>(new Set());
-  const currentTextSoundAssetId = getExampleTextSoundAssetId(runtimeState);
-
-  const addNotice = useCallback(
-    (code: string, message: string, detail?: unknown) => {
-      if (noticedKeysRef.current.has(code)) {
-        return;
-      }
-      noticedKeysRef.current.add(code);
-      onNotice({ severity: "warning", code, message });
-      if (detail === undefined) {
-        console.warn(message);
-      } else {
-        console.warn(message, detail);
-      }
-    },
-    [onNotice],
-  );
+  const textSoundState = getExampleTextSoundState(runtimeState);
+  const textSoundContext = getExampleTextSoundContext(visibleEvent);
+  const profile =
+    textSoundContext === null ? null : resolveStdTextSoundProfile(assets.textSound, textSoundState, textSoundContext);
 
   return useCallback(
     (event: TextRevealCharacterEvent) => {
-      if (!preferences.textRevealEnabled || !preferences.textSoundEnabled || currentTextSoundAssetId === null) {
+      if (!preferences.textRevealEnabled || !preferences.textSoundEnabled || profile === null) {
         return;
       }
-      if (!shouldPlayTextSoundForCharacter(event.character)) {
-        return;
-      }
-
-      const now = performance.now();
-      if (now - lastPlayedAtRef.current < TEXT_SOUND_MIN_INTERVAL_MS) {
-        return;
-      }
-      lastPlayedAtRef.current = now;
-
-      const profile = assets.textSound[currentTextSoundAssetId as keyof typeof assets.textSound];
-      if (profile === undefined) {
-        addNotice(
-          `example.textSound.missing.${currentTextSoundAssetId}`,
-          `Text sound asset is not mapped: ${currentTextSoundAssetId}`,
-        );
+      if (!shouldPlayStdTextSoundCharacter(event.character)) {
         return;
       }
 
-      void playTextSoundTone(profile, preferences.textSoundVolume, audioContextRef, addNotice);
+      player.play(profile, {
+        minIntervalMs: TEXT_SOUND_MIN_INTERVAL_MS,
+        volume: preferences.textSoundVolume,
+      });
     },
-    [
-      addNotice,
-      currentTextSoundAssetId,
-      preferences.textRevealEnabled,
-      preferences.textSoundEnabled,
-      preferences.textSoundVolume,
-    ],
+    [player, preferences.textRevealEnabled, preferences.textSoundEnabled, preferences.textSoundVolume, profile],
   );
 }
 
-function getExampleTextSoundAssetId(runtimeState: RuntimeState): string | null {
+function getExampleTextSoundState(runtimeState: RuntimeState): StdTextSoundState {
   try {
-    return getStdTextSoundState(runtimeState).current?.assetId ?? null;
+    return getStdTextSoundState(runtimeState);
   } catch {
-    return null;
+    return { overrideProfileId: null };
   }
+}
+
+function getExampleTextSoundContext(event: RuntimeEvent | null): ResolveStdTextSoundProfileContext | null {
+  if (event?.type === "narration") {
+    return { kind: "narration" };
+  }
+  if (event?.type === "dialogue") {
+    return { kind: "dialogue", speakerId: event.speaker };
+  }
+  return null;
 }
 
 function getRuntimeEventTextKey(event: RuntimeEvent): string {
@@ -708,50 +730,6 @@ function getRuntimeEventTextKey(event: RuntimeEvent): string {
     return event.items.map((item) => item.text).join("\u0000");
   }
   return "";
-}
-
-type TextSoundProfile = (typeof assets.textSound)[keyof typeof assets.textSound];
-
-function shouldPlayTextSoundForCharacter(character: string): boolean {
-  return character.trim().length > 0 && !TEXT_SOUND_SKIPPED_CHARACTERS.has(character);
-}
-
-async function playTextSoundTone(
-  profile: TextSoundProfile,
-  volume: number,
-  audioContextRef: { current: AudioContext | null },
-  addNotice: (code: string, message: string, detail?: unknown) => void,
-): Promise<void> {
-  if (typeof AudioContext === "undefined") {
-    addNotice("example.textSound.audioContextUnavailable", "Text sound skipped because AudioContext is unavailable.");
-    return;
-  }
-
-  try {
-    const context = audioContextRef.current ?? new AudioContext();
-    audioContextRef.current = context;
-    if (context.state === "suspended") {
-      await context.resume();
-    }
-
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const now = context.currentTime;
-    const durationSeconds = profile.durationMs / 1000;
-    const outputVolume = Math.max(0, Math.min(volume, 1));
-
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(profile.frequencyHz, now);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(outputVolume * 0.18, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + durationSeconds);
-  } catch (error) {
-    addNotice("example.textSound.playbackFailed", "Text sound playback was blocked or failed.", error);
-  }
 }
 
 interface DiagnosticLike {

@@ -5,13 +5,11 @@ scene notebook:
     ちゃんと見ておいてね。
   clear sprites
   clear bg
-  stopTextSound
   stopBgm
   end
 
 scene leave:
   narration:
     駅をあとにした。
-  stopTextSound
   stopBgm
   end

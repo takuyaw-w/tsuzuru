@@ -35,6 +35,12 @@ not bundled; place files under `public/assets/audio/...` to match the asset map.
 Playback and asset resolution are host-owned presentation behavior, not core or
 plugin behavior.
 
+Text Sound MVP uses `@tsuzuru/plugin-std-text-sound` profile defaults from
+`assets.ts`. Narration and character defaults resolve to `noise` / `mix`
+profiles with `note: "E5"` style tone layers, and the package browser helper is
+called from the text reveal character callback. Settings can turn text sound on
+or off and adjust volume. No real text sound audio files are bundled.
+
 The runtime menu also includes an Auto Mode MVP. Auto Mode can be toggled from
 the `Auto` button and advances narration or dialogue after the full text is
 visible. It stops at choices and never selects an option automatically. This is

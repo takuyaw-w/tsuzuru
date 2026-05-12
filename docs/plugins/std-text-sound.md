@@ -1,130 +1,153 @@
 # std-text-sound plugin
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata are
-> current, and `createStdTextSoundPlugin()` exposes metadata for compiler
-> validation. The runnable integrations are
-> [`examples/preact-basic`](../../examples/preact-basic/) and
-> [`examples/vue-basic`](../../examples/vue-basic/).
+> current. The browser playback helper is exposed from the separate
+> `@tsuzuru/plugin-std-text-sound/browser` subpath.
 
-`@tsuzuru/plugin-std-text-sound` は、いわゆる popopo / text blip sound に相当する Tsuzuru 公式の standard plugin です。
+`@tsuzuru/plugin-std-text-sound` is Tsuzuru's standard plugin for popopo / text
+blip sound.
 
-この plugin は、文字表示音の有効な sound id を renderer / app 非依存の runtime state として管理します。
+The plugin keeps renderer-neutral state and command handlers. It also exports
+profile types, resolver helpers, character skip policy, note conversion, and a
+basic Web Audio player helper for browser apps. Actual playback is still driven
+by the renderer / app text reveal callback.
 
-この plugin は次のことを行いません。
+The main package entry does not use DOM, timers, `Audio`, or `AudioContext`.
+Browser-specific playback lives under the `/browser` subpath.
 
-- 実際の音声再生
-- `Audio` / `AudioContext` / DOM の制御
-- timer や text reveal の制御
-- `assetId` から audio file / tone profile への解決
-- volume / interval / punctuation skip / speaker-specific mapping の保持
+## Profile Model
 
-renderer / app は、この plugin が保持する `assetId` をもとに、文字送りと同期して実際の再生を行います。
-
-## Installation / Registration
-
-plugin state を初期化するには、runtime state 作成時に `createStdTextSoundPlugin()` を登録します。
+Author-facing profiles use musical notes instead of raw frequencies.
 
 ```ts
-import { createInitialRuntimeState } from "@tsuzuru/core";
-import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
+import type { StdTextSoundConfig } from "@tsuzuru/plugin-std-text-sound";
 
-const runtimeState = createInitialRuntimeState(document, {
-  plugins: [createStdTextSoundPlugin()],
-});
+export const textSound = {
+  profiles: {
+    narration: {
+      type: "noise",
+      color: "white",
+      duration: "short",
+      volume: 0.18,
+    },
+    mio: {
+      type: "mix",
+      duration: "short",
+      volume: 0.55,
+      layers: [
+        { type: "tone", note: "E5", waveform: "triangle", volume: 0.7 },
+        { type: "noise", color: "white", volume: 0.12 },
+      ],
+    },
+  },
+  defaults: {
+    narration: "narration",
+    dialogue: "mio",
+    characters: {
+      mio: "mio",
+    },
+  },
+} satisfies StdTextSoundConfig;
 ```
 
-runtime 実行時は std-text-sound command handler を渡します。
+Supported top-level profile types are:
 
-```ts
-import { stepRuntime } from "@tsuzuru/core";
-import { createStdTextSoundCommandHandlers } from "@tsuzuru/plugin-std-text-sound";
+- `tone`: a short oscillator sound using `note: "C5"` style note names.
+- `noise`: a short white or pink noise sound. The valid spelling is `noise`; `noize` is not supported.
+- `mix`: a profile-level duration and volume with multiple `tone` / `noise` layers played together.
 
-const result = stepRuntime(document, runtimeState, {
-  commandHandlers: createStdTextSoundCommandHandlers(),
-});
-```
+Supported notes are sharp-only `C3` through `B6`. Flats such as `Db5` are not
+part of the MVP. `frequencyHz` is not a public authoring field; the helper
+`noteToFrequencyHz()` converts notes internally using A4 = 440Hz.
+
+Durations are `short`, `normal`, and `long`, mapped by
+`resolveStdTextSoundDurationMs()` to 24ms, 32ms, and 48ms.
+
+## Defaults And Resolver
+
+Most scenarios should not write `textSound` for every dialogue line. Configure
+defaults in app / example assets and resolve them when a character is revealed.
+
+`resolveStdTextSoundProfile(config, state, context)` uses this priority:
+
+1. Runtime override profile ID from `state.overrideProfileId`
+2. Dialogue speaker default from `defaults.characters[speakerId]`
+3. Dialogue default from `defaults.dialogue`
+4. Narration default from `defaults.narration`
+5. `null`
+
+`shouldPlayStdTextSoundCharacter(character)` returns `false` for empty strings,
+whitespace, newlines, punctuation, and brackets, including Japanese punctuation.
+It returns `true` for normal hiragana, katakana, kanji, and alphanumeric
+characters.
 
 ## Runtime State
 
-std-text-sound の状態は `runtimeState.plugins.stdTextSound` に保存されます。
+std-text-sound state is stored under `runtimeState.plugins.stdTextSound`.
 
 ```ts
-runtimeState.plugins.stdTextSound
-```
-
-state の形は次のとおりです。
-
-```ts
-{
-  current: null | { assetId: string },
+export interface StdTextSoundState {
+  readonly overrideProfileId: string | null;
 }
 ```
 
-初期 state は次の値です。
+Initial state:
 
 ```ts
-{
-  current: null,
-}
+{ overrideProfileId: null }
 ```
 
-renderer / app から state を読む場合は `getStdTextSoundState(runtimeState)` を使えます。`stdTextSound` state が初期化されていない場合、この helper は例外を投げます。
+Use `getStdTextSoundState(runtimeState)` to read it. The helper throws if the
+plugin was not registered.
 
 ## Commands
 
-### `textSound assetId`
-
-現在の text sound を設定します。
+The DSL commands remain available as advanced override controls.
 
 ```txt
-textSound soft
-```
-
-仕様:
-
-- `current` を `{ assetId }` に設定する
-- 既存 text sound は常に上書きする
-- `assetId` は空文字不可
-- 追加引数は不可
-
-実行後の state:
-
-```ts
-current: { assetId: "soft" }
-```
-
-### `stopTextSound`
-
-現在の text sound を停止します。
-
-```txt
+textSound mio
 stopTextSound
 ```
 
-仕様:
+`textSound profileId` sets `overrideProfileId` to a non-empty profile ID.
+`stopTextSound` clears the override by setting `overrideProfileId` to `null`.
 
-- `current` を `null` にする
-- text sound 未設定でも no-op
-- text sound 未設定時に warning は出さない
-- 引数は不可
+Normal text sound usage should prefer character / narration defaults instead of
+writing these commands throughout the scenario.
 
-実行後の state:
+## Browser Helper
+
+Browser apps can use the optional helper:
 
 ```ts
-current: null
+import { createStdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
+
+const player = createStdTextSoundPlayer({
+  defaultMinIntervalMs: 45,
+  onError: (error) => {
+    console.warn("text sound playback failed", error);
+  },
+});
+
+player.play(profile, { volume: 0.55 });
+player.destroy();
 ```
+
+The player uses Web Audio:
+
+- `tone`: `OscillatorNode` + `GainNode`
+- `noise`: generated `AudioBufferSourceNode` + `GainNode`
+- `mix`: tone and noise layers started together
+
+Playback errors, including autoplay / `AudioContext.resume()` failure, are
+reported through `onError` and are not thrown from `play()`.
 
 ## Presentation Policy
 
-文字ごとの throttle、空白 / 改行 / 句読点で鳴らさない方針、volume、speaker-specific mapping は plugin state には入れません。
+Volume preferences, throttle interval, punctuation skip, and speaker mapping are
+presentation policy. The plugin provides helpers for common behavior, but the
+renderer / app decides when to call playback from text reveal.
 
-`examples/preact-basic` と `examples/vue-basic` では、example-owned presentation policy として次を実装しています。
-
-- text reveal の timed character callback に同期する
-- 空白、改行、句読点では鳴らさない
-- reveal-all では鳴らさない
-- text reveal disabled では鳴らさない
-- 最小 interval を入れる
-- `assets.ts` の `textSound.soft` tone profile を Web Audio oscillator に接続する
-
-実音声素材は同梱していません。将来 audio file mapping に差し替える場合も、plugin package はその mapping shape を知りません。
+The Preact and Vue examples wire `resolveStdTextSoundProfile()`,
+`shouldPlayStdTextSoundCharacter()`, and `createStdTextSoundPlayer()` to their
+text reveal callbacks. They do not include real audio assets.

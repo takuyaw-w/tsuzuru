@@ -1,7 +1,6 @@
 scene start:
   bg riverside
   bgm vue_theme
-  textSound soft
   show aoi_smile at center
 
   narration:
@@ -36,7 +35,6 @@ scene vueScreen:
   jump finish
 
 scene finish:
-  stopTextSound
   stopBgm
   hide aoi_smile
   narration:

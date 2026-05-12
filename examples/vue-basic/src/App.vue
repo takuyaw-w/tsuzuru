@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import type { CompiledTzrDocument, RuntimeDiagnostic, RuntimeEvent, RuntimePluginDefinition } from "@tsuzuru/core";
+import type {
+  CompiledTzrDocument,
+  RuntimeDiagnostic,
+  RuntimeEvent,
+  RuntimePluginDefinition,
+  RuntimeState,
+} from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
   getStdTextSoundState,
+  resolveStdTextSoundProfile,
+  shouldPlayStdTextSoundCharacter,
+  type ResolveStdTextSoundProfileContext,
+  type StdTextSoundState,
 } from "@tsuzuru/plugin-std-text-sound";
+import { createStdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/vue";
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { assets } from "../assets.js";
 import AudioLayer from "./components/AudioLayer.vue";
 import ChoiceLayer from "./components/ChoiceLayer.vue";
 import MessageWindow from "./components/MessageWindow.vue";
@@ -20,13 +32,17 @@ import BacklogScreen from "./screens/BacklogScreen.vue";
 import GalleryScreen from "./screens/GalleryScreen.vue";
 import SettingsScreen from "./screens/SettingsScreen.vue";
 import TitleScreen from "./screens/TitleScreen.vue";
-import { createTextSoundPlayer, type TextSoundCharacterEvent } from "./text-sound.js";
 
 type DocumentResult =
   | { readonly ok: true; readonly document: CompiledTzrDocument }
   | { readonly ok: false; readonly message: string };
 type AppScreen = "title" | "runtime" | "backlog" | "settings" | "gallery";
 type MessageEvent = Extract<RuntimeEvent, { type: "narration" | "dialogue" }>;
+interface TextSoundCharacterEvent {
+  readonly character: string;
+  readonly index: number;
+  readonly text: string;
+}
 
 interface BacklogEntry {
   readonly speaker: string | null;
@@ -41,6 +57,7 @@ const preferences = ref<ExamplePreferences>(loadPreferences());
 const diagnostics = ref<readonly RuntimeDiagnostic[]>([]);
 const audioNotices = ref<readonly string[]>([]);
 const backlog = ref<readonly BacklogEntry[]>([]);
+let textSoundPlaybackNoticeShown = false;
 
 const plugins: readonly RuntimePluginDefinition[] = [
   createStdVisualPlugin(),
@@ -84,17 +101,20 @@ const runtimeStatus = computed(() => {
   }
   return runtime.event.value === null ? "Ready" : `Event: ${runtime.event.value.type}`;
 });
-const textSoundAssetId = computed(() => {
-  if (runtime === null) {
-    return null;
-  }
-  try {
-    return getStdTextSoundState(runtime.state.value).current?.assetId ?? null;
-  } catch {
-    return null;
-  }
+const textSoundPlayer = createStdTextSoundPlayer({
+  defaultMinIntervalMs: 45,
+  onError: (error) => {
+    if (!textSoundPlaybackNoticeShown) {
+      textSoundPlaybackNoticeShown = true;
+      addAudioNotice("Text sound playback was blocked or failed.");
+    }
+    console.warn("Text sound playback was blocked or failed.", error);
+  },
 });
-const textSoundPlayer = createTextSoundPlayer(addAudioNotice);
+
+onBeforeUnmount(() => {
+  textSoundPlayer.destroy();
+});
 
 watch(
   messageEvent,
@@ -167,14 +187,53 @@ function addAudioNotice(message: string): void {
 }
 
 function handleTextSoundCharacterReveal(event: TextSoundCharacterEvent): void {
-  textSoundPlayer.playCharacter(event, {
-    assetId: textSoundAssetId.value,
-    preferences: preferences.value,
+  if (runtime === null || !preferences.value.textRevealEnabled || !preferences.value.textSoundEnabled) {
+    return;
+  }
+  if (!shouldPlayStdTextSoundCharacter(event.character)) {
+    return;
+  }
+
+  const context = getExampleTextSoundContext(visibleEvent.value);
+  if (context === null) {
+    return;
+  }
+
+  const profile = resolveStdTextSoundProfile(
+    assets.textSound,
+    getExampleTextSoundState(runtime.state.value),
+    context,
+  );
+  if (profile === null) {
+    return;
+  }
+
+  textSoundPlayer.play(profile, {
+    minIntervalMs: 45,
+    volume: preferences.value.textSoundVolume,
   });
 }
 
 function formatDiagnostics(errors: readonly { readonly message: string }[]): string {
   return errors.map((error) => error.message).join("\n");
+}
+
+function getExampleTextSoundState(runtimeState: RuntimeState): StdTextSoundState {
+  try {
+    return getStdTextSoundState(runtimeState);
+  } catch {
+    return { overrideProfileId: null };
+  }
+}
+
+function getExampleTextSoundContext(event: RuntimeEvent | null): ResolveStdTextSoundProfileContext | null {
+  if (event?.type === "narration") {
+    return { kind: "narration" };
+  }
+  if (event?.type === "dialogue") {
+    return { kind: "dialogue", speakerId: event.speaker };
+  }
+  return null;
 }
 </script>
 

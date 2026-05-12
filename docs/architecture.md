@@ -286,19 +286,21 @@ Playback and asset resolution belong to the app, renderer, or example.
 Responsibilities:
 
 - maintain standard text sound plugin state
-- set or clear the current text sound asset ID
+- set or clear an advanced text sound override profile ID
 - handle standard text sound command instructions
+- provide shared profile, resolver, note conversion, and skip helpers
 
 It does not:
 
 - create audio elements or audio contexts
 - own text reveal timing
-- resolve asset IDs to URLs or tone profiles
+- resolve app asset IDs to URLs
 - own volume, interval, punctuation skip, or speaker mapping policy
 - own scene flow
 - own runtime stepping
 
-Playback policy belongs to the app, renderer, or example.
+The optional browser player lives in the `@tsuzuru/plugin-std-text-sound/browser`
+subpath. Playback timing still belongs to the app, renderer, or example.
 
 ---
 

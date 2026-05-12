@@ -1,3 +1,32 @@
+import type { StdTextSoundConfig } from "@tsuzuru/plugin-std-text-sound";
+
+const textSound = {
+  profiles: {
+    narration: {
+      type: "noise",
+      color: "white",
+      duration: "short",
+      volume: 0.18,
+    },
+    aoi: {
+      type: "mix",
+      duration: "short",
+      volume: 0.55,
+      layers: [
+        { type: "tone", note: "E5", waveform: "triangle", volume: 0.7 },
+        { type: "noise", color: "white", volume: 0.12 },
+      ],
+    },
+  },
+  defaults: {
+    narration: "narration",
+    dialogue: "aoi",
+    characters: {
+      aoi: "aoi",
+    },
+  },
+} satisfies StdTextSoundConfig;
+
 export const assets = {
   visual: {
     backgrounds: {
@@ -24,13 +53,7 @@ export const assets = {
       aoi_001: "/assets/audio/voice/aoi_001.mp3",
     },
   },
-  textSound: {
-    soft: {
-      type: "tone",
-      frequencyHz: 660,
-      durationMs: 32,
-    },
-  },
+  textSound,
 } as const;
 
 export type ExampleAssets = typeof assets;

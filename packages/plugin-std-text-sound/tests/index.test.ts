@@ -13,6 +13,12 @@ import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
   getStdTextSoundState,
+  noteToFrequencyHz,
+  resolveStdTextSoundDurationMs,
+  resolveStdTextSoundProfile,
+  type StdTextSoundConfig,
+  type StdTextSoundProfile,
+  shouldPlayStdTextSoundCharacter,
   stdTextSoundPluginCommands,
 } from "../src/index.js";
 
@@ -30,7 +36,7 @@ describe("createStdTextSoundPlugin", () => {
 
     expect(plugin.commands).toBe(stdTextSoundPluginCommands);
     expect(state.plugins.stdTextSound).toEqual({
-      current: null,
+      overrideProfileId: null,
     });
   });
 
@@ -40,7 +46,7 @@ describe("createStdTextSoundPlugin", () => {
     });
 
     expect(getStdTextSoundState(state)).toEqual({
-      current: null,
+      overrideProfileId: null,
     });
   });
 
@@ -54,7 +60,7 @@ describe("createStdTextSoundPlugin", () => {
 });
 
 describe("std-text-sound commands", () => {
-  it("keeps plugin command metadata available for DSL v2 integrations", () => {
+  it("keeps advanced override command metadata available for DSL integrations", () => {
     expect(Object.keys(stdTextSoundPluginCommands)).toEqual(["textSound", "stopTextSound"]);
     expect(stdTextSoundPluginCommands.textSound).toEqual({
       name: "textSound",
@@ -66,45 +72,45 @@ describe("std-text-sound commands", () => {
     });
   });
 
-  it("sets the current text sound", () => {
-    const result = runStdTextSoundCommands(command("textSound", [positionalString("soft")]));
+  it("sets the override profile id", () => {
+    const result = runStdTextSoundCommands(command("textSound", [positionalString("mio")]));
 
     expect(getStdTextSoundState(result.state)).toEqual({
-      current: { assetId: "soft" },
+      overrideProfileId: "mio",
     });
   });
 
-  it("reassigns and overwrites the current text sound", () => {
+  it("reassigns and overwrites the override profile id", () => {
     const result = runStdTextSoundCommands(
-      command("textSound", [positionalString("soft")]),
-      command("textSound", [positionalString("another")]),
+      command("textSound", [positionalString("mio")]),
+      command("textSound", [positionalString("narration")]),
     );
 
     expect(getStdTextSoundState(result.state)).toEqual({
-      current: { assetId: "another" },
+      overrideProfileId: "narration",
     });
   });
 
-  it("stops the current text sound", () => {
+  it("clears the override profile id", () => {
     const result = runStdTextSoundCommands(
-      command("textSound", [positionalString("soft")]),
+      command("textSound", [positionalString("mio")]),
       command("stopTextSound", []),
     );
 
     expect(getStdTextSoundState(result.state)).toEqual({
-      current: null,
+      overrideProfileId: null,
     });
   });
 
-  it("keeps stopTextSound as a no-op when no text sound is active", () => {
+  it("keeps stopTextSound as a no-op when no override is active", () => {
     const result = runStdTextSoundCommands(command("stopTextSound", []));
 
     expect(getStdTextSoundState(result.state)).toEqual({
-      current: null,
+      overrideProfileId: null,
     });
   });
 
-  it("validates empty asset ids and unsupported extra args through command metadata", () => {
+  it("validates empty profile ids and unsupported extra args through command metadata", () => {
     expect(
       validatePluginCommandArguments(stdTextSoundPluginCommands.textSound, [positionalString("")], loc.start).map(
         (diagnostic) => diagnostic.message,
@@ -114,7 +120,7 @@ describe("std-text-sound commands", () => {
     expect(
       validatePluginCommandArguments(
         stdTextSoundPluginCommands.textSound,
-        [positionalString("soft"), positionalString("extra")],
+        [positionalString("mio"), positionalString("extra")],
         loc.start,
       ).map((diagnostic) => diagnostic.message),
     ).toContain('Plugin command "textSound" expects at most 1 positional argument but received 2.');
@@ -122,7 +128,7 @@ describe("std-text-sound commands", () => {
     expect(
       validatePluginCommandArguments(
         stdTextSoundPluginCommands.stopTextSound,
-        [positionalString("soft")],
+        [positionalString("mio")],
         loc.start,
       ).map((diagnostic) => diagnostic.message),
     ).toContain('Plugin command "stopTextSound" expects at most 0 positional arguments but received 1.');
@@ -132,7 +138,7 @@ describe("std-text-sound commands", () => {
     expect(() => runStdTextSoundCommands(command("textSound", [positionalString("")]))).toThrow(
       "Invalid @textSound runtime arguments. Expected validated std text sound command arguments.",
     );
-    expect(() => runStdTextSoundCommands(command("stopTextSound", [positionalString("soft")]))).toThrow(
+    expect(() => runStdTextSoundCommands(command("stopTextSound", [positionalString("mio")]))).toThrow(
       "Invalid @stopTextSound runtime arguments. Expected validated std text sound command arguments.",
     );
   });
@@ -140,7 +146,7 @@ describe("std-text-sound commands", () => {
   it("runs compiled textSound and stopTextSound through runtime plugin handlers", () => {
     const parsed = parseTzr(
       `scene start:
-  textSound soft
+  textSound mio
   stopTextSound
 `,
       { filePath: "scenario/std-text-sound.tzr" },
@@ -167,13 +173,151 @@ describe("std-text-sound commands", () => {
       commandHandlers: createStdTextSoundCommandHandlers(),
     });
     expect(textSound.event).toEqual({ type: "pluginCommand", name: "textSound" });
-    expect(getStdTextSoundState(textSound.state)).toEqual({ current: { assetId: "soft" } });
+    expect(getStdTextSoundState(textSound.state)).toEqual({ overrideProfileId: "mio" });
 
     const stopTextSound = stepRuntime(compiled.document, textSound.state, {
       commandHandlers: createStdTextSoundCommandHandlers(),
     });
     expect(stopTextSound.event).toEqual({ type: "pluginCommand", name: "stopTextSound" });
-    expect(getStdTextSoundState(stopTextSound.state)).toEqual({ current: null });
+    expect(getStdTextSoundState(stopTextSound.state)).toEqual({ overrideProfileId: null });
+  });
+});
+
+describe("profile helpers", () => {
+  it("maps duration names to milliseconds", () => {
+    expect(resolveStdTextSoundDurationMs("short")).toBe(24);
+    expect(resolveStdTextSoundDurationMs(undefined)).toBe(32);
+    expect(resolveStdTextSoundDurationMs("normal")).toBe(32);
+    expect(resolveStdTextSoundDurationMs("long")).toBe(48);
+  });
+
+  it("converts note names to frequencies using A4 = 440Hz", () => {
+    expect(noteToFrequencyHz("A4")).toBeCloseTo(440, 6);
+    expect(noteToFrequencyHz("C4")).toBeCloseTo(261.625565, 6);
+    expect(noteToFrequencyHz("C5")).toBeCloseTo(523.251131, 6);
+    expect(noteToFrequencyHz("E5")).toBeCloseTo(659.255114, 6);
+  });
+
+  it("skips whitespace, punctuation, and brackets", () => {
+    for (const character of [
+      "",
+      " ",
+      "\n",
+      "。",
+      "、",
+      ".",
+      ",",
+      "!",
+      "?",
+      "！",
+      "？",
+      "…",
+      "「",
+      "」",
+      "『",
+      "』",
+      "（",
+      "）",
+      "(",
+      ")",
+    ]) {
+      expect(shouldPlayStdTextSoundCharacter(character)).toBe(false);
+    }
+  });
+
+  it("allows hiragana, katakana, kanji, and alphanumeric characters", () => {
+    for (const character of ["あ", "ア", "漢", "A", "z", "0", "9"]) {
+      expect(shouldPlayStdTextSoundCharacter(character)).toBe(true);
+    }
+  });
+
+  it("accepts tone, noise, and mix profile shapes", () => {
+    const tone = {
+      type: "tone",
+      note: "C5",
+      waveform: "triangle",
+      duration: "short",
+      volume: 0.5,
+    } satisfies StdTextSoundProfile;
+    const noise = {
+      type: "noise",
+      color: "pink",
+      duration: "normal",
+      volume: 0.18,
+    } satisfies StdTextSoundProfile;
+    const mix = {
+      type: "mix",
+      duration: "short",
+      volume: 0.55,
+      layers: [
+        { type: "tone", note: "E5", waveform: "triangle", volume: 0.7 },
+        { type: "noise", color: "white", volume: 0.12 },
+      ],
+    } satisfies StdTextSoundProfile;
+
+    expect(tone.type).toBe("tone");
+    expect(noise.type).toBe("noise");
+    expect(mix.layers).toHaveLength(2);
+  });
+});
+
+describe("resolveStdTextSoundProfile", () => {
+  const config: StdTextSoundConfig = {
+    profiles: {
+      narration: { type: "noise", color: "white", duration: "short", volume: 0.18 },
+      dialogue: { type: "tone", note: "C5", duration: "normal" },
+      mio: {
+        type: "mix",
+        duration: "short",
+        layers: [
+          { type: "tone", note: "E5", waveform: "triangle", volume: 0.7 },
+          { type: "noise", color: "white", volume: 0.12 },
+        ],
+      },
+      override: { type: "tone", note: "A5" },
+    },
+    defaults: {
+      narration: "narration",
+      dialogue: "dialogue",
+      characters: {
+        mio: "mio",
+      },
+    },
+  };
+
+  it("prefers runtime override profile ids", () => {
+    expect(
+      resolveStdTextSoundProfile(config, { overrideProfileId: "override" }, { kind: "dialogue", speakerId: "mio" }),
+    ).toEqual(config.profiles.override);
+  });
+
+  it("prefers character defaults for dialogue", () => {
+    expect(
+      resolveStdTextSoundProfile(config, { overrideProfileId: null }, { kind: "dialogue", speakerId: "mio" }),
+    ).toEqual(config.profiles.mio);
+  });
+
+  it("uses dialogue defaults when no character default exists", () => {
+    expect(
+      resolveStdTextSoundProfile(config, { overrideProfileId: null }, { kind: "dialogue", speakerId: "aoi" }),
+    ).toEqual(config.profiles.dialogue);
+  });
+
+  it("uses narration defaults for narration", () => {
+    expect(resolveStdTextSoundProfile(config, { overrideProfileId: null }, { kind: "narration" })).toEqual(
+      config.profiles.narration,
+    );
+  });
+
+  it("returns null for missing profile ids", () => {
+    expect(
+      resolveStdTextSoundProfile(
+        { profiles: {}, defaults: { narration: "missing" } },
+        { overrideProfileId: null },
+        { kind: "narration" },
+      ),
+    ).toBeNull();
+    expect(resolveStdTextSoundProfile(config, { overrideProfileId: "missing" }, { kind: "narration" })).toBeNull();
   });
 });
 

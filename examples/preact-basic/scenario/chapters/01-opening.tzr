@@ -1,11 +1,11 @@
 scene opening_start:
   bg station with fade(duration=300)
   bgm daily_theme
-  textSound soft
   show mio_smile at center with dissolve(duration=250)
 
   mio:
-    遅いよ。
+    遅いよ。あなたはいったいなにをしていたの。
+    わたしはさみしかった
 
   set scenario.hasNotebook = true
   set scenario.selectedItem = null

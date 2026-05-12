@@ -23,6 +23,7 @@ describe("vue-basic example", () => {
     expect(assets.visual.backgrounds.riverside.url).toContain("/assets/images/backgrounds/");
     expect(assets.visual.sprites.aoi_smile.url).toContain("/assets/images/sprites/");
     expect(assets.audio.bgm.vue_theme).toContain("/assets/audio/bgm/");
-    expect(assets.textSound.soft.type).toBe("tone");
+    expect(assets.textSound.profiles.narration.type).toBe("noise");
+    expect(assets.textSound.profiles.aoi.type).toBe("mix");
   });
 });

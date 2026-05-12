@@ -1396,17 +1396,19 @@ Rules:
 ### 23.4 Text Sound
 
 ```txt
-textSound soft
+textSound mio
 stopTextSound
 ```
 
 Rules:
 
 - `textSound` and `stopTextSound` are sugar for `@tsuzuru/plugin-std-text-sound`.
-- `textSound` sets the current renderer-neutral text sound asset ID.
-- `stopTextSound` clears the current text sound.
+- Normal text sound selection should use app-side narration / character defaults.
+- `textSound` sets an advanced renderer-neutral override profile ID.
+- `stopTextSound` clears the override profile ID.
 - Actual playback is renderer / app policy tied to text reveal.
-- Volume, interval, punctuation skip, and speaker mapping are not DSL syntax.
+- `tone` / `noise` / `mix` profiles, `note: "C5"`, volume, interval,
+  punctuation skip, and speaker mapping are not DSL syntax.
 
 ### 23.5 AssetRef
 
