@@ -13,6 +13,7 @@ import {
   createStdEffectPlugin,
   prepareStdEffectStateForSnapshot,
 } from "@tsuzuru/plugin-std-effect";
+import { createStdParticleCommandHandlers, createStdParticlePlugin } from "@tsuzuru/plugin-std-particle";
 import { createStdSystemCommandHandlers, createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import {
   createStdTextSoundCommandHandlers,
@@ -43,6 +44,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { assets } from "../assets.js";
 import { AudioLayer } from "./AudioLayer.js";
 import { EffectLayer } from "./EffectLayer.js";
+import { ParticleLayer } from "./ParticleLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
@@ -214,6 +216,7 @@ function RuntimeApp({
       createStdTextSoundPlugin(),
       createStdEffectPlugin(),
       createStdCameraPlugin(),
+      createStdParticlePlugin(),
       createStdSystemPlugin(),
     ],
     [],
@@ -225,6 +228,7 @@ function RuntimeApp({
       ...createStdTextSoundCommandHandlers(),
       ...createStdEffectCommandHandlers(),
       ...createStdCameraCommandHandlers(),
+      ...createStdParticleCommandHandlers(),
       ...createStdSystemCommandHandlers(),
     }),
     [],
@@ -525,6 +529,7 @@ function RuntimeApp({
         <GameShell className="app__shell">
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} />
+            <ParticleLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <EffectLayer runtimeState={runtime.state} />
             <RuntimeControlBar

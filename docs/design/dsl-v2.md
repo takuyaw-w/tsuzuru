@@ -102,6 +102,10 @@ The following syntax is not Core. It is official standard plugin sugar.
   camera focus
   reset camera
 
+@tsuzuru/plugin-std-particle:
+  particle
+  stopParticle
+
 @tsuzuru/plugin-std-system:
   call system.unlockEnding(id=...)
   call system.unlockCg(id=...)
@@ -1665,7 +1669,94 @@ ResetCameraStatement
 
 ---
 
-## 26. `@tsuzuru/plugin-std-system`
+## 26. `@tsuzuru/plugin-std-particle`
+
+Particle statements are sugar for `@tsuzuru/plugin-std-particle`.
+
+Particles are durable overlay state. They are not one-shot events and should not
+be mixed into std-effect. They also stay separate from std-visual because they
+represent environmental overlays rather than the current background or sprites.
+
+### 26.1 Syntax
+
+```txt
+particle <type> [intensity=<intensity>]
+stopParticle
+```
+
+Examples:
+
+```txt
+particle rain intensity=normal
+particle snow
+particle sakura intensity=strong
+particle dust intensity=light
+stopParticle
+```
+
+Rules:
+
+- `type` is required and must be `rain`, `snow`, `sakura`, or `dust`.
+- `intensity` is optional and defaults to `normal`.
+- `intensity` must be `light`, `normal`, or `strong`.
+- Running `particle ...` replaces the current particle.
+- MVP supports one particle at a time.
+- `stopParticle` takes no arguments and clears the current particle.
+- `stopParticle` is a no-op when no particle is active.
+
+### 26.2 Runtime State
+
+The std-particle plugin stores state under `runtimeState.plugins.stdParticle`:
+
+```ts
+{
+  current: {
+    type: "rain" | "snow" | "sakura" | "dust",
+    intensity: "light" | "normal" | "strong",
+  } | null,
+}
+```
+
+Initial state:
+
+```ts
+{
+  current: null,
+}
+```
+
+Particle state is durable presentation state and may be saved/restored with
+runtime snapshots as-is. There is no `prepareStdParticleStateForSnapshot()`
+helper.
+
+Actual DOM / CSS / canvas rendering is renderer or app responsibility.
+
+### 26.3 Grammar Fragment
+
+```bnf
+ParticleStatement
+  ::= "particle" ParticleType ParticleNamedArgs? NEWLINE
+
+ParticleType
+  ::= "rain" | "snow" | "sakura" | "dust"
+
+ParticleNamedArgs
+  ::= "intensity" "=" ParticleIntensity
+
+ParticleIntensity
+  ::= "light" | "normal" | "strong"
+
+StopParticleStatement
+  ::= "stopParticle" NEWLINE
+```
+
+Deferred:
+
+- multiple simultaneous particle layers
+- wind / direction / speed / size / color / density options
+- smoke / fog / embers / leaves / custom particle definitions
+
+## 27. `@tsuzuru/plugin-std-system`
 
 ### 26.1 Position
 
@@ -1746,7 +1837,7 @@ Generic `system.set` and dedicated `unlock ...` sugar are not adopted.
 
 ---
 
-## 27. File Splitting and Assets
+## 28. File Splitting and Assets
 
 ### 27.1 File Splitting
 
@@ -1774,7 +1865,7 @@ Policy:
 
 ---
 
-## 28. Reserved / Not Adopted
+## 29. Reserved / Not Adopted
 
 ### 28.1 Not Adopted
 
@@ -1808,7 +1899,7 @@ named text preset / style
 
 ---
 
-## 29. Full Example
+## 30. Full Example
 
 ```txt
 title "雨の駅"
@@ -1900,7 +1991,7 @@ scene common:
 
 ---
 
-## 28. Implementation Phases
+## 31. Implementation Phases
 
 The specification is written as a complete design, but implementation should be split.
 
@@ -1954,6 +2045,10 @@ Phase 10:
   shake / flash / pulse / blur
 
 Phase 11:
+  std-particle sugar
+  particle / stopParticle
+
+Phase 12:
   std-system plugin
   call system.unlockEnding(id=...)
   call system.unlockCg(id=...)

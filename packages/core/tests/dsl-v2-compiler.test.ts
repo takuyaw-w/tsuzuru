@@ -129,6 +129,15 @@ const stdCameraPluginCommands = {
   }),
 };
 
+const stdParticlePluginCommands = {
+  particle: definePluginCommand("particle", {
+    kind: "mixed",
+    positional: [{ type: "string", values: ["rain", "snow", "sakura", "dust"] }],
+    named: [{ name: "intensity", type: "string", optional: true, values: ["light", "normal", "strong"] }],
+  }),
+  stopParticle: definePluginCommand("stopParticle", { kind: "none" }),
+};
+
 const stdSystemPluginCommands = {
   "system.unlockEnding": definePluginCommand("system.unlockEnding", {
     kind: "named",
@@ -887,6 +896,50 @@ scene start:
     ]);
   });
 
+  it("compiles std particle sugar to plugin command instructions", () => {
+    const document = compileSource(`scene start:
+  particle rain intensity=normal
+  particle snow
+  particle sakura intensity=strong
+  particle dust intensity=light
+  stopParticle
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "particle",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "rain" } },
+          { type: "NamedArgument", name: "intensity", value: { type: "StringValue", value: "normal" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "particle",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "snow" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "particle",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "sakura" } },
+          { type: "NamedArgument", name: "intensity", value: { type: "StringValue", value: "strong" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "particle",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "dust" } },
+          { type: "NamedArgument", name: "intensity", value: { type: "StringValue", value: "light" } },
+        ],
+      },
+      { type: "CommandInstruction", name: "stopParticle", args: [] },
+    ]);
+  });
+
   it("compiles visual statements inside body choice branches", () => {
     const document = compileSource(`scene start:
   choice "Choose":
@@ -1151,6 +1204,59 @@ scene start:
     ]);
   });
 
+  it("compiles and validates std particle plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  particle rain intensity=normal
+  particle snow
+  particle sakura intensity=strong
+  particle dust intensity=light
+  stopParticle
+`,
+      { plugins: [{ name: "stdParticle", commands: stdParticlePluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "particle" },
+      { type: "CommandInstruction", name: "particle" },
+      { type: "CommandInstruction", name: "particle" },
+      { type: "CommandInstruction", name: "particle" },
+      { type: "CommandInstruction", name: "stopParticle" },
+    ]);
+  });
+
+  it("rejects invalid std particle plugin command arguments when metadata is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  particle smoke\n", {
+        plugins: [{ name: "stdParticle", commands: stdParticlePluginCommands }],
+      }),
+    ).toContain('Plugin command "particle" positional argument 1 must be one of "rain", "snow", "sakura", "dust".');
+    expect(
+      expectCompileFailure("scene start:\n  particle rain intensity=huge\n", {
+        plugins: [{ name: "stdParticle", commands: stdParticlePluginCommands }],
+      }),
+    ).toContain('Plugin command "particle" named argument "intensity" must be one of "light", "normal", "strong".');
+    expect(
+      expectCompileFailure("scene start:\n  particle\n", {
+        plugins: [{ name: "stdParticle", commands: stdParticlePluginCommands }],
+      }),
+    ).toContain('Plugin command "particle" is missing required positional argument 1.');
+    expect(
+      expectCompileFailure("scene start:\n  particle rain speed=fast\n", {
+        plugins: [{ name: "stdParticle", commands: stdParticlePluginCommands }],
+      }),
+    ).toContain('Plugin command "particle" does not support named argument "speed".');
+  });
+
+  it("rejects std particle sugar when plugin metadata is enabled but std particle is not registered", () => {
+    expect(
+      expectCompileFailure("scene start:\n  particle rain intensity=normal\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "particle".');
+  });
+
   it("rejects invalid std camera plugin command arguments when metadata is enabled", () => {
     expect(
       expectCompileFailure("scene start:\n  camera duration=100\n", {
@@ -1189,7 +1295,7 @@ scene start:
     ).toContain('Unknown plugin command "cameraFocus".');
   });
 
-  it("keeps std visual, audio, text sound, effect, and camera command compilation compatible without plugin metadata", () => {
+  it("keeps std visual, audio, text sound, effect, camera, and particle command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
@@ -1197,6 +1303,8 @@ scene start:
   textSound soft
   shake screen duration=180
   camera focus tone_stand zoom=1.2 duration=400
+  particle rain
+  stopParticle
 `);
 
     expect(document.instructions).toMatchObject([
@@ -1207,6 +1315,8 @@ scene start:
       { type: "CommandInstruction", name: "textSound" },
       { type: "CommandInstruction", name: "shake" },
       { type: "CommandInstruction", name: "cameraFocus" },
+      { type: "CommandInstruction", name: "particle" },
+      { type: "CommandInstruction", name: "stopParticle" },
     ]);
   });
 

@@ -68,5 +68,6 @@ scene lab_end:
   hide noize_stand
   hide mix_stand
   clear bg
+  stopParticle
   stopBgm
   end

@@ -31,6 +31,7 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - `@tsuzuru/plugin-std-text-sound`
 - `@tsuzuru/plugin-std-effect`
 - `@tsuzuru/plugin-std-camera`
+- `@tsuzuru/plugin-std-particle`
 - `@tsuzuru/plugin-std-system`
 - Preact basic example
 - Vue basic example
@@ -89,6 +90,7 @@ packages/
   plugin-std-text-sound/
   plugin-std-effect/
   plugin-std-camera/
+  plugin-std-particle/
   plugin-std-system/
 
 examples/
@@ -332,7 +334,7 @@ show haruka_smile at center
 bgm daily_theme
 ```
 
-std visual/audio command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。`compileTzr(document, { plugins })` に std plugin を渡すと、compiler が plugin command metadata に基づいて command name と argument shape を検証します。
+std visual/audio/effect/camera/particle command は DSL v2 compiler が runtime `CommandInstruction` に変換し、runtime で handler に dispatch します。`compileTzr(document, { plugins })` に std plugin を渡すと、compiler が plugin command metadata に基づいて command name と argument shape を検証します。
 
 ## v0.1 の範囲
 
@@ -341,7 +343,7 @@ v0.1 では、以下を目標にします。
 - `.tzr` で小規模なノベルゲームシナリオを書ける
 - `@tsuzuru/core` で DSL v2 parse / compile / runtime 実行できる
 - compile 時に主要な DSL エラーを検出できる
-- std visual/audio command を runtime handler に dispatch できる
+- std visual/audio/effect/camera/particle command を runtime handler に dispatch できる
 - Preact で runtime を表示・操作できる
 - Vue で runtime を表示・操作できる adapter と example がある
 - DSL v2 example が clean checkout から動く

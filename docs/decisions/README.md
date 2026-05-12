@@ -51,6 +51,7 @@ reintroduced.
 | 0023 | [Standard Effect Plugin](0023-std-effect-plugin.md) | Accepted |
 | 0024 | [Standard Camera Plugin](0024-std-camera-plugin.md) | Accepted |
 | 0025 | [Standard System Plugin](0025-std-system-plugin.md) | Accepted |
+| 0026 | [Standard Particle Plugin](0026-std-particle-plugin.md) | Accepted |
 
 ## Reading Order
 

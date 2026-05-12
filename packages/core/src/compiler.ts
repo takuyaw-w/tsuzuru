@@ -42,6 +42,7 @@ import type {
   TzrShowStatement,
   TzrStdCameraStatement,
   TzrStdEffectStatement,
+  TzrStdParticleStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrTextBlockItem,
@@ -444,6 +445,9 @@ class TzrCompiler {
           break;
         case "StdCameraStatement":
           instructions.push(...this.buildStdCameraInstruction(statement));
+          break;
+        case "StdParticleStatement":
+          instructions.push(...this.buildStdParticleInstruction(statement));
           break;
         default:
           assertUnreachableSceneStatement(statement);
@@ -852,6 +856,17 @@ class TzrCompiler {
   private buildStdCameraInstruction(statement: TzrStdCameraStatement): readonly CommandInstruction[] {
     this.validateStdCameraSugar(statement);
 
+    return [
+      {
+        type: "CommandInstruction",
+        name: statement.name,
+        args: statement.args,
+        loc: statement.loc,
+      },
+    ];
+  }
+
+  private buildStdParticleInstruction(statement: TzrStdParticleStatement): readonly CommandInstruction[] {
     return [
       {
         type: "CommandInstruction",

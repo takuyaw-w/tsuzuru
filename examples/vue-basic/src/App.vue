@@ -9,6 +9,7 @@ import type {
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
 import { createStdEffectCommandHandlers, createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
+import { createStdParticleCommandHandlers, createStdParticlePlugin } from "@tsuzuru/plugin-std-particle";
 import { createStdSystemCommandHandlers, createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import {
   createStdTextSoundCommandHandlers,
@@ -28,6 +29,7 @@ import AudioLayer from "./components/AudioLayer.vue";
 import ChoiceLayer from "./components/ChoiceLayer.vue";
 import EffectLayer from "./components/EffectLayer.vue";
 import MessageWindow from "./components/MessageWindow.vue";
+import ParticleLayer from "./components/ParticleLayer.vue";
 import RuntimeControlBar from "./components/RuntimeControlBar.vue";
 import VisualLayer from "./components/VisualLayer.vue";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
@@ -69,6 +71,7 @@ const plugins: readonly RuntimePluginDefinition[] = [
   createStdTextSoundPlugin(),
   createStdEffectPlugin(),
   createStdCameraPlugin(),
+  createStdParticlePlugin(),
   createStdSystemPlugin(),
 ];
 const commandHandlers = {
@@ -77,6 +80,7 @@ const commandHandlers = {
   ...createStdTextSoundCommandHandlers(),
   ...createStdEffectCommandHandlers(),
   ...createStdCameraCommandHandlers(),
+  ...createStdParticleCommandHandlers(),
   ...createStdSystemCommandHandlers(),
 };
 const runtime = documentResult.ok
@@ -277,6 +281,7 @@ function getExampleTextSoundContext(event: RuntimeEvent | null): ResolveStdTextS
 
     <section v-else class="runtime-screen" @click.self="advanceRuntime">
       <VisualLayer v-if="runtime !== null" :state="runtime.state.value" />
+      <ParticleLayer v-if="runtime !== null" :state="runtime.state.value" />
       <AudioLayer
         v-if="runtime !== null"
         :state="runtime.state.value"

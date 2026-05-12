@@ -46,6 +46,8 @@ import type {
   TzrStdCameraStatement,
   TzrStdEffectCommandName,
   TzrStdEffectStatement,
+  TzrStdParticleCommandName,
+  TzrStdParticleStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrStringValue,
@@ -117,6 +119,7 @@ type VisualAssetStatementKeyword = "bg" | "show" | "hide";
 type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
 type EffectStatementKeyword = TzrStdEffectCommandName;
 type CameraStatementKeyword = "camera" | "camera focus" | "reset camera";
+type ParticleStatementKeyword = TzrStdParticleCommandName;
 
 interface InlineRawAttribute {
   readonly key: string;
@@ -456,6 +459,9 @@ class TzrParser {
     }
     if (isCameraStatementSource(source)) {
       return this.parseStdCameraStatement(line, source, statementColumn);
+    }
+    if (isParticleStatementSource(source)) {
+      return this.parseStdParticleStatement(line, source, statementColumn);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -2424,11 +2430,53 @@ class TzrParser {
     return undefined;
   }
 
+  private parseStdParticleStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrStdParticleStatement | undefined {
+    if (source === "stopParticle" || source.startsWith("stopParticle ")) {
+      if (source !== "stopParticle") {
+        this.addError(
+          line,
+          statementColumn + "stopParticle".length + 1,
+          "stopParticle statement must not have extra trailing tokens.",
+        );
+        this.cursor += 1;
+        return undefined;
+      }
+
+      this.cursor += 1;
+      return {
+        type: "StdParticleStatement",
+        name: "stopParticle",
+        args: [],
+        loc: this.lineRange(line),
+      };
+    }
+
+    const name = source.match(/^\S+/)?.[0] as TzrStdParticleCommandName;
+    const rest = source.slice(name.length).trim();
+    const restColumn = rest.length === 0 ? statementColumn + source.length : statementColumn + source.indexOf(rest);
+    const args = this.parseStdEffectArguments(line, rest, restColumn, name);
+    this.cursor += 1;
+    if (args === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StdParticleStatement",
+      name,
+      args,
+      loc: this.lineRange(line),
+    };
+  }
+
   private parseStdEffectArguments(
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword | CameraStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword | ParticleStatementKeyword,
   ): readonly TzrArgument[] | undefined {
     if (source.length === 0) {
       return [];
@@ -2457,7 +2505,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword | CameraStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword | ParticleStatementKeyword,
   ): readonly { readonly source: string; readonly column: number }[] | undefined {
     const parts: { readonly source: string; readonly column: number }[] = [];
     let inString = false;
@@ -2505,7 +2553,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword | CameraStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword | ParticleStatementKeyword,
   ): TzrArgument | undefined {
     const value = this.parseStdEffectArgumentValue(line, source, sourceColumn, keyword);
     if (value === undefined) {
@@ -2523,7 +2571,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword | CameraStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword | ParticleStatementKeyword,
   ): TzrArgument | undefined {
     const equalsIndex = source.indexOf("=");
     const name = source.slice(0, equalsIndex).trim();
@@ -2567,7 +2615,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
-    keyword: EffectStatementKeyword | CameraStatementKeyword,
+    keyword: EffectStatementKeyword | CameraStatementKeyword | ParticleStatementKeyword,
   ): TzrValue | undefined {
     const loc = {
       start: this.location(line.line, sourceColumn),
@@ -3766,6 +3814,15 @@ function isCameraStatementSource(source: string): boolean {
     source.startsWith("camera ") ||
     source === "reset camera" ||
     source.startsWith("reset camera ")
+  );
+}
+
+function isParticleStatementSource(source: string): boolean {
+  return (
+    source === "particle" ||
+    source.startsWith("particle ") ||
+    source === "stopParticle" ||
+    source.startsWith("stopParticle ")
   );
 }
 

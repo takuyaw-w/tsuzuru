@@ -198,7 +198,7 @@ scene cameraChoice:
       jump cameraFocusDemo
 
     "Text Sound Lab に戻る" id=skipCameraDemo:
-      jump afterFocus
+      jump particleChoice
 
 scene cameraFocusDemo:
   camera focus tone_stand zoom=1.2 duration=400
@@ -227,7 +227,65 @@ scene cameraFocusDemo:
   narration:
     カメラは、元の位置へ戻った。
 
-  jump afterFocus
+  jump particleChoice
+
+scene particleChoice:
+  choice "particle demo を試す？":
+    "雨を降らせる" id=particleRain:
+      jump particleRain
+
+    "雪を降らせる" id=particleSnow:
+      jump particleSnow
+
+    "桜を舞わせる" id=particleSakura:
+      jump particleSakura
+
+    "埃を漂わせる" id=particleDust:
+      jump particleDust
+
+    "Text Sound Lab に戻る" id=returnToLab:
+      jump afterFocus
+
+scene particleRain:
+  particle rain intensity=normal
+
+  noize:
+    雨は、画面全体の空気を冷たくする。
+
+  jump particleAfter
+
+scene particleSnow:
+  particle snow intensity=light
+
+  tone:
+    雪は、音を少しだけ遠ざける。
+
+  jump particleAfter
+
+scene particleSakura:
+  particle sakura intensity=normal
+
+  mix:
+    桜は、場面を少しだけ柔らかくする。
+
+  jump particleAfter
+
+scene particleDust:
+  particle dust intensity=light
+
+  narration:
+    埃が光の中をゆっくり漂っている。
+
+  jump particleAfter
+
+scene particleAfter:
+  choice "particle を止める？":
+    "止める" id=stopParticleDemo:
+      stopParticle
+      jump afterFocus
+
+    "別の particle を試す" id=tryAnotherParticle:
+      jump particleChoice
 
 scene afterFocus:
   narration:
@@ -327,6 +385,7 @@ scene labEnd:
     そして物語に合う音を、必要なだけ選べばいい。
 
   stopBgm
+  stopParticle
   hide tone_stand
   hide noize_stand
   hide mix_stand

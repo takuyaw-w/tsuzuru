@@ -75,6 +75,7 @@ export type TzrSceneStatement =
   | TzrStopTextSoundStatement
   | TzrStdEffectStatement
   | TzrStdCameraStatement
+  | TzrStdParticleStatement
   | TzrJumpStatement
   | TzrEndStatement;
 
@@ -336,6 +337,15 @@ export type TzrStdCameraCommandName = "camera" | "cameraFocus" | "resetCamera";
 export interface TzrStdCameraStatement {
   readonly type: "StdCameraStatement";
   readonly name: TzrStdCameraCommandName;
+  readonly args: readonly TzrArgument[];
+  readonly loc: SourceRange;
+}
+
+export type TzrStdParticleCommandName = "particle" | "stopParticle";
+
+export interface TzrStdParticleStatement {
+  readonly type: "StdParticleStatement";
+  readonly name: TzrStdParticleCommandName;
   readonly args: readonly TzrArgument[];
   readonly loc: SourceRange;
 }
