@@ -298,6 +298,7 @@ function RuntimeApp({
   const textReveal = useTextReveal(revealText, {
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
+    resetKey: presentationKey,
     onCharacterReveal: playTextSoundForCharacter,
   });
   const messageHistory = useMessageHistory({
@@ -431,10 +432,6 @@ function RuntimeApp({
     },
     [runtime, saveSlots],
   );
-
-  useEffect(() => {
-    textReveal.reset();
-  }, [presentationKey, textReveal.reset]);
 
   useEffect(() => {
     if (!canSkipAdvanceText) {

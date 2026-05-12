@@ -180,10 +180,12 @@ describe("useTextReveal", () => {
     options?: UseTextRevealOptions,
   ): Promise<{
     readonly getState: () => TextRevealState;
+    readonly getRenderedStates: () => readonly TextRevealState[];
     readonly update: (nextText: string, nextOptions?: UseTextRevealOptions) => Promise<void>;
     readonly unmount: () => void;
   }> {
     let currentState: TextRevealState | null = null;
+    const renderedStates: TextRevealState[] = [];
     const root = createMinimalElement("div");
     roots.push(root);
 
@@ -195,6 +197,7 @@ describe("useTextReveal", () => {
             ...(nextOptions === undefined ? {} : { options: nextOptions }),
             onRender: (state) => {
               currentState = state;
+              renderedStates.push(state);
             },
           }),
           root as unknown as Element,
@@ -212,6 +215,7 @@ describe("useTextReveal", () => {
         }
         return currentState;
       },
+      getRenderedStates: () => renderedStates,
       update,
       unmount: () => {
         act(() => {
@@ -248,6 +252,39 @@ describe("useTextReveal", () => {
     expect(harness.getState().visibleText).toBe("a");
 
     await harness.update("xyz", { charactersPerSecond: 10 });
+    expect(harness.getState().visibleText).toBe("");
+    expect(harness.getState().isComplete).toBe(false);
+    expect(harness.getState().isRevealing).toBe(true);
+  });
+
+  it("does not expose stale visible text during the render that changes text and resetKey", async () => {
+    const harness = await mountReveal("abc", { charactersPerSecond: 10, resetKey: "message-1" });
+
+    act(() => {
+      harness.getState().revealAll();
+    });
+    await flushUpdates();
+    expect(harness.getState().visibleText).toBe("abc");
+
+    const firstUpdateRenderIndex = harness.getRenderedStates().length;
+    await harness.update("xyz", { charactersPerSecond: 10, resetKey: "message-2" });
+    const updateVisibleTexts = harness
+      .getRenderedStates()
+      .slice(firstUpdateRenderIndex)
+      .map((state) => state.visibleText);
+
+    expect(updateVisibleTexts[0]).toBe("");
+    expect(updateVisibleTexts).not.toContain("xyz");
+    expect(harness.getState().visibleText).toBe("");
+  });
+
+  it("resets when resetKey changes even if text is unchanged", async () => {
+    const harness = await mountReveal("abc", { charactersPerSecond: 10, resetKey: "message-1" });
+
+    await advanceTimersByTime(100);
+    expect(harness.getState().visibleText).toBe("a");
+
+    await harness.update("abc", { charactersPerSecond: 10, resetKey: "message-2" });
     expect(harness.getState().visibleText).toBe("");
     expect(harness.getState().isComplete).toBe(false);
     expect(harness.getState().isRevealing).toBe(true);
