@@ -137,6 +137,34 @@ test("save and load restore retained message behind choices", async ({ page }) =
   await expect(retainedMessage).toContainText("物語の常用音");
 });
 
+test("effect demo choice exposes individual effect paths", async ({ page }) => {
+  await page.goto("/");
+  await disableTextReveal(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const choiceLayer = page.locator(".tzr-choice-layer");
+
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await advanceMessages(messageWindow, 8);
+  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
+
+  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
+  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
+  await advanceMessages(messageWindow, 3);
+
+  await expect(choiceLayer).toContainText("今度は、どの effect を試す？", { timeout: 3000 });
+  await expect(choiceLayer.getByRole("button", { name: "shake を試す" })).toBeVisible();
+  await expect(choiceLayer.getByRole("button", { name: "flash を試す" })).toBeVisible();
+  await expect(choiceLayer.getByRole("button", { name: "pulse を試す" })).toBeVisible();
+  await expect(choiceLayer.getByRole("button", { name: "blur を試す" })).toBeVisible();
+
+  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
+  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
+  await messageWindow.click();
+  await expect(messageWindow).toContainText("衝撃や落下", { timeout: 3000 });
+});
+
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);

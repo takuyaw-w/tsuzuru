@@ -87,7 +87,7 @@ scene focusTone:
     そのかわり、長い文章では規則正しさが目立つこともある。
     だから volume と duration を短めにして、文字の後ろにそっと置くのが大事。
 
-  jump afterFocus
+  jump effectChoice
 
 scene focusNoize:
   noize:
@@ -103,7 +103,7 @@ scene focusNoize:
     一方で、音の芯が必要な場面では少し弱く感じるかもしれない。
     そこを補うために、mix では小さな tone layer を重ねている。
 
-  jump afterFocus
+  jump effectChoice
 
 scene focusMix:
   mix:
@@ -118,7 +118,79 @@ scene focusMix:
   noize:
     noise だけのざらつきより、文字の位置が見えやすくなる。
 
-  jump afterFocus
+  jump effectChoice
+
+scene effectChoice:
+  choice "今度は、どの effect を試す？":
+    "shake を試す" id=tryShake:
+      jump effectShake
+
+    "flash を試す" id=tryFlash:
+      jump effectFlash
+
+    "pulse を試す" id=tryPulse:
+      jump effectPulse
+
+    "blur を試す" id=tryBlur:
+      jump effectBlur
+
+scene effectShake:
+  noize:
+    まずは shake。
+    画面全体が短く揺れる。
+
+  shake screen intensity=strong duration=420
+  se page
+
+  tone:
+    衝撃や落下、遠くの爆発に使いやすい。
+
+  jump effectChoiceAfter
+
+scene effectFlash:
+  tone:
+    次は flash。
+    一瞬だけ画面に光を入れる。
+
+  flash color="#ffffff" duration=140
+  se page
+
+  mix:
+    雷、カメラのフラッシュ、気づきの演出に向いている。
+
+  jump effectChoiceAfter
+
+scene effectPulse:
+  mix:
+    pulse は、画面やメッセージを一瞬だけ押し出す。
+
+  pulse message intensity=strong duration=260
+  se page
+
+  noize:
+    心音、強調、クリック感に使える。
+
+  jump effectChoiceAfter
+
+scene effectBlur:
+  tone:
+    blur は、視界の輪郭をゆっくり滲ませる。
+
+  blur screen amount=8 duration=420
+  se page
+
+  mix:
+    めまい、回想、意識が遠のく場面に向いている。
+
+  jump effectChoiceAfter
+
+scene effectChoiceAfter:
+  choice "もう一度 effect を試す？":
+    "別の effect を試す" id=tryAnotherEffect:
+      jump effectChoice
+
+    "Text Sound Lab に戻る" id=returnToLab:
+      jump afterFocus
 
 scene afterFocus:
   narration:

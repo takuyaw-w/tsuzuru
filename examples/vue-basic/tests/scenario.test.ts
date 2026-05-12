@@ -9,6 +9,16 @@ describe("vue-basic example", () => {
     expect(scenarioProject.ok).toBe(true);
   });
 
+  it("includes individual std-effect demo scenes", async () => {
+    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "01-opening.tzr"), "utf8");
+
+    expect(scenario).toContain('choice "今度は、どの effect を試す？"');
+    expect(scenario).toContain("shake screen intensity=strong duration=420");
+    expect(scenario).toContain('flash color="#ffffff" duration=140');
+    expect(scenario).toContain("pulse message intensity=strong duration=260");
+    expect(scenario).toContain("blur screen amount=8 duration=420");
+  });
+
   it("uses @tsuzuru/vue without Preact dependencies", async () => {
     const packageJson = JSON.parse(await readFile(join(import.meta.dirname, "..", "package.json"), "utf8")) as {
       readonly dependencies: Readonly<Record<string, string>>;
