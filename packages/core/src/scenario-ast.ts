@@ -75,7 +75,6 @@ export type TzrSceneStatement =
   | TzrStopTextSoundStatement
   | TzrStdEffectStatement
   | TzrStdCameraStatement
-  | TzrSystemUnlockStatement
   | TzrJumpStatement
   | TzrEndStatement;
 
@@ -351,29 +350,6 @@ export interface TzrAudioIdentifierAssetRef {
 
 export interface TzrAudioStringAssetRef {
   readonly type: "AudioStringAssetRef";
-  readonly value: string;
-  readonly loc: SourceRange;
-}
-
-export type TzrSystemUnlockKind = "ending" | "cg" | "achievement";
-
-export interface TzrSystemUnlockStatement {
-  readonly type: "SystemUnlockStatement";
-  readonly kind: TzrSystemUnlockKind;
-  readonly id: TzrSystemUnlockId;
-  readonly loc: SourceRange;
-}
-
-export type TzrSystemUnlockId = TzrSystemUnlockIdentifierId | TzrSystemUnlockStringId;
-
-export interface TzrSystemUnlockIdentifierId {
-  readonly type: "SystemUnlockIdentifierId";
-  readonly value: string;
-  readonly loc: SourceRange;
-}
-
-export interface TzrSystemUnlockStringId {
-  readonly type: "SystemUnlockStringId";
   readonly value: string;
   readonly loc: SourceRange;
 }

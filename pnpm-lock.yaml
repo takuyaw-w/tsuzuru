@@ -56,6 +56,9 @@ importers:
       '@tsuzuru/plugin-std-effect':
         specifier: workspace:*
         version: link:../../packages/plugin-std-effect
+      '@tsuzuru/plugin-std-system':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-system
       '@tsuzuru/plugin-std-text-sound':
         specifier: workspace:*
         version: link:../../packages/plugin-std-text-sound
@@ -102,6 +105,9 @@ importers:
       '@tsuzuru/plugin-std-effect':
         specifier: workspace:*
         version: link:../../packages/plugin-std-effect
+      '@tsuzuru/plugin-std-system':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-system
       '@tsuzuru/plugin-std-text-sound':
         specifier: workspace:*
         version: link:../../packages/plugin-std-text-sound
@@ -210,6 +216,19 @@ importers:
         version: 4.1.5(@types/node@25.6.0)(vite@8.0.10(@types/node@25.6.0)(jiti@2.7.0))
 
   packages/plugin-std-effect:
+    dependencies:
+      '@tsuzuru/core':
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.5(@types/node@25.6.0)(vite@8.0.10(@types/node@25.6.0)(jiti@2.7.0))
+
+  packages/plugin-std-system:
     dependencies:
       '@tsuzuru/core':
         specifier: workspace:^

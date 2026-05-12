@@ -9,6 +9,7 @@ import type {
 import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
 import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
 import { createStdEffectCommandHandlers, createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
+import { createStdSystemCommandHandlers, createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
@@ -68,6 +69,7 @@ const plugins: readonly RuntimePluginDefinition[] = [
   createStdTextSoundPlugin(),
   createStdEffectPlugin(),
   createStdCameraPlugin(),
+  createStdSystemPlugin(),
 ];
 const commandHandlers = {
   ...createStdVisualCommandHandlers(),
@@ -75,6 +77,7 @@ const commandHandlers = {
   ...createStdTextSoundCommandHandlers(),
   ...createStdEffectCommandHandlers(),
   ...createStdCameraCommandHandlers(),
+  ...createStdSystemCommandHandlers(),
 };
 const runtime = documentResult.ok
   ? useRuntime(documentResult.document, {

@@ -31,6 +31,7 @@ DSL v2 は、このブランチで新しく作るシナリオの current support
 - `@tsuzuru/plugin-std-text-sound`
 - `@tsuzuru/plugin-std-effect`
 - `@tsuzuru/plugin-std-camera`
+- `@tsuzuru/plugin-std-system`
 - Preact basic example
 - Vue basic example
 - DSL v2 design notes
@@ -88,6 +89,7 @@ packages/
   plugin-std-text-sound/
   plugin-std-effect/
   plugin-std-camera/
+  plugin-std-system/
 
 examples/
   preact-basic/

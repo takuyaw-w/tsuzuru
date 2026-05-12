@@ -10,7 +10,7 @@ scene like_tone:
 
   mix:
     トーンを主役にするなら、noise はほんの少しだけで十分。
-  jump lab_end
+  jump system_unlock_demo
 
 scene like_noize:
   noize:
@@ -23,7 +23,7 @@ scene like_noize:
 
   mix:
     静かな場面やモノローグでは、noise の控えめさがよく効く。
-  jump lab_end
+  jump system_unlock_demo
 
 scene like_mix:
   mix:
@@ -36,6 +36,19 @@ scene like_mix:
 
   noize:
     そこに白い粒を少しだけ足す。
+  jump system_unlock_demo
+
+scene system_unlock_demo:
+  narration:
+    Text Sound Lab の記録が、システムに保存された。
+
+  call system.unlockCg(id=textSoundLab)
+  call system.unlockAchievement(id=firstTextSoundLab)
+  call system.unlockEnding(id=textSoundLabComplete)
+
+  mix:
+    これで、ギャラリーと実績に今日の実験が残るはず。
+
   jump lab_end
 
 scene lab_end:

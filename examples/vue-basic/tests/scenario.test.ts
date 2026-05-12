@@ -30,6 +30,16 @@ describe("vue-basic example", () => {
     expect(scenario).toContain("reset camera duration=400");
   });
 
+  it("includes the std-system unlock demo scene", async () => {
+    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "01-opening.tzr"), "utf8");
+
+    expect(scenario).toContain("scene systemUnlockDemo:");
+    expect(scenario).toContain("call system.unlockCg(id=textSoundLab)");
+    expect(scenario).toContain("call system.unlockAchievement(id=firstTextSoundLab)");
+    expect(scenario).toContain("call system.unlockEnding(id=textSoundLabComplete)");
+    expect(scenario).not.toContain("unlock ending");
+  });
+
   it("uses @tsuzuru/vue without Preact dependencies", async () => {
     const packageJson = JSON.parse(await readFile(join(import.meta.dirname, "..", "package.json"), "utf8")) as {
       readonly dependencies: Readonly<Record<string, string>>;
@@ -38,6 +48,7 @@ describe("vue-basic example", () => {
     expect(packageJson.dependencies["@tsuzuru/vue"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-camera"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-effect"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/plugin-std-system"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
     expect(packageJson.dependencies.preact).toBeUndefined();
   });

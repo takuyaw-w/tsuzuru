@@ -131,17 +131,25 @@ const pluginCommands = {
 };
 ```
 
-Standard plugins expose metadata on the plugin object returned by `createStdVisualPlugin()` and `createStdAudioPlugin()`:
+Standard plugins expose metadata on the plugin object returned by their
+`createStd*Plugin()` functions:
 
 ```ts
 const compiled = compileTzr(document, {
-  plugins: [createStdVisualPlugin(), createStdAudioPlugin()],
+  plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdSystemPlugin()],
 });
 ```
 
-Passing metadata enables compile-time validation for emitted plugin commands. If no plugin metadata is passed, current std visual/audio DSL sugar remains compatible and is compiled without plugin command metadata validation.
+Passing metadata enables compile-time validation for emitted plugin commands. If
+no plugin metadata is passed, current std visual/audio/text-sound/effect/camera
+DSL sugar remains compatible and is compiled without plugin command metadata
+validation. `call system.*(...)` commands require std-system metadata because
+generic `call` is only compile-supported through plugin command registration.
 
-When metadata validation is enabled, the compiler validates every emitted non-core command against the supplied registry. If a scenario uses std visual/audio DSL sugar, pass `createStdVisualPlugin()` and `createStdAudioPlugin()` to `compileTzr` so `bg` / `show` / `hide` / `clearBg` / `clearSprites` / `startBgm` / `stopBgm` / `se` / `voice` are registered.
+When metadata validation is enabled, the compiler validates every emitted
+non-core command against the supplied registry. If a scenario uses standard
+plugin commands, pass the corresponding standard plugins to `compileTzr` so
+their command names and argument schemas are registered.
 
 ## Argument Schemas
 

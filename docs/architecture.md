@@ -78,6 +78,7 @@ packages/
   plugin-std-text-sound/
   plugin-std-effect/
   plugin-std-camera/
+  plugin-std-system/
 
 examples/
   preact-basic/
@@ -355,6 +356,34 @@ It does not:
 
 Camera transform and reduced-motion policy belong to the app, renderer, or
 example.
+
+---
+
+### `@tsuzuru/plugin-std-system`
+
+`@tsuzuru/plugin-std-system` provides standard durable system unlock command
+handlers.
+
+Responsibilities:
+
+- maintain standard system plugin state
+- store unlocked endings / CGs / achievements
+- handle `system.unlockEnding`, `system.unlockCg`, and
+  `system.unlockAchievement` command instructions
+- keep repeated unlocks idempotent
+- allow unlock state to be saved and restored with runtime snapshots
+
+It does not:
+
+- add dedicated `unlock ...` DSL sugar
+- allow direct `set system.*` or `add system.*` mutation
+- persist to localStorage
+- render gallery / achievement / ending UI
+- own scene flow
+- own runtime stepping
+
+System persistence beyond runtime snapshots and unlock presentation belong to
+the app, renderer, or example.
 
 ---
 
@@ -1010,9 +1039,8 @@ The following topics are intentionally deferred:
 - broader namespaced `wait` event semantics
 - coordinate placement
 - visual transition animation / renderer execution
-- std system sugar
+- dedicated std-system sugar
 - rich text / inline event runtime
-- persistent system state
 - `system.*` runtime state references
 - reusable staging / preset design
 - macro-like authoring sugar
@@ -1051,6 +1079,7 @@ pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-text-sound test
 pnpm --filter @tsuzuru/plugin-std-effect test
 pnpm --filter @tsuzuru/plugin-std-camera test
+pnpm --filter @tsuzuru/plugin-std-system test
 ```
 
 If `rtk` is available, prefer equivalent `rtk` commands when they preserve the same verification intent and reduce output noise.

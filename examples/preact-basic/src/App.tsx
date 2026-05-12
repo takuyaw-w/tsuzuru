@@ -13,6 +13,7 @@ import {
   createStdEffectPlugin,
   prepareStdEffectStateForSnapshot,
 } from "@tsuzuru/plugin-std-effect";
+import { createStdSystemCommandHandlers, createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
@@ -213,6 +214,7 @@ function RuntimeApp({
       createStdTextSoundPlugin(),
       createStdEffectPlugin(),
       createStdCameraPlugin(),
+      createStdSystemPlugin(),
     ],
     [],
   );
@@ -223,6 +225,7 @@ function RuntimeApp({
       ...createStdTextSoundCommandHandlers(),
       ...createStdEffectCommandHandlers(),
       ...createStdCameraCommandHandlers(),
+      ...createStdSystemCommandHandlers(),
     }),
     [],
   );

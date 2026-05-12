@@ -103,10 +103,9 @@ The following syntax is not Core. It is official standard plugin sugar.
   reset camera
 
 @tsuzuru/plugin-std-system:
-  system.*
-  system.unlockEnding
-  system.unlockCg
-  system.unlockAchievement
+  call system.unlockEnding(id=...)
+  call system.unlockCg(id=...)
+  call system.unlockAchievement(id=...)
 ```
 
 ---
@@ -791,6 +790,8 @@ system.*
 ```
 
 `system.*` is valid only when `@tsuzuru/plugin-std-system` is registered.
+Condition parsing accepts this namespace, but compile/runtime evaluation for
+`system.*` remains deferred in the current MVP.
 
 Invalid:
 
@@ -1006,14 +1007,15 @@ Global persistent state provided by `@tsuzuru/plugin-std-system`.
 
 ```txt
 system.endings.trueEnd.unlocked
-system.gallery.cgs.cg001.unlocked
+system.cgs.cg001.unlocked
 system.achievements.firstClear.unlocked
 ```
 
 Rules:
 
 - Valid only when `@tsuzuru/plugin-std-system` is registered.
-- Can be referenced in conditions.
+- Can be parsed in conditions, but compile/runtime condition evaluation is
+  deferred.
 - Direct mutation via `set` / `add` is not allowed.
 - Mutation must go through `call system.*`.
 
@@ -1674,6 +1676,9 @@ direct set/add mutation of system.* is prohibited
 system.* updates go through call system.*
 ```
 
+std-system intentionally does not add dedicated DSL sugar. It uses the same
+`call namespace.action(...)` syntax available to user plugins.
+
 ### 26.2 Minimal Semantic Actions
 
 ```txt
@@ -1699,22 +1704,26 @@ system.unlockAchievement(id=<id>)
 
 ```txt
 system.endings.<id>.unlocked
-system.gallery.cgs.<id>.unlocked
+system.cgs.<id>.unlocked
 system.achievements.<id>.unlocked
 ```
 
-### 26.5 Condition Examples
+### 26.5 Condition References
 
 ```txt
 if system.endings.trueEnd.unlocked:
   jump trueExtra
 
-if system.gallery.cgs.cg001.unlocked:
+if system.cgs.cg001.unlocked:
   jump cgHint
 
 if system.achievements.firstClear.unlocked:
   jump bonusScene
 ```
+
+Condition parsing accepts `system.*` references, but compile/runtime condition
+evaluation remains deferred in the current MVP. The compiler rejects
+`if system.*` until a renderer-neutral system condition resolver is added.
 
 ### 26.6 Validation
 
@@ -1724,14 +1733,16 @@ if system.achievements.firstClear.unlocked:
 - Extra arguments are not allowed.
 - Re-unlocking the same ID is no-op.
 - No warning is emitted for re-unlock no-op.
+- `set system.*` and `add system.*` are prohibited.
 
 ### 26.7 Not Adopted
 
 ```txt
 call system.set(path=..., value=...)
+unlock ending trueEnd
 ```
 
-Generic `system.set` is not adopted.
+Generic `system.set` and dedicated `unlock ...` sugar are not adopted.
 
 ---
 
@@ -1944,6 +1955,7 @@ Phase 10:
 
 Phase 11:
   std-system plugin
-  system.*
-  unlockEnding / unlockCg / unlockAchievement
+  call system.unlockEnding(id=...)
+  call system.unlockCg(id=...)
+  call system.unlockAchievement(id=...)
 ```

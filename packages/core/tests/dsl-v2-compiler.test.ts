@@ -129,6 +129,21 @@ const stdCameraPluginCommands = {
   }),
 };
 
+const stdSystemPluginCommands = {
+  "system.unlockEnding": definePluginCommand("system.unlockEnding", {
+    kind: "named",
+    arguments: [{ name: "id", type: ["string", "identifier"], nonEmpty: true }],
+  }),
+  "system.unlockCg": definePluginCommand("system.unlockCg", {
+    kind: "named",
+    arguments: [{ name: "id", type: ["string", "identifier"], nonEmpty: true }],
+  }),
+  "system.unlockAchievement": definePluginCommand("system.unlockAchievement", {
+    kind: "named",
+    arguments: [{ name: "id", type: ["string", "identifier"], nonEmpty: true }],
+  }),
+};
+
 function parseSource(source: string) {
   const parsed = parseTzr(source, { filePath: "scenario/v2.tzr" });
   expect(parsed.ok).toBe(true);
@@ -1223,6 +1238,62 @@ scene start:
     });
   });
 
+  it("compiles and validates std system unlock calls when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  call system.unlockEnding(id=trueEnd)
+  call system.unlockCg(id=textSoundLab)
+  call system.unlockAchievement(id=firstTextSoundLab)
+`,
+      { plugins: [{ name: "stdSystem", commands: stdSystemPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "system.unlockEnding",
+        args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", name: "trueEnd" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "system.unlockCg",
+        args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", name: "textSoundLab" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "system.unlockAchievement",
+        args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", name: "firstTextSoundLab" } }],
+      },
+    ]);
+  });
+
+  it("rejects invalid std system unlock call arguments when metadata is enabled", () => {
+    expect(
+      expectCompileFailure("scene start:\n  call system.unlockEnding()\n", {
+        plugins: [{ name: "stdSystem", commands: stdSystemPluginCommands }],
+      }),
+    ).toContain('Plugin command "system.unlockEnding" is missing required named argument "id".');
+    expect(
+      expectCompileFailure('scene start:\n  call system.unlockCg(id="")\n', {
+        plugins: [{ name: "stdSystem", commands: stdSystemPluginCommands }],
+      }),
+    ).toContain('Plugin command "system.unlockCg" named argument "id" must not be empty.');
+    expect(
+      expectCompileFailure("scene start:\n  call system.unlockAchievement(id=firstClear, extra=true)\n", {
+        plugins: [{ name: "stdSystem", commands: stdSystemPluginCommands }],
+      }),
+    ).toContain('Plugin command "system.unlockAchievement" does not support named argument "extra".');
+  });
+
+  it("rejects std system unlock calls when plugin metadata is enabled but std system is not registered", () => {
+    expect(
+      expectCompileFailure("scene start:\n  call system.unlockEnding(id=trueEnd)\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "system.unlockEnding".');
+  });
+
   it("rejects invalid plugin command argument shapes when metadata validation is enabled", () => {
     expect(
       expectCompileFailure("scene start:\n  call visual.bg()\n", {
@@ -1724,11 +1795,10 @@ scene start:
     ).toContain("Inline voice is not compile-supported yet.");
   });
 
-  it("rejects unsupported call, event wait, and system statements", () => {
+  it("rejects unsupported call and event wait statements", () => {
     const cases = [
       { source: "call screen.open(id=notebook)", statement: "CallStatement" },
       { source: "wait screen.closed(id=notebook)", statement: "WaitStatement" },
-      { source: "system.unlockAchievement firstClear", statement: "SystemUnlockStatement" },
     ];
 
     for (const { source, statement } of cases) {

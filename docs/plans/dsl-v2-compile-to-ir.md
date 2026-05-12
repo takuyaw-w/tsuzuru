@@ -209,7 +209,7 @@ DSL v2 parser には macro syntax / AST がないため、`compileTzrV2` 初期�
 | `StopBgmStatement` | std-audio `stopBgm` command | compile-ready if plugin registered | args なし |
 | `SeStatement` | std-audio `se` command | compile-ready if plugin registered | asset ref は string positional arg |
 | `VoiceStatement` | std-audio `voice` command | compile-ready if plugin registered | asset ref は string positional arg |
-| `SystemUnlockStatement` | future std-system command | deferred | `@tsuzuru/plugin-std-system` package がまだない |
+| `SystemUnlockStatement` | superseded by `call system.*(...)` | superseded | std-system now uses plugin call syntax instead of dedicated sugar |
 
 Small factual note:
 
@@ -260,9 +260,9 @@ Small factual note:
 | `stopBgm` | `stopBgm()` |
 | `se doorOpen` | `se("doorOpen")` |
 | `voice mio_001` | `voice("mio_001")` |
-| `system.unlockEnding trueEnd` | future `system.unlockEnding(id="trueEnd")` |
-| `system.unlockCg cg001` | future `system.unlockCg(id="cg001")` |
-| `system.unlockAchievement firstClear` | future `system.unlockAchievement(id="firstClear")` |
+| `call system.unlockEnding(id=trueEnd)` | `system.unlockEnding(id=trueEnd)` |
+| `call system.unlockCg(id=cg001)` | `system.unlockCg(id=cg001)` |
+| `call system.unlockAchievement(id=firstClear)` | `system.unlockAchievement(id=firstClear)` |
 
 ### 3.4 Require new or extended IR/runtime model
 
@@ -1041,22 +1041,24 @@ Do not plan compiler support for audio transition until parser/AST and std-audio
 
 ### 11.3 std-system
 
-There is no `@tsuzuru/plugin-std-system` package in the current workspace.
+This section is superseded by ADR 0025. `@tsuzuru/plugin-std-system` now exists
+and uses `call system.*(...)` syntax instead of dedicated system unlock sugar.
 
-Future command targets:
+Current command targets:
 
 ```txt
-system.unlockEnding trueEnd
-  -> system.unlockEnding(id="trueEnd")
+call system.unlockEnding(id=trueEnd)
+  -> system.unlockEnding(id=trueEnd)
 
-system.unlockCg cg001
-  -> system.unlockCg(id="cg001")
+call system.unlockCg(id=cg001)
+  -> system.unlockCg(id=cg001)
 
-system.unlockAchievement firstClear
-  -> system.unlockAchievement(id="firstClear")
+call system.unlockAchievement(id=firstClear)
+  -> system.unlockAchievement(id=firstClear)
 ```
 
-Initial compiler should reject `SystemUnlockStatement` as deferred unless std-system command definitions are introduced.
+The compiler validates these calls through std-system plugin command metadata.
+Direct `SystemUnlockStatement` sugar is not supported.
 
 For `system.*` conditions:
 

@@ -28,85 +28,59 @@ function expectSystemFailure(source: string): string[] {
   return result.errors.map((error) => error.message);
 }
 
-describe("parseTzr std system sugar statements", () => {
-  it("parses system.unlockEnding ids", () => {
-    expect(parseSingleStatement("scene start:\n  system.unlockEnding trueEnd\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "ending",
-      id: { type: "SystemUnlockIdentifierId", value: "trueEnd" },
+describe("parseTzr std system call statements", () => {
+  it("parses system unlock calls as normal call statements", () => {
+    expect(parseSingleStatement("scene start:\n  call system.unlockEnding(id=trueEnd)\n")).toMatchObject({
+      type: "CallStatement",
+      name: "system.unlockEnding",
+      args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", value: "trueEnd" } }],
     });
-    expect(parseSingleStatement("scene start:\n  system.unlockEnding endings.trueEnd\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "ending",
-      id: { type: "SystemUnlockIdentifierId", value: "endings.trueEnd" },
+    expect(parseSingleStatement("scene start:\n  call system.unlockCg(id=textSoundLab)\n")).toMatchObject({
+      type: "CallStatement",
+      name: "system.unlockCg",
+      args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", value: "textSoundLab" } }],
     });
-    expect(parseSingleStatement('scene start:\n  system.unlockEnding "true-end"\n')).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "ending",
-      id: { type: "SystemUnlockStringId", value: "true-end" },
+    expect(parseSingleStatement("scene start:\n  call system.unlockAchievement(id=firstTextSoundLab)\n")).toMatchObject(
+      {
+        type: "CallStatement",
+        name: "system.unlockAchievement",
+        args: [{ type: "NamedArgument", name: "id", value: { type: "IdentifierValue", value: "firstTextSoundLab" } }],
+      },
+    );
+  });
+
+  it("parses string ids for call system unlock commands", () => {
+    expect(parseSingleStatement('scene start:\n  call system.unlockCg(id="text-sound-lab")\n')).toMatchObject({
+      type: "CallStatement",
+      name: "system.unlockCg",
+      args: [{ type: "NamedArgument", name: "id", value: { type: "StringValue", value: "text-sound-lab" } }],
     });
   });
 
-  it("parses system.unlockCg ids", () => {
-    expect(parseSingleStatement("scene start:\n  system.unlockCg cg001\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "cg",
-      id: { type: "SystemUnlockIdentifierId", value: "cg001" },
-    });
-    expect(parseSingleStatement("scene start:\n  system.unlockCg gallery.cg001\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "cg",
-      id: { type: "SystemUnlockIdentifierId", value: "gallery.cg001" },
-    });
-    expect(parseSingleStatement('scene start:\n  system.unlockCg "cg-001"\n')).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "cg",
-      id: { type: "SystemUnlockStringId", value: "cg-001" },
-    });
-  });
-
-  it("parses system.unlockAchievement ids", () => {
-    expect(parseSingleStatement("scene start:\n  system.unlockAchievement firstClear\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "achievement",
-      id: { type: "SystemUnlockIdentifierId", value: "firstClear" },
-    });
-    expect(parseSingleStatement("scene start:\n  system.unlockAchievement achievements.firstClear\n")).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "achievement",
-      id: { type: "SystemUnlockIdentifierId", value: "achievements.firstClear" },
-    });
-    expect(parseSingleStatement('scene start:\n  system.unlockAchievement "first-clear"\n')).toMatchObject({
-      type: "SystemUnlockStatement",
-      kind: "achievement",
-      id: { type: "SystemUnlockStringId", value: "first-clear" },
-    });
-  });
-
-  it("parses system unlock statements inside if branches", () => {
+  it("parses system unlock calls inside if branches", () => {
     const statement = parseSingleStatement(`scene start:
   if scenario.hasNotebook:
-    system.unlockEnding trueEnd
-    system.unlockCg cg001
-    system.unlockAchievement firstClear
+    call system.unlockEnding(id=trueEnd)
+    call system.unlockCg(id=textSoundLab)
+    call system.unlockAchievement(id=firstTextSoundLab)
 `);
 
     expect(statement).toMatchObject({
       type: "IfStatement",
       thenBranch: [
-        { type: "SystemUnlockStatement", kind: "ending" },
-        { type: "SystemUnlockStatement", kind: "cg" },
-        { type: "SystemUnlockStatement", kind: "achievement" },
+        { type: "CallStatement", name: "system.unlockEnding" },
+        { type: "CallStatement", name: "system.unlockCg" },
+        { type: "CallStatement", name: "system.unlockAchievement" },
       ],
     });
   });
 
-  it("parses system unlock statements inside choice item bodies", () => {
+  it("parses system unlock calls inside choice item bodies", () => {
     const statement = parseSingleStatement(`scene start:
   choice "どうする？":
     "解放する":
-      system.unlockEnding trueEnd
-      system.unlockAchievement firstClear
+      call system.unlockEnding(id=trueEnd)
+      call system.unlockAchievement(id=firstTextSoundLab)
 `);
 
     expect(statement).toMatchObject({
@@ -114,66 +88,20 @@ describe("parseTzr std system sugar statements", () => {
       items: [
         {
           body: [
-            { type: "SystemUnlockStatement", kind: "ending" },
-            { type: "SystemUnlockStatement", kind: "achievement" },
+            { type: "CallStatement", name: "system.unlockEnding" },
+            { type: "CallStatement", name: "system.unlockAchievement" },
           ],
         },
       ],
     });
   });
 
-  it("keeps call system.unlock as a normal call statement", () => {
-    expect(parseSingleStatement("scene start:\n  call system.unlockEnding(id=trueEnd)\n")).toMatchObject({
-      type: "CallStatement",
-      name: "system.unlockEnding",
-      args: [{ name: "id", value: { type: "IdentifierValue", value: "trueEnd" } }],
-    });
-  });
-
-  it("rejects unknown system statements", () => {
-    expect(expectSystemFailure("scene start:\n  system.set path\n")).toContain("Unknown system statement.");
-    expect(expectSystemFailure("scene start:\n  system.unlockVoice voice001\n")).toContain("Unknown system statement.");
-  });
-
-  it("rejects missing system unlock ids", () => {
-    expect(expectSystemFailure("scene start:\n  system.unlockEnding\n")).toContain(
-      "system.unlockEnding id is required.",
+  it("does not add dedicated system unlock DSL sugar", () => {
+    expect(expectSystemFailure("scene start:\n  system.unlockEnding trueEnd\n")).toContain(
+      "Unsupported DSL v2 scene body statement.",
     );
-    expect(expectSystemFailure("scene start:\n  system.unlockCg\n")).toContain("system.unlockCg id is required.");
-    expect(expectSystemFailure("scene start:\n  system.unlockAchievement\n")).toContain(
-      "system.unlockAchievement id is required.",
+    expect(expectSystemFailure("scene start:\n  unlock ending trueEnd\n")).toContain(
+      "Unsupported DSL v2 scene body statement.",
     );
-  });
-
-  it("rejects invalid system unlock ids", () => {
-    expect(expectSystemFailure("scene start:\n  system.unlockEnding $scenario.endingId\n")).toContain(
-      "system.unlockEnding id must be static.",
-    );
-    expect(expectSystemFailure("scene start:\n  system.unlockCg $scenario.cgId\n")).toContain(
-      "system.unlockCg id must be static.",
-    );
-    expect(expectSystemFailure("scene start:\n  system.unlockAchievement $scenario.achievementId\n")).toContain(
-      "system.unlockAchievement id must be static.",
-    );
-    expect(expectSystemFailure('scene start:\n  system.unlockEnding ""\n')).toContain(
-      "system.unlockEnding id must not be empty.",
-    );
-    expect(expectSystemFailure("scene start:\n  system.unlockCg cg-001\n")).toContain("Invalid system.unlockCg id.");
-  });
-
-  it("rejects extra trailing tokens", () => {
-    expect(expectSystemFailure("scene start:\n  system.unlockEnding trueEnd extra\n")).toContain(
-      "system.unlockEnding statement must not have extra trailing tokens.",
-    );
-    expect(expectSystemFailure('scene start:\n  system.unlockCg "cg-001" extra\n')).toContain(
-      "system.unlockCg statement must not have extra trailing tokens.",
-    );
-  });
-
-  it("keeps direct system state mutation rejected", () => {
-    expect(expectSystemFailure("scene start:\n  set system.endings.trueEnd.unlocked = true\n")).toContain(
-      "set cannot target system.*.",
-    );
-    expect(expectSystemFailure("scene start:\n  add system.playCount += 1\n")).toContain("add cannot target system.*.");
   });
 });

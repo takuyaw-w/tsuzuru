@@ -75,7 +75,7 @@ describe("parseTzr parser audit coverage", () => {
     ]);
   });
 
-  it("parses visual audio and system sugar inside nested if branches", () => {
+  it("parses visual audio sugar and system calls inside nested if branches", () => {
     const body = parseSceneBody(`scene start:
   if scenario.outer:
     if scenario.inner:
@@ -83,7 +83,7 @@ describe("parseTzr parser audit coverage", () => {
       show alice_smile at center
       bgm daily_theme
       se doorOpen
-      system.unlockAchievement firstClear
+      call system.unlockAchievement(id=firstClear)
 `);
 
     expect(body).toMatchObject([
@@ -97,7 +97,7 @@ describe("parseTzr parser audit coverage", () => {
               { type: "ShowStatement", placement: { value: "center" } },
               { type: "BgmStatement" },
               { type: "SeStatement" },
-              { type: "SystemUnlockStatement", kind: "achievement" },
+              { type: "CallStatement", name: "system.unlockAchievement" },
             ],
           },
         ],
@@ -105,7 +105,7 @@ describe("parseTzr parser audit coverage", () => {
     ]);
   });
 
-  it("parses visual audio and system sugar inside nested choice item bodies", () => {
+  it("parses visual audio sugar and system calls inside nested choice item bodies", () => {
     const body = parseSceneBody(`scene start:
   choice "外側":
     "見る":
@@ -115,7 +115,7 @@ describe("parseTzr parser audit coverage", () => {
           clear bg
           voice mio_001
           stopBgm
-          system.unlockCg cg001
+          call system.unlockCg(id=cg001)
 `);
 
     expect(body).toMatchObject([
@@ -133,7 +133,7 @@ describe("parseTzr parser audit coverage", () => {
                       { type: "ClearVisualStatement", target: "bg" },
                       { type: "VoiceStatement" },
                       { type: "StopBgmStatement" },
-                      { type: "SystemUnlockStatement", kind: "cg" },
+                      { type: "CallStatement", name: "system.unlockCg" },
                     ],
                   },
                 ],

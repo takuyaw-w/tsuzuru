@@ -49,9 +49,6 @@ import type {
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrStringValue,
-  TzrSystemUnlockId,
-  TzrSystemUnlockKind,
-  TzrSystemUnlockStatement,
   TzrTextBlockItem,
   TzrTextBlockMeta,
   TzrTextBlockMetaAttribute,
@@ -120,7 +117,6 @@ type VisualAssetStatementKeyword = "bg" | "show" | "hide";
 type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
 type EffectStatementKeyword = TzrStdEffectCommandName;
 type CameraStatementKeyword = "camera" | "camera focus" | "reset camera";
-type SystemUnlockStatementName = "system.unlockEnding" | "system.unlockCg" | "system.unlockAchievement";
 
 interface InlineRawAttribute {
   readonly key: string;
@@ -460,9 +456,6 @@ class TzrParser {
     }
     if (isCameraStatementSource(source)) {
       return this.parseStdCameraStatement(line, source, statementColumn);
-    }
-    if (source === "system" || source.startsWith("system.")) {
-      return this.parseSystemStatement(line, source, statementColumn);
     }
     if (source.startsWith("jump")) {
       return this.parseJumpStatement(line, source, statementColumn);
@@ -2609,113 +2602,6 @@ class TzrParser {
     return undefined;
   }
 
-  private parseSystemStatement(
-    line: SourceLine,
-    source: string,
-    statementColumn: number,
-  ): TzrSystemUnlockStatement | undefined {
-    const statementName = source.match(/^\S+/)?.[0] ?? "";
-    if (!isSystemUnlockStatementName(statementName)) {
-      this.addError(line, statementColumn, "Unknown system statement.");
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const rest = source.slice(statementName.length).trim();
-    if (rest.length === 0) {
-      this.addError(line, statementColumn, `${statementName} id is required.`);
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const id = this.parseSystemUnlockId(line, rest, statementColumn + source.indexOf(rest), statementName);
-    this.cursor += 1;
-    if (id === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "SystemUnlockStatement",
-      kind: systemUnlockKind(statementName),
-      id,
-      loc: this.lineRange(line),
-    };
-  }
-
-  private parseSystemUnlockId(
-    line: SourceLine,
-    source: string,
-    sourceColumn: number,
-    statementName: SystemUnlockStatementName,
-  ): TzrSystemUnlockId | undefined {
-    if (source.startsWith("$")) {
-      this.addError(line, sourceColumn, `${statementName} id must be static.`);
-      return undefined;
-    }
-
-    if (source.startsWith("'") || source.startsWith("`")) {
-      this.parseStringLiteral(line, source, sourceColumn);
-      return undefined;
-    }
-
-    if (source.startsWith('"')) {
-      const literalEnd = this.findStringLiteralEnd(source);
-      if (literalEnd !== undefined) {
-        const trailing = source.slice(literalEnd + 1);
-        if (trailing.trim().length > 0) {
-          this.addError(
-            line,
-            sourceColumn + literalEnd + 1 + trailing.search(/\S/),
-            `${statementName} statement must not have extra trailing tokens.`,
-          );
-          return undefined;
-        }
-      }
-
-      const value = this.parseStringLiteral(line, source, sourceColumn);
-      if (value === undefined) {
-        return undefined;
-      }
-      if (value.length === 0) {
-        this.addError(line, sourceColumn, `${statementName} id must not be empty.`);
-        return undefined;
-      }
-
-      return {
-        type: "SystemUnlockStringId",
-        value,
-        loc: {
-          start: this.location(line.line, sourceColumn),
-          end: this.location(line.line, sourceColumn + source.length),
-        },
-      };
-    }
-
-    const firstWhitespace = source.search(/\s/);
-    if (firstWhitespace !== -1) {
-      this.addError(
-        line,
-        sourceColumn + firstWhitespace,
-        `${statementName} statement must not have extra trailing tokens.`,
-      );
-      return undefined;
-    }
-
-    if (!isValidTzrDottedIdentifier(source)) {
-      this.addError(line, sourceColumn, `Invalid ${statementName} id.`);
-      return undefined;
-    }
-
-    return {
-      type: "SystemUnlockIdentifierId",
-      value: source,
-      loc: {
-        start: this.location(line.line, sourceColumn),
-        end: this.location(line.line, sourceColumn + source.length),
-      },
-    };
-  }
-
   private findStringLiteralEnd(source: string): number | undefined {
     let escaped = false;
     for (let index = 1; index < source.length; index += 1) {
@@ -3861,10 +3747,6 @@ function findVisualStandaloneToken(source: string, token: string): number | unde
   return undefined;
 }
 
-function isSystemUnlockStatementName(value: string): value is SystemUnlockStatementName {
-  return value === "system.unlockEnding" || value === "system.unlockCg" || value === "system.unlockAchievement";
-}
-
 function isEffectStatementSource(source: string): boolean {
   return (
     source === "shake" ||
@@ -3885,17 +3767,6 @@ function isCameraStatementSource(source: string): boolean {
     source === "reset camera" ||
     source.startsWith("reset camera ")
   );
-}
-
-function systemUnlockKind(statementName: SystemUnlockStatementName): TzrSystemUnlockKind {
-  switch (statementName) {
-    case "system.unlockEnding":
-      return "ending";
-    case "system.unlockCg":
-      return "cg";
-    case "system.unlockAchievement":
-      return "achievement";
-  }
 }
 
 function countIndent(text: string): number {

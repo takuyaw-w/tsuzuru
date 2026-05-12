@@ -446,7 +446,7 @@ class TzrCompiler {
           instructions.push(...this.buildStdCameraInstruction(statement));
           break;
         default:
-          this.addError(statement.loc.start, `DSL v2 statement "${statement.type}" is not compile-supported yet.`);
+          assertUnreachableSceneStatement(statement);
           break;
       }
     }
@@ -1120,6 +1120,10 @@ class TzrCompiler {
     const sourceLines = this.document.sourceLineMap?.[location.filePath] ?? this.document.sourceLines;
     return sourceLines[location.line - 1] ?? "";
   }
+}
+
+function assertUnreachableSceneStatement(_statement: never): void {
+  // This switch should stay exhaustive as supported scene statements evolve.
 }
 
 function findNamedArgument(
