@@ -99,13 +99,13 @@ function createParticleSpec(
 function sizeFor(type: StdParticleType, depth: number, random: () => number): number {
   switch (type) {
     case "rain":
-      return round(0.7 + depth * 0.85);
+      return round(0.86 + depth * 0.78);
     case "snow":
       return round(0.65 + depth * 1.55);
     case "sakura":
       return round(0.72 + depth * 0.9);
     case "dust":
-      return round(0.55 + depth * 1.2 + random() * 0.25);
+      return round(0.9 + depth * 0.82 + random() * 0.16);
   }
 }
 
@@ -113,7 +113,7 @@ function durationFor(type: StdParticleType, intensityIndex: number, depth: numbe
   const depthSpeed = 1.12 - depth * 0.24;
   switch (type) {
     case "rain":
-      return round((1.08 - intensityIndex * 0.16 + random() * 0.22) * depthSpeed);
+      return round((1.34 - intensityIndex * 0.14 + random() * 0.28) * depthSpeed);
     case "snow":
       return round((10.5 - intensityIndex * 1.35 + random() * 2.4) * depthSpeed);
     case "sakura":
@@ -126,13 +126,13 @@ function durationFor(type: StdParticleType, intensityIndex: number, depth: numbe
 function opacityFor(type: StdParticleType, intensityIndex: number, depth: number, random: () => number): number {
   switch (type) {
     case "rain":
-      return round(0.22 + intensityIndex * 0.05 + depth * 0.2 + random() * 0.08);
+      return round(0.38 + intensityIndex * 0.06 + depth * 0.22 + random() * 0.08);
     case "snow":
       return round(0.46 + intensityIndex * 0.04 + depth * 0.22 + random() * 0.1);
     case "sakura":
       return round(0.5 + intensityIndex * 0.04 + depth * 0.18 + random() * 0.08);
     case "dust":
-      return round(0.2 + intensityIndex * 0.025 + depth * 0.13 + random() * 0.08);
+      return round(0.36 + intensityIndex * 0.035 + depth * 0.18 + random() * 0.08);
   }
 }
 
@@ -145,7 +145,7 @@ function driftFor(type: StdParticleType, random: () => number): number {
     case "sakura":
       return random() * 170 - 85;
     case "dust":
-      return random() * 30 - 15;
+      return random() * 54 - 27;
   }
 }
 
@@ -158,7 +158,7 @@ function swayFor(type: StdParticleType, random: () => number): number {
     case "sakura":
       return random() * 140 - 70;
     case "dust":
-      return random() * 36 - 18;
+      return random() * 62 - 31;
   }
 }
 

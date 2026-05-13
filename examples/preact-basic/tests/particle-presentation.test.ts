@@ -48,4 +48,18 @@ describe("preact-basic particle presentation", () => {
 
     expect(rainAverage).toBeLessThan(snowAverage);
   });
+
+  it("keeps rain and dust visible enough for the example backgrounds", () => {
+    const rain = getParticleSpecs("rain", "normal");
+    const dust = getParticleSpecs("dust", "light");
+    const averageDuration = (durations: readonly number[]) =>
+      durations.reduce((total, duration) => total + duration, 0) / durations.length;
+
+    expect(Math.min(...rain.map((particle) => particle.opacity))).toBeGreaterThanOrEqual(0.38);
+    expect(Math.min(...rain.map((particle) => particle.size))).toBeGreaterThanOrEqual(0.86);
+    expect(averageDuration(rain.map((particle) => particle.duration))).toBeGreaterThanOrEqual(1.1);
+    expect(Math.min(...dust.map((particle) => particle.opacity))).toBeGreaterThanOrEqual(0.36);
+    expect(Math.min(...dust.map((particle) => particle.size))).toBeGreaterThanOrEqual(0.9);
+    expect(Math.max(...dust.map((particle) => Math.abs(particle.sway)))).toBeGreaterThanOrEqual(20);
+  });
 });

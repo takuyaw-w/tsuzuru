@@ -208,6 +208,18 @@ test("particle demo renders bounded non-interactive overlay particles", async ({
 
   await messageWindow.click();
   await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "別の particle を試す" }).click();
+  await expect(choiceLayer).toContainText("particle demo を試す？", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "埃を漂わせる" }).click();
+  await expect(messageWindow).toContainText("埃が光の中をゆっくり漂っている。", { timeout: 3000 });
+
+  const dustLayer = page.locator(".particle-layer--dust.particle-layer--light");
+  await expect(dustLayer).toBeAttached();
+  await expect(dustLayer).toHaveCSS("pointer-events", "none");
+  await expect(dustLayer.locator(".particle-layer__particle")).toHaveCount(22);
+
+  await messageWindow.click();
+  await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
   await choiceLayer.getByRole("button", { name: "止める" }).click();
   await expect(page.locator(".particle-layer")).toHaveCount(0);
   await expect(messageWindow).toContainText("メトロノームが一度だけ止まり", { timeout: 3000 });

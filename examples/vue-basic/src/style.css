@@ -220,11 +220,19 @@ button:disabled {
 }
 
 .particle-layer--rain .particle-layer__particle {
-  width: max(1px, calc(1px * var(--size, 1)));
-  height: calc(22px * var(--size, 1));
+  width: max(1.5px, calc(1.45px * var(--size, 1)));
+  height: calc(32px * var(--size, 1));
   border-radius: 999px;
-  background: linear-gradient(180deg, transparent, rgba(210, 232, 255, 0.58), transparent);
-  box-shadow: 0 0 5px rgba(180, 220, 255, 0.18);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(232, 246, 255, 0.82) 40%,
+    rgba(156, 209, 255, 0.5) 74%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 7px rgba(182, 224, 255, 0.34),
+    0 0 12px rgba(112, 176, 255, 0.12);
   transform-origin: center top;
   animation-name: particle-rain-fall;
   animation-timing-function: linear;
@@ -253,11 +261,13 @@ button:disabled {
 }
 
 .particle-layer--dust .particle-layer__particle {
-  width: calc(2px * var(--size, 1));
-  height: calc(2px * var(--size, 1));
+  width: calc(3.2px * var(--size, 1));
+  height: calc(3.2px * var(--size, 1));
   border-radius: 50%;
-  background: rgba(255, 230, 170, 0.4);
-  box-shadow: 0 0 calc(10px * var(--size, 1)) rgba(255, 220, 150, 0.24);
+  background: rgba(255, 226, 154, 0.66);
+  box-shadow:
+    0 0 calc(10px * var(--size, 1)) rgba(255, 220, 150, 0.46),
+    0 0 calc(18px * var(--size, 1)) rgba(255, 190, 110, 0.2);
   animation-name: particle-dust-float;
   animation-timing-function: ease-in-out;
 }
@@ -605,13 +615,13 @@ button:disabled {
 @keyframes particle-dust-float {
   0%,
   100% {
-    opacity: 0.14;
+    opacity: 0.24;
     transform: translate3d(var(--sway-soft, -4px), var(--drift-soft, -2px), 0) scale(0.9);
   }
 
   50% {
-    opacity: var(--opacity, 0.28);
-    transform: translate3d(var(--sway, 12px), var(--drift, 10px), 0) scale(1.12);
+    opacity: var(--opacity, 0.48);
+    transform: translate3d(var(--sway, 18px), var(--drift, 16px), 0) scale(1.2);
   }
 }
 
