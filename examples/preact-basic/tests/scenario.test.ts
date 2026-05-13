@@ -18,11 +18,23 @@ describe("preact-basic scenario", () => {
     expect(scenario).not.toContain("unlock ending");
   });
 
+  it("includes the std-particle demo scenes", async () => {
+    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "02-common.tzr"), "utf8");
+
+    expect(scenario).toContain('choice "particle demo を試す？"');
+    expect(scenario).toContain("particle rain intensity=normal");
+    expect(scenario).toContain("particle snow intensity=light");
+    expect(scenario).toContain("particle sakura intensity=normal");
+    expect(scenario).toContain("particle dust intensity=light");
+    expect(scenario).toContain("stopParticle");
+  });
+
   it("depends on the std-system plugin package", async () => {
     const packageJson = JSON.parse(await readFile(join(import.meta.dirname, "..", "package.json"), "utf8")) as {
       readonly dependencies: Readonly<Record<string, string>>;
     };
 
     expect(packageJson.dependencies["@tsuzuru/plugin-std-system"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/plugin-std-particle"]).toBeDefined();
   });
 });

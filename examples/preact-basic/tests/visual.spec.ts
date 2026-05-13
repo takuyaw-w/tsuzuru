@@ -175,6 +175,44 @@ test("effect demo choice exposes individual effect paths", async ({ page }) => {
   await expect(messageWindow).toContainText("まずは、僕に寄ってみよう", { timeout: 3000 });
 });
 
+test("particle demo renders bounded non-interactive overlay particles", async ({ page }) => {
+  await page.goto("/");
+  await disableTextReveal(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const choiceLayer = page.locator(".tzr-choice-layer");
+
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await advanceMessages(messageWindow, 8);
+  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
+  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
+  await advanceMessages(messageWindow, 3);
+
+  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
+  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
+  await advanceMessages(messageWindow, 2);
+
+  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
+  await expect(choiceLayer).toContainText("camera demo を試す？", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
+  await expect(choiceLayer).toContainText("particle demo を試す？", { timeout: 3000 });
+
+  await choiceLayer.getByRole("button", { name: "雨を降らせる" }).click();
+  await expect(messageWindow).toContainText("雨は、画面全体の空気を冷たくする。", { timeout: 3000 });
+
+  const particleLayer = page.locator(".particle-layer--rain.particle-layer--normal");
+  await expect(particleLayer).toBeAttached();
+  await expect(particleLayer).toHaveCSS("pointer-events", "none");
+  await expect(particleLayer.locator(".particle-layer__particle")).toHaveCount(38);
+
+  await messageWindow.click();
+  await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "止める" }).click();
+  await expect(page.locator(".particle-layer")).toHaveCount(0);
+  await expect(messageWindow).toContainText("メトロノームが一度だけ止まり", { timeout: 3000 });
+});
+
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);

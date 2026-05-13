@@ -40,6 +40,17 @@ describe("vue-basic example", () => {
     expect(scenario).not.toContain("unlock ending");
   });
 
+  it("includes the std-particle demo scenes", async () => {
+    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "01-opening.tzr"), "utf8");
+
+    expect(scenario).toContain('choice "particle demo を試す？"');
+    expect(scenario).toContain("particle rain intensity=normal");
+    expect(scenario).toContain("particle snow intensity=light");
+    expect(scenario).toContain("particle sakura intensity=normal");
+    expect(scenario).toContain("particle dust intensity=light");
+    expect(scenario).toContain("stopParticle");
+  });
+
   it("uses @tsuzuru/vue without Preact dependencies", async () => {
     const packageJson = JSON.parse(await readFile(join(import.meta.dirname, "..", "package.json"), "utf8")) as {
       readonly dependencies: Readonly<Record<string, string>>;
@@ -48,6 +59,7 @@ describe("vue-basic example", () => {
     expect(packageJson.dependencies["@tsuzuru/vue"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-camera"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-effect"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/plugin-std-particle"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-system"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeUndefined();
     expect(packageJson.dependencies.preact).toBeUndefined();
