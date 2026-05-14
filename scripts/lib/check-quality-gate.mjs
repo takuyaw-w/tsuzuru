@@ -49,6 +49,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertDocumentedInventory(context, "AGENTS.md", parsePlainInventory);
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
+  assertTypeScriptBuildGraphPlan(context);
 
   return {
     failures,
@@ -242,6 +243,29 @@ function assertDocumentedInventory(context, relativePath, parseInventory) {
 
   assertSameList(context, `${relativePath} package inventory`, inventory.packages, context.packageDirs);
   assertSameList(context, `${relativePath} example inventory`, inventory.examples, context.exampleDirs);
+}
+
+function assertTypeScriptBuildGraphPlan(context) {
+  const relativePath = "docs/plans/typescript-build-graph.md";
+  const absolutePath = join(context.rootDir, relativePath);
+  if (!existsSync(absolutePath)) {
+    context.failures.push(`${relativePath} is missing.`);
+    return;
+  }
+
+  const source = readFileSync(absolutePath, "utf8");
+  for (const heading of [
+    "## Source and Test Config Split",
+    "## .tsbuildinfo Placement",
+    "## Package and Example Graphs",
+    "## Publish Layout Constraints",
+    "## Decision for now",
+    "## Migration steps",
+  ]) {
+    if (!source.includes(heading)) {
+      context.failures.push(`${relativePath} is missing required heading "${heading}".`);
+    }
+  }
 }
 
 function parsePlainInventory(context, source, relativePath) {

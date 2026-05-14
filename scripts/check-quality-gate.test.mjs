@@ -203,6 +203,22 @@ describe("checkQualityGate", () => {
       "README.md package inventory is out of sync. Expected [packages/addon, packages/core], got [packages/core].",
     );
   });
+
+  it("fails when the TypeScript build graph plan is missing", async () => {
+    const root = await createFixtureRepo();
+    await rm(join(root, "docs/plans/typescript-build-graph.md"));
+
+    expect(checkQualityGate(root).failures).toContain("docs/plans/typescript-build-graph.md is missing.");
+  });
+
+  it("fails when the TypeScript build graph plan is missing required sections", async () => {
+    const root = await createFixtureRepo();
+    await writeFile(join(root, "docs/plans/typescript-build-graph.md"), "# TypeScript Build Graph Plan\n");
+
+    expect(checkQualityGate(root).failures).toContain(
+      'docs/plans/typescript-build-graph.md is missing required heading "## Decision for now".',
+    );
+  });
 });
 
 async function createFixtureRepo() {
@@ -280,6 +296,7 @@ async function createFixtureRepo() {
   await writeAgents(root);
   await writeTreeInventoryDoc(root, "README.md");
   await writeTreeInventoryDoc(root, "docs/architecture.md");
+  await writeTypeScriptBuildGraphPlan(root);
 
   return root;
 }
@@ -324,6 +341,27 @@ packages/
 examples/
   example/
 \`\`\`
+`,
+  );
+}
+
+async function writeTypeScriptBuildGraphPlan(root) {
+  await mkdir(join(root, "docs/plans"), { recursive: true });
+  await writeFile(
+    join(root, "docs/plans/typescript-build-graph.md"),
+    `# TypeScript Build Graph Plan
+
+## Source and Test Config Split
+
+## .tsbuildinfo Placement
+
+## Package and Example Graphs
+
+## Publish Layout Constraints
+
+## Decision for now
+
+## Migration steps
 `,
   );
 }
