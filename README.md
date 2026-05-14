@@ -82,6 +82,9 @@ runtime behavior、rendering、plugins、reusable logic は TypeScript に置く
 ```txt
 packages/
   core/
+  config/
+  cli/
+  create-tsuzuru/
   preact/
   vue/
   standard-ui-preact/
@@ -239,6 +242,18 @@ pnpm test
 
 ```sh
 pnpm typecheck
+```
+
+package inventory / script coverage / docs inventory の同期確認:
+
+```sh
+pnpm inventory:check
+```
+
+examples の scenario / unit test / typecheck / build 確認:
+
+```sh
+pnpm examples:check
 ```
 
 ## パッケージ別コマンド

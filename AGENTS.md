@@ -55,6 +55,11 @@ packages/vue
 packages/standard-ui-preact
 packages/plugin-std-visual
 packages/plugin-std-audio
+packages/plugin-std-text-sound
+packages/plugin-std-effect
+packages/plugin-std-camera
+packages/plugin-std-particle
+packages/plugin-std-system
 ```
 
 Current examples:
@@ -134,6 +139,36 @@ Package responsibilities:
   - owns audio plugin state updates
   - does not load or bundle audio assets
   - does not own browser audio playback policy
+
+- `@tsuzuru/plugin-std-text-sound`
+  - provides standard text sound command handlers
+  - owns text sound plugin state updates
+  - may provide browser playback helpers under explicit subpaths
+  - does not own text reveal timing or speaker mapping policy
+
+- `@tsuzuru/plugin-std-effect`
+  - provides standard effect command handlers
+  - owns transient effect plugin state updates
+  - clears one-shot events before snapshots when requested by the host
+  - does not render animations or own persistent visual state
+
+- `@tsuzuru/plugin-std-camera`
+  - provides standard camera command handlers
+  - owns durable camera plugin state updates
+  - supports snapshot / restore through runtime plugin state
+  - does not render transforms or resolve focus target coordinates
+
+- `@tsuzuru/plugin-std-particle`
+  - provides standard particle command handlers
+  - owns durable particle plugin state updates
+  - supports snapshot / restore through runtime plugin state
+  - does not render particle systems or resolve visual assets
+
+- `@tsuzuru/plugin-std-system`
+  - provides standard system unlock command handlers
+  - owns durable unlock plugin state for endings, CGs, and achievements
+  - supports snapshot / restore through runtime plugin state
+  - does not persist to browser storage or render gallery / achievement UI
 
 ## Current DSL Direction
 
@@ -250,8 +285,12 @@ Plugins may own presentation-related behavior such as:
 - BGM state
 - sound effect events
 - voice events
+- text sound state
 - transitions
-- camera or screen effects in future versions
+- transient screen effects
+- camera state
+- particle state
+- system unlock state
 
 Plugins must not own core narrative flow.
 
@@ -347,6 +386,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
+pnpm examples:check
 pnpm --filter @tsuzuru/example-preact-basic check:scenario
 pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
@@ -363,6 +403,7 @@ rtk pnpm lint
 rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
+rtk pnpm examples:check
 rtk pnpm --filter @tsuzuru/example-preact-basic check:scenario
 rtk pnpm --filter @tsuzuru/example-preact-basic build
 rtk git diff --check
@@ -399,6 +440,21 @@ pnpm --filter @tsuzuru/plugin-std-visual typecheck
 
 pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-audio typecheck
+
+pnpm --filter @tsuzuru/plugin-std-text-sound test
+pnpm --filter @tsuzuru/plugin-std-text-sound typecheck
+
+pnpm --filter @tsuzuru/plugin-std-effect test
+pnpm --filter @tsuzuru/plugin-std-effect typecheck
+
+pnpm --filter @tsuzuru/plugin-std-camera test
+pnpm --filter @tsuzuru/plugin-std-camera typecheck
+
+pnpm --filter @tsuzuru/plugin-std-particle test
+pnpm --filter @tsuzuru/plugin-std-particle typecheck
+
+pnpm --filter @tsuzuru/plugin-std-system test
+pnpm --filter @tsuzuru/plugin-std-system typecheck
 ```
 
 For scenario or Preact example changes, also run:

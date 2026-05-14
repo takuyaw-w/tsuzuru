@@ -70,6 +70,9 @@ Current main packages:
 ```txt
 packages/
   core/
+  config/
+  cli/
+  create-tsuzuru/
   preact/
   vue/
   standard-ui-preact/
@@ -78,6 +81,7 @@ packages/
   plugin-std-text-sound/
   plugin-std-effect/
   plugin-std-camera/
+  plugin-std-particle/
   plugin-std-system/
 
 examples/
@@ -104,9 +108,10 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
+examples/vue-basic
 ```
 
-Future package candidates such as `@tsuzuru/vite` or `create-tsuzuru` must not be documented as implemented until they exist and work.
+Future package candidates such as `@tsuzuru/vite` must not be documented as implemented until they exist and work.
 
 ---
 
@@ -359,6 +364,31 @@ example.
 
 ---
 
+### `@tsuzuru/plugin-std-particle`
+
+`@tsuzuru/plugin-std-particle` provides standard durable particle command
+handlers.
+
+Responsibilities:
+
+- maintain standard particle plugin state
+- store the current particle type and intensity
+- handle `particle` and `stopParticle` command instructions
+- allow particle state to be saved and restored with runtime snapshots
+
+It does not:
+
+- render DOM / Canvas / WebGL particles
+- run animation timers
+- resolve particle assets or textures
+- own scene flow
+- own runtime stepping
+
+Particle rendering and reduced-motion policy belong to the app, renderer, or
+example.
+
+---
+
 ### `@tsuzuru/plugin-std-system`
 
 `@tsuzuru/plugin-std-system` provides standard durable system unlock command
@@ -391,10 +421,11 @@ the app, renderer, or example.
 
 Examples are integration checks and usage references.
 
-Current example:
+Current examples:
 
 ```txt
 examples/preact-basic
+examples/vue-basic
 ```
 
 Example responsibilities:
@@ -1060,6 +1091,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
+pnpm examples:check
 pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
 ```
@@ -1079,6 +1111,7 @@ pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-text-sound test
 pnpm --filter @tsuzuru/plugin-std-effect test
 pnpm --filter @tsuzuru/plugin-std-camera test
+pnpm --filter @tsuzuru/plugin-std-particle test
 pnpm --filter @tsuzuru/plugin-std-system test
 ```
 
