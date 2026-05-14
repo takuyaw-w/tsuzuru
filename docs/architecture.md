@@ -1092,6 +1092,7 @@ pnpm check
 pnpm test
 pnpm typecheck
 pnpm examples:check
+pnpm publish-readiness:check
 pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
 ```

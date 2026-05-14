@@ -387,6 +387,7 @@ pnpm check
 pnpm test
 pnpm typecheck
 pnpm examples:check
+pnpm publish-readiness:check
 pnpm --filter @tsuzuru/example-preact-basic check:scenario
 pnpm --filter @tsuzuru/example-preact-basic build
 git diff --check
@@ -404,6 +405,7 @@ rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
 rtk pnpm examples:check
+rtk pnpm publish-readiness:check
 rtk pnpm --filter @tsuzuru/example-preact-basic check:scenario
 rtk pnpm --filter @tsuzuru/example-preact-basic build
 rtk git diff --check
@@ -479,6 +481,7 @@ For package publishing, package exports, `files`, generated templates, or releas
 
 ```sh
 pnpm run pack:dry-run
+pnpm publish-readiness:check
 pnpm run smoke:create-tsuzuru
 ```
 

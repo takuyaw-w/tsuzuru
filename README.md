@@ -256,6 +256,12 @@ examples の scenario / unit test / typecheck / build 確認:
 pnpm examples:check
 ```
 
+publish 前の tarball 内容確認:
+
+```sh
+pnpm publish-readiness:check
+```
+
 ## パッケージ別コマンド
 
 ### Core
