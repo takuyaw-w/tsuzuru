@@ -187,6 +187,11 @@ pnpm run smoke:create-tsuzuru
 
 This checks that the published `create-tsuzuru` package can generate a project
 that installs, validates its scenario, and builds.
+For CI and local release readiness from this repository, use the local tarball smoke:
+
+```sh
+pnpm run smoke:create-tsuzuru:local
+```
 
 ## DSL v2 の例
 
@@ -256,11 +261,27 @@ examples の scenario / unit test / typecheck / build 確認:
 pnpm examples:check
 ```
 
+publish 対象 package の build:
+
+```sh
+pnpm packages:build
+```
+
 publish 前の tarball 内容確認:
 
 ```sh
 pnpm publish-readiness:check
 ```
+
+`publish-readiness:check` は build 済み `dist` を前提に tarball 内容を検査します。clean checkout では先に `pnpm packages:build` を実行してください。
+
+release 前の推奨確認:
+
+```sh
+pnpm release-readiness:check
+```
+
+This runs package builds, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
 
 ## パッケージ別コマンド
 

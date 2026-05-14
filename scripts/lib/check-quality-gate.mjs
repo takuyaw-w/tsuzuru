@@ -10,6 +10,9 @@ export function checkQualityGate(rootDir = process.cwd()) {
   const publicPackageNames = packageEntries
     .filter((entry) => entry.packageJson.private !== true)
     .map((entry) => entry.name);
+  const publicBuildablePackageNames = packageEntries
+    .filter((entry) => entry.packageJson.private !== true && entry.packageJson.scripts?.build !== undefined)
+    .map((entry) => entry.name);
   const exampleNames = exampleEntries.map((entry) => entry.name);
   const packageDirs = packageEntries.map((entry) => `packages/${entry.dir}`).sort();
   const exampleDirs = exampleEntries.map((entry) => `examples/${entry.dir}`).sort();
@@ -19,6 +22,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
     exampleNames,
     failures,
     packageDirs,
+    publicBuildablePackageNames,
     publicPackageNames,
     rootDir,
     rootPackageJson,
@@ -27,7 +31,9 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertNoMissingRootScriptFilters(context);
   assertScriptCovers(context, "test", publicPackageNames, "test");
   assertScriptCovers(context, "typecheck", publicPackageNames, "typecheck");
+  assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build");
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
+  assertReleaseReadinessScript(context);
   assertExamplesCheckCoversExamples(context);
   assertDocumentedInventory(context, "AGENTS.md", parsePlainInventory);
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
@@ -37,6 +43,33 @@ export function checkQualityGate(rootDir = process.cwd()) {
     failures,
     ok: failures.length === 0,
   };
+}
+
+function assertReleaseReadinessScript(context) {
+  const script = context.rootPackageJson.scripts?.["release-readiness:check"];
+  if (script === undefined) {
+    context.failures.push('root package.json is missing script "release-readiness:check".');
+    return;
+  }
+
+  let previousIndex = -1;
+  for (const expected of [
+    "pnpm packages:build",
+    "pnpm examples:check",
+    "pnpm run pack:dry-run",
+    "pnpm publish-readiness:check",
+    "pnpm run smoke:create-tsuzuru:local",
+  ]) {
+    const index = script.indexOf(expected);
+    if (index === -1) {
+      context.failures.push(`root script "release-readiness:check" does not include "${expected}".`);
+      continue;
+    }
+    if (index < previousIndex) {
+      context.failures.push(`root script "release-readiness:check" must run "${expected}" after earlier release checks.`);
+    }
+    previousIndex = index;
+  }
 }
 
 function readWorkspaceEntries(rootDir, workspaceDir) {

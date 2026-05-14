@@ -1091,6 +1091,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
+pnpm release-readiness:check
 pnpm examples:check
 pnpm publish-readiness:check
 pnpm --filter @tsuzuru/example-preact-basic build
@@ -1098,6 +1099,7 @@ git diff --check
 ```
 
 For package-focused work, run the relevant filtered checks first.
+`publish-readiness:check` assumes package `dist` output already exists. On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
 
 Examples:
 

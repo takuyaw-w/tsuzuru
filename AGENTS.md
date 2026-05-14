@@ -386,6 +386,7 @@ pnpm lint
 pnpm check
 pnpm test
 pnpm typecheck
+pnpm release-readiness:check
 pnpm examples:check
 pnpm publish-readiness:check
 pnpm --filter @tsuzuru/example-preact-basic check:scenario
@@ -404,6 +405,7 @@ rtk pnpm lint
 rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
+rtk pnpm release-readiness:check
 rtk pnpm examples:check
 rtk pnpm publish-readiness:check
 rtk pnpm --filter @tsuzuru/example-preact-basic check:scenario
@@ -480,10 +482,15 @@ pnpm --filter @tsuzuru/example-vue-basic build
 For package publishing, package exports, `files`, generated templates, or release-readiness changes, also run:
 
 ```sh
+pnpm packages:build
 pnpm run pack:dry-run
 pnpm publish-readiness:check
-pnpm run smoke:create-tsuzuru
+pnpm run smoke:create-tsuzuru:local
 ```
+
+`publish-readiness:check` inspects packed package contents and assumes package `dist` output already exists.
+On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
+`smoke:create-tsuzuru` remains the registry-based smoke; CI and release-readiness should use `smoke:create-tsuzuru:local` to avoid depending on the published `create-tsuzuru` package.
 
 If any verification is skipped, report the skipped command and the reason.
 

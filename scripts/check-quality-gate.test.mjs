@@ -69,6 +69,35 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when a public buildable package is omitted from packages:build", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["packages:build"] = removeCommandForPackage(
+        packageJson.scripts["packages:build"],
+        "@fixture/addon",
+        "build",
+      );
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "packages:build" does not include "--filter @fixture/addon build".',
+    );
+  });
+
+  it("fails when release-readiness:check does not use the local create-tsuzuru smoke", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["release-readiness:check"] = packageJson.scripts["release-readiness:check"].replace(
+        "pnpm run smoke:create-tsuzuru:local",
+        "pnpm run smoke:create-tsuzuru",
+      );
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "release-readiness:check" does not include "pnpm run smoke:create-tsuzuru:local".',
+    );
+  });
+
   it("fails when an example is omitted from examples:check", async () => {
     const root = await createFixtureRepo();
     await mutateRootPackageJson(root, (packageJson) => {
@@ -122,6 +151,17 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/addon pack --dry-run",
         "pnpm --filter @fixture/core pack --dry-run",
       ].join(" && "),
+      "packages:build": [
+        "pnpm --filter @fixture/addon build",
+        "pnpm --filter @fixture/core build",
+      ].join(" && "),
+      "release-readiness:check": [
+        "pnpm packages:build",
+        "pnpm examples:check",
+        "pnpm run pack:dry-run",
+        "pnpm publish-readiness:check",
+        "pnpm run smoke:create-tsuzuru:local",
+      ].join(" && "),
       test: ["pnpm --filter @fixture/addon test", "pnpm --filter @fixture/core test"].join(" && "),
       typecheck: [
         "pnpm --filter @fixture/addon typecheck",
@@ -130,8 +170,8 @@ async function createFixtureRepo() {
     },
   });
 
-  await writePackageJson(root, "packages/core", { name: "@fixture/core" });
-  await writePackageJson(root, "packages/addon", { name: "@fixture/addon" });
+  await writePackageJson(root, "packages/core", { name: "@fixture/core", scripts: { build: "tsc" } });
+  await writePackageJson(root, "packages/addon", { name: "@fixture/addon", scripts: { build: "tsc" } });
   await writePackageJson(root, "examples/example", { name: "@fixture/example", private: true });
   await writeAgents(root);
   await writeTreeInventoryDoc(root, "README.md");

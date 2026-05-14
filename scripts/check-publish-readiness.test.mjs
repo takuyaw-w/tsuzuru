@@ -1,5 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { collectExportTargets, validatePackedPackage } from "./lib/check-publish-readiness.mjs";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { checkPublishReadiness, collectExportTargets, validatePackedPackage } from "./lib/check-publish-readiness.mjs";
+
+const tempRoots = [];
+
+afterEach(async () => {
+  await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
 
 const packageEntry = {
   dir: "example",
@@ -90,6 +99,22 @@ describe("collectExportTargets", () => {
   });
 });
 
+describe("checkPublishReadiness", () => {
+  it("explains that package builds are required when pnpm pack fails", async () => {
+    const root = await createFixtureRepo();
+
+    const result = await checkPublishReadiness(root, {
+      packPackage: async () => {
+        throw new Error("missing dist/index.js");
+      },
+    });
+
+    expect(result.failures).toEqual([
+      '@fixture/example pack failed: missing dist/index.js. Run "pnpm packages:build" before "pnpm publish-readiness:check" on a clean checkout.',
+    ]);
+  });
+});
+
 function validEntries() {
   return [
     "package/package.json",
@@ -104,4 +129,17 @@ function validEntries() {
 
 function validEntriesWithout(path) {
   return validEntries().filter((entry) => entry !== path);
+}
+
+async function createFixtureRepo() {
+  const root = await mkdtemp(join(tmpdir(), "tsuzuru-publish-readiness-"));
+  tempRoots.push(root);
+
+  await mkdir(join(root, "packages", "example"), { recursive: true });
+  await writeFile(
+    join(root, "packages", "example", "package.json"),
+    `${JSON.stringify({ name: "@fixture/example", type: "module" }, null, 2)}\n`,
+  );
+
+  return root;
 }

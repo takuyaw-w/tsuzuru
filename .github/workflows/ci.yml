@@ -74,14 +74,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check examples
-        run: pnpm examples:check
-
-      - name: Pack dry-run
-        run: pnpm run pack:dry-run
-
-      - name: Check publish readiness
-        run: pnpm publish-readiness:check
-
-      - name: Smoke create-tsuzuru
-        run: pnpm run smoke:create-tsuzuru
+      - name: Check release readiness
+        run: pnpm release-readiness:check

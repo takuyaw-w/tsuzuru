@@ -27,7 +27,13 @@ export async function checkPublishReadiness(rootDir = process.cwd(), options = {
     tempDir = await mkdtemp(join(tmpdir(), "tsuzuru-publish-readiness-"));
 
     for (const packageEntry of packageEntries) {
-      const packed = await packPackage(rootDir, packageEntry, tempDir);
+      let packed;
+      try {
+        packed = await packPackage(rootDir, packageEntry, tempDir);
+      } catch (error) {
+        failures.push(formatPackFailure(packageEntry.name, error));
+        continue;
+      }
       checkedPackages.push(packageEntry.name);
       failures.push(...validatePackedPackage(packageEntry, packed.entries));
     }
@@ -125,8 +131,7 @@ async function packPackageWithPnpm(rootDir, packageEntry, tempDir) {
       },
     ));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${packageEntry.name} pack failed: ${message}`);
+    throw new Error(error instanceof Error ? error.message : String(error));
   }
 
   const packResult = parsePackJson(stdout, packageEntry.name);
@@ -134,6 +139,11 @@ async function packPackageWithPnpm(rootDir, packageEntry, tempDir) {
     entries: packResult.files.map((file) => file.path),
     tarballPath: packResult.filename,
   };
+}
+
+function formatPackFailure(packageName, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return `${packageName} pack failed: ${message}. Run "pnpm packages:build" before "pnpm publish-readiness:check" on a clean checkout.`;
 }
 
 function parsePackJson(stdout, packageName) {
