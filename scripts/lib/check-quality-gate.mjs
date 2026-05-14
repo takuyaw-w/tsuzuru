@@ -137,7 +137,7 @@ function assertReleaseReadinessScript(context) {
 function assertExamplesHaveSelfScripts(context) {
   for (const exampleEntry of context.exampleEntries) {
     const scripts = exampleEntry.packageJson.scripts ?? {};
-    for (const scriptName of ["build:self", "typecheck:self"]) {
+    for (const scriptName of ["build:self", "check:scenario:self", "typecheck:self"]) {
       if (scripts[scriptName] === undefined) {
         context.failures.push(`${exampleEntry.name} is an example but is missing script "${scriptName}".`);
       }
@@ -210,9 +210,8 @@ function assertExamplesCheckCoversExamples(context) {
 
   for (const exampleName of context.exampleNames) {
     for (const command of ["check:scenario", "test", "typecheck", "build"]) {
-      const expected = `--filter ${exampleName} ${command}`;
-      if (!script.includes(expected)) {
-        context.failures.push(`root script "examples:check" does not include "${expected}".`);
+      if (!scriptIncludesFilterCommand(script, exampleName, command)) {
+        context.failures.push(`root script "examples:check" does not include "--filter ${exampleName} ${command}".`);
       }
     }
   }
@@ -226,13 +225,25 @@ function assertExamplesSelfCheckCoversExamples(context) {
   }
 
   for (const exampleName of context.exampleNames) {
-    for (const command of ["check:scenario", "test", "typecheck:self", "build:self"]) {
-      const expected = `--filter ${exampleName} ${command}`;
-      if (!script.includes(expected)) {
-        context.failures.push(`root script "examples:check:self" does not include "${expected}".`);
+    if (scriptIncludesFilterCommand(script, exampleName, "check:scenario")) {
+      context.failures.push(
+        `root script "examples:check:self" must use "--filter ${exampleName} check:scenario:self" instead of "--filter ${exampleName} check:scenario".`,
+      );
+    }
+
+    for (const command of ["check:scenario:self", "test", "typecheck:self", "build:self"]) {
+      if (!scriptIncludesFilterCommand(script, exampleName, command)) {
+        context.failures.push(`root script "examples:check:self" does not include "--filter ${exampleName} ${command}".`);
       }
     }
   }
+}
+
+function scriptIncludesFilterCommand(script, packageName, command) {
+  return script
+    .split("&&")
+    .map((part) => part.trim())
+    .includes(`pnpm --filter ${packageName} ${command}`);
 }
 
 function assertDocumentedInventory(context, relativePath, parseInventory) {

@@ -8,6 +8,7 @@
     "build:deps": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-system build",
     "build:self": "vite build",
     "check:scenario": "tsuzuru check",
+    "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
     "dev": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-text-sound build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-system build && vite",
     "test": "vitest run tests/*.test.ts",
     "test:ui": "playwright test -c playwright.config.ts",

@@ -496,6 +496,7 @@ Package-level `build` scripts may still build their dependencies first so filter
 Package-level `typecheck` scripts may still build their dependencies first so filtered package typechecks keep working from a clean checkout.
 `examples:check` keeps the standalone example checks that build example dependencies first.
 `examples:check:self` is the release-readiness example gate and assumes `packages:build` already produced package `dist` output, so it uses example `typecheck:self` and `build:self` to avoid rebuilding packages.
+Example `check:scenario` scripts use the normal `tsuzuru check` bin for standalone usage. Example `check:scenario:self` scripts are monorepo release-readiness checks that call `packages/cli/dist/src/index.js` directly after `packages:build`, avoiding clean-install failures when pnpm did not create the `tsuzuru` bin shim before the CLI dist existed.
 Do not add a template `pnpm-lock.yaml` without first designing how local tarball rewrites update or replace that lockfile.
 TypeScript project references / `tsc -b` are a future build-system design topic, not the current release-readiness build strategy.
 `smoke:create-tsuzuru` and `smoke:create-tsuzuru:registry` are registry-based smoke checks for the published `create-tsuzuru` package.

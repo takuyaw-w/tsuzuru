@@ -164,7 +164,7 @@ describe("checkQualityGate", () => {
     await mutateRootPackageJson(root, (packageJson) => {
       packageJson.scripts["examples:check:self"] = packageJson.scripts["examples:check:self"].replace(
         "pnpm --filter @fixture/example typecheck:self",
-        "pnpm --filter @fixture/example check:scenario",
+        "pnpm --filter @fixture/example check:scenario:self",
       );
     });
 
@@ -173,14 +173,28 @@ describe("checkQualityGate", () => {
     );
   });
 
-  it("fails when an example is missing self check scripts", async () => {
+  it("fails when examples:check:self uses the standalone scenario check", async () => {
     const root = await createFixtureRepo();
-    await mutatePackageJson(root, "examples/example", (packageJson) => {
-      delete packageJson.scripts["build:self"];
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["examples:check:self"] = packageJson.scripts["examples:check:self"].replace(
+        "pnpm --filter @fixture/example check:scenario:self",
+        "pnpm --filter @fixture/example check:scenario",
+      );
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      '@fixture/example is an example but is missing script "build:self".',
+      'root script "examples:check:self" must use "--filter @fixture/example check:scenario:self" instead of "--filter @fixture/example check:scenario".',
+    );
+  });
+
+  it("fails when an example is missing self check scripts", async () => {
+    const root = await createFixtureRepo();
+    await mutatePackageJson(root, "examples/example", (packageJson) => {
+      delete packageJson.scripts["check:scenario:self"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@fixture/example is an example but is missing script "check:scenario:self".',
     );
   });
 
@@ -331,7 +345,7 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/example build",
       ].join(" && "),
       "examples:check:self": [
-        "pnpm --filter @fixture/example check:scenario",
+        "pnpm --filter @fixture/example check:scenario:self",
         "pnpm --filter @fixture/example test",
         "pnpm --filter @fixture/example typecheck:self",
         "pnpm --filter @fixture/example build:self",
@@ -384,6 +398,8 @@ async function createFixtureRepo() {
     scripts: {
       build: "pnpm run build:deps && pnpm run build:self",
       "build:self": "vite build",
+      "check:scenario": "tsuzuru check",
+      "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
       typecheck: "pnpm run build:deps && pnpm run typecheck:self",
       "typecheck:self": "tsc -p tsconfig.json --noEmit",
     },

@@ -268,7 +268,7 @@ examples の scenario / unit test / typecheck / build 確認:
 pnpm examples:check
 ```
 
-`examples:check` は example 単体検証用で、必要な workspace package build を先に実行します。release readiness では `packages:build` 済みの `dist` を使う `examples:check:self` を使い、example の `typecheck:self` / `build:self` で package build の重複を避けます。
+`examples:check` は example 単体検証用で、必要な workspace package build を先に実行します。release readiness では `packages:build` 済みの `dist` を使う `examples:check:self` を使い、example の `check:scenario:self` / `typecheck:self` / `build:self` で package build の重複を避けます。通常の `check:scenario` は `tsuzuru check` bin を使い、`check:scenario:self` は clean install で pnpm bin shim が CLI build 前に作られない場合を避けるため、build 済み CLI entry を直接実行します。
 
 publish 対象 package の build:
 
