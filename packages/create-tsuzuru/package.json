@@ -42,7 +42,7 @@
     "build:self": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",
     "typecheck": "pnpm run typecheck:self",
-    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+    "typecheck:self": "tsc -p tsconfig.test.json"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

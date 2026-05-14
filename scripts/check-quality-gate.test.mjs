@@ -290,6 +290,18 @@ describe("checkQualityGate", () => {
       '@tsuzuru/config script "typecheck:self" must use tsconfig.test.json.',
     );
   });
+
+  it("fails when another pilot package source tsconfig includes tests", async () => {
+    const root = await createFixtureRepo();
+    await writeTypeScriptBuildGraphPilotFiles(root, "create-tsuzuru", "create-tsuzuru");
+    await mutateJson(join(root, "packages/create-tsuzuru/tsconfig.json"), (tsconfig) => {
+      tsconfig.include = ["src/**/*.ts", "tests/**/*.ts"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/create-tsuzuru/tsconfig.json must not include tests; use packages/create-tsuzuru/tsconfig.test.json.",
+    );
+  });
 });
 
 async function createFixtureRepo() {
@@ -438,15 +450,19 @@ async function writeTypeScriptBuildGraphPlan(root) {
 }
 
 async function writeConfigPilotFiles(root) {
+  await writeTypeScriptBuildGraphPilotFiles(root, "config", "@tsuzuru/config");
+}
+
+async function writeTypeScriptBuildGraphPilotFiles(root, packageDir, packageName) {
   await writeFile(join(root, ".gitignore"), "**/.tsbuildinfo/\n*.tsbuildinfo\n");
-  await mkdir(join(root, "packages/config"), { recursive: true });
-  await writeJson(join(root, "packages/config/package.json"), {
-    name: "@tsuzuru/config",
+  await mkdir(join(root, "packages", packageDir), { recursive: true });
+  await writeJson(join(root, "packages", packageDir, "package.json"), {
+    name: packageName,
     scripts: {
       "typecheck:self": "tsc -p tsconfig.test.json",
     },
   });
-  await writeJson(join(root, "packages/config/tsconfig.json"), {
+  await writeJson(join(root, "packages", packageDir, "tsconfig.json"), {
     extends: "../../tsconfig.base.json",
     compilerOptions: {
       composite: true,
@@ -454,7 +470,7 @@ async function writeConfigPilotFiles(root) {
     },
     include: ["src/**/*.ts"],
   });
-  await writeJson(join(root, "packages/config/tsconfig.test.json"), {
+  await writeJson(join(root, "packages", packageDir, "tsconfig.test.json"), {
     extends: "./tsconfig.json",
     compilerOptions: {
       noEmit: true,

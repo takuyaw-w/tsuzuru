@@ -1,6 +1,11 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
+  { dir: "config", name: "@tsuzuru/config" },
+  { dir: "create-tsuzuru", name: "create-tsuzuru" },
+];
+
 export function checkQualityGate(rootDir = process.cwd()) {
   const failures = [];
   const rootPackageJson = readJson(rootDir, "package.json");
@@ -50,7 +55,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
   assertTypeScriptBuildGraphPlan(context);
-  assertConfigTsconfigPilot(context);
+  assertTypeScriptBuildGraphPilots(context);
 
   return {
     failures,
@@ -269,44 +274,67 @@ function assertTypeScriptBuildGraphPlan(context) {
   }
 }
 
-function assertConfigTsconfigPilot(context) {
-  const configTsconfigPath = "packages/config/tsconfig.json";
-  const absoluteConfigTsconfigPath = join(context.rootDir, configTsconfigPath);
-  if (!existsSync(absoluteConfigTsconfigPath)) {
+function assertTypeScriptBuildGraphPilots(context) {
+  const pilotPackages = TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES.filter((pilotPackage) =>
+    context.packageEntries.some((packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name),
+  );
+  if (pilotPackages.length === 0) {
     return;
   }
 
-  const sourceTsconfig = readJson(context.rootDir, configTsconfigPath);
-  if ((sourceTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
-    context.failures.push(`${configTsconfigPath} must not include tests; use packages/config/tsconfig.test.json.`);
+  assertTypeScriptBuildInfoIgnored(context);
+  for (const pilotPackage of pilotPackages) {
+    assertTypeScriptBuildGraphPilot(context, pilotPackage);
   }
-  if (sourceTsconfig.compilerOptions?.composite !== true) {
-    context.failures.push(`${configTsconfigPath} must set compilerOptions.composite to true for the @tsuzuru/config pilot.`);
-  }
-  const tsBuildInfoFile = sourceTsconfig.compilerOptions?.tsBuildInfoFile;
-  if (tsBuildInfoFile !== ".tsbuildinfo/tsconfig.tsbuildinfo") {
-    context.failures.push(
-      `${configTsconfigPath} must set compilerOptions.tsBuildInfoFile to ".tsbuildinfo/tsconfig.tsbuildinfo".`,
-    );
-  }
-  if (typeof tsBuildInfoFile === "string" && (tsBuildInfoFile === "dist" || tsBuildInfoFile.startsWith("dist/"))) {
-    context.failures.push(`${configTsconfigPath} must not put tsBuildInfoFile under dist.`);
-  }
+}
+
+function assertTypeScriptBuildInfoIgnored(context) {
   const gitignorePath = ".gitignore";
   const absoluteGitignorePath = join(context.rootDir, gitignorePath);
   if (!existsSync(absoluteGitignorePath)) {
     context.failures.push(`${gitignorePath} must ignore TypeScript build info cache directories.`);
-  } else {
-    const gitignore = readFileSync(absoluteGitignorePath, "utf8");
-    if (!gitignore.includes(".tsbuildinfo")) {
-      context.failures.push(`${gitignorePath} must ignore TypeScript build info cache directories.`);
-    }
+    return;
   }
 
-  const testTsconfigPath = "packages/config/tsconfig.test.json";
+  const gitignore = readFileSync(absoluteGitignorePath, "utf8");
+  if (!gitignore.includes(".tsbuildinfo")) {
+    context.failures.push(`${gitignorePath} must ignore TypeScript build info cache directories.`);
+  }
+}
+
+function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
+  const sourceTsconfigPath = `packages/${pilotPackage.dir}/tsconfig.json`;
+  const absoluteSourceTsconfigPath = join(context.rootDir, sourceTsconfigPath);
+  if (!existsSync(absoluteSourceTsconfigPath)) {
+    context.failures.push(`${sourceTsconfigPath} is missing for the ${pilotPackage.name} source/test tsconfig pilot.`);
+    return;
+  }
+
+  const sourceTsconfig = readJson(context.rootDir, sourceTsconfigPath);
+  if ((sourceTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
+    context.failures.push(
+      `${sourceTsconfigPath} must not include tests; use packages/${pilotPackage.dir}/tsconfig.test.json.`,
+    );
+  }
+  if (sourceTsconfig.compilerOptions?.composite !== true) {
+    context.failures.push(
+      `${sourceTsconfigPath} must set compilerOptions.composite to true for the ${pilotPackage.name} pilot.`,
+    );
+  }
+  const tsBuildInfoFile = sourceTsconfig.compilerOptions?.tsBuildInfoFile;
+  if (tsBuildInfoFile !== ".tsbuildinfo/tsconfig.tsbuildinfo") {
+    context.failures.push(
+      `${sourceTsconfigPath} must set compilerOptions.tsBuildInfoFile to ".tsbuildinfo/tsconfig.tsbuildinfo".`,
+    );
+  }
+  if (typeof tsBuildInfoFile === "string" && (tsBuildInfoFile === "dist" || tsBuildInfoFile.startsWith("dist/"))) {
+    context.failures.push(`${sourceTsconfigPath} must not put tsBuildInfoFile under dist.`);
+  }
+
+  const testTsconfigPath = `packages/${pilotPackage.dir}/tsconfig.test.json`;
   const absoluteTestTsconfigPath = join(context.rootDir, testTsconfigPath);
   if (!existsSync(absoluteTestTsconfigPath)) {
-    context.failures.push(`${testTsconfigPath} is missing for the @tsuzuru/config source/test tsconfig pilot.`);
+    context.failures.push(`${testTsconfigPath} is missing for the ${pilotPackage.name} source/test tsconfig pilot.`);
     return;
   }
 
@@ -315,10 +343,10 @@ function assertConfigTsconfigPilot(context) {
     context.failures.push(`${testTsconfigPath} must set compilerOptions.noEmit to true.`);
   }
   if (!(testTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
-    context.failures.push(`${testTsconfigPath} must include tests for the @tsuzuru/config pilot.`);
+    context.failures.push(`${testTsconfigPath} must include tests for the ${pilotPackage.name} pilot.`);
   }
 
-  const packageJsonPath = "packages/config/package.json";
+  const packageJsonPath = `packages/${pilotPackage.dir}/package.json`;
   const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
   if (!existsSync(absolutePackageJsonPath)) {
     return;
@@ -327,7 +355,7 @@ function assertConfigTsconfigPilot(context) {
   const packageJson = readJson(context.rootDir, packageJsonPath);
   const typecheckSelf = packageJson.scripts?.["typecheck:self"];
   if (typeof typecheckSelf === "string" && !typecheckSelf.includes("tsconfig.test.json")) {
-    context.failures.push('@tsuzuru/config script "typecheck:self" must use tsconfig.test.json.');
+    context.failures.push(`${pilotPackage.name} script "typecheck:self" must use tsconfig.test.json.`);
   }
 }
 
