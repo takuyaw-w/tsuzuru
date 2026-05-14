@@ -22,6 +22,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
     exampleNames,
     failures,
     packageDirs,
+    packageEntries,
     publicBuildablePackageNames,
     publicPackageNames,
     rootDir,
@@ -31,7 +32,8 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertNoMissingRootScriptFilters(context);
   assertScriptCovers(context, "test", publicPackageNames, "test");
   assertScriptCovers(context, "typecheck", publicPackageNames, "typecheck");
-  assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build");
+  assertPublicBuildablePackagesHaveSelfBuild(context);
+  assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build:self");
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
   assertReleaseReadinessScript(context);
   assertExamplesCheckCoversExamples(context);
@@ -43,6 +45,17 @@ export function checkQualityGate(rootDir = process.cwd()) {
     failures,
     ok: failures.length === 0,
   };
+}
+
+function assertPublicBuildablePackagesHaveSelfBuild(context) {
+  for (const packageEntry of context.packageEntries) {
+    if (packageEntry.packageJson.private === true || packageEntry.packageJson.scripts?.build === undefined) {
+      continue;
+    }
+    if (packageEntry.packageJson.scripts["build:self"] === undefined) {
+      context.failures.push(`${packageEntry.name} is public and buildable but is missing script "build:self".`);
+    }
+  }
 }
 
 function assertReleaseReadinessScript(context) {

@@ -46,7 +46,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json && node scripts/copy-css.mjs",
+    "build": "pnpm --filter @tsuzuru/core build && pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
     "test": "vitest run --dir tests",
     "typecheck": "pnpm --filter @tsuzuru/core build && tsc -p tsconfig.json --noEmit"
   },

@@ -38,7 +38,8 @@
     "vite"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

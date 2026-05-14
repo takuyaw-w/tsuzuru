@@ -274,6 +274,8 @@ publish 対象 package の build:
 pnpm packages:build
 ```
 
+`packages:build` は release readiness 用の package build gate です。publish 対象 package を明示順に `build:self` で build し、root release flow 内では依存 package の再 build を避けます。package 単体の `build` は clean checkout でも動くよう、必要な依存 package build を引き続き内包します。
+
 publish 前の tarball 内容確認:
 
 ```sh
@@ -289,6 +291,7 @@ pnpm release-readiness:check
 ```
 
 This runs package builds, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
+Template `pnpm-lock.yaml` は現時点では同梱していません。local smoke で generated project の `@tsuzuru/*` dependency を local tarball に書き換えるため、lockfile 採用は rewrite 後の整合性設計と合わせて扱います。TypeScript project references / `tsc -b` による一括 build も今後の build-system 設計対象です。
 
 ## パッケージ別コマンド
 

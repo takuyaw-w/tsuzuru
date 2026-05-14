@@ -75,12 +75,23 @@ describe("checkQualityGate", () => {
       packageJson.scripts["packages:build"] = removeCommandForPackage(
         packageJson.scripts["packages:build"],
         "@fixture/addon",
-        "build",
+        "build:self",
       );
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      'root script "packages:build" does not include "--filter @fixture/addon build".',
+      'root script "packages:build" does not include "--filter @fixture/addon build:self".',
+    );
+  });
+
+  it("fails when a public buildable package is missing build:self", async () => {
+    const root = await createFixtureRepo();
+    await mutatePackageJson(root, "packages/addon", (packageJson) => {
+      delete packageJson.scripts["build:self"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@fixture/addon is public and buildable but is missing script "build:self".',
     );
   });
 
@@ -152,8 +163,8 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/core pack --dry-run",
       ].join(" && "),
       "packages:build": [
-        "pnpm --filter @fixture/addon build",
-        "pnpm --filter @fixture/core build",
+        "pnpm --filter @fixture/addon build:self",
+        "pnpm --filter @fixture/core build:self",
       ].join(" && "),
       "release-readiness:check": [
         "pnpm packages:build",
@@ -170,8 +181,14 @@ async function createFixtureRepo() {
     },
   });
 
-  await writePackageJson(root, "packages/core", { name: "@fixture/core", scripts: { build: "tsc" } });
-  await writePackageJson(root, "packages/addon", { name: "@fixture/addon", scripts: { build: "tsc" } });
+  await writePackageJson(root, "packages/core", {
+    name: "@fixture/core",
+    scripts: { build: "pnpm run build:self", "build:self": "tsc" },
+  });
+  await writePackageJson(root, "packages/addon", {
+    name: "@fixture/addon",
+    scripts: { build: "pnpm run build:self", "build:self": "tsc" },
+  });
   await writePackageJson(root, "examples/example", { name: "@fixture/example", private: true });
   await writeAgents(root);
   await writeTreeInventoryDoc(root, "README.md");
@@ -225,7 +242,11 @@ examples/
 }
 
 async function mutateRootPackageJson(root, mutate) {
-  const packageJsonPath = join(root, "package.json");
+  await mutatePackageJson(root, ".", mutate);
+}
+
+async function mutatePackageJson(root, relativeDir, mutate) {
+  const packageJsonPath = join(root, relativeDir, "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
   mutate(packageJson);
   await writeJson(packageJsonPath, packageJson);
