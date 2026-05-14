@@ -219,6 +219,44 @@ describe("checkQualityGate", () => {
       'docs/plans/typescript-build-graph.md is missing required heading "## Decision for now".',
     );
   });
+
+  it("fails when the config source tsconfig includes tests", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await writeJson(join(root, "packages/config/tsconfig.json"), {
+      extends: "../../tsconfig.base.json",
+      include: ["src/**/*.ts", "tests/**/*.ts"],
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/config/tsconfig.json must not include tests; use packages/config/tsconfig.test.json.",
+    );
+  });
+
+  it("fails when the config test tsconfig is missing", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await rm(join(root, "packages/config/tsconfig.test.json"));
+
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/config/tsconfig.test.json is missing for the @tsuzuru/config source/test tsconfig pilot.",
+    );
+  });
+
+  it("fails when the config typecheck:self does not use the test tsconfig", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await writeJson(join(root, "packages/config/package.json"), {
+      name: "@tsuzuru/config",
+      scripts: {
+        "typecheck:self": "tsc -p tsconfig.json --noEmit",
+      },
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/config script "typecheck:self" must use tsconfig.test.json.',
+    );
+  });
 });
 
 async function createFixtureRepo() {
@@ -364,6 +402,27 @@ async function writeTypeScriptBuildGraphPlan(root) {
 ## Migration steps
 `,
   );
+}
+
+async function writeConfigPilotFiles(root) {
+  await mkdir(join(root, "packages/config"), { recursive: true });
+  await writeJson(join(root, "packages/config/package.json"), {
+    name: "@tsuzuru/config",
+    scripts: {
+      "typecheck:self": "tsc -p tsconfig.test.json",
+    },
+  });
+  await writeJson(join(root, "packages/config/tsconfig.json"), {
+    extends: "../../tsconfig.base.json",
+    include: ["src/**/*.ts"],
+  });
+  await writeJson(join(root, "packages/config/tsconfig.test.json"), {
+    extends: "./tsconfig.json",
+    compilerOptions: {
+      noEmit: true,
+    },
+    include: ["src/**/*.ts", "tests/**/*.ts"],
+  });
 }
 
 async function mutateRootPackageJson(root, mutate) {

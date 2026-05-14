@@ -50,6 +50,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
   assertTypeScriptBuildGraphPlan(context);
+  assertConfigTsconfigPilot(context);
 
   return {
     failures,
@@ -265,6 +266,46 @@ function assertTypeScriptBuildGraphPlan(context) {
     if (!source.includes(heading)) {
       context.failures.push(`${relativePath} is missing required heading "${heading}".`);
     }
+  }
+}
+
+function assertConfigTsconfigPilot(context) {
+  const configTsconfigPath = "packages/config/tsconfig.json";
+  const absoluteConfigTsconfigPath = join(context.rootDir, configTsconfigPath);
+  if (!existsSync(absoluteConfigTsconfigPath)) {
+    return;
+  }
+
+  const sourceTsconfig = readJson(context.rootDir, configTsconfigPath);
+  if ((sourceTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
+    context.failures.push(`${configTsconfigPath} must not include tests; use packages/config/tsconfig.test.json.`);
+  }
+
+  const testTsconfigPath = "packages/config/tsconfig.test.json";
+  const absoluteTestTsconfigPath = join(context.rootDir, testTsconfigPath);
+  if (!existsSync(absoluteTestTsconfigPath)) {
+    context.failures.push(`${testTsconfigPath} is missing for the @tsuzuru/config source/test tsconfig pilot.`);
+    return;
+  }
+
+  const testTsconfig = readJson(context.rootDir, testTsconfigPath);
+  if (testTsconfig.compilerOptions?.noEmit !== true) {
+    context.failures.push(`${testTsconfigPath} must set compilerOptions.noEmit to true.`);
+  }
+  if (!(testTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
+    context.failures.push(`${testTsconfigPath} must include tests for the @tsuzuru/config pilot.`);
+  }
+
+  const packageJsonPath = "packages/config/package.json";
+  const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
+  if (!existsSync(absolutePackageJsonPath)) {
+    return;
+  }
+
+  const packageJson = readJson(context.rootDir, packageJsonPath);
+  const typecheckSelf = packageJson.scripts?.["typecheck:self"];
+  if (typeof typecheckSelf === "string" && !typecheckSelf.includes("tsconfig.test.json")) {
+    context.failures.push('@tsuzuru/config script "typecheck:self" must use tsconfig.test.json.');
   }
 }
 

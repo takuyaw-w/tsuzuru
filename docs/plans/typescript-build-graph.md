@@ -27,9 +27,12 @@ tests share the same referenced project.
 
 Current package shapes:
 
-- `packages/core`, `packages/config`, `packages/cli`,
-  `packages/create-tsuzuru`, and standard plugin packages use `rootDir: "."`,
-  `outDir: "dist"`, and include both `src/**/*.ts` and `tests/**/*.ts`.
+- `packages/config` is the first source/test tsconfig split pilot. Its source
+  `tsconfig.json` includes only `src/**/*.ts`, and `tsconfig.test.json` covers
+  source plus tests with `noEmit`.
+- `packages/core`, `packages/cli`, `packages/create-tsuzuru`, and standard
+  plugin packages still use `rootDir: "."`, `outDir: "dist"`, and include both
+  `src/**/*.ts` and `tests/**/*.ts`.
 - `packages/preact`, `packages/vue`, and `packages/standard-ui-preact` use
   `rootDir: "src"` and include source files only.
 - Package tarballs are protected by `files`, but source builds still compile
@@ -45,6 +48,29 @@ packages/foo/tsconfig.test.json  # test typecheck, references source if needed
 The source config should own emitted declarations and the package `dist` layout.
 The test config should own Vitest-facing test typechecking and should not emit
 publish artifacts.
+
+### `@tsuzuru/config` pilot
+
+`@tsuzuru/config` was selected as the first pilot because it is public, has no
+workspace package dependencies, has a small source/test shape, and publishes
+from `dist/src/index.*`.
+
+Pilot layout:
+
+```txt
+packages/config/tsconfig.json       # source build only, keeps rootDir "." and dist/src layout
+packages/config/tsconfig.test.json  # source + tests typecheck, noEmit
+```
+
+`packages/config` keeps `build:self` as `tsc -p tsconfig.json`. Its
+`typecheck:self` uses `tsc -p tsconfig.test.json`, so root
+`packages:typecheck:self` still checks source and tests for this package without
+emitting test artifacts.
+
+The pilot intentionally does not enable `composite: true` yet. The next step is
+to verify that this split keeps `dist/src/index.js` and `dist/src/index.d.ts`
+stable, avoids `dist/tests/*` output, and keeps `pack:dry-run` /
+`publish-readiness:check` passing before expanding to another package.
 
 ## .tsbuildinfo Placement
 
@@ -111,7 +137,7 @@ the reference build or be retired in the same staged migration.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy.
 - If project references are introduced, source tsconfig and test tsconfig must be
-  split first.
+  split first; `@tsuzuru/config` is the initial pilot for that split.
 - `.tsbuildinfo` placement must be decided before enabling `composite` /
   incremental builds.
 - Examples should be designed as a separate graph from the packages graph.
@@ -119,11 +145,13 @@ the reference build or be retired in the same staged migration.
 ## Migration steps
 
 1. Trial source/test tsconfig split in one representative package.
-2. Decide `.tsbuildinfo` placement.
-3. Check the impact of `composite: true`.
-4. Add an experimental `tsconfig.packages.json`.
-5. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
+   `@tsuzuru/config` is the current pilot.
+2. Confirm the pilot keeps publish layout stable and does not emit test output.
+3. Decide `.tsbuildinfo` placement.
+4. Check the impact of `composite: true`.
+5. Add an experimental `tsconfig.packages.json`.
+6. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
    it as a gate.
-6. If the package layout and publish-readiness checks remain stable, expand to
+7. If the package layout and publish-readiness checks remain stable, expand to
    the package graph.
-7. Treat the examples graph as a separate design.
+8. Treat the examples graph as a separate design.
