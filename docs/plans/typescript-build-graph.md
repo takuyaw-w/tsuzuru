@@ -24,6 +24,9 @@ Tsuzuru monorepo.
   with package `build:self` scripts.
 - Root `packages:typecheck:self` runs public package `typecheck:self` scripts
   after `packages:build` has produced dependency `dist` output.
+- Root `test` also runs `packages:build` first so package-level tests can
+  resolve workspace package imports through package `exports` that point at
+  built `dist` files on a clean checkout.
 - Package-level `build` and `typecheck` scripts keep dependency builds so
   filtered package work still works from a clean checkout.
 - Examples keep standalone `typecheck` / `build` scripts with dependency builds,
@@ -242,6 +245,9 @@ the reference build or be retired in the same staged migration.
 - `tsc -b` / project references are not introduced yet.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy.
+- Root `test` keeps the same clean-checkout assumption as root `typecheck`:
+  build public package `dist` output before running package tests that resolve
+  workspace imports through package `exports`.
 - If project references are introduced, source tsconfig and test tsconfig must be
   split first; `@tsuzuru/config`, `create-tsuzuru`, and
   `@tsuzuru/plugin-std-visual` are the current pilots for that split.
