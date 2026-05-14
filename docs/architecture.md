@@ -1100,6 +1100,7 @@ git diff --check
 
 For package-focused work, run the relevant filtered checks first.
 `publish-readiness:check` assumes package `dist` output already exists. On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
+The local create-tsuzuru smoke uses workspace-built tarballs for `create-tsuzuru` and generated `@tsuzuru/*` dependencies, then installs the generated project with `pnpm install --prefer-offline`. Registry-backed smoke remains available through `pnpm run smoke:create-tsuzuru:registry`; CI release-readiness should use the local smoke.
 
 Examples:
 

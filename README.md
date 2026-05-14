@@ -185,13 +185,20 @@ Release smoke test:
 pnpm run smoke:create-tsuzuru
 ```
 
-This checks that the published `create-tsuzuru` package can generate a project
-that installs, validates its scenario, and builds.
+This is the registry smoke. It checks that the published `create-tsuzuru` package can generate a project
+that installs, validates its scenario, and builds. The explicit alias is:
+
+```sh
+pnpm run smoke:create-tsuzuru:registry
+```
+
 For CI and local release readiness from this repository, use the local tarball smoke:
 
 ```sh
 pnpm run smoke:create-tsuzuru:local
 ```
+
+The local smoke packs `create-tsuzuru` and generated `@tsuzuru/*` dependencies from the workspace as local tarballs, then installs the generated project with `pnpm install --prefer-offline`. External template dependencies such as `preact`, `typescript`, and `vite` still use the normal registry-backed pnpm install flow.
 
 ## DSL v2 の例
 

@@ -490,7 +490,9 @@ pnpm run smoke:create-tsuzuru:local
 
 `publish-readiness:check` inspects packed package contents and assumes package `dist` output already exists.
 On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
-`smoke:create-tsuzuru` remains the registry-based smoke; CI and release-readiness should use `smoke:create-tsuzuru:local` to avoid depending on the published `create-tsuzuru` package.
+`smoke:create-tsuzuru` and `smoke:create-tsuzuru:registry` are registry-based smoke checks for the published `create-tsuzuru` package.
+CI and release-readiness should use `smoke:create-tsuzuru:local`, which packs `create-tsuzuru` and generated `@tsuzuru/*` dependencies from the workspace as local tarballs and installs generated projects with `pnpm install --prefer-offline`.
+The local smoke still installs external template dependencies such as `preact`, `typescript`, and `vite` through the normal registry-backed pnpm flow.
 
 If any verification is skipped, report the skipped command and the reason.
 

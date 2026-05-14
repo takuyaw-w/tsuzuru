@@ -30,6 +30,7 @@
     "pack:dry-run": "pnpm --filter @tsuzuru/core pack --dry-run && pnpm --filter @tsuzuru/config pack --dry-run && pnpm --filter @tsuzuru/cli pack --dry-run && pnpm --filter @tsuzuru/preact pack --dry-run && pnpm --filter @tsuzuru/vue pack --dry-run && pnpm --filter @tsuzuru/standard-ui-preact pack --dry-run && pnpm --filter @tsuzuru/plugin-std-visual pack --dry-run && pnpm --filter @tsuzuru/plugin-std-audio pack --dry-run && pnpm --filter @tsuzuru/plugin-std-text-sound pack --dry-run && pnpm --filter @tsuzuru/plugin-std-effect pack --dry-run && pnpm --filter @tsuzuru/plugin-std-camera pack --dry-run && pnpm --filter @tsuzuru/plugin-std-particle pack --dry-run && pnpm --filter @tsuzuru/plugin-std-system pack --dry-run && pnpm --filter create-tsuzuru pack --dry-run",
     "smoke:create-tsuzuru": "node scripts/smoke-create-tsuzuru.mjs",
     "smoke:create-tsuzuru:local": "node scripts/smoke-create-tsuzuru.mjs --local",
+    "smoke:create-tsuzuru:registry": "node scripts/smoke-create-tsuzuru.mjs --registry",
     "release:version": "bash scripts/release-version.sh"
   },
   "devDependencies": {
