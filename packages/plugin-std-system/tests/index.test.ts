@@ -2,8 +2,10 @@ import {
   type CommandInstruction,
   compileTzr,
   createInitialRuntimeState,
+  createRuntimeSnapshot,
   parseTzr,
   type RuntimeDocument,
+  restoreRuntimeState,
   stepRuntime,
   type TzrArgument,
 } from "@tsuzuru/core";
@@ -148,6 +150,22 @@ describe("std-system commands", () => {
       endings: { trueEnd: { unlocked: true } },
       cgs: {},
       achievements: {},
+    });
+  });
+
+  it("round-trips unlock state through snapshot and restore", () => {
+    const result = runStdSystemCommands(
+      command("system.unlockEnding", [namedIdentifier("id", "trueEnd")]),
+      command("system.unlockCg", [namedString("id", "gallery-main")]),
+      command("system.unlockAchievement", [namedIdentifier("id", "firstClear")]),
+    );
+
+    const restored = restoreRuntimeState(createRuntimeSnapshot(result.state));
+
+    expect(getStdSystemState(restored)).toEqual({
+      endings: { trueEnd: { unlocked: true } },
+      cgs: { "gallery-main": { unlocked: true } },
+      achievements: { firstClear: { unlocked: true } },
     });
   });
 
