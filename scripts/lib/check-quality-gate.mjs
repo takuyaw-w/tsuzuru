@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
+  { dir: "core", name: "@tsuzuru/core" },
   { dir: "config", name: "@tsuzuru/config" },
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },

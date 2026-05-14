@@ -317,6 +317,16 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when the core pilot test tsconfig can emit", async () => {
+    const root = await createFixtureRepo();
+    await writeTypeScriptBuildGraphPilotFiles(root, "core", "@tsuzuru/core");
+    await mutateJson(join(root, "packages/core/tsconfig.test.json"), (tsconfig) => {
+      tsconfig.compilerOptions.noEmit = false;
+    });
+
+    expect(checkQualityGate(root).failures).toContain("packages/core/tsconfig.test.json must set compilerOptions.noEmit to true.");
+  });
+
   it("fails when a dependency-edge pilot does not use the test tsconfig", async () => {
     const root = await createFixtureRepo();
     await writeTypeScriptBuildGraphPilotFiles(root, "plugin-std-visual", "@tsuzuru/plugin-std-visual");

@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/core" },
     { "path": "./packages/config" },
     { "path": "./packages/create-tsuzuru" },
     { "path": "./packages/plugin-std-visual" }
