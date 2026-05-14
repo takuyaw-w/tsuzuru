@@ -4,6 +4,7 @@ import { join } from "node:path";
 const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
   { dir: "config", name: "@tsuzuru/config" },
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
+  { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
 ];
 
 export function checkQualityGate(rootDir = process.cwd()) {

@@ -302,6 +302,18 @@ describe("checkQualityGate", () => {
       "packages/create-tsuzuru/tsconfig.json must not include tests; use packages/create-tsuzuru/tsconfig.test.json.",
     );
   });
+
+  it("fails when a dependency-edge pilot does not use the test tsconfig", async () => {
+    const root = await createFixtureRepo();
+    await writeTypeScriptBuildGraphPilotFiles(root, "plugin-std-visual", "@tsuzuru/plugin-std-visual");
+    await mutatePackageJson(root, "packages/plugin-std-visual", (packageJson) => {
+      packageJson.scripts["typecheck:self"] = "tsc -p tsconfig.json --noEmit";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/plugin-std-visual script "typecheck:self" must use tsconfig.test.json.',
+    );
+  });
 });
 
 async function createFixtureRepo() {
