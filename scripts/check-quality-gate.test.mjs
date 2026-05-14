@@ -243,6 +243,39 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when the config source tsconfig is missing composite", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await mutateJson(join(root, "packages/config/tsconfig.json"), (tsconfig) => {
+      delete tsconfig.compilerOptions.composite;
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/config/tsconfig.json must set compilerOptions.composite to true for the @tsuzuru/config pilot.",
+    );
+  });
+
+  it("fails when the config tsBuildInfoFile is missing or wrong", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await mutateJson(join(root, "packages/config/tsconfig.json"), (tsconfig) => {
+      tsconfig.compilerOptions.tsBuildInfoFile = "dist/tsconfig.tsbuildinfo";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'packages/config/tsconfig.json must set compilerOptions.tsBuildInfoFile to ".tsbuildinfo/tsconfig.tsbuildinfo".',
+    );
+    expect(checkQualityGate(root).failures).toContain("packages/config/tsconfig.json must not put tsBuildInfoFile under dist.");
+  });
+
+  it("fails when TypeScript build info is not ignored", async () => {
+    const root = await createFixtureRepo();
+    await writeConfigPilotFiles(root);
+    await writeFile(join(root, ".gitignore"), "");
+
+    expect(checkQualityGate(root).failures).toContain(".gitignore must ignore TypeScript build info cache directories.");
+  });
+
   it("fails when the config typecheck:self does not use the test tsconfig", async () => {
     const root = await createFixtureRepo();
     await writeConfigPilotFiles(root);
@@ -405,6 +438,7 @@ async function writeTypeScriptBuildGraphPlan(root) {
 }
 
 async function writeConfigPilotFiles(root) {
+  await writeFile(join(root, ".gitignore"), "**/.tsbuildinfo/\n*.tsbuildinfo\n");
   await mkdir(join(root, "packages/config"), { recursive: true });
   await writeJson(join(root, "packages/config/package.json"), {
     name: "@tsuzuru/config",
@@ -414,6 +448,10 @@ async function writeConfigPilotFiles(root) {
   });
   await writeJson(join(root, "packages/config/tsconfig.json"), {
     extends: "../../tsconfig.base.json",
+    compilerOptions: {
+      composite: true,
+      tsBuildInfoFile: ".tsbuildinfo/tsconfig.tsbuildinfo",
+    },
     include: ["src/**/*.ts"],
   });
   await writeJson(join(root, "packages/config/tsconfig.test.json"), {
@@ -431,9 +469,13 @@ async function mutateRootPackageJson(root, mutate) {
 
 async function mutatePackageJson(root, relativeDir, mutate) {
   const packageJsonPath = join(root, relativeDir, "package.json");
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
+  await mutateJson(packageJsonPath, mutate);
+}
+
+async function mutateJson(path, mutate) {
+  const packageJson = JSON.parse(await readFile(path, "utf8"));
   mutate(packageJson);
-  await writeJson(packageJsonPath, packageJson);
+  await writeJson(path, packageJson);
 }
 
 async function writeJson(path, value) {

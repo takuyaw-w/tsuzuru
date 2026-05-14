@@ -280,6 +280,28 @@ function assertConfigTsconfigPilot(context) {
   if ((sourceTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
     context.failures.push(`${configTsconfigPath} must not include tests; use packages/config/tsconfig.test.json.`);
   }
+  if (sourceTsconfig.compilerOptions?.composite !== true) {
+    context.failures.push(`${configTsconfigPath} must set compilerOptions.composite to true for the @tsuzuru/config pilot.`);
+  }
+  const tsBuildInfoFile = sourceTsconfig.compilerOptions?.tsBuildInfoFile;
+  if (tsBuildInfoFile !== ".tsbuildinfo/tsconfig.tsbuildinfo") {
+    context.failures.push(
+      `${configTsconfigPath} must set compilerOptions.tsBuildInfoFile to ".tsbuildinfo/tsconfig.tsbuildinfo".`,
+    );
+  }
+  if (typeof tsBuildInfoFile === "string" && (tsBuildInfoFile === "dist" || tsBuildInfoFile.startsWith("dist/"))) {
+    context.failures.push(`${configTsconfigPath} must not put tsBuildInfoFile under dist.`);
+  }
+  const gitignorePath = ".gitignore";
+  const absoluteGitignorePath = join(context.rootDir, gitignorePath);
+  if (!existsSync(absoluteGitignorePath)) {
+    context.failures.push(`${gitignorePath} must ignore TypeScript build info cache directories.`);
+  } else {
+    const gitignore = readFileSync(absoluteGitignorePath, "utf8");
+    if (!gitignore.includes(".tsbuildinfo")) {
+      context.failures.push(`${gitignorePath} must ignore TypeScript build info cache directories.`);
+    }
+  }
 
   const testTsconfigPath = "packages/config/tsconfig.test.json";
   const absoluteTestTsconfigPath = join(context.rootDir, testTsconfigPath);

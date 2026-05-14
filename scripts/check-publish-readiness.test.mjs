@@ -81,6 +81,15 @@ describe("validatePackedPackage", () => {
       '@fixture/example tarball includes legacy or removed path "dist/legacy-parser.js".',
     );
   });
+
+  it("fails when TypeScript build info is included", () => {
+    expect(validatePackedPackage(packageEntry, [...validEntries(), "package/.tsbuildinfo/tsconfig.tsbuildinfo"])).toContain(
+      '@fixture/example tarball includes TypeScript build info path ".tsbuildinfo/tsconfig.tsbuildinfo".',
+    );
+    expect(validatePackedPackage(packageEntry, [...validEntries(), "package/dist/tsconfig.tsbuildinfo"])).toContain(
+      '@fixture/example tarball includes TypeScript build info path "dist/tsconfig.tsbuildinfo".',
+    );
+  });
 });
 
 describe("collectExportTargets", () => {

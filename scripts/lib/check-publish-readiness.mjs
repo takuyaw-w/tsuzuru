@@ -16,6 +16,11 @@ const LEGACY_TARBALL_PATH_PATTERNS = [
   /(^|\/)examples\/preact-std-audio(\/|$)/,
 ];
 
+const TYPESCRIPT_BUILD_INFO_TARBALL_PATH_PATTERNS = [
+  /(^|\/)\.tsbuildinfo(\/|$)/,
+  /(^|\/)[^/]*\.tsbuildinfo$/,
+];
+
 export async function checkPublishReadiness(rootDir = process.cwd(), options = {}) {
   const packPackage = options.packPackage ?? packPackageWithPnpm;
   const packageEntries = readPublicPackageEntries(rootDir);
@@ -78,6 +83,9 @@ export function validatePackedPackage(packageEntry, entries) {
   for (const entry of entrySet) {
     if (LEGACY_TARBALL_PATH_PATTERNS.some((pattern) => pattern.test(entry))) {
       failures.push(`${packageName} tarball includes legacy or removed path "${entry}".`);
+    }
+    if (TYPESCRIPT_BUILD_INFO_TARBALL_PATH_PATTERNS.some((pattern) => pattern.test(entry))) {
+      failures.push(`${packageName} tarball includes TypeScript build info path "${entry}".`);
     }
   }
 

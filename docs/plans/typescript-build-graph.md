@@ -8,7 +8,9 @@ Tsuzuru monorepo.
 - The repository has `tsconfig.base.json`, but no root `tsconfig.json`,
   `tsconfig.packages.json`, or `tsconfig.examples.json`.
 - Package and example `tsconfig.json` files extend `tsconfig.base.json`.
-- Package `tsconfig.json` files do not use `composite`, `references`,
+- `packages/config` is the first `composite: true` pilot and writes TypeScript
+  build info to `.tsbuildinfo/tsconfig.tsbuildinfo`.
+- Other package `tsconfig.json` files do not use `composite`, `references`,
   `incremental`, or `tsBuildInfoFile`.
 - Root `packages:build` builds public publishable packages in explicit order
   with package `build:self` scripts.
@@ -62,31 +64,34 @@ packages/config/tsconfig.json       # source build only, keeps rootDir "." and d
 packages/config/tsconfig.test.json  # source + tests typecheck, noEmit
 ```
 
-`packages/config` keeps `build:self` as `tsc -p tsconfig.json`. Its
-`typecheck:self` uses `tsc -p tsconfig.test.json`, so root
-`packages:typecheck:self` still checks source and tests for this package without
-emitting test artifacts.
+`packages/config` keeps `build:self` as `tsc -p tsconfig.json`. The source
+config now uses `composite: true` and writes build info to
+`.tsbuildinfo/tsconfig.tsbuildinfo`. Its `typecheck:self` uses
+`tsc -p tsconfig.test.json`, so root `packages:typecheck:self` still checks
+source and tests for this package.
 
-The pilot intentionally does not enable `composite: true` yet. The next step is
-to verify that this split keeps `dist/src/index.js` and `dist/src/index.d.ts`
-stable, avoids `dist/tests/*` output, and keeps `pack:dry-run` /
-`publish-readiness:check` passing before expanding to another package.
+The pilot keeps `rootDir: "."` and `outDir: "dist"` so the publish layout stays
+at `dist/src/index.js` and `dist/src/index.d.ts`. It must not emit
+`dist/tests/*`. `pack:dry-run` and `publish-readiness:check` must continue to
+exclude `.tsbuildinfo` from the tarball.
 
 ## .tsbuildinfo Placement
 
-No `.tsbuildinfo` files exist today.
-
-When `composite` / incremental build is introduced, prefer a package-local cache
-directory that is outside publish `files` patterns:
+The first pilot uses a package-local cache directory that is outside publish
+`files` patterns:
 
 ```txt
-packages/foo/.tsbuildinfo/tsconfig.tsbuildinfo
+packages/config/.tsbuildinfo/tsconfig.tsbuildinfo
 ```
 
 Do not put `.tsbuildinfo` directly under `dist`, because `dist` is publish-facing
 and is inspected by `pack:dry-run` / `publish-readiness:check`. A package-local
 cache directory is easy to clean, does not collide across packages, and can be
 made cacheable in CI later.
+
+The repository `.gitignore` must ignore `.tsbuildinfo` directories and
+`*.tsbuildinfo` files. `publish-readiness:check` must fail if a tarball includes
+TypeScript build info paths.
 
 ## Package and Example Graphs
 
@@ -138,8 +143,10 @@ the reference build or be retired in the same staged migration.
   build strategy.
 - If project references are introduced, source tsconfig and test tsconfig must be
   split first; `@tsuzuru/config` is the initial pilot for that split.
-- `.tsbuildinfo` placement must be decided before enabling `composite` /
-  incremental builds.
+- `@tsuzuru/config` is the initial `composite: true` pilot. Do not expand
+  `composite` to other packages until this package keeps publish layout stable.
+- `.tsbuildinfo` should stay in package-local `.tsbuildinfo/` cache directories,
+  not under `dist`.
 - Examples should be designed as a separate graph from the packages graph.
 
 ## Migration steps
@@ -147,8 +154,9 @@ the reference build or be retired in the same staged migration.
 1. Trial source/test tsconfig split in one representative package.
    `@tsuzuru/config` is the current pilot.
 2. Confirm the pilot keeps publish layout stable and does not emit test output.
-3. Decide `.tsbuildinfo` placement.
-4. Check the impact of `composite: true`.
+3. Decide `.tsbuildinfo` placement. The current pilot uses
+   `packages/config/.tsbuildinfo/tsconfig.tsbuildinfo`.
+4. Check the impact of `composite: true` in `@tsuzuru/config`.
 5. Add an experimental `tsconfig.packages.json`.
 6. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
    it as a gate.
