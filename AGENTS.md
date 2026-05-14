@@ -492,6 +492,8 @@ pnpm run smoke:create-tsuzuru:local
 On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
 `packages:build` is the release-readiness package build gate. It builds public publishable packages in explicit dependency order through package `build:self` scripts so dependency packages are not rebuilt repeatedly inside the root release flow.
 Package-level `build` scripts may still build their dependencies first so filtered package builds keep working from a clean checkout.
+`packages:typecheck:self` is the repository-level package typecheck gate after `packages:build`. It runs public package `typecheck:self` scripts against already-built dependency `dist` output.
+Package-level `typecheck` scripts may still build their dependencies first so filtered package typechecks keep working from a clean checkout.
 `examples:check` keeps the standalone example checks that build example dependencies first.
 `examples:check:self` is the release-readiness example gate and assumes `packages:build` already produced package `dist` output, so it uses example `typecheck:self` and `build:self` to avoid rebuilding packages.
 Do not add a template `pnpm-lock.yaml` without first designing how local tarball rewrites update or replace that lockfile.

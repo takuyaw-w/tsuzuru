@@ -39,18 +39,29 @@ describe("checkQualityGate", () => {
     );
   });
 
-  it("fails when a public package is omitted from the root typecheck script", async () => {
+  it("fails when a public package is omitted from packages:typecheck:self", async () => {
     const root = await createFixtureRepo();
     await mutateRootPackageJson(root, (packageJson) => {
-      packageJson.scripts.typecheck = removeCommandForPackage(
-        packageJson.scripts.typecheck,
+      packageJson.scripts["packages:typecheck:self"] = removeCommandForPackage(
+        packageJson.scripts["packages:typecheck:self"],
         "@fixture/addon",
-        "typecheck",
+        "typecheck:self",
       );
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      'root script "typecheck" does not include "--filter @fixture/addon typecheck".',
+      'root script "packages:typecheck:self" does not include "--filter @fixture/addon typecheck:self".',
+    );
+  });
+
+  it("fails when root typecheck does not use the self typecheck flow", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts.typecheck = "pnpm --filter @fixture/addon typecheck && pnpm --filter @fixture/core typecheck";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "typecheck" does not include "pnpm packages:typecheck:self".',
     );
   });
 
@@ -92,6 +103,17 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       '@fixture/addon is public and buildable but is missing script "build:self".',
+    );
+  });
+
+  it("fails when a public typecheckable package is missing typecheck:self", async () => {
+    const root = await createFixtureRepo();
+    await mutatePackageJson(root, "packages/addon", (packageJson) => {
+      delete packageJson.scripts["typecheck:self"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@fixture/addon is public and typecheckable but is missing script "typecheck:self".',
     );
   });
 
@@ -211,6 +233,10 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/addon build:self",
         "pnpm --filter @fixture/core build:self",
       ].join(" && "),
+      "packages:typecheck:self": [
+        "pnpm --filter @fixture/addon typecheck:self",
+        "pnpm --filter @fixture/core typecheck:self",
+      ].join(" && "),
       "release-readiness:check": [
         "pnpm packages:build",
         "pnpm examples:check:self",
@@ -219,20 +245,27 @@ async function createFixtureRepo() {
         "pnpm run smoke:create-tsuzuru:local",
       ].join(" && "),
       test: ["pnpm --filter @fixture/addon test", "pnpm --filter @fixture/core test"].join(" && "),
-      typecheck: [
-        "pnpm --filter @fixture/addon typecheck",
-        "pnpm --filter @fixture/core typecheck",
-      ].join(" && "),
+      typecheck: "pnpm packages:build && pnpm packages:typecheck:self",
     },
   });
 
   await writePackageJson(root, "packages/core", {
     name: "@fixture/core",
-    scripts: { build: "pnpm run build:self", "build:self": "tsc" },
+    scripts: {
+      build: "pnpm run build:self",
+      "build:self": "tsc",
+      typecheck: "pnpm run typecheck:self",
+      "typecheck:self": "tsc --noEmit",
+    },
   });
   await writePackageJson(root, "packages/addon", {
     name: "@fixture/addon",
-    scripts: { build: "pnpm run build:self", "build:self": "tsc" },
+    scripts: {
+      build: "pnpm run build:self",
+      "build:self": "tsc",
+      typecheck: "pnpm run typecheck:self",
+      "typecheck:self": "tsc --noEmit",
+    },
   });
   await writePackageJson(root, "examples/example", {
     name: "@fixture/example",

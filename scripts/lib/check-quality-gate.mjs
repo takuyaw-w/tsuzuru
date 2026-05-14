@@ -13,6 +13,9 @@ export function checkQualityGate(rootDir = process.cwd()) {
   const publicBuildablePackageNames = packageEntries
     .filter((entry) => entry.packageJson.private !== true && entry.packageJson.scripts?.build !== undefined)
     .map((entry) => entry.name);
+  const publicTypecheckablePackageNames = packageEntries
+    .filter((entry) => entry.packageJson.private !== true && entry.packageJson.scripts?.typecheck !== undefined)
+    .map((entry) => entry.name);
   const exampleNames = exampleEntries.map((entry) => entry.name);
   const packageDirs = packageEntries.map((entry) => `packages/${entry.dir}`).sort();
   const exampleDirs = exampleEntries.map((entry) => `examples/${entry.dir}`).sort();
@@ -26,15 +29,18 @@ export function checkQualityGate(rootDir = process.cwd()) {
     packageEntries,
     publicBuildablePackageNames,
     publicPackageNames,
+    publicTypecheckablePackageNames,
     rootDir,
     rootPackageJson,
   };
 
   assertNoMissingRootScriptFilters(context);
   assertScriptCovers(context, "test", publicPackageNames, "test");
-  assertScriptCovers(context, "typecheck", publicPackageNames, "typecheck");
   assertPublicBuildablePackagesHaveSelfBuild(context);
+  assertPublicTypecheckablePackagesHaveSelfTypecheck(context);
   assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build:self");
+  assertScriptCovers(context, "packages:typecheck:self", publicTypecheckablePackageNames, "typecheck:self");
+  assertRootTypecheckScript(context);
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
   assertReleaseReadinessScript(context);
   assertExamplesHaveSelfScripts(context);
@@ -58,6 +64,38 @@ function assertPublicBuildablePackagesHaveSelfBuild(context) {
     if (packageEntry.packageJson.scripts["build:self"] === undefined) {
       context.failures.push(`${packageEntry.name} is public and buildable but is missing script "build:self".`);
     }
+  }
+}
+
+function assertPublicTypecheckablePackagesHaveSelfTypecheck(context) {
+  for (const packageEntry of context.packageEntries) {
+    if (packageEntry.packageJson.private === true || packageEntry.packageJson.scripts?.typecheck === undefined) {
+      continue;
+    }
+    if (packageEntry.packageJson.scripts["typecheck:self"] === undefined) {
+      context.failures.push(`${packageEntry.name} is public and typecheckable but is missing script "typecheck:self".`);
+    }
+  }
+}
+
+function assertRootTypecheckScript(context) {
+  const script = context.rootPackageJson.scripts?.typecheck;
+  if (script === undefined) {
+    context.failures.push('root package.json is missing script "typecheck".');
+    return;
+  }
+
+  let previousIndex = -1;
+  for (const expected of ["pnpm packages:build", "pnpm packages:typecheck:self"]) {
+    const index = script.indexOf(expected);
+    if (index === -1) {
+      context.failures.push(`root script "typecheck" does not include "${expected}".`);
+      continue;
+    }
+    if (index < previousIndex) {
+      context.failures.push(`root script "typecheck" must run "${expected}" after earlier typecheck steps.`);
+    }
+    previousIndex = index;
   }
 }
 
