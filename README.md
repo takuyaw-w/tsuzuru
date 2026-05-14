@@ -268,6 +268,8 @@ examples の scenario / unit test / typecheck / build 確認:
 pnpm examples:check
 ```
 
+`examples:check` は example 単体検証用で、必要な workspace package build を先に実行します。release readiness では `packages:build` 済みの `dist` を使う `examples:check:self` を使い、example の `typecheck:self` / `build:self` で package build の重複を避けます。
+
 publish 対象 package の build:
 
 ```sh

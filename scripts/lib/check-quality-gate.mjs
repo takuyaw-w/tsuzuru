@@ -19,6 +19,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   const context = {
     allPackageNames,
     exampleDirs,
+    exampleEntries,
     exampleNames,
     failures,
     packageDirs,
@@ -36,7 +37,9 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build:self");
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
   assertReleaseReadinessScript(context);
+  assertExamplesHaveSelfScripts(context);
   assertExamplesCheckCoversExamples(context);
+  assertExamplesSelfCheckCoversExamples(context);
   assertDocumentedInventory(context, "AGENTS.md", parsePlainInventory);
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
@@ -68,7 +71,7 @@ function assertReleaseReadinessScript(context) {
   let previousIndex = -1;
   for (const expected of [
     "pnpm packages:build",
-    "pnpm examples:check",
+    "pnpm examples:check:self",
     "pnpm run pack:dry-run",
     "pnpm publish-readiness:check",
     "pnpm run smoke:create-tsuzuru:local",
@@ -82,6 +85,17 @@ function assertReleaseReadinessScript(context) {
       context.failures.push(`root script "release-readiness:check" must run "${expected}" after earlier release checks.`);
     }
     previousIndex = index;
+  }
+}
+
+function assertExamplesHaveSelfScripts(context) {
+  for (const exampleEntry of context.exampleEntries) {
+    const scripts = exampleEntry.packageJson.scripts ?? {};
+    for (const scriptName of ["build:self", "typecheck:self"]) {
+      if (scripts[scriptName] === undefined) {
+        context.failures.push(`${exampleEntry.name} is an example but is missing script "${scriptName}".`);
+      }
+    }
   }
 }
 
@@ -153,6 +167,23 @@ function assertExamplesCheckCoversExamples(context) {
       const expected = `--filter ${exampleName} ${command}`;
       if (!script.includes(expected)) {
         context.failures.push(`root script "examples:check" does not include "${expected}".`);
+      }
+    }
+  }
+}
+
+function assertExamplesSelfCheckCoversExamples(context) {
+  const script = context.rootPackageJson.scripts?.["examples:check:self"];
+  if (script === undefined) {
+    context.failures.push('root package.json is missing script "examples:check:self".');
+    return;
+  }
+
+  for (const exampleName of context.exampleNames) {
+    for (const command of ["check:scenario", "test", "typecheck:self", "build:self"]) {
+      const expected = `--filter ${exampleName} ${command}`;
+      if (!script.includes(expected)) {
+        context.failures.push(`root script "examples:check:self" does not include "${expected}".`);
       }
     }
   }

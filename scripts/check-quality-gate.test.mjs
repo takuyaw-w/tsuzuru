@@ -109,6 +109,20 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when release-readiness:check uses the heavy examples check", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["release-readiness:check"] = packageJson.scripts["release-readiness:check"].replace(
+        "pnpm examples:check:self",
+        "pnpm examples:check",
+      );
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "release-readiness:check" does not include "pnpm examples:check:self".',
+    );
+  });
+
   it("fails when an example is omitted from examples:check", async () => {
     const root = await createFixtureRepo();
     await mutateRootPackageJson(root, (packageJson) => {
@@ -120,6 +134,31 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       'root script "examples:check" does not include "--filter @fixture/example test".',
+    );
+  });
+
+  it("fails when an example is omitted from examples:check:self", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["examples:check:self"] = packageJson.scripts["examples:check:self"].replace(
+        "pnpm --filter @fixture/example typecheck:self",
+        "pnpm --filter @fixture/example check:scenario",
+      );
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "examples:check:self" does not include "--filter @fixture/example typecheck:self".',
+    );
+  });
+
+  it("fails when an example is missing self check scripts", async () => {
+    const root = await createFixtureRepo();
+    await mutatePackageJson(root, "examples/example", (packageJson) => {
+      delete packageJson.scripts["build:self"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@fixture/example is an example but is missing script "build:self".',
     );
   });
 
@@ -158,6 +197,12 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/example typecheck",
         "pnpm --filter @fixture/example build",
       ].join(" && "),
+      "examples:check:self": [
+        "pnpm --filter @fixture/example check:scenario",
+        "pnpm --filter @fixture/example test",
+        "pnpm --filter @fixture/example typecheck:self",
+        "pnpm --filter @fixture/example build:self",
+      ].join(" && "),
       "pack:dry-run": [
         "pnpm --filter @fixture/addon pack --dry-run",
         "pnpm --filter @fixture/core pack --dry-run",
@@ -168,7 +213,7 @@ async function createFixtureRepo() {
       ].join(" && "),
       "release-readiness:check": [
         "pnpm packages:build",
-        "pnpm examples:check",
+        "pnpm examples:check:self",
         "pnpm run pack:dry-run",
         "pnpm publish-readiness:check",
         "pnpm run smoke:create-tsuzuru:local",
@@ -189,7 +234,16 @@ async function createFixtureRepo() {
     name: "@fixture/addon",
     scripts: { build: "pnpm run build:self", "build:self": "tsc" },
   });
-  await writePackageJson(root, "examples/example", { name: "@fixture/example", private: true });
+  await writePackageJson(root, "examples/example", {
+    name: "@fixture/example",
+    private: true,
+    scripts: {
+      build: "pnpm run build:deps && pnpm run build:self",
+      "build:self": "vite build",
+      typecheck: "pnpm run build:deps && pnpm run typecheck:self",
+      "typecheck:self": "tsc -p tsconfig.json --noEmit",
+    },
+  });
   await writeAgents(root);
   await writeTreeInventoryDoc(root, "README.md");
   await writeTreeInventoryDoc(root, "docs/architecture.md");

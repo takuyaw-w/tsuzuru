@@ -492,6 +492,8 @@ pnpm run smoke:create-tsuzuru:local
 On a clean checkout, run `pnpm packages:build` first, or use `pnpm release-readiness:check` to run package build, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
 `packages:build` is the release-readiness package build gate. It builds public publishable packages in explicit dependency order through package `build:self` scripts so dependency packages are not rebuilt repeatedly inside the root release flow.
 Package-level `build` scripts may still build their dependencies first so filtered package builds keep working from a clean checkout.
+`examples:check` keeps the standalone example checks that build example dependencies first.
+`examples:check:self` is the release-readiness example gate and assumes `packages:build` already produced package `dist` output, so it uses example `typecheck:self` and `build:self` to avoid rebuilding packages.
 Do not add a template `pnpm-lock.yaml` without first designing how local tarball rewrites update or replace that lockfile.
 TypeScript project references / `tsc -b` are a future build-system design topic, not the current release-readiness build strategy.
 `smoke:create-tsuzuru` and `smoke:create-tsuzuru:registry` are registry-based smoke checks for the published `create-tsuzuru` package.
