@@ -5,7 +5,10 @@
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "composite": true,
+    "tsBuildInfoFile": ".tsbuildinfo/tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "references": [{ "path": "../core" }],
+  "include": ["src/**/*.ts"]
 }

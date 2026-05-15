@@ -339,40 +339,40 @@ describe("checkQualityGate", () => {
     );
   });
 
-  it("passes for the visual-to-core project reference experiment", async () => {
+  it("passes for package-to-core project reference experiments", async () => {
     const root = await createFixtureRepo();
-    await writeVisualCoreReferenceExperimentFiles(root);
+    await writePackageCoreReferenceExperimentFiles(root);
 
     expect(checkQualityGate(root)).toEqual({ ok: true, failures: [] });
   });
 
-  it("fails when the visual-to-core reference experiment omits the visual source reference", async () => {
+  it("fails when a package-to-core reference experiment omits a source reference", async () => {
     const root = await createFixtureRepo();
-    await writeVisualCoreReferenceExperimentFiles(root);
-    await mutateJson(join(root, "packages/plugin-std-visual/tsconfig.json"), (tsconfig) => {
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "packages/plugin-std-audio/tsconfig.json"), (tsconfig) => {
       tsconfig.references = [];
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      'packages/plugin-std-visual/tsconfig.json must reference "../core" for the visual-to-core project reference pilot.',
+      'packages/plugin-std-audio/tsconfig.json must reference "../core" for the package-to-core project reference pilot.',
     );
   });
 
-  it("fails when the visual-to-core reference experiment is missing from the experimental graph", async () => {
+  it("fails when a package-to-core reference experiment is missing from the experimental graph", async () => {
     const root = await createFixtureRepo();
-    await writeVisualCoreReferenceExperimentFiles(root);
+    await writePackageCoreReferenceExperimentFiles(root);
     await mutateJson(join(root, "tsconfig.packages.experimental.json"), (tsconfig) => {
-      tsconfig.references = tsconfig.references.filter((reference) => reference.path !== "./packages/plugin-std-visual");
+      tsconfig.references = tsconfig.references.filter((reference) => reference.path !== "./packages/plugin-std-audio");
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      'tsconfig.packages.experimental.json must reference "./packages/plugin-std-visual".',
+      'tsconfig.packages.experimental.json must reference "./packages/plugin-std-audio".',
     );
   });
 
   it("fails when the experimental package graph is wired into a root quality gate", async () => {
     const root = await createFixtureRepo();
-    await writeVisualCoreReferenceExperimentFiles(root);
+    await writePackageCoreReferenceExperimentFiles(root);
     await mutateRootPackageJson(root, (packageJson) => {
       packageJson.scripts.typecheck =
         "pnpm packages:build && pnpm exec tsc -b tsconfig.packages.experimental.json --dry && pnpm packages:typecheck:self";
@@ -561,29 +561,41 @@ async function writeTypeScriptBuildGraphPilotFiles(root, packageDir, packageName
   });
 }
 
-async function writeVisualCoreReferenceExperimentFiles(root) {
+async function writePackageCoreReferenceExperimentFiles(root) {
   await writeTypeScriptBuildGraphPilotFiles(root, "core", "@tsuzuru/core");
-  await writeTypeScriptBuildGraphPilotFiles(root, "plugin-std-visual", "@tsuzuru/plugin-std-visual");
-  await mutateJson(join(root, "packages/plugin-std-visual/tsconfig.json"), (tsconfig) => {
-    tsconfig.references = [{ path: "../core" }];
-  });
+  const pluginPilots = [
+    { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
+    { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
+  ];
+  for (const pluginPilot of pluginPilots) {
+    await writeTypeScriptBuildGraphPilotFiles(root, pluginPilot.dir, pluginPilot.name);
+    await mutateJson(join(root, `packages/${pluginPilot.dir}/tsconfig.json`), (tsconfig) => {
+      tsconfig.references = [{ path: "../core" }];
+    });
+  }
   await writeJson(join(root, "tsconfig.packages.experimental.json"), {
     files: [],
-    references: [{ path: "./packages/core" }, { path: "./packages/plugin-std-visual" }],
+    references: [
+      { path: "./packages/core" },
+      { path: "./packages/plugin-std-visual" },
+      { path: "./packages/plugin-std-audio" },
+    ],
   });
   await mutateRootPackageJson(root, (packageJson) => {
     for (const scriptName of Object.keys(packageJson.scripts)) {
       packageJson.scripts[scriptName] = packageJson.scripts[scriptName].replaceAll("@fixture/core", "@tsuzuru/core");
     }
-    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/plugin-std-visual pack --dry-run";
-    packageJson.scripts.test += " && pnpm --filter @tsuzuru/plugin-std-visual test";
+    for (const pluginPilot of pluginPilots) {
+      packageJson.scripts["pack:dry-run"] += ` && pnpm --filter ${pluginPilot.name} pack --dry-run`;
+      packageJson.scripts.test += ` && pnpm --filter ${pluginPilot.name} test`;
+    }
   });
-  await writeAgentsWithVisualPilot(root);
-  await writeTreeInventoryDocWithVisualPilot(root, "README.md");
-  await writeTreeInventoryDocWithVisualPilot(root, "docs/architecture.md");
+  await writeAgentsWithReferencePilots(root);
+  await writeTreeInventoryDocWithReferencePilots(root, "README.md");
+  await writeTreeInventoryDocWithReferencePilots(root, "docs/architecture.md");
 }
 
-async function writeAgentsWithVisualPilot(root) {
+async function writeAgentsWithReferencePilots(root) {
   await writeFile(
     join(root, "AGENTS.md"),
     `# Fixture Agents
@@ -593,6 +605,7 @@ Current packages:
 \`\`\`txt
 packages/addon
 packages/core
+packages/plugin-std-audio
 packages/plugin-std-visual
 \`\`\`
 
@@ -605,7 +618,7 @@ examples/example
   );
 }
 
-async function writeTreeInventoryDocWithVisualPilot(root, relativePath) {
+async function writeTreeInventoryDocWithReferencePilots(root, relativePath) {
   await mkdir(join(root, "docs"), { recursive: true });
   await writeFile(
     join(root, relativePath),
@@ -615,6 +628,7 @@ async function writeTreeInventoryDocWithVisualPilot(root, relativePath) {
 packages/
   addon/
   core/
+  plugin-std-audio/
   plugin-std-visual/
 
 examples/
