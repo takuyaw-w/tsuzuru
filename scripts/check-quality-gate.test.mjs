@@ -338,6 +338,50 @@ describe("checkQualityGate", () => {
       '@tsuzuru/plugin-std-visual script "typecheck:self" must use tsconfig.test.json.',
     );
   });
+
+  it("passes for the visual-to-core project reference experiment", async () => {
+    const root = await createFixtureRepo();
+    await writeVisualCoreReferenceExperimentFiles(root);
+
+    expect(checkQualityGate(root)).toEqual({ ok: true, failures: [] });
+  });
+
+  it("fails when the visual-to-core reference experiment omits the visual source reference", async () => {
+    const root = await createFixtureRepo();
+    await writeVisualCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "packages/plugin-std-visual/tsconfig.json"), (tsconfig) => {
+      tsconfig.references = [];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'packages/plugin-std-visual/tsconfig.json must reference "../core" for the visual-to-core project reference pilot.',
+    );
+  });
+
+  it("fails when the visual-to-core reference experiment is missing from the experimental graph", async () => {
+    const root = await createFixtureRepo();
+    await writeVisualCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "tsconfig.packages.experimental.json"), (tsconfig) => {
+      tsconfig.references = tsconfig.references.filter((reference) => reference.path !== "./packages/plugin-std-visual");
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'tsconfig.packages.experimental.json must reference "./packages/plugin-std-visual".',
+    );
+  });
+
+  it("fails when the experimental package graph is wired into a root quality gate", async () => {
+    const root = await createFixtureRepo();
+    await writeVisualCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts.typecheck =
+        "pnpm packages:build && pnpm exec tsc -b tsconfig.packages.experimental.json --dry && pnpm packages:typecheck:self";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "typecheck" must not wire tsconfig.packages.experimental.json into a formal quality gate.',
+    );
+  });
 });
 
 async function createFixtureRepo() {
@@ -515,6 +559,69 @@ async function writeTypeScriptBuildGraphPilotFiles(root, packageDir, packageName
     },
     include: ["src/**/*.ts", "tests/**/*.ts"],
   });
+}
+
+async function writeVisualCoreReferenceExperimentFiles(root) {
+  await writeTypeScriptBuildGraphPilotFiles(root, "core", "@tsuzuru/core");
+  await writeTypeScriptBuildGraphPilotFiles(root, "plugin-std-visual", "@tsuzuru/plugin-std-visual");
+  await mutateJson(join(root, "packages/plugin-std-visual/tsconfig.json"), (tsconfig) => {
+    tsconfig.references = [{ path: "../core" }];
+  });
+  await writeJson(join(root, "tsconfig.packages.experimental.json"), {
+    files: [],
+    references: [{ path: "./packages/core" }, { path: "./packages/plugin-std-visual" }],
+  });
+  await mutateRootPackageJson(root, (packageJson) => {
+    for (const scriptName of Object.keys(packageJson.scripts)) {
+      packageJson.scripts[scriptName] = packageJson.scripts[scriptName].replaceAll("@fixture/core", "@tsuzuru/core");
+    }
+    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/plugin-std-visual pack --dry-run";
+    packageJson.scripts.test += " && pnpm --filter @tsuzuru/plugin-std-visual test";
+  });
+  await writeAgentsWithVisualPilot(root);
+  await writeTreeInventoryDocWithVisualPilot(root, "README.md");
+  await writeTreeInventoryDocWithVisualPilot(root, "docs/architecture.md");
+}
+
+async function writeAgentsWithVisualPilot(root) {
+  await writeFile(
+    join(root, "AGENTS.md"),
+    `# Fixture Agents
+
+Current packages:
+
+\`\`\`txt
+packages/addon
+packages/core
+packages/plugin-std-visual
+\`\`\`
+
+Current examples:
+
+\`\`\`txt
+examples/example
+\`\`\`
+`,
+  );
+}
+
+async function writeTreeInventoryDocWithVisualPilot(root, relativePath) {
+  await mkdir(join(root, "docs"), { recursive: true });
+  await writeFile(
+    join(root, relativePath),
+    `# Fixture
+
+\`\`\`txt
+packages/
+  addon/
+  core/
+  plugin-std-visual/
+
+examples/
+  example/
+\`\`\`
+`,
+  );
 }
 
 async function mutateRootPackageJson(root, mutate) {

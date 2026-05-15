@@ -16,8 +16,9 @@ Tsuzuru monorepo.
   plugins depend on it, so preparing core as a composite project is required
   before the packages graph can become dependency-complete.
 - `packages/plugin-std-visual` is the first pilot with a workspace dependency
-  edge. It still depends on built `@tsuzuru/core` package output rather than a
-  TypeScript project reference to core.
+  edge. It now has an explicit TypeScript project reference to
+  `packages/core`, while its package import still resolves through the built
+  `@tsuzuru/core` declaration output.
 - Other package `tsconfig.json` files do not use `composite`, `references`,
   `incremental`, or `tsBuildInfoFile`.
 - `tsconfig.packages.experimental.json` exists only as a manual dry-validation
@@ -152,6 +153,33 @@ The source config uses `composite: true` and writes build info to
 and `.tsbuildinfo` must not appear in pack output or
 `publish-readiness:check`.
 
+The visual source config now declares:
+
+```json
+"references": [{ "path": "../core" }]
+```
+
+This was validated as an isolated reference-edge experiment.
+`tsc -b tsconfig.packages.experimental.json --dry --verbose` lists
+`packages/core/tsconfig.json` before
+`packages/plugin-std-visual/tsconfig.json`, and visual becomes the out-of-date
+project when its source tsconfig changes. This confirms that TypeScript treats
+the explicit `plugin-std-visual -> core` reference as a build graph edge.
+
+The source package import remains stable under NodeNext package resolution:
+`@tsuzuru/core` resolves through the workspace package link and the
+`exports.types` target `packages/core/dist/src/index.d.ts`. With the reference
+present, TypeScript also reports project-reference compiler option redirects
+while resolving declarations from core. This means the experiment does not
+replace the existing package-output contract; it layers an explicit build graph
+edge on top of the current `dist` declaration layout.
+
+`packages/plugin-std-visual/tsconfig.test.json` extends the source config for
+compiler options and file shape, but `tsc --showConfig` does not show inherited
+top-level `references`. The test typecheck therefore continues to validate the
+existing source-plus-tests flow through built `@tsuzuru/core` package output and
+`noEmit: true`.
+
 ### `@tsuzuru/core` pilot
 
 `@tsuzuru/core` was selected as the fourth pilot because every standard plugin
@@ -179,12 +207,11 @@ package's `files` allowlist still pointing at `dist/src/*`. It must not emit
 `dist/tests/*`, and `.tsbuildinfo` must not appear in pack output or
 `publish-readiness:check`.
 
-This prepares core as a future reference target, but it does not yet make
-`@tsuzuru/plugin-std-visual` reference core explicitly. The visual plugin still
-resolves core through built package output, matching the current
-`packages:build` / `packages:typecheck:self` flow. Add explicit package
-references only after a separate experiment confirms the package-import and
-declaration-resolution behavior.
+This prepares core as a reference target for the current visual plugin
+experiment. The visual plugin still resolves core package imports through built
+package output, matching the current `packages:build` /
+`packages:typecheck:self` flow, even though the source config now declares the
+explicit reference edge.
 
 ## .tsbuildinfo Placement
 
@@ -247,19 +274,22 @@ It references the current composite pilots:
 
 This file is intentionally not wired into root scripts, CI, `check`, `typecheck`,
 or `release-readiness:check`. The graph can now include core as an addressable
-composite project, but it is not yet a sound package dependency graph because
-`@tsuzuru/plugin-std-visual` does not explicitly reference core. Today the
-visual plugin still resolves `@tsuzuru/core` through package output under
-`packages/core/dist`, matching the release-readiness flow.
+composite project and visual now explicitly references core. It is still not a
+complete package dependency graph because the other workspace package dependency
+edges have not been designed or validated. Today the visual plugin still
+resolves `@tsuzuru/core` through package output under `packages/core/dist`,
+matching the release-readiness flow.
 
 Manual dry validation may be run with:
 
 ```sh
 pnpm exec tsc -b tsconfig.packages.experimental.json --dry
+pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose
 ```
 
 This validates that the current pilot projects can be addressed by `tsc -b`,
-but it must not be interpreted as a complete monorepo build graph until package
+and that the explicit visual-to-core edge affects build order. It must not be
+interpreted as a complete monorepo build graph until the remaining package
 dependency references are added deliberately and their package-import behavior
 is checked.
 
@@ -285,7 +315,8 @@ the reference build or be retired in the same staged migration.
 
 ## Decision for now
 
-- `tsc -b` / project references are not introduced yet.
+- `tsc -b` remains manual-only, but the visual-to-core project reference edge is
+  now present as an isolated pilot.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy.
 - Root `test` keeps the same clean-checkout assumption as root `typecheck`:
@@ -295,18 +326,19 @@ the reference build or be retired in the same staged migration.
   split first; `@tsuzuru/core`, `@tsuzuru/config`, `create-tsuzuru`, and
   `@tsuzuru/plugin-std-visual` are the current pilots for that split.
 - `@tsuzuru/core`, `@tsuzuru/config`, `create-tsuzuru`, and
-  `@tsuzuru/plugin-std-visual` are the current `composite: true` pilots. Do not
-  expand `composite` broadly until these packages keep publish layout stable
-  under `pack:dry-run` and
+  `@tsuzuru/plugin-std-visual` are the current `composite: true` pilots.
+  `@tsuzuru/plugin-std-visual` is also the first explicit dependency-reference
+  pilot through its reference to `../core`. Do not expand `composite` broadly
+  until these packages keep publish layout stable under `pack:dry-run` and
   `publish-readiness:check`.
 - `.tsbuildinfo` should stay in package-local `.tsbuildinfo/` cache directories,
   not under `dist`.
 - Examples should be designed as a separate graph from the packages graph.
-- The next graph experiment should add an explicit `@tsuzuru/plugin-std-visual`
-  to `@tsuzuru/core` project reference, then validate whether package imports
-  still resolve through the intended declaration output.
-- `tsconfig.packages.experimental.json` remains a manual experiment until
-  package dependency references are added intentionally.
+- `tsconfig.packages.experimental.json` remains a manual experiment. It should
+  not become a root script, CI, `typecheck`, or `release-readiness:check` gate
+  yet because it covers only current pilots, not the complete package dependency
+  graph, and because the existing release flow still depends on explicit
+  package-order builds plus package `exports.types` declaration output.
 
 ## Migration steps
 
@@ -323,8 +355,8 @@ the reference build or be retired in the same staged migration.
    validation, not as a release gate.
 7. Prepare `@tsuzuru/core` as a composite reference target before treating the
    graph as dependency-complete.
-8. Add an explicit dependency reference from the dependency-edge pilot to core in
-   a separate experiment and confirm package import resolution remains stable.
+8. Keep the explicit dependency reference from the dependency-edge pilot to core
+   and use it as the reference-resolution baseline for the next package edge.
 9. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
    it as a gate.
 10. If the package layout and publish-readiness checks remain stable, expand to
@@ -333,20 +365,12 @@ the reference build or be retired in the same staged migration.
 
 ## Next Migration Candidates
 
-1. `@tsuzuru/plugin-std-visual` -> `@tsuzuru/core` explicit project reference
-   experiment
-   - Reason: core is now a composite reference target, but the experimental
-     graph is not dependency-complete until at least one plugin declares its
-     dependency edge to core.
-   - Risk: TypeScript may still resolve `@tsuzuru/core` through package
-     `exports` and built `dist` rather than the project reference, so the
-     experiment must verify package-import and declaration-resolution behavior
-     before becoming a gate.
-2. `@tsuzuru/plugin-std-audio`
+1. `@tsuzuru/plugin-std-audio`
    - Reason: same simple package shape as visual and a narrow public export.
-   - Risk: useful to prove repeatability, but it does not advance graph
-     completeness until explicit plugin-to-core references are designed.
-3. `@tsuzuru/cli`
+   - Condition: repeat the visual experiment pattern by first keeping source and
+     tests split, then adding only the explicit `../core` reference and checking
+     `@tsuzuru/core` package import resolution before broadening the graph.
+2. `@tsuzuru/cli`
    - Reason: important release package with Node types and config/core
      dependencies.
    - Risk: higher blast radius because scenario checking and config loading tests

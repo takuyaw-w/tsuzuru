@@ -58,6 +58,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
   assertTypeScriptBuildGraphPlan(context);
   assertTypeScriptBuildGraphPilots(context);
+  assertTypeScriptBuildGraphReferenceExperiment(context);
 
   return {
     failures,
@@ -298,6 +299,48 @@ function assertTypeScriptBuildGraphPilots(context) {
   assertTypeScriptBuildInfoIgnored(context);
   for (const pilotPackage of pilotPackages) {
     assertTypeScriptBuildGraphPilot(context, pilotPackage);
+  }
+}
+
+function assertTypeScriptBuildGraphReferenceExperiment(context) {
+  const hasCorePilot = context.packageEntries.some(
+    (packageEntry) => packageEntry.dir === "core" && packageEntry.name === "@tsuzuru/core",
+  );
+  const hasVisualPilot = context.packageEntries.some(
+    (packageEntry) => packageEntry.dir === "plugin-std-visual" && packageEntry.name === "@tsuzuru/plugin-std-visual",
+  );
+  if (!hasCorePilot || !hasVisualPilot) {
+    return;
+  }
+
+  const visualTsconfigPath = "packages/plugin-std-visual/tsconfig.json";
+  const visualTsconfig = readJson(context.rootDir, visualTsconfigPath);
+  const visualReferences = visualTsconfig.references ?? [];
+  if (!visualReferences.some((reference) => reference.path === "../core")) {
+    context.failures.push(`${visualTsconfigPath} must reference "../core" for the visual-to-core project reference pilot.`);
+  }
+
+  const experimentalTsconfigPath = "tsconfig.packages.experimental.json";
+  const absoluteExperimentalTsconfigPath = join(context.rootDir, experimentalTsconfigPath);
+  if (!existsSync(absoluteExperimentalTsconfigPath)) {
+    context.failures.push(`${experimentalTsconfigPath} is missing for the TypeScript build graph reference experiment.`);
+    return;
+  }
+
+  const experimentalTsconfig = readJson(context.rootDir, experimentalTsconfigPath);
+  const experimentalReferences = experimentalTsconfig.references ?? [];
+  for (const expectedReference of ["./packages/core", "./packages/plugin-std-visual"]) {
+    if (!experimentalReferences.some((reference) => reference.path === expectedReference)) {
+      context.failures.push(`${experimentalTsconfigPath} must reference "${expectedReference}".`);
+    }
+  }
+
+  for (const [scriptName, script] of Object.entries(context.rootPackageJson.scripts ?? {})) {
+    if (script.includes(experimentalTsconfigPath)) {
+      context.failures.push(
+        `root script "${scriptName}" must not wire ${experimentalTsconfigPath} into a formal quality gate.`,
+      );
+    }
   }
 }
 

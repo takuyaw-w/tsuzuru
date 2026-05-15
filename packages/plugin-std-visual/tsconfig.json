@@ -9,5 +9,6 @@
     "composite": true,
     "tsBuildInfoFile": ".tsbuildinfo/tsconfig.tsbuildinfo"
   },
+  "references": [{ "path": "../core" }],
   "include": ["src/**/*.ts"]
 }
