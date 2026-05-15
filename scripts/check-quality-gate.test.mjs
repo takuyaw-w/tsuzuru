@@ -354,7 +354,19 @@ describe("checkQualityGate", () => {
     });
 
     expect(checkQualityGate(root).failures).toContain(
-      'packages/plugin-std-audio/tsconfig.json must reference "../core" for the package-to-core project reference pilot.',
+      'packages/plugin-std-audio/tsconfig.json must reference "../core" for the package project reference pilot.',
+    );
+  });
+
+  it("fails when the cli reference experiment omits the config source reference", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "packages/cli/tsconfig.json"), (tsconfig) => {
+      tsconfig.references = [{ path: "../core" }];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'packages/cli/tsconfig.json must reference "../config" for the package project reference pilot.',
     );
   });
 
@@ -367,6 +379,18 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       'tsconfig.packages.experimental.json must reference "./packages/plugin-std-audio".',
+    );
+  });
+
+  it("fails when a referenced package target is missing from the experimental graph", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "tsconfig.packages.experimental.json"), (tsconfig) => {
+      tsconfig.references = tsconfig.references.filter((reference) => reference.path !== "./packages/config");
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'tsconfig.packages.experimental.json must reference "./packages/config".',
     );
   });
 
@@ -563,6 +587,11 @@ async function writeTypeScriptBuildGraphPilotFiles(root, packageDir, packageName
 
 async function writePackageCoreReferenceExperimentFiles(root) {
   await writeTypeScriptBuildGraphPilotFiles(root, "core", "@tsuzuru/core");
+  await writeTypeScriptBuildGraphPilotFiles(root, "config", "@tsuzuru/config");
+  await writeTypeScriptBuildGraphPilotFiles(root, "cli", "@tsuzuru/cli");
+  await mutateJson(join(root, "packages/cli/tsconfig.json"), (tsconfig) => {
+    tsconfig.references = [{ path: "../config" }, { path: "../core" }];
+  });
   const pluginPilots = [
     { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
     { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
@@ -577,14 +606,20 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     files: [],
     references: [
       { path: "./packages/core" },
+      { path: "./packages/config" },
       { path: "./packages/plugin-std-visual" },
       { path: "./packages/plugin-std-audio" },
+      { path: "./packages/cli" },
     ],
   });
   await mutateRootPackageJson(root, (packageJson) => {
     for (const scriptName of Object.keys(packageJson.scripts)) {
       packageJson.scripts[scriptName] = packageJson.scripts[scriptName].replaceAll("@fixture/core", "@tsuzuru/core");
     }
+    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/config pack --dry-run";
+    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/cli pack --dry-run";
+    packageJson.scripts.test += " && pnpm --filter @tsuzuru/config test";
+    packageJson.scripts.test += " && pnpm --filter @tsuzuru/cli test";
     for (const pluginPilot of pluginPilots) {
       packageJson.scripts["pack:dry-run"] += ` && pnpm --filter ${pluginPilot.name} pack --dry-run`;
       packageJson.scripts.test += ` && pnpm --filter ${pluginPilot.name} test`;
@@ -604,6 +639,8 @@ Current packages:
 
 \`\`\`txt
 packages/addon
+packages/cli
+packages/config
 packages/core
 packages/plugin-std-audio
 packages/plugin-std-visual
@@ -627,6 +664,8 @@ async function writeTreeInventoryDocWithReferencePilots(root, relativePath) {
 \`\`\`txt
 packages/
   addon/
+  cli/
+  config/
   core/
   plugin-std-audio/
   plugin-std-visual/

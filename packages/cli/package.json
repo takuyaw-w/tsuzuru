@@ -43,7 +43,7 @@
     "build:self": "tsc -p tsconfig.json",
     "test": "vitest run --dir tests",
     "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
-    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+    "typecheck:self": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@tsuzuru/config": "workspace:^",

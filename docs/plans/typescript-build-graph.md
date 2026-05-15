@@ -8,7 +8,7 @@ Tsuzuru monorepo.
 - The repository has `tsconfig.base.json`, but no root `tsconfig.json`,
   `tsconfig.packages.json`, or `tsconfig.examples.json`.
 - Package and example `tsconfig.json` files extend `tsconfig.base.json`.
-- `packages/core`, `packages/config`, `packages/create-tsuzuru`,
+- `packages/core`, `packages/config`, `packages/cli`, `packages/create-tsuzuru`,
   `packages/plugin-std-visual`, and `packages/plugin-std-audio` are the current
   `composite: true` pilots and write TypeScript build info to
   `.tsbuildinfo/tsconfig.tsbuildinfo`.
@@ -23,6 +23,9 @@ Tsuzuru monorepo.
   pilot. It uses the same explicit TypeScript project reference to
   `packages/core`, while its package import also continues to resolve through
   built `@tsuzuru/core` declarations.
+- `packages/cli` is the first higher-risk dependency-edge pilot. It references
+  both `packages/config` and `packages/core`, keeps Node types enabled, and
+  preserves the `tsuzuru` bin target at `dist/src/index.js`.
 - Other package `tsconfig.json` files do not use `composite`, `references`,
   `incremental`, or `tsBuildInfoFile`.
 - `tsconfig.packages.experimental.json` exists only as a manual dry-validation
@@ -64,9 +67,11 @@ Current package shapes:
 - `packages/plugin-std-audio` is the fifth pilot and second dependency-edge
   package. Its source `tsconfig.json` includes only `src/**/*.ts`, while
   `tsconfig.test.json` covers source plus tests with `noEmit`.
-- `packages/cli` and the remaining standard plugin packages still use
-  `rootDir: "."`, `outDir: "dist"`, and include both `src/**/*.ts` and
-  `tests/**/*.ts`.
+- `packages/cli` is the sixth pilot and first multi-dependency package edge.
+  Its source `tsconfig.json` includes only `src/**/*.ts`, while
+  `tsconfig.test.json` covers source plus tests with `noEmit`.
+- The remaining standard plugin packages still use `rootDir: "."`,
+  `outDir: "dist"`, and include both `src/**/*.ts` and `tests/**/*.ts`.
 - `packages/preact`, `packages/vue`, and `packages/standard-ui-preact` use
   `rootDir: "src"` and include source files only.
 - Package tarballs are protected by `files`, but source builds still compile
@@ -264,6 +269,54 @@ The audio package import remains stable under NodeNext package resolution:
 project reference supplies the build graph edge but does not replace the
 existing built declaration contract.
 
+### `@tsuzuru/cli` pilot
+
+`@tsuzuru/cli` was selected as the sixth pilot because it is a public bin
+package and has workspace dependencies on both `@tsuzuru/config` and
+`@tsuzuru/core`. This is higher risk than the standard plugin edge experiments:
+the package has a `bin` entry, uses Node types, imports `compileTzrProject` as a
+runtime value from core, loads config files through `jiti`, and is used by
+example scenario checks and create-tsuzuru smoke tests.
+
+Pilot layout:
+
+```txt
+packages/cli/tsconfig.json       # source build only, keeps rootDir "." and dist/src layout
+packages/cli/tsconfig.test.json  # source + tests typecheck, noEmit
+```
+
+`@tsuzuru/cli` keeps package-level `build` and `typecheck` scripts that build
+`@tsuzuru/config` and `@tsuzuru/core` first, so filtered package work remains
+safe on a clean checkout. Its `build:self` remains `tsc -p tsconfig.json`,
+while `typecheck:self` uses `tsc -p tsconfig.test.json`.
+
+The source config keeps `types: ["node"]`, uses `composite: true`, writes build
+info to `.tsbuildinfo/tsconfig.tsbuildinfo`, includes only `src/**/*.ts`, and
+declares:
+
+```json
+"references": [{ "path": "../config" }, { "path": "../core" }]
+```
+
+The pilot keeps the publish layout at `dist/src/index.js`,
+`dist/src/index.d.ts`, `dist/src/check.*`, `dist/src/config-loader.*`, and
+`dist/src/scenario-files.*`. It must not emit `dist/tests/*`, and
+`.tsbuildinfo` must not appear in pack output or `publish-readiness:check`.
+The `bin.tsuzuru` target remains `./dist/src/index.js`.
+
+The CLI reference-edge experiment used the manual package graph validation.
+`tsc -b tsconfig.packages.experimental.json --dry --verbose` lists
+`packages/core/tsconfig.json` and `packages/config/tsconfig.json` before
+`packages/cli/tsconfig.json`. This confirms that TypeScript treats the
+`cli -> config/core` references as build graph edges.
+
+The CLI package imports remain stable under NodeNext package resolution:
+`@tsuzuru/config` resolves through the workspace package link and
+`packages/config/dist/src/index.d.ts`, while `@tsuzuru/core` resolves through
+`packages/core/dist/src/index.d.ts`. As with the plugin pilots, the project
+references supply build graph edges but do not replace the existing built
+declaration contracts.
+
 ## .tsbuildinfo Placement
 
 Current pilots use a package-local cache directory that is outside publish
@@ -272,6 +325,7 @@ Current pilots use a package-local cache directory that is outside publish
 ```txt
 packages/core/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/config/.tsbuildinfo/tsconfig.tsbuildinfo
+packages/cli/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/create-tsuzuru/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-visual/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-audio/.tsbuildinfo/tsconfig.tsbuildinfo
@@ -321,17 +375,18 @@ It references the current composite pilots:
 
 - `packages/core`
 - `packages/config`
+- `packages/cli`
 - `packages/create-tsuzuru`
 - `packages/plugin-std-visual`
 - `packages/plugin-std-audio`
 
 This file is intentionally not wired into root scripts, CI, `check`, `typecheck`,
-or `release-readiness:check`. The graph can now include core as an addressable
-composite project, and visual/audio now explicitly reference core. It is still
-not a complete package dependency graph because the other workspace package
-dependency edges have not been designed or validated. Today the standard plugin
-pilots still resolve `@tsuzuru/core` through package output under
-`packages/core/dist`, matching the release-readiness flow.
+or `release-readiness:check`. The graph can now include core and config as
+addressable composite projects, visual/audio explicitly reference core, and CLI
+explicitly references config/core. It is still not a complete package dependency
+graph because the other workspace package dependency edges have not been
+designed or validated. Today the pilots still resolve workspace imports through
+package output under `dist`, matching the release-readiness flow.
 
 Manual dry validation may be run with:
 
@@ -341,10 +396,10 @@ pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose
 ```
 
 This validates that the current pilot projects can be addressed by `tsc -b`,
-and that the explicit visual/audio-to-core edges affect build order. It must
-not be interpreted as a complete monorepo build graph until the remaining
-package dependency references are added deliberately and their package-import
-behavior is checked.
+and that the explicit visual/audio-to-core and cli-to-config/core edges affect
+build order. It must not be interpreted as a complete monorepo build graph until
+the remaining package dependency references are added deliberately and their
+package-import behavior is checked.
 
 ## Publish Layout Constraints
 
@@ -368,23 +423,24 @@ the reference build or be retired in the same staged migration.
 
 ## Decision for now
 
-- `tsc -b` remains manual-only, but the visual/audio-to-core project reference
-  edges are now present as isolated pilots.
+- `tsc -b` remains manual-only, but the visual/audio-to-core and
+  cli-to-config/core project reference edges are now present as isolated
+  pilots.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy.
 - Root `test` keeps the same clean-checkout assumption as root `typecheck`:
   build public package `dist` output before running package tests that resolve
   workspace imports through package `exports`.
 - If project references are introduced, source tsconfig and test tsconfig must be
-  split first; `@tsuzuru/core`, `@tsuzuru/config`, `create-tsuzuru`,
+  split first; `@tsuzuru/core`, `@tsuzuru/config`, `@tsuzuru/cli`,
+  `create-tsuzuru`, `@tsuzuru/plugin-std-visual`, and
+  `@tsuzuru/plugin-std-audio` are the current pilots for that split.
+- `@tsuzuru/core`, `@tsuzuru/config`, `@tsuzuru/cli`, `create-tsuzuru`,
   `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
-  pilots for that split.
-- `@tsuzuru/core`, `@tsuzuru/config`, `create-tsuzuru`,
-  `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
-  `composite: true` pilots. The visual and audio plugins are also explicit
-  dependency-reference pilots through their references to `../core`. Do not
-  expand `composite` broadly until these packages keep publish layout stable
-  under `pack:dry-run` and `publish-readiness:check`.
+  `composite: true` pilots. The visual/audio plugins and CLI are also explicit
+  dependency-reference pilots. Do not expand `composite` broadly until these
+  packages keep publish layout stable under `pack:dry-run` and
+  `publish-readiness:check`.
 - `.tsbuildinfo` should stay in package-local `.tsbuildinfo/` cache directories,
   not under `dist`.
 - Examples should be designed as a separate graph from the packages graph.
@@ -410,9 +466,8 @@ the reference build or be retired in the same staged migration.
    validation, not as a release gate.
 7. Prepare `@tsuzuru/core` as a composite reference target before treating the
    graph as dependency-complete.
-8. Keep the explicit dependency references from the dependency-edge pilots to
-   core and use them as the reference-resolution baseline for the next package
-   edge.
+8. Add a higher-risk CLI package edge to `@tsuzuru/config` and `@tsuzuru/core`
+   while preserving the `tsuzuru` bin layout.
 9. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
    it as a gate.
 10. If the package layout and publish-readiness checks remain stable, expand to
@@ -421,19 +476,17 @@ the reference build or be retired in the same staged migration.
 
 ## Next Migration Candidates
 
-1. More standard plugin-to-core edges
-   - Reason: audio repeated the visual pattern successfully, so another small
-     plugin can test whether the pattern remains boring across multiple package
-     shapes.
-   - Risk: useful for repeatability, but each additional plugin edge gives
-     diminishing information unless it has a distinct export or test shape.
-2. `@tsuzuru/cli`
-   - Reason: important release package with Node types and config/core
-     dependencies.
-   - Risk: higher blast radius because scenario checking and config loading tests
-     depend on built workspace packages.
+1. `@tsuzuru/preact` / `@tsuzuru/vue`
+   - Reason: framework adapters are public packages with `@tsuzuru/core`
+     dependencies and different `rootDir: "src"` / `dist/index.*` layout from
+     the Node-oriented packages.
+   - Risk: higher UI adapter surface and examples depend on their built output.
+2. More standard plugin-to-core edges such as `@tsuzuru/plugin-std-effect`
+   - Reason: useful to prove repeatability across more plugin packages.
+   - Risk: diminishing returns now that visual and audio already cover the
+     simple standard plugin shape.
 3. Formal `tsconfig.packages.json` design
-   - Reason: visual and audio now show that explicit plugin-to-core references
-     can coexist with package `exports.types` resolution.
+   - Reason: visual/audio and CLI now show that explicit package references can
+     coexist with package `exports.types` resolution and bin publish layout.
    - Risk: premature until the remaining package dependency edges and the
      relationship between `build:self` and `tsc -b` are designed.

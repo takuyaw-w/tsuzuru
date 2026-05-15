@@ -4,14 +4,16 @@ import { join } from "node:path";
 const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
   { dir: "core", name: "@tsuzuru/core" },
   { dir: "config", name: "@tsuzuru/config" },
+  { dir: "cli", name: "@tsuzuru/cli" },
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
 ];
 
 const TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS = [
-  { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual", referencePath: "../core" },
-  { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio", referencePath: "../core" },
+  { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual", referencePaths: ["../core"] },
+  { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio", referencePaths: ["../core"] },
+  { dir: "cli", name: "@tsuzuru/cli", referencePaths: ["../config", "../core"] },
 ];
 
 export function checkQualityGate(rootDir = process.cwd()) {
@@ -309,13 +311,10 @@ function assertTypeScriptBuildGraphPilots(context) {
 }
 
 function assertTypeScriptBuildGraphReferenceExperiment(context) {
-  const hasCorePilot = context.packageEntries.some(
-    (packageEntry) => packageEntry.dir === "core" && packageEntry.name === "@tsuzuru/core",
-  );
   const referenceEdgePilots = TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS.filter((pilotPackage) =>
     context.packageEntries.some((packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name),
   );
-  if (!hasCorePilot || referenceEdgePilots.length === 0) {
+  if (referenceEdgePilots.length === 0) {
     return;
   }
 
@@ -323,10 +322,12 @@ function assertTypeScriptBuildGraphReferenceExperiment(context) {
     const sourceTsconfigPath = `packages/${pilotPackage.dir}/tsconfig.json`;
     const sourceTsconfig = readJson(context.rootDir, sourceTsconfigPath);
     const sourceReferences = sourceTsconfig.references ?? [];
-    if (!sourceReferences.some((reference) => reference.path === pilotPackage.referencePath)) {
-      context.failures.push(
-        `${sourceTsconfigPath} must reference "${pilotPackage.referencePath}" for the package-to-core project reference pilot.`,
-      );
+    for (const referencePath of pilotPackage.referencePaths) {
+      if (!sourceReferences.some((reference) => reference.path === referencePath)) {
+        context.failures.push(
+          `${sourceTsconfigPath} must reference "${referencePath}" for the package project reference pilot.`,
+        );
+      }
     }
   }
 
@@ -339,7 +340,14 @@ function assertTypeScriptBuildGraphReferenceExperiment(context) {
 
   const experimentalTsconfig = readJson(context.rootDir, experimentalTsconfigPath);
   const experimentalReferences = experimentalTsconfig.references ?? [];
-  const expectedReferences = ["./packages/core", ...referenceEdgePilots.map((pilotPackage) => `./packages/${pilotPackage.dir}`)];
+  const expectedReferences = new Set(referenceEdgePilots.map((pilotPackage) => `./packages/${pilotPackage.dir}`));
+  for (const pilotPackage of referenceEdgePilots) {
+    for (const referencePath of pilotPackage.referencePaths) {
+      if (referencePath.startsWith("../")) {
+        expectedReferences.add(`./packages/${referencePath.slice("../".length)}`);
+      }
+    }
+  }
   for (const expectedReference of expectedReferences) {
     if (!experimentalReferences.some((reference) => reference.path === expectedReference)) {
       context.failures.push(`${experimentalTsconfigPath} must reference "${expectedReference}".`);

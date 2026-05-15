@@ -6,7 +6,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "composite": true,
+    "tsBuildInfoFile": ".tsbuildinfo/tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "references": [{ "path": "../config" }, { "path": "../core" }],
+  "include": ["src/**/*.ts"]
 }
