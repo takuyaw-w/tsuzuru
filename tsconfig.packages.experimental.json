@@ -6,6 +6,7 @@
     { "path": "./packages/create-tsuzuru" },
     { "path": "./packages/plugin-std-visual" },
     { "path": "./packages/plugin-std-audio" },
-    { "path": "./packages/cli" }
+    { "path": "./packages/cli" },
+    { "path": "./packages/preact" }
   ]
 }

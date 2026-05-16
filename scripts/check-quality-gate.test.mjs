@@ -339,6 +339,18 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when the preact source-only pilot typecheck can emit", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutatePackageJson(root, "packages/preact", (packageJson) => {
+      packageJson.scripts["typecheck:self"] = "tsc -p tsconfig.json";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/preact script "typecheck:self" must use --noEmit for the source-only pilot.',
+    );
+  });
+
   it("passes for package-to-core project reference experiments", async () => {
     const root = await createFixtureRepo();
     await writePackageCoreReferenceExperimentFiles(root);
@@ -355,6 +367,18 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       'packages/plugin-std-audio/tsconfig.json must reference "../core" for the package project reference pilot.',
+    );
+  });
+
+  it("fails when the preact reference experiment omits the core source reference", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "packages/preact/tsconfig.json"), (tsconfig) => {
+      tsconfig.references = [];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'packages/preact/tsconfig.json must reference "../core" for the package project reference pilot.',
     );
   });
 
@@ -602,6 +626,7 @@ async function writePackageCoreReferenceExperimentFiles(root) {
       tsconfig.references = [{ path: "../core" }];
     });
   }
+  await writePreactReferenceExperimentFiles(root);
   await writeJson(join(root, "tsconfig.packages.experimental.json"), {
     files: [],
     references: [
@@ -610,6 +635,7 @@ async function writePackageCoreReferenceExperimentFiles(root) {
       { path: "./packages/plugin-std-visual" },
       { path: "./packages/plugin-std-audio" },
       { path: "./packages/cli" },
+      { path: "./packages/preact" },
     ],
   });
   await mutateRootPackageJson(root, (packageJson) => {
@@ -618,8 +644,10 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     }
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/config pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/cli pack --dry-run";
+    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/preact pack --dry-run";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/config test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/cli test";
+    packageJson.scripts.test += " && pnpm --filter @tsuzuru/preact test";
     for (const pluginPilot of pluginPilots) {
       packageJson.scripts["pack:dry-run"] += ` && pnpm --filter ${pluginPilot.name} pack --dry-run`;
       packageJson.scripts.test += ` && pnpm --filter ${pluginPilot.name} test`;
@@ -628,6 +656,31 @@ async function writePackageCoreReferenceExperimentFiles(root) {
   await writeAgentsWithReferencePilots(root);
   await writeTreeInventoryDocWithReferencePilots(root, "README.md");
   await writeTreeInventoryDocWithReferencePilots(root, "docs/architecture.md");
+}
+
+async function writePreactReferenceExperimentFiles(root) {
+  await writeFile(join(root, ".gitignore"), "**/.tsbuildinfo/\n*.tsbuildinfo\n");
+  await mkdir(join(root, "packages/preact"), { recursive: true });
+  await writeJson(join(root, "packages/preact/package.json"), {
+    name: "@tsuzuru/preact",
+    scripts: {
+      "typecheck:self": "tsc -p tsconfig.json --noEmit",
+    },
+  });
+  await writeJson(join(root, "packages/preact/tsconfig.json"), {
+    extends: "../../tsconfig.base.json",
+    compilerOptions: {
+      rootDir: "src",
+      outDir: "dist",
+      composite: true,
+      tsBuildInfoFile: ".tsbuildinfo/tsconfig.tsbuildinfo",
+      jsx: "react-jsx",
+      jsxImportSource: "preact",
+      lib: ["ES2022", "DOM"],
+    },
+    references: [{ path: "../core" }],
+    include: ["src/**/*.ts", "src/**/*.tsx"],
+  });
 }
 
 async function writeAgentsWithReferencePilots(root) {
@@ -642,6 +695,7 @@ packages/addon
 packages/cli
 packages/config
 packages/core
+packages/preact
 packages/plugin-std-audio
 packages/plugin-std-visual
 \`\`\`
@@ -667,6 +721,7 @@ packages/
   cli/
   config/
   core/
+  preact/
   plugin-std-audio/
   plugin-std-visual/
 

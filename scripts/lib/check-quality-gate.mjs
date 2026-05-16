@@ -6,6 +6,7 @@ const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
   { dir: "config", name: "@tsuzuru/config" },
   { dir: "cli", name: "@tsuzuru/cli" },
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
+  { dir: "preact", name: "@tsuzuru/preact", testTsconfig: false },
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
 ];
@@ -14,6 +15,7 @@ const TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS = [
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual", referencePaths: ["../core"] },
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio", referencePaths: ["../core"] },
   { dir: "cli", name: "@tsuzuru/cli", referencePaths: ["../config", "../core"] },
+  { dir: "preact", name: "@tsuzuru/preact", referencePaths: ["../core"] },
 ];
 
 export function checkQualityGate(rootDir = process.cwd()) {
@@ -386,6 +388,7 @@ function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
   }
 
   const sourceTsconfig = readJson(context.rootDir, sourceTsconfigPath);
+  const testTsconfigRequired = pilotPackage.testTsconfig !== false;
   if ((sourceTsconfig.include ?? []).some((pattern) => pattern.includes("tests"))) {
     context.failures.push(
       `${sourceTsconfigPath} must not include tests; use packages/${pilotPackage.dir}/tsconfig.test.json.`,
@@ -408,6 +411,19 @@ function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
 
   const testTsconfigPath = `packages/${pilotPackage.dir}/tsconfig.test.json`;
   const absoluteTestTsconfigPath = join(context.rootDir, testTsconfigPath);
+  if (!testTsconfigRequired) {
+    const packageJsonPath = `packages/${pilotPackage.dir}/package.json`;
+    const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
+    if (existsSync(absolutePackageJsonPath)) {
+      const packageJson = readJson(context.rootDir, packageJsonPath);
+      const typecheckSelf = packageJson.scripts?.["typecheck:self"];
+      if (typeof typecheckSelf === "string" && !typecheckSelf.includes("--noEmit")) {
+        context.failures.push(`${pilotPackage.name} script "typecheck:self" must use --noEmit for the source-only pilot.`);
+      }
+    }
+    return;
+  }
+
   if (!existsSync(absoluteTestTsconfigPath)) {
     context.failures.push(`${testTsconfigPath} is missing for the ${pilotPackage.name} source/test tsconfig pilot.`);
     return;
