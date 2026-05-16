@@ -363,6 +363,42 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when the standard UI Preact source-only pilot typecheck can emit", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutatePackageJson(root, "packages/standard-ui-preact", (packageJson) => {
+      packageJson.scripts["typecheck:self"] = "tsc -p tsconfig.json";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/standard-ui-preact script "typecheck:self" must use --noEmit for the source-only pilot.',
+    );
+  });
+
+  it("fails when the standard UI Preact style export is missing", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutatePackageJson(root, "packages/standard-ui-preact", (packageJson) => {
+      delete packageJson.exports["./style.css"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/standard-ui-preact package.json must export "./style.css" as "./dist/style.css".',
+    );
+  });
+
+  it("fails when the standard UI Preact style file is missing from files", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutatePackageJson(root, "packages/standard-ui-preact", (packageJson) => {
+      packageJson.files = packageJson.files.filter((entry) => entry !== "dist/style.css");
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@tsuzuru/standard-ui-preact package.json files must include "dist/style.css".',
+    );
+  });
+
   it("passes for package-to-core project reference experiments", async () => {
     const root = await createFixtureRepo();
     await writePackageCoreReferenceExperimentFiles(root);
@@ -403,6 +439,18 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       'packages/vue/tsconfig.json must reference "../core" for the package project reference pilot.',
+    );
+  });
+
+  it("fails when the standard UI Preact reference experiment omits the core source reference", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateJson(join(root, "packages/standard-ui-preact/tsconfig.json"), (tsconfig) => {
+      tsconfig.references = [];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'packages/standard-ui-preact/tsconfig.json must reference "../core" for the package project reference pilot.',
     );
   });
 
@@ -652,6 +700,7 @@ async function writePackageCoreReferenceExperimentFiles(root) {
   }
   await writePreactReferenceExperimentFiles(root);
   await writeVueReferenceExperimentFiles(root);
+  await writeStandardUiPreactReferenceExperimentFiles(root);
   await writeJson(join(root, "tsconfig.packages.experimental.json"), {
     files: [],
     references: [
@@ -662,6 +711,7 @@ async function writePackageCoreReferenceExperimentFiles(root) {
       { path: "./packages/cli" },
       { path: "./packages/preact" },
       { path: "./packages/vue" },
+      { path: "./packages/standard-ui-preact" },
     ],
   });
   await mutateRootPackageJson(root, (packageJson) => {
@@ -672,10 +722,12 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/cli pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/preact pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/vue pack --dry-run";
+    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/standard-ui-preact pack --dry-run";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/config test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/cli test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/preact test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/vue test";
+    packageJson.scripts.test += " && pnpm --filter @tsuzuru/standard-ui-preact test";
     for (const pluginPilot of pluginPilots) {
       packageJson.scripts["pack:dry-run"] += ` && pnpm --filter ${pluginPilot.name} pack --dry-run`;
       packageJson.scripts.test += ` && pnpm --filter ${pluginPilot.name} test`;
@@ -696,6 +748,39 @@ async function writePreactReferenceExperimentFiles(root) {
     },
   });
   await writeJson(join(root, "packages/preact/tsconfig.json"), {
+    extends: "../../tsconfig.base.json",
+    compilerOptions: {
+      rootDir: "src",
+      outDir: "dist",
+      composite: true,
+      tsBuildInfoFile: ".tsbuildinfo/tsconfig.tsbuildinfo",
+      jsx: "react-jsx",
+      jsxImportSource: "preact",
+      lib: ["ES2022", "DOM"],
+    },
+    references: [{ path: "../core" }],
+    include: ["src/**/*.ts", "src/**/*.tsx"],
+  });
+}
+
+async function writeStandardUiPreactReferenceExperimentFiles(root) {
+  await writeFile(join(root, ".gitignore"), "**/.tsbuildinfo/\n*.tsbuildinfo\n");
+  await mkdir(join(root, "packages/standard-ui-preact"), { recursive: true });
+  await writeJson(join(root, "packages/standard-ui-preact/package.json"), {
+    name: "@tsuzuru/standard-ui-preact",
+    exports: {
+      ".": {
+        types: "./dist/index.d.ts",
+        import: "./dist/index.js",
+      },
+      "./style.css": "./dist/style.css",
+    },
+    files: ["dist/index.*", "dist/style.css"],
+    scripts: {
+      "typecheck:self": "tsc -p tsconfig.json --noEmit",
+    },
+  });
+  await writeJson(join(root, "packages/standard-ui-preact/tsconfig.json"), {
     extends: "../../tsconfig.base.json",
     compilerOptions: {
       rootDir: "src",
@@ -749,6 +834,7 @@ packages/core
 packages/preact
 packages/plugin-std-audio
 packages/plugin-std-visual
+packages/standard-ui-preact
 packages/vue
 \`\`\`
 
@@ -776,6 +862,7 @@ packages/
   preact/
   plugin-std-audio/
   plugin-std-visual/
+  standard-ui-preact/
   vue/
 
 examples/

@@ -9,9 +9,10 @@ Tsuzuru monorepo.
   `tsconfig.packages.json`, or `tsconfig.examples.json`.
 - Package and example `tsconfig.json` files extend `tsconfig.base.json`.
 - `packages/core`, `packages/config`, `packages/cli`, `packages/create-tsuzuru`,
-  `packages/preact`, `packages/vue`, `packages/plugin-std-visual`, and
-  `packages/plugin-std-audio` are the current `composite: true` pilots and write
-  TypeScript build info to `.tsbuildinfo/tsconfig.tsbuildinfo`.
+  `packages/preact`, `packages/vue`, `packages/standard-ui-preact`,
+  `packages/plugin-std-visual`, and `packages/plugin-std-audio` are the current
+  `composite: true` pilots and write TypeScript build info to
+  `.tsbuildinfo/tsconfig.tsbuildinfo`.
 - `packages/core` is the first structural dependency root pilot. Standard
   plugins depend on it, so preparing core as a composite project is required
   before the packages graph can become dependency-complete.
@@ -32,6 +33,10 @@ Tsuzuru monorepo.
 - `packages/vue` is the second framework adapter dependency-edge pilot. It
   references `packages/core`, keeps the same `rootDir: "src"` / `dist/index.*`
   layout category, and preserves DOM lib and `vue` peer dependency behavior.
+- `packages/standard-ui-preact` is the first CSS-asset UI package
+  dependency-edge pilot. It references `packages/core`, keeps the
+  `rootDir: "src"` / `dist/index.*` layout category, and preserves JSX, DOM
+  lib, `preact` peer dependency behavior, CSS copy, and `./style.css` export.
 - Other package `tsconfig.json` files do not use `composite`, `references`,
   `incremental`, or `tsBuildInfoFile`.
 - `tsconfig.packages.experimental.json` exists only as a manual dry-validation
@@ -82,10 +87,12 @@ Current package shapes:
 - `packages/vue` is the eighth pilot and second framework adapter package. Its
   source `tsconfig.json` already includes only `src/**/*.ts`, so it also stays
   source-only without adding `tsconfig.test.json`.
+- `packages/standard-ui-preact` is the ninth pilot and first CSS-asset UI
+  package. Its source `tsconfig.json` already includes only `src/**/*.ts` and
+  `src/**/*.tsx`, so it also stays source-only without adding
+  `tsconfig.test.json`.
 - The remaining standard plugin packages still use `rootDir: "."`,
   `outDir: "dist"`, and include both `src/**/*.ts` and `tests/**/*.ts`.
-- `packages/standard-ui-preact` uses `rootDir: "src"` and includes source files
-  only, but is not yet a `composite` pilot.
 - Package tarballs are protected by `files`, but source builds still compile
   tests for the packages that include `tests/**/*.ts`.
 
@@ -419,6 +426,56 @@ The Vue package import remains stable under NodeNext package resolution:
 `packages/core/dist/src/index.d.ts`. The project reference supplies the build
 graph edge but does not replace the existing built declaration contract.
 
+### `@tsuzuru/standard-ui-preact` pilot
+
+`@tsuzuru/standard-ui-preact` was selected as the ninth pilot because it is a
+Preact-facing UI package with a broader exported component surface than the
+framework adapter packages. It uses the same `rootDir: "src"` / `dist/index.*`
+layout category as Preact, but it also has a CSS copy step and publishes
+`./style.css` through package exports.
+
+Pilot layout:
+
+```txt
+packages/standard-ui-preact/tsconfig.json  # source build only, keeps rootDir "src" and dist/index layout
+```
+
+`@tsuzuru/standard-ui-preact` already had a source-only tsconfig with
+`include: ["src/**/*.ts", "src/**/*.tsx"]`, so this pilot does not add
+`tsconfig.test.json`. Its package-level `build` and `typecheck` scripts keep
+building `@tsuzuru/core` first for clean checkout safety. `build:self` remains
+`tsc -p tsconfig.json && node scripts/copy-css.mjs`, while `typecheck:self`
+remains `tsc -p tsconfig.json --noEmit`.
+
+The source config keeps `jsx: "react-jsx"`, `jsxImportSource: "preact"`, and
+`lib: ["ES2022", "DOM"]`, uses `composite: true`, writes build info to
+`.tsbuildinfo/tsconfig.tsbuildinfo`, and declares:
+
+```json
+"references": [{ "path": "../core" }]
+```
+
+The pilot keeps the publish layout at `dist/index.js`, `dist/index.d.ts`, the
+component and hook outputs such as `dist/ChoiceLayer.*`, `dist/GameShell.*`,
+`dist/RuntimeMessageLayer.*`, `dist/useTextReveal.*`, and `dist/style.css`.
+The CSS source remains `src/style.css`, copied by `scripts/copy-css.mjs` during
+`build:self`. `exports["./style.css"]` remains `./dist/style.css`, and
+`files` continues to include `dist/style.css`. `.tsbuildinfo` must not appear
+under `dist`, in pack output, or in `publish-readiness:check`. The `preact`
+peer dependency remains unchanged.
+
+The Standard UI Preact reference-edge experiment uses the manual package graph
+validation. `tsc -b tsconfig.packages.experimental.json --dry --verbose` lists
+`packages/core/tsconfig.json` before
+`packages/standard-ui-preact/tsconfig.json`. This confirms that TypeScript
+treats the explicit `standard-ui-preact -> core` reference as a build graph edge
+while preserving the UI package output and CSS asset layout.
+
+The Standard UI Preact package import remains stable under NodeNext package
+resolution: `@tsuzuru/core` resolves through the workspace package link and
+`packages/core/dist/src/index.d.ts`. The project reference supplies the build
+graph edge but does not replace the existing built declaration contract.
+
 ## .tsbuildinfo Placement
 
 Current pilots use a package-local cache directory that is outside publish
@@ -431,6 +488,7 @@ packages/cli/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/create-tsuzuru/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/preact/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/vue/.tsbuildinfo/tsconfig.tsbuildinfo
+packages/standard-ui-preact/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-visual/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-audio/.tsbuildinfo/tsconfig.tsbuildinfo
 ```
@@ -483,17 +541,18 @@ It references the current composite pilots:
 - `packages/create-tsuzuru`
 - `packages/preact`
 - `packages/vue`
+- `packages/standard-ui-preact`
 - `packages/plugin-std-visual`
 - `packages/plugin-std-audio`
 
 This file is intentionally not wired into root scripts, CI, `check`, `typecheck`,
 or `release-readiness:check`. The graph can now include core and config as
 addressable composite projects, visual/audio explicitly reference core, CLI
-explicitly references config/core, and Preact/Vue explicitly reference core. It
-is still not a complete package dependency graph because the other workspace
-package dependency edges have not been designed or validated. Today the pilots
-still resolve workspace imports through package output under `dist`, matching
-the release-readiness flow.
+explicitly references config/core, and Preact/Vue/Standard UI Preact explicitly
+reference core. It is still not a complete package dependency graph because the
+other workspace package dependency edges have not been designed or validated.
+Today the pilots still resolve workspace imports through package output under
+`dist`, matching the release-readiness flow.
 
 Manual dry validation may be run with:
 
@@ -503,10 +562,10 @@ pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose
 ```
 
 This validates that the current pilot projects can be addressed by `tsc -b`,
-and that the explicit visual/audio/preact/vue-to-core and cli-to-config/core
-edges affect build order. It must not be interpreted as a complete monorepo build
-graph until the remaining package dependency references are added deliberately
-and their package-import behavior is checked.
+and that the explicit visual/audio/preact/vue/standard-ui-preact-to-core and
+cli-to-config/core edges affect build order. It must not be interpreted as a
+complete monorepo build graph until the remaining package dependency references
+are added deliberately and their package-import behavior is checked.
 
 ## Publish Layout Constraints
 
@@ -530,9 +589,9 @@ the reference build or be retired in the same staged migration.
 
 ## Decision for now
 
-- `tsc -b` remains manual-only, but the visual/audio/preact/vue-to-core and
-  cli-to-config/core project reference edges are now present as isolated
-  pilots.
+- `tsc -b` remains manual-only, but the
+  visual/audio/preact/vue/standard-ui-preact-to-core and cli-to-config/core
+  project reference edges are now present as isolated pilots.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy.
 - Root `test` keeps the same clean-checkout assumption as root `typecheck`:
@@ -542,14 +601,16 @@ the reference build or be retired in the same staged migration.
   split first for packages whose source configs include tests. `@tsuzuru/core`,
   `@tsuzuru/config`, `@tsuzuru/cli`, `create-tsuzuru`,
   `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
-  source/test split pilots. `@tsuzuru/preact` and `@tsuzuru/vue` are
-  source-only already, so they do not add test tsconfigs.
+  source/test split pilots. `@tsuzuru/preact`, `@tsuzuru/vue`, and
+  `@tsuzuru/standard-ui-preact` are source-only already, so they do not add test
+  tsconfigs.
 - `@tsuzuru/core`, `@tsuzuru/config`, `@tsuzuru/cli`, `create-tsuzuru`,
-  `@tsuzuru/preact`, `@tsuzuru/vue`, `@tsuzuru/plugin-std-visual`, and
-  `@tsuzuru/plugin-std-audio` are the current `composite: true` pilots. The
-  visual/audio plugins, CLI, Preact, and Vue are also explicit
-  dependency-reference pilots. Do not expand `composite` broadly until these packages keep publish
-  layout stable under `pack:dry-run` and `publish-readiness:check`.
+  `@tsuzuru/preact`, `@tsuzuru/vue`, `@tsuzuru/standard-ui-preact`,
+  `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
+  `composite: true` pilots. The visual/audio plugins, CLI, Preact, Vue, and
+  Standard UI Preact are also explicit dependency-reference pilots. Do not
+  expand `composite` broadly until these packages keep publish layout stable
+  under `pack:dry-run` and `publish-readiness:check`.
 - `.tsbuildinfo` should stay in package-local `.tsbuildinfo/` cache directories,
   not under `dist`.
 - Examples should be designed as a separate graph from the packages graph.
@@ -583,25 +644,30 @@ the reference build or be retired in the same staged migration.
 10. Add the second framework adapter edge with `@tsuzuru/vue` pointing to
     `@tsuzuru/core`, while preserving DOM lib, Vue peer dependency behavior,
     and `dist/index.*` publish layout.
-11. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
+11. Add the broader Preact UI package edge with
+    `@tsuzuru/standard-ui-preact` pointing to `@tsuzuru/core`, while preserving
+    JSX, DOM lib, Preact peer dependency behavior, CSS copy, `./style.css`
+    export, and `dist/index.*` publish layout.
+12. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
    it as a gate.
-12. If the package layout and publish-readiness checks remain stable, expand to
+13. If the package layout and publish-readiness checks remain stable, expand to
     the package graph.
-13. Treat the examples graph as a separate design.
+14. Treat the examples graph as a separate design.
 
 ## Next Migration Candidates
 
-1. `@tsuzuru/standard-ui-preact -> @tsuzuru/core`
-   - Reason: it is a Preact-facing UI package with `rootDir: "src"` /
-     `dist/index.*` layout and a broader exported component surface.
-   - Risk: it also depends on Preact UI types and CSS copy behavior.
+1. Formal `tsconfig.packages.json` design
+   - Reason: visual/audio, CLI, Preact, Vue, and Standard UI Preact now show
+     that explicit package references can coexist with package `exports.types`
+     resolution, bin publish layout, framework adapter `dist/index.*` layout,
+     and a CSS asset export.
+   - Risk: still needs an explicit decision about whether `build:self` delegates
+     to `tsc -b` or remains the release-readiness build strategy.
 2. Remaining standard plugin-to-core edges
    - Reason: useful to prove repeatability across more plugin packages.
    - Risk: diminishing returns now that visual and audio already cover the
      simple standard plugin shape.
-3. Formal `tsconfig.packages.json` design
-   - Reason: visual/audio, CLI, Preact, and Vue now show that explicit package
-     references can coexist with package `exports.types` resolution, bin publish
-     layout, and framework adapter `dist/index.*` layout.
-   - Risk: premature until the remaining package dependency edges and the
-     relationship between `build:self` and `tsc -b` are designed.
+3. Future browser package additions, such as `@tsuzuru/html` if introduced
+   - Reason: browser-facing packages should be classified into the package graph
+     or examples graph deliberately instead of inferred by naming.
+   - Risk: no such package exists today, so this remains a design placeholder.

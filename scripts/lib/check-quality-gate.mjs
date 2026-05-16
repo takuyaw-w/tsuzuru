@@ -8,6 +8,7 @@ const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
   { dir: "preact", name: "@tsuzuru/preact", testTsconfig: false },
   { dir: "vue", name: "@tsuzuru/vue", testTsconfig: false },
+  { dir: "standard-ui-preact", name: "@tsuzuru/standard-ui-preact", testTsconfig: false, styleCssExport: true },
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
 ];
@@ -18,6 +19,7 @@ const TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS = [
   { dir: "cli", name: "@tsuzuru/cli", referencePaths: ["../config", "../core"] },
   { dir: "preact", name: "@tsuzuru/preact", referencePaths: ["../core"] },
   { dir: "vue", name: "@tsuzuru/vue", referencePaths: ["../core"] },
+  { dir: "standard-ui-preact", name: "@tsuzuru/standard-ui-preact", referencePaths: ["../core"] },
 ];
 
 export function checkQualityGate(rootDir = process.cwd()) {
@@ -411,13 +413,23 @@ function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
     context.failures.push(`${sourceTsconfigPath} must not put tsBuildInfoFile under dist.`);
   }
 
+  const packageJsonPath = `packages/${pilotPackage.dir}/package.json`;
+  const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
+  const packageJson = existsSync(absolutePackageJsonPath) ? readJson(context.rootDir, packageJsonPath) : undefined;
+  if (pilotPackage.styleCssExport === true && packageJson !== undefined) {
+    const styleExport = packageJson.exports?.["./style.css"];
+    if (styleExport !== "./dist/style.css") {
+      context.failures.push(`${pilotPackage.name} package.json must export "./style.css" as "./dist/style.css".`);
+    }
+    if (!Array.isArray(packageJson.files) || !packageJson.files.includes("dist/style.css")) {
+      context.failures.push(`${pilotPackage.name} package.json files must include "dist/style.css".`);
+    }
+  }
+
   const testTsconfigPath = `packages/${pilotPackage.dir}/tsconfig.test.json`;
   const absoluteTestTsconfigPath = join(context.rootDir, testTsconfigPath);
   if (!testTsconfigRequired) {
-    const packageJsonPath = `packages/${pilotPackage.dir}/package.json`;
-    const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
-    if (existsSync(absolutePackageJsonPath)) {
-      const packageJson = readJson(context.rootDir, packageJsonPath);
+    if (packageJson !== undefined) {
       const typecheckSelf = packageJson.scripts?.["typecheck:self"];
       if (typeof typecheckSelf === "string" && !typecheckSelf.includes("--noEmit")) {
         context.failures.push(`${pilotPackage.name} script "typecheck:self" must use --noEmit for the source-only pilot.`);
@@ -439,13 +451,10 @@ function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
     context.failures.push(`${testTsconfigPath} must include tests for the ${pilotPackage.name} pilot.`);
   }
 
-  const packageJsonPath = `packages/${pilotPackage.dir}/package.json`;
-  const absolutePackageJsonPath = join(context.rootDir, packageJsonPath);
-  if (!existsSync(absolutePackageJsonPath)) {
+  if (packageJson === undefined) {
     return;
   }
 
-  const packageJson = readJson(context.rootDir, packageJsonPath);
   const typecheckSelf = packageJson.scripts?.["typecheck:self"];
   if (typeof typecheckSelf === "string" && !typecheckSelf.includes("tsconfig.test.json")) {
     context.failures.push(`${pilotPackage.name} script "typecheck:self" must use tsconfig.test.json.`);

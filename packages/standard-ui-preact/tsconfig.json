@@ -8,7 +8,10 @@
     "sourceMap": true,
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "composite": true,
+    "tsBuildInfoFile": ".tsbuildinfo/tsconfig.tsbuildinfo"
   },
+  "references": [{ "path": "../core" }],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
