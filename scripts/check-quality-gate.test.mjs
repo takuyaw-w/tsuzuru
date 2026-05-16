@@ -502,6 +502,91 @@ describe("checkQualityGate", () => {
       'root script "typecheck" must not wire tsconfig.packages.experimental.json into a formal quality gate.',
     );
   });
+
+  it("fails when packages:graph:check is missing", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      delete packageJson.scripts["packages:graph:check"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain('root package.json is missing script "packages:graph:check".');
+  });
+
+  it("fails when packages:graph:check does not use tsc build mode", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["packages:graph:check"] = "pnpm exec tsc -p tsconfig.packages.experimental.json --dry --verbose";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "packages:graph:check" does not include "pnpm exec tsc -b".',
+    );
+  });
+
+  it("fails when packages:graph:check omits dry or verbose validation", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["packages:graph:check"] = "pnpm exec tsc -b tsconfig.packages.experimental.json";
+    });
+
+    expect(checkQualityGate(root).failures).toContain('root script "packages:graph:check" does not include "--dry".');
+    expect(checkQualityGate(root).failures).toContain('root script "packages:graph:check" does not include "--verbose".');
+  });
+
+  it("fails when packages:graph:check mixes in artifact build work", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["packages:graph:check"] =
+        "pnpm packages:build && pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "packages:graph:check" must not include "packages:build".',
+    );
+  });
+
+  it("fails when packages:graph:check is mixed into typecheck", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts.typecheck =
+        "pnpm packages:build && pnpm packages:graph:check && pnpm packages:typecheck:self";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "typecheck" must not call packages:graph:check or the experimental package graph.',
+    );
+  });
+
+  it("fails when packages:graph:check is mixed into release readiness", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["release-readiness:check"] =
+        "pnpm packages:build && pnpm packages:graph:check && pnpm examples:check:self && pnpm run pack:dry-run && pnpm publish-readiness:check && pnpm run smoke:create-tsuzuru:local";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "release-readiness:check" must not call packages:graph:check or the experimental package graph.',
+    );
+  });
+
+  it("fails when release-readiness:check no longer starts with packages:build", async () => {
+    const root = await createFixtureRepo();
+    await writePackageCoreReferenceExperimentFiles(root);
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["release-readiness:check"] =
+        "pnpm examples:check:self && pnpm packages:build && pnpm run pack:dry-run && pnpm publish-readiness:check && pnpm run smoke:create-tsuzuru:local";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "release-readiness:check" must start with "pnpm packages:build".',
+    );
+  });
 });
 
 async function createFixtureRepo() {
@@ -532,6 +617,7 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/addon build:self",
         "pnpm --filter @fixture/core build:self",
       ].join(" && "),
+      "packages:graph:check": "pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose",
       "packages:typecheck:self": [
         "pnpm --filter @fixture/addon typecheck:self",
         "pnpm --filter @fixture/core typecheck:self",
@@ -582,6 +668,10 @@ async function createFixtureRepo() {
   await writeTreeInventoryDoc(root, "README.md");
   await writeTreeInventoryDoc(root, "docs/architecture.md");
   await writeTypeScriptBuildGraphPlan(root);
+  await writeJson(join(root, "tsconfig.packages.experimental.json"), {
+    files: [],
+    references: [],
+  });
 
   return root;
 }

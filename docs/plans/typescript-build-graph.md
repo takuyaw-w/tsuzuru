@@ -39,9 +39,10 @@ Tsuzuru monorepo.
   lib, `preact` peer dependency behavior, CSS copy, and `./style.css` export.
 - Other package `tsconfig.json` files do not use `composite`, `references`,
   `incremental`, or `tsBuildInfoFile`.
-- `tsconfig.packages.experimental.json` exists only as a manual dry-validation
-  reference list for current pilots. It is not called from root scripts, CI, or
-  release-readiness.
+- `tsconfig.packages.experimental.json` exists as a dry-validation reference
+  list for current pilots. It is exposed through `packages:graph:check` for
+  explicit local dependency graph validation, but is not called from CI,
+  `typecheck`, or release-readiness.
 - Root `packages:build` builds public publishable packages in explicit order
   with package `build:self` scripts.
 - Root `packages:typecheck:self` runs public package `typecheck:self` scripts
@@ -545,24 +546,26 @@ It references the current composite pilots:
 - `packages/plugin-std-visual`
 - `packages/plugin-std-audio`
 
-This file is intentionally not wired into root scripts, CI, `check`, `typecheck`,
-or `release-readiness:check`. The graph can now include core and config as
-addressable composite projects, visual/audio explicitly reference core, CLI
-explicitly references config/core, and Preact/Vue/Standard UI Preact explicitly
-reference core. It is still not a complete package dependency graph because the
-other workspace package dependency edges have not been designed or validated.
-Today the pilots still resolve workspace imports through package output under
-`dist`, matching the release-readiness flow.
+This file is intentionally wired only to the explicit
+`packages:graph:check` root script. It is not wired into CI, `check`,
+`typecheck`, or `release-readiness:check`. The graph can now include core and
+config as addressable composite projects, visual/audio explicitly reference
+core, CLI explicitly references config/core, and Preact/Vue/Standard UI Preact
+explicitly reference core. It is still not a complete package dependency graph
+because the other workspace package dependency edges have not been designed or
+validated. Today the pilots still resolve workspace imports through package
+output under `dist`, matching the release-readiness flow.
 
 Manual dry validation may be run with:
 
 ```sh
-pnpm exec tsc -b tsconfig.packages.experimental.json --dry
-pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose
+pnpm packages:graph:check
 ```
 
-This validates that the current pilot projects can be addressed by `tsc -b`,
-and that the explicit visual/audio/preact/vue/standard-ui-preact-to-core and
+`packages:graph:check` runs
+`pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose`. This
+validates that the current pilot projects can be addressed by `tsc -b`, and
+that the explicit visual/audio/preact/vue/standard-ui-preact-to-core and
 cli-to-config/core edges affect build order. It must not be interpreted as a
 complete monorepo build graph until the remaining package dependency references
 are added deliberately and their package-import behavior is checked.
@@ -592,10 +595,12 @@ emit. It does not guarantee:
 
 Therefore `release-readiness:check`, `pack:dry-run`, and
 `publish-readiness:check` remain required distribution validation even after a
-formal packages graph exists. A future `tsconfig.packages.json` can become a
-formal graph validation input only after it is dependency-complete for the
-publishable package set and its checks are explicitly scoped as validation, not
-as a replacement for `packages:build`.
+formal packages graph exists. `packages:graph:check` is the explicit local
+script for the current dependency graph validation experiment; it is not an
+artifact build and does not replace `packages:build`. A future
+`tsconfig.packages.json` can become a formal graph validation input only after
+it is dependency-complete for the publishable package set and its checks are
+explicitly scoped as validation, not as a replacement for `packages:build`.
 
 Conditions before promoting `tsconfig.packages.experimental.json` to a formal
 `tsconfig.packages.json`:
@@ -615,6 +620,8 @@ Conditions before promoting `tsconfig.packages.experimental.json` to a formal
   emitted package contents.
 - The formal graph's root-script integration point is named and scoped as graph
   validation, not as package artifact generation.
+- CI integration has been explicitly chosen. Today `packages:graph:check` stays
+  out of CI because the experimental graph is still pilot-only.
 
 ## Publish Layout Constraints
 
@@ -638,9 +645,10 @@ the reference build or be retired in the same staged migration.
 
 ## Decision for now
 
-- `tsc -b` remains manual-only, but the
+- `tsc -b` is exposed through the explicit `packages:graph:check` script for
+  local dependency graph validation, but the
   visual/audio/preact/vue/standard-ui-preact-to-core and cli-to-config/core
-  project reference edges are now present as isolated pilots.
+  project reference edges remain isolated pilots.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy. `build:self` remains responsible for package artifacts and
   package-local non-TypeScript build steps. `tsc -b` is treated as dependency
@@ -665,11 +673,12 @@ the reference build or be retired in the same staged migration.
 - `.tsbuildinfo` should stay in package-local `.tsbuildinfo/` cache directories,
   not under `dist`.
 - Examples should be designed as a separate graph from the packages graph.
-- `tsconfig.packages.experimental.json` remains a manual experiment. It should
-  not become a root script, CI, `typecheck`, or `release-readiness:check` gate
-  yet because it covers only current pilots, not the complete package dependency
-  graph, and because the existing release flow still depends on explicit
-  package-order builds plus package `exports.types` declaration output.
+- `tsconfig.packages.experimental.json` remains an experimental graph input. It
+  is used by `packages:graph:check`, but it should not become a CI,
+  `typecheck`, or `release-readiness:check` gate yet because it covers only
+  current pilots, not the complete package dependency graph, and because the
+  existing release flow still depends on explicit package-order builds plus
+  package `exports.types` declaration output.
 
 ## Migration steps
 
@@ -683,8 +692,9 @@ the reference build or be retired in the same staged migration.
    a workspace dependency on `@tsuzuru/core`. `@tsuzuru/plugin-std-visual` was
    the initial dependency-edge pilot, and `@tsuzuru/plugin-std-audio` is the
    second plugin-to-core edge.
-6. Keep `tsconfig.packages.experimental.json` manual-only and use it for dry
-   validation, not as a release gate.
+6. Keep `tsconfig.packages.experimental.json` as dry validation, not as a
+   release gate. `packages:graph:check` is the explicit root script for this
+   validation.
 7. Prepare `@tsuzuru/core` as a composite reference target before treating the
    graph as dependency-complete.
 8. Add a higher-risk CLI package edge to `@tsuzuru/config` and `@tsuzuru/core`
@@ -702,8 +712,8 @@ the reference build or be retired in the same staged migration.
 12. Define the formal package graph responsibility before wiring it into root
     scripts. The graph should validate TypeScript package dependency order; it
     should not replace `build:self` as the release artifact build.
-13. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
-    it as a gate.
+13. Run `packages:graph:check` as `tsc -b --dry --verbose` graph validation
+    before using it as any broader gate.
 14. If the package layout and publish-readiness checks remain stable, expand to
     the package graph.
 15. Treat the examples graph as a separate design.

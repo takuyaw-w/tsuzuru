@@ -22,6 +22,8 @@ const TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS = [
   { dir: "standard-ui-preact", name: "@tsuzuru/standard-ui-preact", referencePaths: ["../core"] },
 ];
 
+const TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG = "tsconfig.packages.experimental.json";
+
 export function checkQualityGate(rootDir = process.cwd()) {
   const failures = [];
   const rootPackageJson = readJson(rootDir, "package.json");
@@ -60,6 +62,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertPublicBuildablePackagesHaveSelfBuild(context);
   assertPublicTypecheckablePackagesHaveSelfTypecheck(context);
   assertScriptCovers(context, "packages:build", publicBuildablePackageNames, "build:self");
+  assertPackagesGraphCheckScript(context);
   assertScriptCovers(context, "packages:typecheck:self", publicTypecheckablePackageNames, "typecheck:self");
   assertRootTypecheckScript(context);
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
@@ -109,6 +112,10 @@ function assertRootTypecheckScript(context) {
     return;
   }
 
+  if (script.includes("packages:graph:check") || script.includes(TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG)) {
+    context.failures.push('root script "typecheck" must not call packages:graph:check or the experimental package graph.');
+  }
+
   let previousIndex = -1;
   for (const expected of ["pnpm packages:build", "pnpm packages:typecheck:self"]) {
     const index = script.indexOf(expected);
@@ -130,6 +137,16 @@ function assertReleaseReadinessScript(context) {
     return;
   }
 
+  if (!script.trim().startsWith("pnpm packages:build")) {
+    context.failures.push('root script "release-readiness:check" must start with "pnpm packages:build".');
+  }
+
+  if (script.includes("packages:graph:check") || script.includes(TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG)) {
+    context.failures.push(
+      'root script "release-readiness:check" must not call packages:graph:check or the experimental package graph.',
+    );
+  }
+
   let previousIndex = -1;
   for (const expected of [
     "pnpm packages:build",
@@ -147,6 +164,36 @@ function assertReleaseReadinessScript(context) {
       context.failures.push(`root script "release-readiness:check" must run "${expected}" after earlier release checks.`);
     }
     previousIndex = index;
+  }
+}
+
+function assertPackagesGraphCheckScript(context) {
+  const scripts = context.rootPackageJson.scripts ?? {};
+  const script = scripts["packages:graph:check"];
+  if (script === undefined) {
+    context.failures.push('root package.json is missing script "packages:graph:check".');
+    return;
+  }
+
+  for (const expected of ["pnpm exec tsc -b", TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG, "--dry", "--verbose"]) {
+    if (!script.includes(expected)) {
+      context.failures.push(`root script "packages:graph:check" does not include "${expected}".`);
+    }
+  }
+
+  if (!existsSync(join(context.rootDir, TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG))) {
+    context.failures.push(`${TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG} is missing for packages:graph:check.`);
+  }
+
+  for (const forbidden of ["packages:build", "build:self", "pack:dry-run", "publish-readiness:check"]) {
+    if (script.includes(forbidden)) {
+      context.failures.push(`root script "packages:graph:check" must not include "${forbidden}".`);
+    }
+  }
+
+  const packagesBuild = scripts["packages:build"] ?? "";
+  if (packagesBuild.includes("tsc -b") || packagesBuild.includes(TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG)) {
+    context.failures.push('root script "packages:build" must remain an artifact build and must not use packages graph validation.');
   }
 }
 
@@ -337,7 +384,7 @@ function assertTypeScriptBuildGraphReferenceExperiment(context) {
     }
   }
 
-  const experimentalTsconfigPath = "tsconfig.packages.experimental.json";
+  const experimentalTsconfigPath = TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG;
   const absoluteExperimentalTsconfigPath = join(context.rootDir, experimentalTsconfigPath);
   if (!existsSync(absoluteExperimentalTsconfigPath)) {
     context.failures.push(`${experimentalTsconfigPath} is missing for the TypeScript build graph reference experiment.`);
@@ -362,6 +409,9 @@ function assertTypeScriptBuildGraphReferenceExperiment(context) {
 
   for (const [scriptName, script] of Object.entries(context.rootPackageJson.scripts ?? {})) {
     if (script.includes(experimentalTsconfigPath)) {
+      if (scriptName === "packages:graph:check") {
+        continue;
+      }
       context.failures.push(
         `root script "${scriptName}" must not wire ${experimentalTsconfigPath} into a formal quality gate.`,
       );

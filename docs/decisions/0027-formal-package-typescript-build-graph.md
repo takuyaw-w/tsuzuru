@@ -39,8 +39,9 @@ Use `tsc -b` as package TypeScript graph validation:
 - observe package import and declaration resolution behavior
 
 Do not rename or promote `tsconfig.packages.experimental.json` to
-`tsconfig.packages.json` yet. Do not connect it to root scripts, CI,
-`typecheck`, or `release-readiness:check` yet.
+`tsconfig.packages.json` yet. The experimental graph may be exposed through the
+explicit root script `packages:graph:check`, but that script is graph validation
+only. Do not connect it to CI, `typecheck`, or `release-readiness:check` yet.
 
 When a formal `tsconfig.packages.json` is introduced, its first responsibility
 should be graph validation. It should not silently replace `packages:build` or
@@ -67,6 +68,26 @@ compiler:
 Keeping `build:self` and `tsc -b` separate lets the project add formal graph
 validation without weakening release and publish validation.
 
+`packages:graph:check` runs:
+
+```sh
+pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose
+```
+
+This makes the dependency-order validation easy to run locally without implying
+that the graph emits release artifacts. `--dry` is part of the contract: the
+script should report TypeScript build graph order and out-of-date status, not
+produce package artifacts.
+
+`release-readiness:check` stays focused on distribution validation and continues
+to run `packages:build`, example self checks, `pack:dry-run`,
+`publish-readiness:check`, and the local create-tsuzuru smoke. It does not call
+`packages:graph:check`.
+
+CI does not call `packages:graph:check` yet. The current graph is still a pilot
+graph rather than a dependency-complete package graph, so a CI failure would be
+too easy to misread as a release artifact failure.
+
 ## Formalization Criteria
 
 `tsconfig.packages.experimental.json` can be promoted only when:
@@ -83,6 +104,8 @@ validation without weakening release and publish validation.
   `publish-readiness:check`, and `release-readiness:check` continue to pass
 - the root script or CI entry point is named as graph validation rather than
   release artifact generation
+- a follow-up decision explicitly chooses whether `packages:graph:check` stays
+  local-only or becomes part of CI quality-fast
 
 ## Consequences
 
