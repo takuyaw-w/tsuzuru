@@ -7,6 +7,7 @@
     { "path": "./packages/plugin-std-visual" },
     { "path": "./packages/plugin-std-audio" },
     { "path": "./packages/cli" },
-    { "path": "./packages/preact" }
+    { "path": "./packages/preact" },
+    { "path": "./packages/vue" }
   ]
 }
