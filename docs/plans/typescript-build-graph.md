@@ -567,6 +567,55 @@ cli-to-config/core edges affect build order. It must not be interpreted as a
 complete monorepo build graph until the remaining package dependency references
 are added deliberately and their package-import behavior is checked.
 
+### Formal packages graph design direction
+
+The next design step is not to replace package builds with `tsc -b`. The
+near-term package graph should separate two responsibilities:
+
+- `build:self` remains the release and publish build responsibility. It emits
+  package artifacts, runs package-local non-TypeScript build steps, and preserves
+  each package's `types`, `exports`, `files`, `bin`, and `dist` layout.
+- `tsc -b` is a package graph validation responsibility. It should validate that
+  composite package projects are addressable, that explicit references describe
+  dependency order, and that package imports still resolve against the expected
+  declaration output.
+
+This separation matters because `tsc -b` only understands TypeScript project
+emit. It does not guarantee:
+
+- CSS copy steps such as `@tsuzuru/standard-ui-preact` copying
+  `src/style.css` to `dist/style.css`
+- template file copy or generated starter layout behavior in `create-tsuzuru`
+- CLI `bin` targets such as `tsuzuru` pointing at `dist/src/index.js`
+- package `exports` and `files` allowlists matching the packed tarball
+- publish artifacts being complete after non-TypeScript build work
+
+Therefore `release-readiness:check`, `pack:dry-run`, and
+`publish-readiness:check` remain required distribution validation even after a
+formal packages graph exists. A future `tsconfig.packages.json` can become a
+formal graph validation input only after it is dependency-complete for the
+publishable package set and its checks are explicitly scoped as validation, not
+as a replacement for `packages:build`.
+
+Conditions before promoting `tsconfig.packages.experimental.json` to a formal
+`tsconfig.packages.json`:
+
+- Every publishable package that participates in the package graph has a
+  source-only composite tsconfig with package-local `.tsbuildinfo` outside
+  `dist`.
+- Every workspace package dependency in the publishable package set has an
+  explicit project reference or a documented reason to stay outside the graph.
+- `pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose`
+  explains the expected package order and does not reveal hidden dependency
+  order assumptions.
+- Node package import resolution still goes through the intended package
+  declaration paths such as `dist/src/index.d.ts` or `dist/index.d.ts`.
+- `packages:build`, `packages:typecheck:self`, `pack:dry-run`,
+  `publish-readiness:check`, and `release-readiness:check` continue to validate
+  emitted package contents.
+- The formal graph's root-script integration point is named and scoped as graph
+  validation, not as package artifact generation.
+
 ## Publish Layout Constraints
 
 The current packages publish types from existing `dist` paths:
@@ -593,7 +642,9 @@ the reference build or be retired in the same staged migration.
   visual/audio/preact/vue/standard-ui-preact-to-core and cli-to-config/core
   project reference edges are now present as isolated pilots.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
-  build strategy.
+  build strategy. `build:self` remains responsible for package artifacts and
+  package-local non-TypeScript build steps. `tsc -b` is treated as dependency
+  graph validation, not as the artifact build source of truth.
 - Root `test` keeps the same clean-checkout assumption as root `typecheck`:
   build public package `dist` output before running package tests that resolve
   workspace imports through package `exports`.
@@ -648,11 +699,14 @@ the reference build or be retired in the same staged migration.
     `@tsuzuru/standard-ui-preact` pointing to `@tsuzuru/core`, while preserving
     JSX, DOM lib, Preact peer dependency behavior, CSS copy, `./style.css`
     export, and `dist/index.*` publish layout.
-12. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
-   it as a gate.
-13. If the package layout and publish-readiness checks remain stable, expand to
+12. Define the formal package graph responsibility before wiring it into root
+    scripts. The graph should validate TypeScript package dependency order; it
+    should not replace `build:self` as the release artifact build.
+13. Run an equivalent of `tsc -b --dry` / no-emit graph validation before using
+    it as a gate.
+14. If the package layout and publish-readiness checks remain stable, expand to
     the package graph.
-14. Treat the examples graph as a separate design.
+15. Treat the examples graph as a separate design.
 
 ## Next Migration Candidates
 
@@ -660,9 +714,11 @@ the reference build or be retired in the same staged migration.
    - Reason: visual/audio, CLI, Preact, Vue, and Standard UI Preact now show
      that explicit package references can coexist with package `exports.types`
      resolution, bin publish layout, framework adapter `dist/index.*` layout,
-     and a CSS asset export.
-   - Risk: still needs an explicit decision about whether `build:self` delegates
-     to `tsc -b` or remains the release-readiness build strategy.
+     and a CSS asset export. The next formal graph should validate dependency
+     order while leaving `build:self` responsible for release artifacts.
+   - Risk: the experimental graph is still not dependency-complete for all
+     publishable packages, and the root-script integration point for graph
+     validation has not been named.
 2. Remaining standard plugin-to-core edges
    - Reason: useful to prove repeatability across more plugin packages.
    - Risk: diminishing returns now that visual and audio already cover the
