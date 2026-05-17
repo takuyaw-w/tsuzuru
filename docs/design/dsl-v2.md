@@ -25,6 +25,10 @@ Current implementation note:
 - Some syntax remains parser-only, design-only, or unsupported at runtime. Use
   the support matrix to distinguish current stable candidates from deferred
   syntax.
+- Editor tooling such as syntax highlighting, VS Code extension support, LSP
+  diagnostics, and GUI editor features is optional tooling. It is not part of
+  the v1.0 engine release gate, and future editor grammars should follow the
+  support matrix.
 
 ---
 
@@ -35,7 +39,8 @@ Tsuzuru DSL v2 is an ASCII-first, indentation-based DSL for visual novel scenari
 The goals are:
 
 - Keep scenario files readable as scripts.
-- Keep the grammar strict enough to parse, validate, compile, and support editor tooling.
+- Keep the grammar strict enough to parse, validate, compile, and allow future
+  editor tooling.
 - Treat scenes as the primary control-flow unit.
 - Treat dialogue and narration as first-class syntax.
 - Avoid raw JavaScript / TypeScript execution in scenario files.

@@ -36,8 +36,7 @@ The v1.0 stable candidate is the plain, compile-supported DSL subset:
 - timed `wait <durationMs>`
 - standard plugin sugar that compiles to registered plugin commands
 
-The main DSL gaps before v1.0 are not parser features. They are support-scope
-decisions:
+The main non-stable DSL areas are explicitly post-v1.0 or optional tooling:
 
 - rich inline markup and text block controls are parser-only today and are
   explicitly not part of the v1.0 stable subset
@@ -48,7 +47,7 @@ decisions:
   coordinate placement remains parser-only
 - statement-level audio commands (`bgm`, `stopBgm`, `se`, `voice`) are the
   v1.0 target; audio transition syntax remains design-only
-- editor / syntax highlighting scope is not implemented
+- editor / syntax highlighting is optional tooling, not a v1.0 release blocker
 
 For v1.0, plain narration, dialogue, and `say` text are the stable text
 authoring target. Rich text, inline events, blank-line click waits, page breaks,
@@ -65,6 +64,12 @@ x=... y=...` remains post-v1.0 renderer coordinate policy work.
 For v1.0 audio, `bgm`, `stopBgm`, `se`, and `voice` are the stable std-audio
 target. `bgm ... with fadeIn(...)` and `stopBgm with fadeOut(...)` remain
 post-v1.0 audio-layer timing and save/load design work.
+
+For v1.0 editor support, DSL semantics are defined by parser, compiler,
+runtime/plugin behavior, docs, examples, and tests. Syntax highlighting, VS Code
+extension work, LSP diagnostics, and GUI editor support are optional tooling and
+may ship independently after engine v1.0. Future editor grammars should track
+this matrix instead of defining a separate supported syntax.
 
 ## Core DSL Matrix
 
@@ -147,10 +152,9 @@ templates, and user-facing syntax docs except as clearly historical context.
 
 ## v1.0 Blockers
 
-Before v1.0, the DSL support decision should close these items:
-
-1. Decide whether editor / syntax highlighting is a v1.0 blocker or a
-   post-v1.0 improvement.
+There are no unresolved DSL support-scope blockers in this matrix. Remaining
+v1.0 blockers are tracked in
+[`v1.0-release-gate.md`](../plans/v1.0-release-gate.md).
 
 Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
 rich inline text, inline waits, inline audio events) are not part of the v1.0
@@ -161,6 +165,8 @@ Visual coordinate placement is also not part of the v1.0 stable subset; preset
 std-visual placement remains plugin-dependent.
 Audio transitions are also not part of the v1.0 stable subset; statement-level
 std-audio commands remain plugin-dependent.
+Editor / syntax highlighting is not a v1.0 blocker; it remains optional tooling
+that should follow this matrix.
 
 ## Recommended Issues
 
@@ -220,12 +226,15 @@ std-audio commands remain plugin-dependent.
 - Risk: transition timing and in-progress restore behavior can constrain host
   audio implementations too early.
 
-### 5. Scope editor and syntax highlighting for v1.0
+### 5. Track editor and syntax highlighting support after v1.0
 
-- Purpose: decide whether `.tzr` editor support is required for v1.0.
-- Scope: syntax grammar, VS Code extension decision, docs, and release gate
-  classification.
-- Done when: v1.0 docs say whether editor support is a blocker or post-v1.0.
+- Purpose: improve `.tzr` authoring UX without making engine v1.0 depend on
+  editor tooling.
+- Scope: syntax grammar, VS Code extension decision, optional LSP diagnostics,
+  snippets, docs, release cadence, and keeping editor grammar aligned with this
+  support matrix.
+- Done when: editor tooling has an implementation plan or separate release
+  vehicle, and docs explain how its grammar follows the v1.0 DSL subset.
 - Suggested checks: docs-only `pnpm check`.
-- Risk: adding editor tooling can expand release scope beyond runtime/package
-  readiness.
+- Risk: editor grammar can drift from parser/compiler behavior if it is not
+  validated against the matrix.

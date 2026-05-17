@@ -86,6 +86,12 @@ not implemented at runtime. Treat `examples/preact-basic` as the current
 runnable reference, and use the support matrix to distinguish v1.0 stable
 candidates from deferred syntax.
 
+The v1.0 DSL scope is about parser, compiler, runtime/plugin behavior, docs,
+examples, and tests. Editor tooling such as syntax highlighting, VS Code
+extensions, LSP diagnostics, or GUI editor support is optional and does not
+block authoring or running `.tzr` scenarios. Future editor tooling should follow
+the support matrix rather than defining a separate stable syntax.
+
 Current state authoring supports string, number, boolean, and `null` values:
 
 ```txt
