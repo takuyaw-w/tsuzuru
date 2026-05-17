@@ -7,6 +7,8 @@
 
 This document is a short entry point for the currently supported `.tzr` syntax.
 For the fuller design notes, see [`docs/design/dsl-v2.md`](design/dsl-v2.md).
+For the v1.0 stable-scope planning matrix, see
+[`docs/design/dsl-support-matrix.md`](design/dsl-support-matrix.md).
 For runnable code, see [`examples/preact-basic`](../examples/preact-basic/).
 
 ## Current API
@@ -68,11 +70,14 @@ The currently implemented runnable subset covers:
 - `wait 1000` timed waits in milliseconds
 - std visual sugar: `bg`, `show`, `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
+- std effect, camera, particle, text sound, and system plugin commands in the
+  ranges listed by the support matrix
 - `end`
 
-Some design-level syntax in `docs/design/design/dsl-v2.md` may still be parser-only
-or not implemented at runtime. Treat `examples/preact-basic` as the current
-runnable reference.
+Some design-level syntax in `docs/design/dsl-v2.md` may still be parser-only or
+not implemented at runtime. Treat `examples/preact-basic` as the current
+runnable reference, and use the support matrix to distinguish v1.0 stable
+candidates from deferred syntax.
 
 Current state authoring supports string, number, boolean, and `null` values:
 

@@ -2,11 +2,15 @@
 
 ## Status
 
-Current supported DSL path on `feature/new-dsl`, still experimental.
+DSL v2 is the current supported scenario authoring path on `main`.
 
-This document defines the current design direction for Tsuzuru DSL v2.
+This document defines the current design direction for Tsuzuru DSL v2. The
+v1.0 stable subset is tracked separately in
+[`dsl-support-matrix.md`](dsl-support-matrix.md).
 
-DSL v2 is not a small extension of the old DSL. It is the current scenario authoring syntax path on this branch and is implemented experimentally while keeping the existing runtime, plugin architecture, and shared instruction model reusable.
+DSL v2 is not a small extension of the old DSL. It is the current scenario
+authoring syntax path and keeps the existing runtime, plugin architecture, and
+shared instruction model reusable.
 
 Current implementation note:
 
@@ -14,8 +18,13 @@ Current implementation note:
 - Current `parseTzr` / `compileTzr` APIs are exported from `@tsuzuru/core`.
 - The old DSL parser/compiler previously associated with these names, legacy AST, legacy compiler, and macro API were removed during the DSL v2 cleanup.
 - A runnable example exists at [`examples/preact-basic`](../../../examples/preact-basic/).
-- Compile/runtime support covers a practical subset including scenes, narration, dialogue, scene jumps, choices, conditional choices, `if`, state updates, `end`, and std visual/audio sugar.
-- Some syntax remains parser-only, draft-only, or unsupported at runtime.
+- Compile/runtime support covers a practical subset including scenes,
+  narration, dialogue, scene jumps, choices, conditional choices, `if`, state
+  updates, `end`, timed waits, and the standard plugin sugar listed in the
+  support matrix.
+- Some syntax remains parser-only, design-only, or unsupported at runtime. Use
+  the support matrix to distinguish current stable candidates from deferred
+  syntax.
 
 ---
 
@@ -1373,29 +1382,34 @@ CoordinatePlacement
 
 Audio statements are sugar for `@tsuzuru/plugin-std-audio`.
 
+Current v1.0 stable candidates are `bgm <assetRef>`, `stopBgm`, `se <assetRef>`,
+and `voice <assetRef>`. Audio transition syntax such as `bgm ... with
+fadeIn(...)` and `stopBgm with fadeOut(...)` remains design-only until parser,
+compiler, plugin, and renderer behavior are implemented together.
+
 ### 23.1 BGM
 
 ```txt
 bgm rainLoop
-bgm rainLoop with fadeIn(duration=1000)
 ```
 
 Rules:
 
 - `bgm` is always treated as looped background music.
 - `loop` option is not supported.
-- `bgm` may use `fadeIn`.
+- `bgm ... with fadeIn(...)` remains design-only and is not current stable
+  syntax.
 
 ### 23.2 Stop BGM
 
 ```txt
 stopBgm
-stopBgm with fadeOut(duration=1000)
 ```
 
 Rules:
 
-- `stopBgm` may use `fadeOut`.
+- `stopBgm ... with fadeOut(...)` remains design-only and is not current
+  stable syntax.
 
 ### 23.3 SE / Voice
 
@@ -1470,6 +1484,10 @@ AudioTransitionOpt
 AudioTransitionCall
   ::= IDENT "(" NamedArgsOpt ")"
 ```
+
+`AudioTransitionOpt` is retained here as a design fragment only. Current parser
+and compiler support the no-transition audio statements listed in the support
+matrix.
 
 ### 23.6 Audio Transition Validation
 
