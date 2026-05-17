@@ -2,7 +2,7 @@
 
 import { execFile, spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -59,6 +59,7 @@ async function packWorkspacePackage(packageName, destinationDir, cwd) {
   console.log(`> pack local ${packageName}`);
   console.log(`$ pnpm --filter ${packageName} pack --json --pack-destination ${destinationDir}`);
 
+  const entriesBeforePack = new Set(await readdir(destinationDir));
   let stdout;
   try {
     ({ stdout } = await execFileAsync(
@@ -74,11 +75,27 @@ async function packWorkspacePackage(packageName, destinationDir, cwd) {
     throw new Error(`pack local ${packageName} failed: ${message}`);
   }
 
+  if (stdout.trim().length === 0) {
+    return findCreatedTarball(destinationDir, entriesBeforePack, packageName);
+  }
+
   const parsed = JSON.parse(stdout);
   if (typeof parsed.filename !== "string") {
     throw new Error(`pack local ${packageName} did not return a tarball filename.`);
   }
   return parsed.filename;
+}
+
+async function findCreatedTarball(destinationDir, entriesBeforePack, packageName) {
+  const createdTarballs = (await readdir(destinationDir))
+    .filter((entry) => !entriesBeforePack.has(entry))
+    .filter((entry) => entry.endsWith(".tgz"));
+
+  if (createdTarballs.length !== 1) {
+    throw new Error(`pack local ${packageName} did not return JSON and produced ${createdTarballs.length} new tarball(s).`);
+  }
+
+  return join(destinationDir, createdTarballs[0]);
 }
 
 async function rewriteGeneratedTsuzuruDependencies(projectDir, tarballDir, rootDir) {
@@ -97,14 +114,69 @@ async function rewriteGeneratedTsuzuruDependencies(projectDir, tarballDir, rootD
         continue;
       }
 
-      if (!tarballs.has(packageName)) {
-        tarballs.set(packageName, await packWorkspacePackage(packageName, tarballDir, rootDir));
-      }
-      dependencies[packageName] = `file:${tarballs.get(packageName)}`;
+      dependencies[packageName] = `file:${await getWorkspacePackageTarball(packageName, tarballs, tarballDir, rootDir)}`;
+    }
+  }
+
+  await rewritePackedTsuzuruDependencies(tarballs);
+
+  if (tarballs.size > 0) {
+    packageJson.pnpm = packageJson.pnpm ?? {};
+    packageJson.pnpm.overrides = packageJson.pnpm.overrides ?? {};
+    for (const [packageName, tarballPath] of tarballs) {
+      packageJson.pnpm.overrides[packageName] = `file:${tarballPath}`;
     }
   }
 
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+}
+
+async function getWorkspacePackageTarball(packageName, tarballs, tarballDir, rootDir) {
+  if (!tarballs.has(packageName)) {
+    tarballs.set(packageName, await packWorkspacePackage(packageName, tarballDir, rootDir));
+  }
+  return tarballs.get(packageName);
+}
+
+async function rewritePackedTsuzuruDependencies(tarballs) {
+  for (const tarballPath of tarballs.values()) {
+    const extractDir = await mkdtemp(join(tmpdir(), "tsuzuru-local-tarball-"));
+
+    try {
+      await execFileAsync("tar", ["-xzf", tarballPath, "-C", extractDir], {
+        maxBuffer: 1024 * 1024 * 10,
+      });
+
+      const packageJsonPath = join(extractDir, "package", "package.json");
+      const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
+      let changed = false;
+
+      for (const dependencyBlock of ["dependencies", "devDependencies", "optionalDependencies"]) {
+        const dependencies = packageJson[dependencyBlock];
+        if (dependencies === undefined) {
+          continue;
+        }
+
+        for (const packageName of Object.keys(dependencies)) {
+          const dependencyTarballPath = tarballs.get(packageName);
+          if (dependencyTarballPath === undefined) {
+            continue;
+          }
+          dependencies[packageName] = `file:${dependencyTarballPath}`;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+        await execFileAsync("tar", ["-czf", tarballPath, "-C", extractDir, "package"], {
+          maxBuffer: 1024 * 1024 * 10,
+        });
+      }
+    } finally {
+      await rm(extractDir, { recursive: true, force: true });
+    }
+  }
 }
 
 async function pathExists(path) {

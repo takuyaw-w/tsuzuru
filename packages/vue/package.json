@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/vue",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Vue runtime adapter and convenience runtime view for Tsuzuru.",
   "license": "MIT",
   "type": "module",

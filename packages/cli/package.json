@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/cli",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Command line tools for checking Tsuzuru projects.",
   "license": "MIT",
   "type": "module",

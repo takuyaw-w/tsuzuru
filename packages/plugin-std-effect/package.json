@@ -1,6 +1,6 @@
 {
   "name": "@tsuzuru/plugin-std-effect",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Standard one-shot effect plugin state and command handlers for Tsuzuru.",
   "license": "MIT",
   "type": "module",

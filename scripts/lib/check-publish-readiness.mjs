@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -128,6 +128,7 @@ export function readPublicPackageEntries(rootDir = process.cwd()) {
 }
 
 async function packPackageWithPnpm(rootDir, packageEntry, tempDir) {
+  const entriesBeforePack = new Set(await readdir(tempDir));
   let stdout;
   try {
     ({ stdout } = await execFileAsync(
@@ -142,11 +143,38 @@ async function packPackageWithPnpm(rootDir, packageEntry, tempDir) {
     throw new Error(error instanceof Error ? error.message : String(error));
   }
 
+  if (stdout.trim().length === 0) {
+    const tarballPath = await findCreatedTarball(tempDir, entriesBeforePack, packageEntry.name);
+    return {
+      entries: await listTarballEntries(tarballPath),
+      tarballPath,
+    };
+  }
+
   const packResult = parsePackJson(stdout, packageEntry.name);
   return {
     entries: packResult.files.map((file) => file.path),
     tarballPath: packResult.filename,
   };
+}
+
+async function findCreatedTarball(tempDir, entriesBeforePack, packageName) {
+  const createdTarballs = (await readdir(tempDir))
+    .filter((entry) => !entriesBeforePack.has(entry))
+    .filter((entry) => entry.endsWith(".tgz"));
+
+  if (createdTarballs.length !== 1) {
+    throw new Error(`${packageName} pack did not return JSON and produced ${createdTarballs.length} new tarball(s)`);
+  }
+
+  return join(tempDir, createdTarballs[0]);
+}
+
+async function listTarballEntries(tarballPath) {
+  const { stdout } = await execFileAsync("tar", ["-tzf", tarballPath], {
+    maxBuffer: 1024 * 1024 * 10,
+  });
+  return stdout.split(/\r?\n/).filter(Boolean);
 }
 
 function formatPackFailure(packageName, error) {
