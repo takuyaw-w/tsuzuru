@@ -186,7 +186,7 @@ button {
 }
 
 .app__message-layer .tzr-message-window {
-  --app-message-window-height: clamp(136px, 24%, 178px);
+  --app-message-window-height: clamp(154px, 25%, 190px);
 
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);
@@ -222,6 +222,7 @@ button {
 .app__message-layer .tzr-message-window__lines {
   gap: 8px;
   height: calc(3.5em + 8px);
+  min-height: 0;
   align-content: start;
   overflow: hidden;
 }

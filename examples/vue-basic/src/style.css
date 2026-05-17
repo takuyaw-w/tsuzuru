@@ -125,7 +125,7 @@ button:disabled {
 .runtime-screen {
   isolation: isolate;
   --message-window-bottom: 24px;
-  --message-window-height: 148px;
+  --message-window-height: 160px;
   --message-window-inset-x: 24px;
   --message-window-choice-gap: 24px;
   background: #0e1721;
@@ -324,6 +324,7 @@ button:disabled {
 .message-window__lines {
   display: grid;
   height: 3.56em;
+  min-height: 0;
   align-content: start;
   overflow: hidden;
 }
@@ -538,9 +539,9 @@ button:disabled {
 @media (max-width: 720px) {
   .runtime-screen {
     --message-window-bottom: 12px;
-    --message-window-height: 132px;
+    --message-window-height: 148px;
     --message-window-inset-x: 12px;
-    --message-window-choice-gap: 26px;
+    --message-window-choice-gap: 16px;
   }
 
   .runtime-control-bar {

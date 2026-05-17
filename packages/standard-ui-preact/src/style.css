@@ -5,7 +5,7 @@
   --tzr-standard-ui-window-bg: rgba(0, 0, 0, 0.72);
   --tzr-standard-ui-window-border: rgba(255, 255, 255, 0.32);
   --tzr-standard-ui-accent-color: #fff;
-  --tzr-standard-ui-message-window-height: 148px;
+  --tzr-standard-ui-message-window-height: 160px;
   --tzr-standard-ui-message-lines-height: calc(3.4em + 6px);
 }
 
@@ -57,6 +57,7 @@
   display: grid;
   gap: 6px;
   height: var(--tzr-standard-ui-message-lines-height);
+  min-height: 0;
   align-content: start;
   overflow: hidden;
 }
