@@ -198,6 +198,40 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when an example is missing a browser UI smoke script", async () => {
+    const root = await createFixtureRepo();
+    await mutatePackageJson(root, "examples/example", (packageJson) => {
+      delete packageJson.scripts["test:ui"];
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      '@fixture/example is an example but is missing script "test:ui".',
+    );
+  });
+
+  it("fails when an example is omitted from examples:e2e", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["examples:e2e"] = "";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "examples:e2e" does not include "--filter @fixture/example test:ui".',
+    );
+  });
+
+  it("fails when browser example E2E smoke tests are mixed into release readiness", async () => {
+    const root = await createFixtureRepo();
+    await mutateRootPackageJson(root, (packageJson) => {
+      packageJson.scripts["release-readiness:check"] =
+        "pnpm packages:build && pnpm examples:check:self && pnpm examples:e2e && pnpm run pack:dry-run && pnpm publish-readiness:check && pnpm run smoke:create-tsuzuru:local";
+    });
+
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "release-readiness:check" must not run browser example E2E smoke tests.',
+    );
+  });
+
   it("fails when AGENTS.md package inventory drifts from package directories", async () => {
     const root = await createFixtureRepo();
     const source = await readFile(join(root, "AGENTS.md"), "utf8");
@@ -609,6 +643,7 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/example typecheck:self",
         "pnpm --filter @fixture/example build:self",
       ].join(" && "),
+      "examples:e2e": "pnpm --filter @fixture/example test:ui",
       "pack:dry-run": [
         "pnpm --filter @fixture/addon pack --dry-run",
         "pnpm --filter @fixture/core pack --dry-run",
@@ -660,6 +695,7 @@ async function createFixtureRepo() {
       "build:self": "vite build",
       "check:scenario": "tsuzuru check",
       "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
+      "test:ui": "playwright test -c playwright.config.ts",
       typecheck: "pnpm run build:deps && pnpm run typecheck:self",
       "typecheck:self": "tsc -p tsconfig.json --noEmit",
     },

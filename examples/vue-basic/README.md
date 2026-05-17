@@ -19,10 +19,17 @@ changing `.tzr` semantics.
 ```sh
 pnpm --filter @tsuzuru/example-vue-basic check:scenario
 pnpm --filter @tsuzuru/example-vue-basic test
+pnpm --filter @tsuzuru/example-vue-basic test:ui
 pnpm --filter @tsuzuru/example-vue-basic typecheck
 pnpm --filter @tsuzuru/example-vue-basic build
 pnpm --filter @tsuzuru/example-vue-basic dev
 ```
+
+The UI check uses Playwright to start the example dev server at
+`http://127.0.0.1:5174/` and run a Save -> Load -> Restore smoke test. The
+browser test verifies that the example-owned localStorage payload contains a
+`RuntimeSaveSlot` envelope with a version 2 runtime snapshot and that loading the
+slot restores the visible runtime message.
 
 Audio files are intentionally represented by `.gitkeep` placeholders. Missing
 audio playback is reported as a non-fatal browser notice by `AudioLayer.vue`.

@@ -97,7 +97,12 @@ pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic test:ui
 ```
 
-The UI check uses Playwright to start the example dev server at `http://127.0.0.1:5173/`, capture a title-screen screenshot under `test-results`, and run a short click-through smoke check.
+The UI check uses Playwright to start the example dev server at
+`http://127.0.0.1:5173/`, capture a title-screen screenshot under
+`test-results`, run short click-through smoke checks, and verify the
+localStorage-backed Save -> Load -> Restore path. The save/load smoke confirms
+that the example stores a `RuntimeSaveSlot` envelope with a version 2 runtime
+snapshot before loading the saved runtime view back into the browser UI.
 If Chromium has not been installed for Playwright yet, run:
 
 ```sh

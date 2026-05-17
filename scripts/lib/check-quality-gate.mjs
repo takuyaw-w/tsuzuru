@@ -70,6 +70,8 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertExamplesHaveSelfScripts(context);
   assertExamplesCheckCoversExamples(context);
   assertExamplesSelfCheckCoversExamples(context);
+  assertExamplesHaveUiSmokeScripts(context);
+  assertExamplesE2eCoversExamples(context);
   assertDocumentedInventory(context, "AGENTS.md", parsePlainInventory);
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
@@ -208,6 +210,15 @@ function assertExamplesHaveSelfScripts(context) {
   }
 }
 
+function assertExamplesHaveUiSmokeScripts(context) {
+  for (const exampleEntry of context.exampleEntries) {
+    const scripts = exampleEntry.packageJson.scripts ?? {};
+    if (scripts["test:ui"] === undefined) {
+      context.failures.push(`${exampleEntry.name} is an example but is missing script "test:ui".`);
+    }
+  }
+}
+
 function readWorkspaceEntries(rootDir, workspaceDir) {
   const absoluteWorkspaceDir = join(rootDir, workspaceDir);
   if (!existsSync(absoluteWorkspaceDir)) {
@@ -298,6 +309,27 @@ function assertExamplesSelfCheckCoversExamples(context) {
       if (!scriptIncludesFilterCommand(script, exampleName, command)) {
         context.failures.push(`root script "examples:check:self" does not include "--filter ${exampleName} ${command}".`);
       }
+    }
+  }
+}
+
+function assertExamplesE2eCoversExamples(context) {
+  const script = context.rootPackageJson.scripts?.["examples:e2e"];
+  if (script === undefined) {
+    context.failures.push('root package.json is missing script "examples:e2e".');
+    return;
+  }
+
+  for (const exampleName of context.exampleNames) {
+    if (!scriptIncludesFilterCommand(script, exampleName, "test:ui")) {
+      context.failures.push(`root script "examples:e2e" does not include "--filter ${exampleName} test:ui".`);
+    }
+  }
+
+  for (const scriptName of ["test", "release-readiness:check"]) {
+    const rootScript = context.rootPackageJson.scripts?.[scriptName] ?? "";
+    if (rootScript.includes("examples:e2e") || rootScript.includes("test:ui")) {
+      context.failures.push(`root script "${scriptName}" must not run browser example E2E smoke tests.`);
     }
   }
 }
