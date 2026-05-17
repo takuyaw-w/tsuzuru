@@ -56,6 +56,7 @@ reintroduced.
 | 0028 | [RuntimeSnapshot Compatibility](0028-runtime-snapshot-compatibility.md) | Accepted |
 | 0029 | [Host-Facing Save / Load Helper](0029-host-facing-save-load-helper.md) | Accepted |
 | 0030 | [Runtime Save Slot Envelope](0030-runtime-save-slot-envelope.md) | Accepted |
+| 0031 | [v1.0 Save / Load Compatibility Promise](0031-v1-save-load-compatibility-promise.md) | Accepted |
 
 ## Reading Order
 

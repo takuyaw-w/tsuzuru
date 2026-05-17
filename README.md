@@ -450,10 +450,12 @@ v0.1 では、以下を目標にします。
 - cloud save
 - save data compatibility guarantees across scenario/runtime changes
 
-v0.x の save/load は example での確認用です。core は `RuntimeSaveSlot`
-で scenario identity / scenario version の検証境界を持ちますが、save
-data migration framework はまだありません。scenario や runtime/event
-shape が変わった後の互換性は v1.0 release gate で明文化します。
+v1.0 の save/load 互換性 promise は migration ではなく validation /
+rejection です。core は `RuntimeSnapshot.version === 2` と
+`RuntimeSaveSlot.version === 1` の検証境界を持ち、scenario identity /
+scenario version mismatch や invalid nested snapshot を loadable data として
+扱いません。save data migration framework はまだありません。scenario や
+runtime/event shape が変わった後の互換性は保証対象外です。
 
 ## Codex / Agent 運用
 

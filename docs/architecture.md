@@ -830,12 +830,17 @@ Preact responsibilities:
 
 Examples may use `localStorage`, but browser storage is not a core responsibility.
 
-Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
+The v1.0 save/load compatibility promise is validation and rejection, not
+migration. Compatibility is not guaranteed if scenario documents, compiled
+instruction order, runtime state shape, plugin state shape, or runtime event
+shape change after saving.
+
 Core currently supports `RuntimeSnapshot.version === 2` only.
 `restoreRuntimeState` rejects missing, old, future, or malformed snapshots by
 throwing an `Invalid RuntimeSnapshot` error. Host save slot wrappers remain
 responsible for scenario identity, scenario version, user-facing recovery, and
-storage migration policy.
+storage migration policy. Core validates the outer snapshot shape and does not
+deep-validate plugin state.
 
 Core also defines a minimal `RuntimeSaveSlot` envelope for host-facing save slot
 validation. The envelope has its own `version: 1`, required `scenarioId`,
@@ -846,12 +851,19 @@ unsupported envelope version, scenario ID mismatch, scenario version mismatch,
 or invalid nested snapshot. It does not restore runtime state, implement
 storage, migrate save data, or deep-validate plugin state.
 
+`RuntimeSaveSlot` scenario version checks are opt-in. When both the slot and the
+current context provide a `scenarioVersion`, mismatches are not loadable. Missing
+scenario versions are accepted so simple hosts can use only `scenarioId`, but
+Tsuzuru does not provide scenario version migration.
+
 Framework adapters provide `createRuntimeSaveDataFromState(state, event,
 options)` as a thin adapter-level helper for converting prepared `RuntimeState`
 into view-oriented `RuntimeSaveData`. It accepts plugin snapshot prepare
 functions using the same `RuntimeSnapshotPrepare` contract as core, then creates
 a core `RuntimeSnapshot`. The helper does not create `RuntimeSaveSlot`, choose
-scenario identity, or own storage.
+scenario identity, or own storage. Adapter `RuntimeSaveData` uses `version: 2`;
+it is a view-restore wrapper around a runtime snapshot plus the current
+renderable event, not a migration or scenario identity layer.
 
 `examples/preact-basic` stores its example-specific save payload as a wrapper
 around `RuntimeSaveSlot` plus Preact `RuntimeSaveData` and retained message
@@ -860,8 +872,13 @@ envelope for a smaller example-owned save/load foundation around Vue
 `RuntimeSaveData`. Both examples compose std-audio and std-effect snapshot
 prepare helpers through the adapter helper, and both filter invalid save slots,
 scenario mismatches, and invalid nested snapshots before they reach the runtime
-restore path. Browser storage, save slot envelopes, and save-slot UI remain
+restore path. Browser storage, example save payloads, and save-slot UI remain
 example-owned.
+
+v1.0 does not promise RuntimeSnapshot migration, RuntimeSaveSlot migration,
+adapter RuntimeSaveData migration beyond example-local compatibility code,
+plugin state migration, scenario version migration, host storage migration, or
+user-facing invalid slot reason UI. Examples may filter invalid slots silently.
 
 Standard plugin state uses the following save/load policy:
 
