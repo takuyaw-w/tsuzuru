@@ -97,7 +97,9 @@
   height: var(--tzr-standard-ui-message-lines-height);
   min-height: 0;
   align-content: start;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   font-size: var(--tzr-standard-ui-message-text-font-size);
   line-height: var(--tzr-standard-ui-message-text-line-height);
 }

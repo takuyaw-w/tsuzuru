@@ -37,7 +37,7 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   expectRuntimeSaveSlotEnvelope(data);
 
   await messageWindow.click();
-  await expect(messageWindow).toContainText("ようこそ", { timeout: 4000 });
+  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
 
   await runtimeControls.getByRole("button", { name: "Load" }).click();
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 8000 });

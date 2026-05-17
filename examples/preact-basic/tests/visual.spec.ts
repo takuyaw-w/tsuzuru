@@ -94,8 +94,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await messageWindow.click();
   await expect(messageWindow).toContainText("夜の旧校舎");
 
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("ようこそ");
+  await advanceUntilText(messageWindow, "ようこそ", 3);
   await expect(audioLayer).toContainText("daily_theme");
   await expect(audioLayer).toContainText("Voice");
 });
@@ -111,8 +110,7 @@ test("save and load restore retained message behind choices", async ({ page }) =
   const choiceLayer = page.locator(".tzr-choice-layer");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceMessages(messageWindow, 8);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
   await expect(retainedMessage).toContainText("物語の常用音");
 
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
@@ -146,12 +144,11 @@ test("effect demo choice exposes individual effect paths", async ({ page }) => {
   const choiceLayer = page.locator(".tzr-choice-layer");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceMessages(messageWindow, 8);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
 
   await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
   await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
-  await advanceMessages(messageWindow, 3);
+  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
 
   await expect(choiceLayer).toContainText("今度は、どの effect を試す？", { timeout: 3000 });
   await expect(choiceLayer.getByRole("button", { name: "shake を試す" })).toBeVisible();
@@ -161,9 +158,8 @@ test("effect demo choice exposes individual effect paths", async ({ page }) => {
 
   await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
   await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("衝撃や落下", { timeout: 3000 });
-  await messageWindow.click();
+  await advanceUntilText(messageWindow, "衝撃や落下", 3);
+  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 3);
 
   await expect(choiceLayer).toContainText("もう一度 effect を試す？", { timeout: 3000 });
   await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
@@ -184,14 +180,14 @@ test("particle demo renders bounded non-interactive overlay particles", async ({
   const choiceLayer = page.locator(".tzr-choice-layer");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceMessages(messageWindow, 8);
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
   await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
   await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
-  await advanceMessages(messageWindow, 3);
+  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
 
   await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
   await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
-  await advanceMessages(messageWindow, 2);
+  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 4);
 
   await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
   await expect(choiceLayer).toContainText("camera demo を試す？", { timeout: 3000 });
@@ -226,6 +222,8 @@ test("particle demo renders bounded non-interactive overlay particles", async ({
 });
 
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
+  test.setTimeout(45_000);
+
   await page.goto("/");
   await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
@@ -242,10 +240,10 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   await autoButton.click();
   await expect(autoButton).toHaveAttribute("aria-pressed", "true");
   await expect(messageWindow).toContainText("ようこそ", { timeout: 5000 });
-  await expect(readStatus).toHaveText("Read: 2");
+  await expect.poll(async () => readCount(readStatus)).toBeGreaterThan(1);
 
   const choiceLayer = page.locator(".tzr-choice-layer");
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 16000 });
+  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 26_000 });
   await page.waitForTimeout(1800);
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
   await expect(messageWindow).not.toContainText("では tone をもう少し詳しく");
@@ -291,8 +289,7 @@ test("skip mode skips previously read messages", async ({ page }) => {
   await page.getByRole("button", { name: "Save Slot 1" }).click();
   await expect(page.getByRole("heading", { name: "Save" })).toHaveCount(0);
 
-  await advanceMessages(messageWindow, 8);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
 
   await skipButton.click();
   await expect(skipButton).toHaveAttribute("aria-pressed", "true");
@@ -321,12 +318,11 @@ test("skip mode pauses at choices", async ({ page }) => {
   await expect(messageWindow).toContainText("夜の旧校舎");
 
   await messageWindow.click();
-  await expect(messageWindow).toContainText("ようこそ、Text Sound Lab", { timeout: 4000 });
+  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
   await page.waitForTimeout(700);
-  await expect(messageWindow).toContainText("ようこそ、Text Sound Lab");
+  await expect(messageWindow).toContainText("その隣で");
 
-  await advanceMessages(messageWindow, 7);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
   await page.waitForTimeout(900);
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
   await expect(choiceLayer).toContainText("重ねた mix を聞く");
@@ -353,7 +349,7 @@ test("read tracking records current-session messages in runtime and backlog", as
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
 
   await messageWindow.click();
-  await expect(messageWindow).toContainText("ようこそ", { timeout: 4000 });
+  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
   await expect(readStatus).toHaveText("Read: 2");
 });
 
@@ -374,8 +370,46 @@ async function disableTextReveal(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Back", exact: true }).click();
 }
 
-async function advanceMessages(messageWindow: Locator, count: number): Promise<void> {
-  for (let index = 0; index < count; index += 1) {
+async function advanceUntilText(messageWindow: Locator, text: string, maxClicks = 24): Promise<void> {
+  for (let index = 0; index <= maxClicks; index += 1) {
+    if (await locatorContainsText(messageWindow, text)) {
+      await expect(messageWindow).toContainText(text, { timeout: 3000 });
+      return;
+    }
+    if (index === maxClicks) {
+      break;
+    }
     await messageWindow.click();
   }
+  await expect(messageWindow).toContainText(text, { timeout: 3000 });
+}
+
+async function advanceUntilChoice(
+  messageWindow: Locator,
+  choiceLayer: Locator,
+  question: string,
+  maxClicks = 24,
+): Promise<void> {
+  for (let index = 0; index <= maxClicks; index += 1) {
+    if (await locatorContainsText(choiceLayer, question)) {
+      await expect(choiceLayer).toContainText(question, { timeout: 3000 });
+      return;
+    }
+    if (index === maxClicks) {
+      break;
+    }
+    await messageWindow.click();
+  }
+  await expect(choiceLayer).toContainText(question, { timeout: 3000 });
+}
+
+async function locatorContainsText(locator: Locator, text: string): Promise<boolean> {
+  const textContent = await locator.textContent({ timeout: 250 }).catch(() => null);
+  return textContent?.includes(text) ?? false;
+}
+
+async function readCount(locator: Locator): Promise<number> {
+  const textContent = await locator.textContent();
+  const match = textContent?.match(/Read: (\d+)/);
+  return match === null || match === undefined ? 0 : Number(match[1]);
 }

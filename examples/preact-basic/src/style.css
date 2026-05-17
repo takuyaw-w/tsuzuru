@@ -56,7 +56,7 @@ button {
   inset: 0;
   z-index: 2;
   --app-message-window-bottom: clamp(16px, 4vw, 40px);
-  --app-message-window-height: clamp(210px, 32%, 252px);
+  --app-message-window-height: 204px;
   --app-message-choice-gap: clamp(20px, 3vw, 32px);
 }
 
@@ -543,7 +543,9 @@ button {
   height: var(--app-message-lines-height);
   min-height: 0;
   align-content: start;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   font-size: var(--app-message-text-font-size);
   line-height: var(--app-message-text-line-height);
 }
@@ -986,6 +988,12 @@ button {
 }
 
 @media (max-width: 720px) {
+  .app__message-layer {
+    --app-message-window-bottom: 12px;
+    --app-message-window-height: 184px;
+    --app-message-choice-gap: 16px;
+  }
+
   .app__viewport {
     width: min(100vw, calc(100dvh * 16 / 9));
   }

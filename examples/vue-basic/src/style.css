@@ -368,7 +368,9 @@ button:disabled {
   height: var(--message-lines-height);
   min-height: 0;
   align-content: start;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   font-size: var(--message-text-font-size);
   line-height: var(--message-text-line-height);
 }
