@@ -123,10 +123,16 @@ describe("parseTzr std audio sugar statements", () => {
     expect(expectAudioFailure("scene start:\n  bgm daily_theme extra\n")).toContain(
       "bgm statement must not have extra trailing tokens.",
     );
+    expect(expectAudioFailure("scene start:\n  bgm daily_theme with fadeIn(duration=300)\n")).toContain(
+      "bgm statement must not have extra trailing tokens.",
+    );
   });
 
   it("rejects invalid stopBgm statements", () => {
     expect(expectAudioFailure("scene start:\n  stopBgm now\n")).toContain(
+      "stopBgm statement must not have extra trailing tokens.",
+    );
+    expect(expectAudioFailure("scene start:\n  stopBgm with fadeOut(duration=300)\n")).toContain(
       "stopBgm statement must not have extra trailing tokens.",
     );
   });

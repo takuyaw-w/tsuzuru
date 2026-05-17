@@ -1512,6 +1512,9 @@ matrix.
 
 ### 23.6 Audio Transition Validation
 
+This section describes future transition validation rules. It is not part of
+the v1.0 stable subset and is not current runnable syntax.
+
 ```txt
 bgm:
   - no transition, or fadeIn(duration=<ms>)
@@ -1940,6 +1943,10 @@ named text preset / style
 ---
 
 ## 30. Full Example
+
+This example shows the broader DSL design direction, including syntax that is
+parser-only or design-only today. For the current v1.0 stable-scope planning
+subset, use [`dsl-support-matrix.md`](dsl-support-matrix.md).
 
 ```txt
 title "雨の駅"

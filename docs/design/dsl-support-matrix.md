@@ -46,7 +46,8 @@ decisions:
   not part of the v1.0 stable subset
 - visual preset placement (`left` / `center` / `right`) is the v1.0 target;
   coordinate placement remains parser-only
-- audio transition syntax is design-only
+- statement-level audio commands (`bgm`, `stopBgm`, `se`, `voice`) are the
+  v1.0 target; audio transition syntax remains design-only
 - editor / syntax highlighting scope is not implemented
 
 For v1.0, plain narration, dialogue, and `say` text are the stable text
@@ -60,6 +61,10 @@ For v1.0 conditions, `scenario.*` references are the stable target.
 For v1.0 visual placement, `show asset at left`, `show asset at center`, and
 `show asset at right` are the stable std-visual target. `show asset at
 x=... y=...` remains post-v1.0 renderer coordinate policy work.
+
+For v1.0 audio, `bgm`, `stopBgm`, `se`, and `voice` are the stable std-audio
+target. `bgm ... with fadeIn(...)` and `stopBgm with fadeOut(...)` remain
+post-v1.0 audio-layer timing and save/load design work.
 
 ## Core DSL Matrix
 
@@ -109,8 +114,8 @@ x=... y=...` remains post-v1.0 renderer coordinate policy work.
 | `stopBgm` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Clears durable BGM state. |
 | `se asset` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | One-shot event; save-ready snapshots clear events through plugin helper. |
 | `voice asset` | std-audio sugar | yes | command | plugin handler | std-audio | yes | tests | yes | `plugin-dependent` | One-shot event; save-ready snapshots clear events through plugin helper. |
-| `bgm ... with fadeIn(...)` | std-audio transition | no | no | no | future | design note | no | historical plan only | `design-only` | Not current parser/compiler syntax. |
-| `stopBgm with fadeOut(...)` | std-audio transition | no | no | no | future | design note | no | historical plan only | `design-only` | Not current parser/compiler syntax. |
+| `bgm ... with fadeIn(...)` | std-audio transition | no | no | no | future | design note | no | yes | `design-only` | Not current parser/compiler syntax. Not included in the v1.0 stable subset. |
+| `stopBgm with fadeOut(...)` | std-audio transition | no | no | no | future | design note | no | yes | `design-only` | Not current parser/compiler syntax. Not included in the v1.0 stable subset. |
 | `textSound asset` | std-text-sound sugar | yes | command | plugin handler | std-text-sound | yes | no | yes | `plugin-dependent` | Advanced override command; normal usage can be app-side defaults. |
 | `stopTextSound` | std-text-sound sugar | yes | command | plugin handler | std-text-sound | yes | no | yes | `plugin-dependent` | Clears override profile ID. |
 | `shake ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
@@ -144,9 +149,7 @@ templates, and user-facing syntax docs except as clearly historical context.
 
 Before v1.0, the DSL support decision should close these items:
 
-1. Decide whether audio transitions remain design-only for v1.0 and update
-   user-facing docs accordingly.
-2. Decide whether editor / syntax highlighting is a v1.0 blocker or a
+1. Decide whether editor / syntax highlighting is a v1.0 blocker or a
    post-v1.0 improvement.
 
 Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
@@ -156,6 +159,8 @@ stable subset. They remain post-v1.0 design work.
 write-side `call system.unlock...` commands remain plugin-dependent.
 Visual coordinate placement is also not part of the v1.0 stable subset; preset
 std-visual placement remains plugin-dependent.
+Audio transitions are also not part of the v1.0 stable subset; statement-level
+std-audio commands remain plugin-dependent.
 
 ## Recommended Issues
 
@@ -201,17 +206,19 @@ std-visual placement remains plugin-dependent.
 - Risk: coordinate semantics can lock responsive renderer behavior and
   std-visual state shape too early.
 
-### 4. Remove or implement audio transition syntax
+### 4. Design audio transitions after v1.0
 
-- Purpose: align docs with implementation for `bgm ... with fadeIn(...)` and
-  `stopBgm with fadeOut(...)`.
-- Scope: parser/compiler/plugin tests if implemented, or user-facing docs if
-  deferred.
-- Done when: no current user-facing doc presents audio transitions as stable
-  unless tests prove they compile and run.
+- Purpose: design BGM fade behavior without overpromising host audio timing or
+  save/load semantics in v1.0.
+- Scope: parser/compiler syntax, std-audio state or event shape, renderer audio
+  timing, transition-in-progress save/load behavior, docs, and examples.
+- Done when: audio transitions have an explicit audio-layer contract,
+  save/load policy, compiler/plugin design, tests, and user docs before being
+  promoted from design-only.
 - Suggested checks: `pnpm --filter @tsuzuru/core test`,
   `pnpm --filter @tsuzuru/plugin-std-audio test`.
-- Risk: audio transition policy touches renderer/audio-layer behavior.
+- Risk: transition timing and in-progress restore behavior can constrain host
+  audio implementations too early.
 
 ### 5. Scope editor and syntax highlighting for v1.0
 

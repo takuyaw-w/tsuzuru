@@ -16,6 +16,8 @@
 - Web Audio / `HTMLAudioElement` の制御
 - `assetId` から audio path / URL への解決
 - volume / loop / fade / channel 制御
+- fadeIn / fadeOut transition DSL
+- transition-in-progress save/load state
 
 renderer / app は、この plugin が保持する `assetId` と event をもとに、実際の音声再生、停止、autoplay 制約への対応を行います。
 
@@ -64,6 +66,8 @@ state の形は次のとおりです。
   nextVoiceSequence: number,
 }
 ```
+
+std-audio state は BGM の durable assetId と SE / Voice の一回性 event だけを保持します。v1.0 では fadeIn / fadeOut や transition-in-progress state は保持しません。
 
 初期 state は次の値です。
 
@@ -128,6 +132,8 @@ stopBgm
 ```ts
 bgm: null
 ```
+
+v1.0 では `bgm main_theme with fadeIn(...)` や `stopBgm with fadeOut(...)` のような audio transition DSL は提供しません。現在の compiler / plugin は BGM transition metadata を持たず、renderer / app が実際の再生 timing を制御します。transition 中の save/load、fade state を std-audio state に保存するかどうか、renderer-only event にするかどうかは post-v1.0 の設計課題です。
 
 ### `se assetId`
 
@@ -331,6 +337,8 @@ std-audio plugin は、v0.2 初期では次の機能を持ちません。
 - volume
 - loop option
 - fade
+- fadeIn / fadeOut DSL
+- transition-in-progress snapshot policy
 - channel
 - currentVoice state
 - stopVoice command

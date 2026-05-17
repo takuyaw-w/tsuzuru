@@ -113,6 +113,10 @@ For v1.0 planning, stable std-visual sprite placement is preset-only:
 `show asset at left`, `show asset at center`, and `show asset at right`.
 Coordinate placement such as `show asset at x=320 y=80` is parser-level future
 syntax and is compile-rejected for current runnable scenarios.
+For v1.0 planning, stable std-audio syntax is statement-level only: `bgm`,
+`stopBgm`, `se`, and `voice`. Audio transition syntax such as
+`bgm main_theme with fadeIn(duration=300)` and `stopBgm with
+fadeOut(duration=300)` is design-only and is not current runnable syntax.
 
 ## Current Implementation Files
 
