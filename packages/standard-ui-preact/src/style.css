@@ -47,8 +47,8 @@
   box-sizing: border-box;
   height: var(--tzr-standard-ui-message-window-height);
   min-height: 0;
-  overflow: visible;
-  padding: 38px 20px 18px;
+  overflow: hidden;
+  padding: 46px 20px 18px;
   border: 1px solid var(--tzr-standard-ui-window-border);
   background: var(--tzr-standard-ui-window-bg);
 }
@@ -59,24 +59,36 @@
 
 .tzr-message-window__speaker {
   position: absolute;
-  top: -1px;
-  left: -1px;
+  top: 0;
+  left: 0;
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 5em;
-  min-height: 30px;
+  min-width: 6em;
+  min-height: 32px;
+  box-sizing: border-box;
   margin: 0;
-  padding: 5px 18px;
-  border: 1px solid var(--tzr-standard-ui-window-border);
-  border-bottom-color: transparent;
-  border-radius: 0 0 4px 0;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+  padding: 6px 18px 6px 16px;
+  border-right: 1px solid var(--tzr-standard-ui-window-border);
+  border-bottom: 1px solid var(--tzr-standard-ui-window-border);
+  border-radius: 0 0 6px 0;
   background: var(--tzr-standard-ui-window-bg);
   color: var(--tzr-standard-ui-text-color);
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.tzr-message-window__speaker::before {
+  display: block;
+  width: 3px;
+  height: 1.1em;
+  margin-right: 10px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.72;
+  content: "";
 }
 
 .tzr-message-window__lines {
