@@ -100,6 +100,21 @@ Initial state:
 Use `getStdTextSoundState(runtimeState)` to read it. The helper throws if the
 plugin was not registered.
 
+## Save/load Policy
+
+std-text-sound runtime state is durable. `overrideProfileId` is kept as-is in
+`RuntimeSnapshot`, so a saved text sound override remains active after restore
+until `stopTextSound` clears it.
+
+The browser player exported from
+`@tsuzuru/plugin-std-text-sound/browser` is not runtime snapshot state. Web Audio
+nodes, playback timing, throttling, and browser resume behavior are
+presentation policy owned by the renderer / app.
+
+std-text-sound has no one-shot runtime event queue and does not require a
+snapshot prepare helper. v1.0 also does not promise plugin state migration if
+the std-text-sound state shape changes later.
+
 ## Commands
 
 The DSL commands remain available as advanced override controls.

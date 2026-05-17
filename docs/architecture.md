@@ -882,6 +882,9 @@ user-facing invalid slot reason UI. Examples may filter invalid slots silently.
 
 Standard plugin state uses the following save/load policy:
 
+The detailed v1.0 release-gate matrix is tracked in
+[`docs/plans/v1.0-standard-plugin-save-load-matrix.md`](plans/v1.0-standard-plugin-save-load-matrix.md).
+
 | Package | State category | Snapshot preparation |
 | --- | --- | --- |
 | `@tsuzuru/plugin-std-visual` | Durable background and sprite state | Keep plugin state as-is. |

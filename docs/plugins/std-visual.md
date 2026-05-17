@@ -86,6 +86,21 @@ import { getStdVisualState } from "@tsuzuru/plugin-std-visual";
 const visual = getStdVisualState(runtimeState);
 ```
 
+## Save/load policy
+
+std-visual state is durable runtime plugin state. `background`, `sprites`, and
+surviving transition metadata are kept as-is in `RuntimeSnapshot`.
+
+std-visual does not have one-shot runtime events and does not require a
+`prepareStdVisualStateForSnapshot` helper. `hide`, `clear bg`, and
+`clear sprites` remove state during runtime execution; after that, the cleared
+state remains cleared across snapshot / restore.
+
+Renderer and app concerns are not part of the snapshot: asset path resolution,
+pixel coordinates, responsive layout, safe areas, z-order policy, and actual
+transition animation execution remain renderer-owned. v1.0 also does not
+promise plugin state migration if the std-visual state shape changes later.
+
 ## Commands
 
 ### `bg assetId`
