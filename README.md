@@ -312,6 +312,9 @@ Template `pnpm-lock.yaml` は現時点では同梱していません。local smo
 
 v1.0 release gate の required / optional / manual / design readiness 分類は
 [`docs/plans/v1.0-release-gate.md`](docs/plans/v1.0-release-gate.md) に整理しています。
+実 publish / tag / GitHub release の手順は
+[`docs/plans/v1.0-manual-publish-checklist.md`](docs/plans/v1.0-manual-publish-checklist.md)
+に分離しています。readiness review では `pnpm release:version`、publish、tag、push、GitHub release 作成を実行しません。
 
 ## パッケージ別コマンド
 
