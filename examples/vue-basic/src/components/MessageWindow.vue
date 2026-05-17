@@ -131,7 +131,11 @@ function splitVisibleLines(
   <section class="message-window" :style="messageStyle" @click.stop="handleClick">
     <template v-if="event?.type === 'narration' || event?.type === 'dialogue'">
       <p v-if="speaker !== null" class="message-window__speaker">{{ speaker }}</p>
-      <p v-for="(_line, index) in lines" :key="index" class="message-window__line">{{ visibleLines[index] ?? "" }}</p>
+      <div class="message-window__lines">
+        <p v-for="(_line, index) in lines" :key="index" class="message-window__line">
+          {{ visibleLines[index] ?? "" }}
+        </p>
+      </div>
       <p class="message-window__hint">Click</p>
     </template>
     <p v-else-if="status !== null" class="message-window__status">{{ status }}</p>

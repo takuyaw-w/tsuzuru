@@ -5,6 +5,8 @@
   --tzr-standard-ui-window-bg: rgba(0, 0, 0, 0.72);
   --tzr-standard-ui-window-border: rgba(255, 255, 255, 0.32);
   --tzr-standard-ui-accent-color: #fff;
+  --tzr-standard-ui-message-window-height: 148px;
+  --tzr-standard-ui-message-lines-height: calc(3.4em + 6px);
 }
 
 .tzr-game-shell {
@@ -34,7 +36,9 @@
   bottom: 24px;
   left: 24px;
   box-sizing: border-box;
-  min-height: 132px;
+  height: var(--tzr-standard-ui-message-window-height);
+  min-height: 0;
+  overflow: hidden;
   padding: 18px 20px;
   border: 1px solid var(--tzr-standard-ui-window-border);
   background: var(--tzr-standard-ui-window-bg);
@@ -52,6 +56,9 @@
 .tzr-message-window__lines {
   display: grid;
   gap: 6px;
+  height: var(--tzr-standard-ui-message-lines-height);
+  align-content: start;
+  overflow: hidden;
 }
 
 .tzr-message-window__line {
@@ -60,7 +67,10 @@
 }
 
 .tzr-message-window__advance-hint {
-  margin-top: 12px;
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  margin: 0;
   color: var(--tzr-standard-ui-muted-text-color);
   font-size: 0.875rem;
   text-align: right;

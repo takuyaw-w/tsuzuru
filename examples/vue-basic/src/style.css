@@ -124,6 +124,10 @@ button:disabled {
 
 .runtime-screen {
   isolation: isolate;
+  --message-window-bottom: 24px;
+  --message-window-height: 148px;
+  --message-window-inset-x: 24px;
+  --message-window-choice-gap: 24px;
   background: #0e1721;
 }
 
@@ -295,11 +299,13 @@ button:disabled {
 
 .message-window {
   position: absolute;
-  right: 24px;
-  bottom: 24px;
-  left: 24px;
+  right: var(--message-window-inset-x);
+  bottom: var(--message-window-bottom);
+  left: var(--message-window-inset-x);
   z-index: 2;
-  min-height: 148px;
+  height: var(--message-window-height);
+  min-height: 0;
+  overflow: hidden;
   padding: 22px 26px;
   border: 1px solid rgba(247, 242, 232, 0.22);
   border-radius: 8px;
@@ -313,6 +319,13 @@ button:disabled {
   color: #ffd37a;
   font-size: 0.95rem;
   font-weight: 700;
+}
+
+.message-window__lines {
+  display: grid;
+  height: 3.56em;
+  align-content: start;
+  overflow: hidden;
 }
 
 .message-window__line,
@@ -333,7 +346,9 @@ button:disabled {
 .choice-layer {
   position: absolute;
   right: 32px;
-  bottom: 196px;
+  bottom: calc(
+    var(--message-window-bottom) + var(--message-window-height) + var(--message-window-choice-gap)
+  );
   z-index: 3;
   display: grid;
   width: min(420px, calc(100vw - 64px));
@@ -521,6 +536,13 @@ button:disabled {
 }
 
 @media (max-width: 720px) {
+  .runtime-screen {
+    --message-window-bottom: 12px;
+    --message-window-height: 132px;
+    --message-window-inset-x: 12px;
+    --message-window-choice-gap: 26px;
+  }
+
   .runtime-control-bar {
     position: fixed;
     overflow-x: auto;
@@ -532,16 +554,11 @@ button:disabled {
   }
 
   .message-window {
-    right: 12px;
-    bottom: 12px;
-    left: 12px;
-    min-height: 132px;
     padding: 18px;
   }
 
   .choice-layer {
     right: 12px;
-    bottom: 170px;
     width: calc(100vw - 24px);
   }
 

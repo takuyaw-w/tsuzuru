@@ -468,10 +468,14 @@ button {
 }
 
 .app__message-layer .tzr-message-window {
+  --app-message-window-height: clamp(136px, 24%, 178px);
+
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);
   left: clamp(16px, 4vw, 44px);
-  min-height: clamp(116px, 24%, 178px);
+  height: var(--app-message-window-height);
+  min-height: 0;
+  overflow: hidden;
   padding: clamp(16px, 2.8vw, 28px) clamp(18px, 3.3vw, 34px);
   border: 1px solid rgba(247, 242, 226, 0.46);
   border-radius: 8px;
@@ -499,8 +503,9 @@ button {
 
 .app__message-layer .tzr-message-window__lines {
   gap: 8px;
-  min-height: calc((1em * 1.75 * 2) + 8px);
+  height: calc(3.5em + 8px);
   align-content: start;
+  overflow: hidden;
 }
 
 .app__message-layer .tzr-message-window__line {
