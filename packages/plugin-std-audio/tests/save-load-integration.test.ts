@@ -4,6 +4,7 @@ import {
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
+  prepareRuntimeStateForSnapshot,
   restoreRuntimeState,
   stepRuntime,
 } from "@tsuzuru/core";
@@ -61,7 +62,7 @@ describe("std audio save/load integration", () => {
       nextVoiceSequence: 2,
     });
 
-    const saveReadyState = prepareStdAudioStateForSnapshot(voice.state);
+    const saveReadyState = prepareRuntimeStateForSnapshot(voice.state, [prepareStdAudioStateForSnapshot]);
     const restored = restoreRuntimeState(jsonRoundTrip(createRuntimeSnapshot(saveReadyState)));
 
     expect(getStdAudioState(saveReadyState)).toEqual({

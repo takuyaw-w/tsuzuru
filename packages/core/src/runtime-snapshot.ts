@@ -1,5 +1,5 @@
 import type { TzrInstruction } from "./ir.js";
-import type { RuntimePendingChoice, RuntimeSnapshot, RuntimeState } from "./runtime-types.js";
+import type { RuntimePendingChoice, RuntimeSnapshot, RuntimeSnapshotPrepare, RuntimeState } from "./runtime-types.js";
 
 export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
   return {
@@ -16,6 +16,13 @@ export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
     isStopped: state.isStopped,
     isWaitingForClick: state.isWaitingForClick,
   };
+}
+
+export function prepareRuntimeStateForSnapshot(
+  state: RuntimeState,
+  prepares: readonly RuntimeSnapshotPrepare[] = [],
+): RuntimeState {
+  return prepares.reduce((current, prepare) => prepare(current), state);
 }
 
 export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {

@@ -851,7 +851,9 @@ Standard plugin state uses the following save/load policy:
 
 Core snapshot creation preserves plugin state but does not automatically clear
 plugin one-shot events. Save-ready cleanup remains a plugin helper / host
-responsibility.
+responsibility. Hosts can compose plugin-specific prepare helpers with
+`prepareRuntimeStateForSnapshot(state, prepares)` before calling
+`createRuntimeSnapshot`.
 
 ---
 

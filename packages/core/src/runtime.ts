@@ -18,7 +18,7 @@ import type {
   RuntimeStepResult,
 } from "./runtime-types.js";
 
-export { createRuntimeSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
+export { createRuntimeSnapshot, prepareRuntimeStateForSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 export type * from "./runtime-types.js";
 
 export function createInitialRuntimeState(

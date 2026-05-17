@@ -60,6 +60,8 @@ export interface RuntimeState {
   readonly isWaitingForClick: boolean;
 }
 
+export type RuntimeSnapshotPrepare = (state: RuntimeState) => RuntimeState;
+
 export interface RuntimeSnapshot {
   readonly version: 2;
   readonly pointer: RuntimePointer;

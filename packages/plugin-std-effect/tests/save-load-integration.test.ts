@@ -4,6 +4,7 @@ import {
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
+  prepareRuntimeStateForSnapshot,
   restoreRuntimeState,
   stepRuntime,
 } from "@tsuzuru/core";
@@ -46,7 +47,7 @@ describe("std effect save/load integration", () => {
       nextSequence: 3,
     });
 
-    const saveReadyState = prepareStdEffectStateForSnapshot(flash.state);
+    const saveReadyState = prepareRuntimeStateForSnapshot(flash.state, [prepareStdEffectStateForSnapshot]);
     const restored = restoreRuntimeState(jsonRoundTrip(createRuntimeSnapshot(saveReadyState)));
 
     expect(getStdEffectState(saveReadyState)).toEqual({
