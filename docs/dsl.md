@@ -97,6 +97,12 @@ add scenario.score += 1
 
 `set scenario.b = scenario.a` copies an existing `scenario.*` runtime value at
 execution time. Missing source values produce a runtime error event.
+For conditions, the v1.0 stable subset is `scenario.*` references only.
+`system.*` condition references are parser-level future syntax and are not
+compiled for current runnable scenarios. std-system unlock state can still be
+written through plugin commands such as `call system.unlockEnding(id=trueEnd)`
+when `@tsuzuru/plugin-std-system` is registered. Reading that unlock state from
+`if system.*` or conditional choices remains post-v1.0 design work.
 `system.*` state remains deferred and cannot be targeted or copied by `set`.
 The core runtime emits wait events for `wait 1000`, but does not start browser
 timers; hosts clear the wait after their own timer completes.

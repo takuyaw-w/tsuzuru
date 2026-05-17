@@ -42,13 +42,18 @@ decisions:
 - rich inline markup and text block controls are parser-only today and are
   explicitly not part of the v1.0 stable subset
 - namespaced `wait namespace.event(...)` remains design-only
-- `system.*` conditions parse but are compile-unsupported
+- `system.*` conditions parse but are compile-unsupported and are explicitly
+  not part of the v1.0 stable subset
 - audio transition syntax is design-only
 - editor / syntax highlighting scope is not implemented
 
 For v1.0, plain narration, dialogue, and `say` text are the stable text
 authoring target. Rich text, inline events, blank-line click waits, page breaks,
 and text block metadata remain post-v1.0 design work.
+
+For v1.0 conditions, `scenario.*` references are the stable target.
+`system.*` condition references remain post-v1.0 resolver design work; use
+`call system.unlock...` commands for std-system write-side behavior.
 
 ## Core DSL Matrix
 
@@ -64,7 +69,7 @@ and text block metadata remain post-v1.0 design work.
 | `choice "..."` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Runtime emits body-choice events and resumes selected body. |
 | `"label" id=... if scenario.*:` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Conditional choice filtering supports `scenario.*` conditions. |
 | `if` / `elif` / `else` with `scenario.*` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Logical `and` / `or` / `not`, comparisons, literals, and parentheses are covered. |
-| `if system.*` | Core / std-system boundary | yes | rejected | no | std-system future | yes | no | yes | `parser-only` | Compiler rejects system condition references until a renderer-neutral resolver exists. |
+| `if system.*` | Core / std-system boundary | yes | rejected | no | std-system future | yes | no | yes | `parser-only` | Compiler rejects system condition references until a renderer-neutral resolver exists. Not included in the v1.0 stable subset. |
 | `jump sceneId` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Cross-file jump validation is supported through `compileTzrProject`. |
 | `end` | Core flow | yes | stop command | yes | n/a | yes | yes | yes | `stable` | Compiles to the core stop command. |
 | `set scenario.x = <value>` | Core state | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Values: string, number, boolean, `null`, or existing `scenario.*` reference. |
@@ -133,16 +138,17 @@ templates, and user-facing syntax docs except as clearly historical context.
 
 Before v1.0, the DSL support decision should close these items:
 
-1. Decide whether `system.*` conditions remain out of scope for v1.0.
-2. Decide whether visual coordinate placement is out of scope for v1.0.
-3. Decide whether audio transitions remain design-only for v1.0 and update
+1. Decide whether visual coordinate placement is out of scope for v1.0.
+2. Decide whether audio transitions remain design-only for v1.0 and update
    user-facing docs accordingly.
-4. Decide whether editor / syntax highlighting is a v1.0 blocker or a
+3. Decide whether editor / syntax highlighting is a v1.0 blocker or a
    post-v1.0 improvement.
 
 Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
 rich inline text, inline waits, inline audio events) are not part of the v1.0
 stable subset. They remain post-v1.0 design work.
+`system.*` conditions are also not part of the v1.0 stable subset; std-system
+write-side `call system.unlock...` commands remain plugin-dependent.
 
 ## Recommended Issues
 
@@ -161,13 +167,15 @@ stable subset. They remain post-v1.0 design work.
 - Risk: making rich text stable too early can constrain renderer and adapter
   behavior.
 
-### 2. Decide `system.*` condition support
+### 2. Design `system.*` condition resolver after v1.0
 
-- Purpose: clarify whether std-system unlock state can be used directly in
-  `if` and conditional choices for v1.0.
-- Scope: compiler validation, runtime condition resolver, docs, and examples.
-- Done when: `if system.*` is either implemented with tests or documented as
-  not v1.0 stable.
+- Purpose: support reading std-system durable unlock state in conditions without
+  moving plugin persistence semantics into core.
+- Scope: renderer-neutral resolver contract, runtime condition evaluator
+  boundary, std-system state shape, save/load compatibility, docs, and examples.
+- Done when: `if system.*` and conditional choices using `system.*` have an
+  explicit resolver design, tests, and user docs before being promoted from
+  parser-only.
 - Suggested checks: `pnpm --filter @tsuzuru/core test`,
   `pnpm --filter @tsuzuru/plugin-std-system test`.
 - Risk: system state may require a renderer-neutral persistent-state boundary.

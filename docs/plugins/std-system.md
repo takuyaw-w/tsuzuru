@@ -114,10 +114,10 @@ and extra arguments are rejected by plugin command metadata.
 
 ## Condition Policy
 
-The MVP supports unlock commands and durable runtime state. `if system.*`
-condition evaluation remains deferred: the compiler still rejects system
-condition references. Use scenario state for branching until a renderer-neutral
-system condition resolver is added.
+The v1.0 planning scope supports unlock commands and durable runtime state, but
+does not include `system.*` condition evaluation. The compiler still rejects
+system condition references. Use `scenario.*` state for branching until a
+renderer-neutral system condition resolver is designed after v1.0.
 
 ## Persistence Policy
 

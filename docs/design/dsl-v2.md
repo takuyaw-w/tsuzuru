@@ -822,9 +822,10 @@ scenario.*
 system.*
 ```
 
-`system.*` is valid only when `@tsuzuru/plugin-std-system` is registered.
-Condition parsing accepts this namespace, but compile/runtime evaluation for
-`system.*` remains deferred in the current MVP.
+v1.0 stable condition references are `scenario.*` only. Condition parsing
+accepts `system.*` as parser-level design syntax, but the compiler rejects
+`system.*` condition references and runtime evaluation remains unsupported until
+a renderer-neutral std-system condition resolver is designed.
 
 Invalid:
 
@@ -1046,9 +1047,9 @@ system.achievements.firstClear.unlocked
 
 Rules:
 
-- Valid only when `@tsuzuru/plugin-std-system` is registered.
-- Can be parsed in conditions, but compile/runtime condition evaluation is
-  deferred.
+- Not part of the v1.0 stable condition subset.
+- Can be parsed in conditions, but compile/runtime condition evaluation remains
+  post-v1.0 design work.
 - Direct mutation via `set` / `add` is not allowed.
 - Mutation must go through `call system.*`.
 
@@ -1851,8 +1852,9 @@ if system.achievements.firstClear.unlocked:
 ```
 
 Condition parsing accepts `system.*` references, but compile/runtime condition
-evaluation remains deferred in the current MVP. The compiler rejects
-`if system.*` until a renderer-neutral system condition resolver is added.
+evaluation remains deferred and is not part of the v1.0 stable subset. The
+compiler rejects `if system.*` until a renderer-neutral system condition
+resolver is added.
 
 ### 26.6 Validation
 
