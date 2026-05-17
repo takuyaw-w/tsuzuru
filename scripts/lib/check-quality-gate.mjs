@@ -72,6 +72,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertExamplesSelfCheckCoversExamples(context);
   assertExamplesHaveUiSmokeScripts(context);
   assertExamplesE2eCoversExamples(context);
+  assertExamplesE2eWorkflow(context);
   assertDocumentedInventory(context, "AGENTS.md", parsePlainInventory);
   assertDocumentedInventory(context, "README.md", parseTreeInventory);
   assertDocumentedInventory(context, "docs/architecture.md", parseTreeInventory);
@@ -331,6 +332,47 @@ function assertExamplesE2eCoversExamples(context) {
     if (rootScript.includes("examples:e2e") || rootScript.includes("test:ui")) {
       context.failures.push(`root script "${scriptName}" must not run browser example E2E smoke tests.`);
     }
+  }
+}
+
+function assertExamplesE2eWorkflow(context) {
+  const relativePath = ".github/workflows/examples-e2e.yml";
+  const absolutePath = join(context.rootDir, relativePath);
+  if (!existsSync(absolutePath)) {
+    context.failures.push(`${relativePath} is missing.`);
+    return;
+  }
+
+  const source = readFileSync(absolutePath, "utf8");
+  for (const expected of [
+    "name: Examples E2E",
+    "workflow_dispatch:",
+    "schedule:",
+    "actions/setup-node@v6",
+    "actions/cache@v5",
+    "corepack prepare pnpm@11.0.0 --activate",
+    "pnpm install --frozen-lockfile",
+    "pnpm exec playwright install --with-deps chromium",
+    "pnpm packages:build",
+    "pnpm examples:e2e",
+  ]) {
+    if (!source.includes(expected)) {
+      context.failures.push(`${relativePath} does not include "${expected}".`);
+    }
+  }
+
+  if (source.includes("pull_request:") || source.includes("push:")) {
+    context.failures.push(`${relativePath} must remain optional and must not run on push or pull_request.`);
+  }
+
+  if (source.includes("release-readiness:check")) {
+    context.failures.push(`${relativePath} must not run release-readiness:check.`);
+  }
+
+  const packagesBuildIndex = source.indexOf("pnpm packages:build");
+  const examplesE2eIndex = source.indexOf("pnpm examples:e2e");
+  if (packagesBuildIndex === -1 || examplesE2eIndex === -1 || packagesBuildIndex > examplesE2eIndex) {
+    context.failures.push(`${relativePath} must run "pnpm packages:build" before "pnpm examples:e2e".`);
   }
 }
 

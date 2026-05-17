@@ -232,6 +232,43 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when the optional examples E2E workflow is missing", async () => {
+    const root = await createFixtureRepo();
+    await rm(join(root, ".github/workflows/examples-e2e.yml"));
+
+    expect(checkQualityGate(root).failures).toContain(".github/workflows/examples-e2e.yml is missing.");
+  });
+
+  it("fails when the examples E2E workflow is not manually runnable", async () => {
+    const root = await createFixtureRepo();
+    const source = await readFile(join(root, ".github/workflows/examples-e2e.yml"), "utf8");
+    await writeFile(join(root, ".github/workflows/examples-e2e.yml"), source.replace("  workflow_dispatch:\n", ""));
+
+    expect(checkQualityGate(root).failures).toContain(
+      '.github/workflows/examples-e2e.yml does not include "workflow_dispatch:".',
+    );
+  });
+
+  it("fails when the examples E2E workflow omits the examples:e2e script", async () => {
+    const root = await createFixtureRepo();
+    const source = await readFile(join(root, ".github/workflows/examples-e2e.yml"), "utf8");
+    await writeFile(join(root, ".github/workflows/examples-e2e.yml"), source.replace("pnpm examples:e2e", "pnpm test"));
+
+    expect(checkQualityGate(root).failures).toContain(
+      '.github/workflows/examples-e2e.yml does not include "pnpm examples:e2e".',
+    );
+  });
+
+  it("fails when the examples E2E workflow becomes a push gate", async () => {
+    const root = await createFixtureRepo();
+    const source = await readFile(join(root, ".github/workflows/examples-e2e.yml"), "utf8");
+    await writeFile(join(root, ".github/workflows/examples-e2e.yml"), source.replace("  workflow_dispatch:", "  push:\n  workflow_dispatch:"));
+
+    expect(checkQualityGate(root).failures).toContain(
+      ".github/workflows/examples-e2e.yml must remain optional and must not run on push or pull_request.",
+    );
+  });
+
   it("fails when AGENTS.md package inventory drifts from package directories", async () => {
     const root = await createFixtureRepo();
     const source = await readFile(join(root, "AGENTS.md"), "utf8");
@@ -701,6 +738,7 @@ async function createFixtureRepo() {
     },
   });
   await writeAgents(root);
+  await writeExamplesE2eWorkflow(root);
   await writeTreeInventoryDoc(root, "README.md");
   await writeTreeInventoryDoc(root, "docs/architecture.md");
   await writeTypeScriptBuildGraphPlan(root);
@@ -715,6 +753,68 @@ async function createFixtureRepo() {
 async function writePackageJson(root, relativeDir, packageJson) {
   await mkdir(join(root, relativeDir), { recursive: true });
   await writeJson(join(root, relativeDir, "package.json"), packageJson);
+}
+
+async function writeExamplesE2eWorkflow(root) {
+  await mkdir(join(root, ".github/workflows"), { recursive: true });
+  await writeFile(
+    join(root, ".github/workflows/examples-e2e.yml"),
+    `name: Examples E2E
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  examples-e2e:
+    name: Examples E2E Optional
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.0.0 --activate
+          pnpm --version
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: \${{ steps.pnpm-store.outputs.path }}
+          key: \${{ runner.os }}-pnpm-store-\${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            \${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build packages
+        run: pnpm packages:build
+
+      - name: Run examples E2E
+        run: pnpm examples:e2e
+`,
+  );
 }
 
 async function writeAgents(root) {

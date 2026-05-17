@@ -270,6 +270,19 @@ pnpm examples:check
 
 `examples:check` は example 単体検証用で、必要な workspace package build を先に実行します。release readiness では `packages:build` 済みの `dist` を使う `examples:check:self` を使い、example の `check:scenario:self` / `typecheck:self` / `build:self` で package build の重複を避けます。通常の `check:scenario` は `tsuzuru check` bin を使い、`check:scenario:self` は clean install で pnpm bin shim が CLI build 前に作られない場合を避けるため、build 済み CLI entry を直接実行します。
 
+Browser E2E smoke for examples:
+
+```sh
+pnpm examples:e2e
+```
+
+`examples:e2e` runs the Playwright Save -> Load -> Restore smoke for the
+Preact and Vue examples. It is intentionally separate from root `test` and
+`release-readiness:check`. GitHub Actions exposes it through the optional
+`Examples E2E` workflow, which can be run manually and on a nightly schedule.
+When the workflow fails, inspect the uploaded Playwright report and
+`test-results` artifacts.
+
 publish 対象 package の build:
 
 ```sh

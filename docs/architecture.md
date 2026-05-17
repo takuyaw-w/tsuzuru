@@ -1152,6 +1152,12 @@ For package-focused work, run the relevant filtered checks first.
 `packages:build` is the release-readiness package build gate. It uses explicit dependency order and package `build:self` scripts to avoid rebuilding dependency packages repeatedly in the root release flow, while package-level `build` scripts keep dependency builds for focused package work.
 `packages:typecheck:self` is the package typecheck gate after `packages:build`. Root `typecheck` builds package `dist` once through `packages:build`, then runs public package `typecheck:self` scripts against that output; package-level `typecheck` scripts keep dependency builds for focused package work.
 `examples:check` remains the standalone example gate and builds workspace dependencies through each example package. Its example `check:scenario` scripts use the normal `tsuzuru check` bin. `examples:check:self` is the release-readiness example gate; it assumes `packages:build` has already run and uses example `check:scenario:self` / `typecheck:self` / `build:self` to avoid rebuilding packages and to run the built CLI entry directly when a clean install did not create the `tsuzuru` bin shim before CLI dist existed.
+`examples:e2e` is a browser E2E smoke for the Preact and Vue examples. It runs
+Playwright Save -> Load -> Restore coverage and verifies the example-owned
+RuntimeSaveSlot path in a browser. It is intentionally not part of root `test`
+or `release-readiness:check`; GitHub Actions exposes it through the optional
+manual / scheduled `Examples E2E` workflow. On workflow failure, inspect the
+uploaded Playwright report and `test-results` artifacts.
 The local create-tsuzuru smoke uses workspace-built tarballs for `create-tsuzuru` and generated `@tsuzuru/*` dependencies, then installs the generated project with `pnpm install --prefer-offline`. Registry-backed smoke remains available through `pnpm run smoke:create-tsuzuru:registry`; CI release-readiness should use the local smoke.
 Template lockfile adoption is intentionally deferred because local smoke rewrites generated `@tsuzuru/*` dependencies to `file:<tarball>` entries. TypeScript project references / `tsc -b` are also deferred until the package build graph can be designed as a dedicated build-system change; see `docs/plans/typescript-build-graph.md`.
 
