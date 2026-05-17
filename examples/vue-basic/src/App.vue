@@ -33,6 +33,12 @@ import ParticleLayer from "./components/ParticleLayer.vue";
 import RuntimeControlBar from "./components/RuntimeControlBar.vue";
 import VisualLayer from "./components/VisualLayer.vue";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
+import {
+  createVueExampleSaveDataFromRuntimeState,
+  getLatestSaveSlot,
+  loadSaveSlots,
+  saveToSlot,
+} from "./save-storage.js";
 import { scenarioProject } from "./scenario.js";
 import BacklogScreen from "./screens/BacklogScreen.vue";
 import GalleryScreen from "./screens/GalleryScreen.vue";
@@ -63,6 +69,7 @@ const preferences = ref<ExamplePreferences>(loadPreferences());
 const diagnostics = ref<readonly RuntimeDiagnostic[]>([]);
 const audioNotices = ref<readonly string[]>([]);
 const backlog = ref<readonly BacklogEntry[]>([]);
+const saveSlots = ref(loadSaveSlots());
 let textSoundPlaybackNoticeShown = false;
 
 const plugins: readonly RuntimePluginDefinition[] = [
@@ -115,6 +122,7 @@ const runtimeStatus = computed(() => {
   }
   return runtime.event.value === null ? "Ready" : `Event: ${runtime.event.value.type}`;
 });
+const latestSaveSlot = computed(() => getLatestSaveSlot(saveSlots.value));
 const textSoundPlayer = createStdTextSoundPlayer({
   defaultMinIntervalMs: 45,
   onError: (error) => {
@@ -190,6 +198,38 @@ function advanceRuntime(): void {
 
 function chooseRuntimeItem(itemIndex: number): void {
   runtime?.choose(itemIndex);
+}
+
+function saveRuntime(): void {
+  if (runtime === null) {
+    return;
+  }
+
+  const saveData = createVueExampleSaveDataFromRuntimeState(runtime.state.value, runtime.visibleEvent.value);
+  saveSlots.value = saveToSlot("slot-1", saveData);
+  addAudioNotice("Saved to Slot 1.");
+}
+
+function loadRuntime(): void {
+  if (runtime === null || latestSaveSlot.value === null) {
+    return;
+  }
+
+  try {
+    runtime.restoreSaveData(latestSaveSlot.value.data.runtime);
+    backlog.value = [];
+    screen.value = "runtime";
+    addAudioNotice(`Loaded ${latestSaveSlot.value.label}.`);
+  } catch {
+    diagnostics.value = [
+      ...diagnostics.value,
+      {
+        severity: "warning",
+        code: "example.saveLoad.restoreFailed",
+        message: "Save data could not be restored.",
+      },
+    ];
+  }
 }
 
 function updatePreferences(nextPreferences: ExamplePreferences): void {
@@ -291,10 +331,13 @@ function getExampleTextSoundContext(event: RuntimeEvent | null): ResolveStdTextS
       <EffectLayer v-if="runtime !== null" :state="runtime.state.value" />
       <RuntimeControlBar
         :status="runtimeStatus"
+        :can-load="latestSaveSlot !== null"
         @title="screen = 'title'"
         @backlog="screen = 'backlog'"
         @settings="screen = 'settings'"
         @gallery="screen = 'gallery'"
+        @save="saveRuntime"
+        @load="loadRuntime"
         @step="advanceRuntime"
         @reset="startRuntime"
       />

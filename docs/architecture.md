@@ -848,10 +848,12 @@ storage, migrate save data, or deep-validate plugin state.
 
 `examples/preact-basic` stores its example-specific save payload as a wrapper
 around `RuntimeSaveSlot` plus Preact `RuntimeSaveData` and retained message
-presentation state. Its save flow composes std-audio and std-effect snapshot
-prepare helpers before creating the snapshot. Its load flow filters invalid
-save slots, scenario mismatches, and invalid nested snapshots before they reach
-the runtime restore path.
+presentation state. `examples/vue-basic` uses the same `RuntimeSaveSlot`
+envelope for a smaller example-owned save/load foundation around Vue
+`RuntimeSaveData`. Both examples compose std-audio and std-effect snapshot
+prepare helpers before creating snapshots, and both filter invalid save slots,
+scenario mismatches, and invalid nested snapshots before they reach the runtime
+restore path. Browser storage and save-slot UI remain example-owned.
 
 Standard plugin state uses the following save/load policy:
 

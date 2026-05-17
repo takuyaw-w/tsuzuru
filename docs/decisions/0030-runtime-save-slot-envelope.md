@@ -30,6 +30,10 @@ save payload. That wrapper still owns retained message presentation state and
 localStorage persistence, while `validateRuntimeSaveSlot` owns scenario identity
 and nested snapshot validation.
 
+The Vue basic example also uses `RuntimeSaveSlot` for a smaller save/load
+foundation. Its storage remains example-owned, and the example uses Vue
+`RuntimeSaveData` for adapter-facing restore behavior.
+
 ## Decision
 
 Core defines a host-facing save slot envelope:
