@@ -1219,7 +1219,6 @@ bg stationRain
 bg "station-rain"
 
 show mio.normal at center
-show mio.normal at x=320 y=80
 
 hide mio.normal
 
@@ -1253,12 +1252,13 @@ x=<number> y=<number>
 
 Rules:
 
-- `left` / `center` / `right` are standard presets.
-- `x` / `y` use viewport top-left origin.
-- Positive `x` goes right.
-- Positive `y` goes down.
-- Both `x` and `y` are required for coordinate placement.
-- Unit is Tsuzuru viewport coordinate.
+- `left` / `center` / `right` are standard presets and are the v1.0
+  std-visual placement target.
+- `x=<number> y=<number>` is parser-level future syntax. It is compile-rejected
+  on `main` and is not part of the v1.0 stable subset.
+- Coordinate origin, units, anchors, safe area, and responsive layout behavior
+  require a future renderer contract before coordinate placement can become
+  stable.
 
 ### 21.5 `show` Update Behavior
 
@@ -1267,7 +1267,7 @@ It does not add a second sprite.
 
 ```txt
 show mio.normal at center
-show mio.normal at x=320 y=80
+show mio.normal at right
 ```
 
 Result:

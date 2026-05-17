@@ -109,6 +109,10 @@ timers; hosts clear the wait after their own timer completes.
 Visual transitions such as `bg station with fade(duration=300)` compile to
 renderer-independent std-visual metadata. Core and std-visual do not run DOM,
 CSS, or timer animations for transitions.
+For v1.0 planning, stable std-visual sprite placement is preset-only:
+`show asset at left`, `show asset at center`, and `show asset at right`.
+Coordinate placement such as `show asset at x=320 y=80` is parser-level future
+syntax and is compile-rejected for current runnable scenarios.
 
 ## Current Implementation Files
 

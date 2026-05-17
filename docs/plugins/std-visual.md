@@ -126,6 +126,11 @@ show alice_smile at center with dissolve(duration=250)
 
 `assetId` は非空文字列である必要があります。`position` は `"left" | "center" | "right"` のいずれかです。runtime command handler では省略時に `"center"` になります。DSL sugar では現在 `at <placement>` が必須です。transition が指定された場合、sprite state に保存されます。
 
+v1.0 で安定対象にする sprite placement は preset の `"left" | "center" | "right"` のみです。
+`show asset at x=... y=...` のような coordinate placement は parser-level future syntax であり、現在の compiler は reject します。
+std-visual state は coordinate / anchor / safe-area 情報を保持しません。
+実際の pixel 位置、responsive layout、safe area への対応は renderer / app 側の責務であり、coordinate placement を安定化するには別途 renderer contract が必要です。
+
 実行後の state:
 
 ```ts

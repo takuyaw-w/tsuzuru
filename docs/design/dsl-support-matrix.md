@@ -44,6 +44,8 @@ decisions:
 - namespaced `wait namespace.event(...)` remains design-only
 - `system.*` conditions parse but are compile-unsupported and are explicitly
   not part of the v1.0 stable subset
+- visual preset placement (`left` / `center` / `right`) is the v1.0 target;
+  coordinate placement remains parser-only
 - audio transition syntax is design-only
 - editor / syntax highlighting scope is not implemented
 
@@ -54,6 +56,10 @@ and text block metadata remain post-v1.0 design work.
 For v1.0 conditions, `scenario.*` references are the stable target.
 `system.*` condition references remain post-v1.0 resolver design work; use
 `call system.unlock...` commands for std-system write-side behavior.
+
+For v1.0 visual placement, `show asset at left`, `show asset at center`, and
+`show asset at right` are the stable std-visual target. `show asset at
+x=... y=...` remains post-v1.0 renderer coordinate policy work.
 
 ## Core DSL Matrix
 
@@ -93,7 +99,7 @@ For v1.0 conditions, `scenario.*` references are the stable target.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `bg asset` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Durable background state. |
 | `show asset at left/center/right` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Preset placement is compiled and runtime-handled. |
-| `show asset at x=... y=...` | std-visual sugar | yes | rejected | no | std-visual future | yes | no | yes | `parser-only` | Compiler explicitly rejects coordinate placement for now. |
+| `show asset at x=... y=...` | std-visual sugar | yes | rejected | no | std-visual future | yes | no | yes | `parser-only` | Compiler explicitly rejects coordinate placement for now. Not included in the v1.0 stable subset. |
 | `hide asset` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Hides matching sprite if present. |
 | `clear sprites` | std-visual sugar | yes | command | plugin handler | std-visual | yes | tests | yes | `plugin-dependent` | Clears sprite state. |
 | `clear bg` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Clears background state. |
@@ -138,10 +144,9 @@ templates, and user-facing syntax docs except as clearly historical context.
 
 Before v1.0, the DSL support decision should close these items:
 
-1. Decide whether visual coordinate placement is out of scope for v1.0.
-2. Decide whether audio transitions remain design-only for v1.0 and update
+1. Decide whether audio transitions remain design-only for v1.0 and update
    user-facing docs accordingly.
-3. Decide whether editor / syntax highlighting is a v1.0 blocker or a
+2. Decide whether editor / syntax highlighting is a v1.0 blocker or a
    post-v1.0 improvement.
 
 Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
@@ -149,6 +154,8 @@ rich inline text, inline waits, inline audio events) are not part of the v1.0
 stable subset. They remain post-v1.0 design work.
 `system.*` conditions are also not part of the v1.0 stable subset; std-system
 write-side `call system.unlock...` commands remain plugin-dependent.
+Visual coordinate placement is also not part of the v1.0 stable subset; preset
+std-visual placement remains plugin-dependent.
 
 ## Recommended Issues
 
@@ -180,17 +187,19 @@ write-side `call system.unlock...` commands remain plugin-dependent.
   `pnpm --filter @tsuzuru/plugin-std-system test`.
 - Risk: system state may require a renderer-neutral persistent-state boundary.
 
-### 3. Decide visual coordinate placement scope
+### 3. Design visual coordinate placement after v1.0
 
-- Purpose: resolve the gap where `show asset at x=... y=...` parses but
-  compiler rejects it.
-- Scope: compiler support, std-visual metadata, renderer expectations, docs,
-  and examples.
-- Done when: coordinate placement is either stable with tests or marked
-  explicitly out of v1.0.
+- Purpose: design arbitrary sprite coordinates without locking the v1.0
+  renderer coordinate system too early.
+- Scope: compiler support, std-visual state metadata, renderer coordinate
+  origin, anchor, safe-area behavior, responsive layout, docs, and examples.
+- Done when: coordinate placement has an explicit renderer contract, compiler
+  and plugin state design, tests, and user docs before being promoted from
+  parser-only.
 - Suggested checks: `pnpm --filter @tsuzuru/core test`,
   `pnpm --filter @tsuzuru/plugin-std-visual test`.
-- Risk: coordinate semantics can lock renderer coordinate systems too early.
+- Risk: coordinate semantics can lock responsive renderer behavior and
+  std-visual state shape too early.
 
 ### 4. Remove or implement audio transition syntax
 
