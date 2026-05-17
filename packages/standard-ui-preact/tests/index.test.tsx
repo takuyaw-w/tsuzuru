@@ -21,7 +21,10 @@ import {
 type DivProps = ComponentProps<"div">;
 type DivClickHandler = NonNullable<DivProps["onClick"]>;
 type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
-type TestNodeProps = Pick<DivProps, "children" | "className" | "onClick" | "onKeyDown" | "role" | "style" | "tabIndex">;
+type TestNodeProps = Pick<
+  DivProps,
+  "aria-label" | "children" | "className" | "onClick" | "onKeyDown" | "role" | "style" | "tabIndex"
+>;
 
 const loc = {
   start: { filePath: "scenario/main.tzr", line: 1, column: 1 },
@@ -70,6 +73,12 @@ function findByClass(value: ComponentChildren, className: string): readonly VNod
     ? [vnode]
     : [];
   return [...matches, ...findByClass(vnode.props.children, className)];
+}
+
+function getChildNodes(value: ComponentChildren): readonly VNode<TestNodeProps>[] {
+  const children = (expectVNode(value) as VNode<TestNodeProps>).props.children;
+  const childList = Array.isArray(children) ? children : [children];
+  return childList.filter(isValidElement) as VNode<TestNodeProps>[];
 }
 
 function createDivClickEvent(): Parameters<DivClickHandler>[0] {
@@ -217,18 +226,35 @@ describe("ScreenHost", () => {
 describe("MessageWindow", () => {
   it("renders narration without speaker", () => {
     const node = expectVNode(MessageWindow({ lines: ["It was raining."] }));
+    const lineContainers = findByClass(node, "tzr-message-window__lines");
 
     expect(node.props.className).toContain("tzr-message-window--narration");
     expect(findByClass(node, "tzr-message-window__speaker")).toHaveLength(0);
+    expect(lineContainers).toHaveLength(1);
     expect(getNodeText(node)).toContain("It was raining.");
   });
 
   it("renders dialogue with speaker", () => {
     const node = expectVNode(MessageWindow({ speaker: "Haruka", lines: ["You're late."] }));
+    const speakers = findByClass(node, "tzr-message-window__speaker");
+    const lineContainers = findByClass(node, "tzr-message-window__lines");
 
     expect(node.props.className).toContain("tzr-message-window--dialogue");
+    expect(speakers).toHaveLength(1);
+    expect(speakers[0].props["aria-label"]).toBe("Speaker");
+    expect(lineContainers).toHaveLength(1);
     expect(getNodeText(node)).toContain("Haruka");
     expect(getNodeText(node)).toContain("You're late.");
+  });
+
+  it("keeps speaker outside the stable line container", () => {
+    const node = expectVNode(MessageWindow({ speaker: "Haruka", lines: ["You're late."] }));
+    const directChildClassNames = getChildNodes(node).map((child) => child.props.className);
+    const lineContainers = findByClass(node, "tzr-message-window__lines");
+
+    expect(directChildClassNames).toEqual(["tzr-message-window__speaker", "tzr-message-window__lines"]);
+    expect(getNodeText(lineContainers[0])).toBe("You're late.");
+    expect(findByClass(lineContainers[0], "tzr-message-window__speaker")).toHaveLength(0);
   });
 
   it("renders default line content inside stable line elements", () => {

@@ -125,16 +125,17 @@ button:disabled {
 .runtime-screen {
   isolation: isolate;
   --message-window-bottom: 24px;
-  --message-window-height: 168px;
+  --message-window-height: 204px;
   --message-window-inset-x: 24px;
   --message-window-choice-gap: 24px;
   --message-text-font-size: 1rem;
   --message-text-line-height: 1.78;
   --message-lines-gap: 6px;
-  --message-lines-extra: 10px;
+  --message-lines-extra: 12px;
+  --message-lines-count: 3;
   --message-lines-height: calc(
-    var(--message-text-font-size) * var(--message-text-line-height) * 2 + var(--message-lines-gap) +
-      var(--message-lines-extra)
+    var(--message-text-font-size) * var(--message-text-line-height) * var(--message-lines-count) +
+      var(--message-lines-gap) * 2 + var(--message-lines-extra)
   );
   background: #0e1721;
 }
@@ -313,7 +314,7 @@ button:disabled {
   z-index: 2;
   height: var(--message-window-height);
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: 22px 26px;
   border: 1px solid rgba(247, 242, 232, 0.22);
   border-radius: 8px;
@@ -323,8 +324,16 @@ button:disabled {
 }
 
 .message-window__speaker {
-  margin: 0 0 10px;
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 26px;
+  z-index: 1;
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid rgba(247, 242, 232, 0.24);
+  border-radius: 999px;
   color: #ffd37a;
+  background: rgba(16, 24, 32, 0.9);
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -551,7 +560,7 @@ button:disabled {
 @media (max-width: 720px) {
   .runtime-screen {
     --message-window-bottom: 12px;
-    --message-window-height: 154px;
+    --message-window-height: 184px;
     --message-window-inset-x: 12px;
     --message-window-choice-gap: 16px;
   }

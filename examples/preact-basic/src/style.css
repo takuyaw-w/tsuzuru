@@ -55,6 +55,9 @@ button {
   position: absolute;
   inset: 0;
   z-index: 2;
+  --app-message-window-bottom: clamp(16px, 4vw, 40px);
+  --app-message-window-height: clamp(210px, 32%, 252px);
+  --app-message-choice-gap: clamp(20px, 3vw, 32px);
 }
 
 .app__runtime-menu {
@@ -468,22 +471,22 @@ button {
 }
 
 .app__message-layer .tzr-message-window {
-  --app-message-window-height: clamp(172px, 26%, 204px);
   --app-message-text-font-size: clamp(1rem, 2vw, 1.28rem);
   --app-message-text-line-height: 1.75;
   --app-message-lines-gap: 8px;
-  --app-message-lines-extra: 10px;
+  --app-message-lines-extra: 12px;
+  --app-message-lines-count: 3;
   --app-message-lines-height: calc(
-    var(--app-message-text-font-size) * var(--app-message-text-line-height) * 2 +
-      var(--app-message-lines-gap) + var(--app-message-lines-extra)
+    var(--app-message-text-font-size) * var(--app-message-text-line-height) * var(--app-message-lines-count) +
+      var(--app-message-lines-gap) * 2 + var(--app-message-lines-extra)
   );
 
   right: clamp(16px, 4vw, 44px);
-  bottom: clamp(16px, 4vw, 40px);
+  bottom: var(--app-message-window-bottom);
   left: clamp(16px, 4vw, 44px);
   height: var(--app-message-window-height);
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: clamp(16px, 2.8vw, 28px) clamp(18px, 3.3vw, 34px);
   border: 1px solid rgba(247, 242, 226, 0.46);
   border-radius: 8px;
@@ -497,9 +500,13 @@ button {
 }
 
 .app__message-layer .tzr-message-window__speaker {
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: clamp(18px, 3.3vw, 34px);
+  z-index: 1;
   display: inline-flex;
   min-width: 4.5em;
-  margin-bottom: 12px;
+  margin: 0;
   padding: 4px 12px;
   border: 1px solid rgba(238, 202, 120, 0.52);
   border-radius: 999px;
@@ -578,7 +585,7 @@ button {
 
 .app__message-layer .app__choice-layer {
   right: clamp(28px, 18vw, 260px);
-  bottom: clamp(188px, 34%, 260px);
+  bottom: calc(var(--app-message-window-bottom) + var(--app-message-window-height) + var(--app-message-choice-gap));
   left: clamp(28px, 18vw, 260px);
   z-index: 2;
 }

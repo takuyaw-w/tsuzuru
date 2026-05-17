@@ -5,14 +5,16 @@
   --tzr-standard-ui-window-bg: rgba(0, 0, 0, 0.72);
   --tzr-standard-ui-window-border: rgba(255, 255, 255, 0.32);
   --tzr-standard-ui-accent-color: #fff;
-  --tzr-standard-ui-message-window-height: 160px;
+  --tzr-standard-ui-message-window-height: 188px;
   --tzr-standard-ui-message-text-font-size: 1rem;
   --tzr-standard-ui-message-text-line-height: 1.7;
   --tzr-standard-ui-message-lines-gap: 6px;
-  --tzr-standard-ui-message-lines-extra: 8px;
+  --tzr-standard-ui-message-lines-extra: 10px;
+  --tzr-standard-ui-message-lines-count: 3;
   --tzr-standard-ui-message-lines-height: calc(
-    var(--tzr-standard-ui-message-text-font-size) * var(--tzr-standard-ui-message-text-line-height) * 2 +
-      var(--tzr-standard-ui-message-lines-gap) + var(--tzr-standard-ui-message-lines-extra)
+    var(--tzr-standard-ui-message-text-font-size) * var(--tzr-standard-ui-message-text-line-height) *
+      var(--tzr-standard-ui-message-lines-count) + var(--tzr-standard-ui-message-lines-gap) * 2 +
+      var(--tzr-standard-ui-message-lines-extra)
   );
 }
 
@@ -45,7 +47,7 @@
   box-sizing: border-box;
   height: var(--tzr-standard-ui-message-window-height);
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: 18px 20px;
   border: 1px solid var(--tzr-standard-ui-window-border);
   background: var(--tzr-standard-ui-window-bg);
@@ -56,7 +58,14 @@
 }
 
 .tzr-message-window__speaker {
-  margin-bottom: 10px;
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 20px;
+  z-index: 1;
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid var(--tzr-standard-ui-window-border);
+  background: var(--tzr-standard-ui-window-bg);
   font-weight: 700;
 }
 

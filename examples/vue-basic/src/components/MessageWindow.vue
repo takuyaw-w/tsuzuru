@@ -16,7 +16,7 @@ const emit = defineEmits<{
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
 const visibleCharacterCount = ref(0);
 const messageStyle = computed(() => ({
-  fontSize: `${props.messageScale}rem`,
+  "--message-text-font-size": `${props.messageScale}rem`,
 }));
 const lines = computed(() => {
   if (props.event?.type !== "narration" && props.event?.type !== "dialogue") {

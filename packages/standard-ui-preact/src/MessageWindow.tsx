@@ -56,7 +56,11 @@ export function MessageWindow({
 
   return (
     <div className={windowClassName} {...advanceProps}>
-      {speaker !== undefined ? <div className="tzr-message-window__speaker">{speaker}</div> : null}
+      {speaker !== undefined ? (
+        <div className="tzr-message-window__speaker" aria-label="Speaker">
+          {speaker}
+        </div>
+      ) : null}
       <div className="tzr-message-window__lines">
         {lines.map((line, index) => (
           <p className="tzr-message-window__line" key={index}>

@@ -5,14 +5,15 @@ import { assets } from "../assets.js";
 import { scenarioProject } from "../src/scenario.js";
 
 const messageSpeakers = new Set(["narration", "tone", "noize", "mix"]);
-const maxMessageLineDisplayWidth = 64;
+const maxMessageBlockLineCount = 3;
+const maxMessageLineDisplayWidth = 72;
 
 describe("vue-basic example", () => {
   it("compiles the scenario project", () => {
     expect(scenarioProject.ok).toBe(true);
   });
 
-  it("keeps message blocks within two short text lines", async () => {
+  it("keeps message blocks within three short text lines", async () => {
     const scenarioRoot = join(import.meta.dirname, "..", "scenario");
     const scenarioFiles = await collectScenarioFiles(scenarioRoot);
 
@@ -20,7 +21,7 @@ describe("vue-basic example", () => {
       const source = await readFile(filePath, "utf8");
       const blocks = collectMessageBlocks(source);
       for (const block of blocks) {
-        if (block.lines.length > 2) {
+        if (block.lines.length > maxMessageBlockLineCount) {
           throw new Error(
             `${relative(scenarioRoot, filePath)}:${block.lineNumber} ${block.speaker} has ${block.lines.length} text lines`,
           );
