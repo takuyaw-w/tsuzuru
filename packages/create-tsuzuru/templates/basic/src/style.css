@@ -186,7 +186,15 @@ button {
 }
 
 .app__message-layer .tzr-message-window {
-  --app-message-window-height: clamp(154px, 25%, 190px);
+  --app-message-window-height: clamp(172px, 26%, 204px);
+  --app-message-text-font-size: clamp(1rem, 2vw, 1.28rem);
+  --app-message-text-line-height: 1.75;
+  --app-message-lines-gap: 8px;
+  --app-message-lines-extra: 10px;
+  --app-message-lines-height: calc(
+    var(--app-message-text-font-size) * var(--app-message-text-line-height) * 2 +
+      var(--app-message-lines-gap) + var(--app-message-lines-extra)
+  );
 
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);
@@ -220,24 +228,26 @@ button {
 }
 
 .app__message-layer .tzr-message-window__lines {
-  gap: 8px;
-  height: calc(3.5em + 8px);
+  gap: var(--app-message-lines-gap);
+  height: var(--app-message-lines-height);
   min-height: 0;
   align-content: start;
   overflow: hidden;
+  font-size: var(--app-message-text-font-size);
+  line-height: var(--app-message-text-line-height);
 }
 
 .app__message-layer .tzr-message-window__line {
   color: #fffaf0;
-  font-size: clamp(1rem, 2vw, 1.28rem);
-  line-height: 1.75;
+  font-size: inherit;
+  line-height: inherit;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
 }
 
 .app__message-layer .tzr-message-window__advance-hint {
   position: absolute;
   right: clamp(16px, 3vw, 30px);
-  bottom: 10px;
+  bottom: 4px;
   margin: 0;
   color: rgba(255, 250, 240, 0.68);
   font-size: 0.78rem;

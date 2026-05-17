@@ -125,9 +125,17 @@ button:disabled {
 .runtime-screen {
   isolation: isolate;
   --message-window-bottom: 24px;
-  --message-window-height: 160px;
+  --message-window-height: 168px;
   --message-window-inset-x: 24px;
   --message-window-choice-gap: 24px;
+  --message-text-font-size: 1rem;
+  --message-text-line-height: 1.78;
+  --message-lines-gap: 6px;
+  --message-lines-extra: 10px;
+  --message-lines-height: calc(
+    var(--message-text-font-size) * var(--message-text-line-height) * 2 + var(--message-lines-gap) +
+      var(--message-lines-extra)
+  );
   background: #0e1721;
 }
 
@@ -323,16 +331,20 @@ button:disabled {
 
 .message-window__lines {
   display: grid;
-  height: 3.56em;
+  gap: var(--message-lines-gap);
+  height: var(--message-lines-height);
   min-height: 0;
   align-content: start;
   overflow: hidden;
+  font-size: var(--message-text-font-size);
+  line-height: var(--message-text-line-height);
 }
 
 .message-window__line,
 .message-window__status {
   margin: 0;
-  line-height: 1.78;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .message-window__hint {
@@ -539,7 +551,7 @@ button:disabled {
 @media (max-width: 720px) {
   .runtime-screen {
     --message-window-bottom: 12px;
-    --message-window-height: 148px;
+    --message-window-height: 154px;
     --message-window-inset-x: 12px;
     --message-window-choice-gap: 16px;
   }

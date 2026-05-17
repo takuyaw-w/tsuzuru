@@ -19,7 +19,10 @@ scene focus_tone:
 
   tone:
     高すぎると落ち着かないし、低すぎると足音みたいになる。
-    今の C5 は、説明役として少し明るく、でも画面を占領しない高さを狙っている。
+    今の C5 は、説明役として少し明るい。
+
+  tone:
+    でも画面を占領しない高さを狙っている。
 
   noize:
     トーンの音は、輪郭がはっきりしている。
@@ -27,7 +30,10 @@ scene focus_tone:
 
   mix:
     そのかわり、長い文章では規則正しさが目立つこともある。
-    だから volume と duration を短めにして、文字の後ろにそっと置くのが大事。
+    だから volume と duration は短めにする。
+
+  mix:
+    文字の後ろにそっと置くのが大事。
 
   jump effect_choice
 
@@ -52,11 +58,14 @@ scene focus_noize:
 scene focus_mix:
   mix:
     では mix を聞いて。
-    私の profile は E5 の triangle tone と white noise を重ねている。
+    私の profile は E5 の triangle tone を使う。
+
+  mix:
+    そこに white noise を重ねている。
 
   mix:
     triangle は sine より少しだけ存在感がある。
-    そこに noise を薄く入れると、軽いクリックではなく、息のある合図になる。
+    noise を薄く入れると、息のある合図になる。
 
   tone:
     tone だけの明るさより、少し実用向けに丸くなる。

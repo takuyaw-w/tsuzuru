@@ -4,13 +4,14 @@ import { describe, expect, it } from "vitest";
 import { scenarioProject } from "../src/scenario.js";
 
 const messageSpeakers = new Set(["narration", "tone", "noize", "mix"]);
+const maxMessageLineDisplayWidth = 64;
 
 describe("preact-basic scenario", () => {
   it("compiles the scenario project", () => {
     expect(scenarioProject.ok).toBe(true);
   });
 
-  it("keeps message blocks within two text lines", async () => {
+  it("keeps message blocks within two short text lines", async () => {
     const scenarioRoot = join(import.meta.dirname, "..", "scenario");
     const scenarioFiles = await collectScenarioFiles(scenarioRoot);
 
@@ -22,6 +23,15 @@ describe("preact-basic scenario", () => {
           throw new Error(
             `${relative(scenarioRoot, filePath)}:${block.lineNumber} ${block.speaker} has ${block.lines.length} text lines`,
           );
+        }
+
+        for (const line of block.lines) {
+          const displayWidth = getApproxDisplayWidth(line.text);
+          if (displayWidth > maxMessageLineDisplayWidth) {
+            throw new Error(
+              `${relative(scenarioRoot, filePath)}:${line.lineNumber} ${block.speaker} line is too long: width=${displayWidth}, text=${line.text}`,
+            );
+          }
         }
       }
     }
@@ -61,7 +71,12 @@ describe("preact-basic scenario", () => {
 interface MessageBlock {
   readonly speaker: string;
   readonly lineNumber: number;
-  readonly lines: readonly string[];
+  readonly lines: readonly MessageLine[];
+}
+
+interface MessageLine {
+  readonly lineNumber: number;
+  readonly text: string;
 }
 
 async function collectScenarioFiles(directory: string): Promise<readonly string[]> {
@@ -89,7 +104,7 @@ function collectMessageBlocks(source: string): readonly MessageBlock[] {
     }
 
     const headerIndent = header[1].length;
-    const textLines: string[] = [];
+    const textLines: MessageLine[] = [];
     for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
       const line = lines[nextIndex];
       if (line.trim() === "") {
@@ -101,8 +116,9 @@ function collectMessageBlocks(source: string): readonly MessageBlock[] {
         break;
       }
 
-      if (!isCommandLine(line.trim())) {
-        textLines.push(line.trim());
+      const text = line.trim();
+      if (!isCommandLine(text)) {
+        textLines.push({ lineNumber: nextIndex + 1, text });
       }
     }
 
@@ -114,6 +130,14 @@ function collectMessageBlocks(source: string): readonly MessageBlock[] {
   }
 
   return blocks;
+}
+
+function getApproxDisplayWidth(text: string): number {
+  let width = 0;
+  for (const char of text) {
+    width += /[ -~]/.test(char) ? 1 : 2;
+  }
+  return width;
 }
 
 function isCommandLine(line: string): boolean {

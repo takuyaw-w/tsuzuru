@@ -6,7 +6,14 @@
   --tzr-standard-ui-window-border: rgba(255, 255, 255, 0.32);
   --tzr-standard-ui-accent-color: #fff;
   --tzr-standard-ui-message-window-height: 160px;
-  --tzr-standard-ui-message-lines-height: calc(3.4em + 6px);
+  --tzr-standard-ui-message-text-font-size: 1rem;
+  --tzr-standard-ui-message-text-line-height: 1.7;
+  --tzr-standard-ui-message-lines-gap: 6px;
+  --tzr-standard-ui-message-lines-extra: 8px;
+  --tzr-standard-ui-message-lines-height: calc(
+    var(--tzr-standard-ui-message-text-font-size) * var(--tzr-standard-ui-message-text-line-height) * 2 +
+      var(--tzr-standard-ui-message-lines-gap) + var(--tzr-standard-ui-message-lines-extra)
+  );
 }
 
 .tzr-game-shell {
@@ -55,16 +62,19 @@
 
 .tzr-message-window__lines {
   display: grid;
-  gap: 6px;
+  gap: var(--tzr-standard-ui-message-lines-gap);
   height: var(--tzr-standard-ui-message-lines-height);
   min-height: 0;
   align-content: start;
   overflow: hidden;
+  font-size: var(--tzr-standard-ui-message-text-font-size);
+  line-height: var(--tzr-standard-ui-message-text-line-height);
 }
 
 .tzr-message-window__line {
   margin: 0;
-  line-height: 1.7;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .tzr-message-window__advance-hint {
