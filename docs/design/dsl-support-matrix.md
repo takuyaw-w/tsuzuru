@@ -39,11 +39,16 @@ The v1.0 stable candidate is the plain, compile-supported DSL subset:
 The main DSL gaps before v1.0 are not parser features. They are support-scope
 decisions:
 
-- rich inline markup and text block control are parser-only today
+- rich inline markup and text block controls are parser-only today and are
+  explicitly not part of the v1.0 stable subset
 - namespaced `wait namespace.event(...)` remains design-only
 - `system.*` conditions parse but are compile-unsupported
 - audio transition syntax is design-only
 - editor / syntax highlighting scope is not implemented
+
+For v1.0, plain narration, dialogue, and `say` text are the stable text
+authoring target. Rich text, inline events, blank-line click waits, page breaks,
+and text block metadata remain post-v1.0 design work.
 
 ## Core DSL Matrix
 
@@ -53,9 +58,9 @@ decisions:
 | `character id name="..."` | Core metadata | yes | metadata | dialogue validation | n/a | yes | yes | yes | `stable` | Dialogue speaker IDs are validated by compiler. |
 | `include "./path.tzr"` | Core project directive | yes | project compiler | n/a | n/a | yes | yes | yes | `stable` | `compileTzrProject` resolves includes; single-document compile ignores project loading. |
 | `scene id:` / `scene id "title":` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Static scene IDs only. |
-| `narration:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Rich inline nodes, page breaks, click waits, and `:meta` are not compile-supported yet. |
-| `say id:` | Core text | yes | plain text only | yes | n/a | yes | tests | yes | `stable` | Compiles like dialogue shorthand. |
-| `<characterId>:` | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Requires a declared character. |
+| `narration:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Rich inline nodes, page breaks, click waits, and `:meta` are parser-only and not included in the v1.0 stable subset. |
+| `say id:` plain text | Core text | yes | plain text only | yes | n/a | yes | tests | yes | `stable` | Compiles like dialogue shorthand; plain text only for v1.0. |
+| `<characterId>:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Requires a declared character; plain text only for v1.0. |
 | `choice "..."` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Runtime emits body-choice events and resumes selected body. |
 | `"label" id=... if scenario.*:` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Conditional choice filtering supports `scenario.*` conditions. |
 | `if` / `elif` / `else` with `scenario.*` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Logical `and` / `or` / `not`, comparisons, literals, and parentheses are covered. |
@@ -68,14 +73,14 @@ decisions:
 | `call namespace.action(...)` | Plugin command | yes | yes with plugin metadata | handler-dependent | required | yes | yes for std-system | yes | `plugin-dependent` | Without plugin metadata the compiler rejects generic `call`; registered plugin metadata validates args. |
 | `wait 1000` | Core wait | yes | yes | yes | host clears wait | yes | unit tests | yes | `stable` | Runtime emits a pending timed wait; host controls timer completion. |
 | `wait namespace.event(...)` | Future wait | yes | rejected | no | future host/plugin | yes | no | yes | `design-only` | Parser recognizes the shape, but compiler rejects namespaced waits. |
-| Inline `{text ...|...}` | Core text markup | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Rich inline text is parsed but not compiled. |
-| Inline `{delay ms=...|...}` | Core text markup | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Parsed for future text reveal control. |
-| Inline `{wait ms=...}` | Core text event | yes | rejected | no | host future | yes | no | yes | `parser-only` | Not compiled into runtime events yet. |
-| Inline `{se assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `se` is supported; inline `se` is not. |
-| Inline `{voice assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `voice` is supported; inline `voice` is not. |
-| Text block blank line click wait | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextClickWait`. |
-| Text block `---` page break | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextPageBreak`. |
-| Text block `:meta` | Core text metadata | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Metadata attributes parse but compiler rejects the block metadata. |
+| Inline `{text ...|...}` | Core text markup | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Rich inline text is parsed but not compiled. Not included in the v1.0 stable subset. |
+| Inline `{delay ms=...|...}` | Core text markup | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Parsed for future text reveal control. Not included in the v1.0 stable subset. |
+| Inline `{wait ms=...}` | Core text event | yes | rejected | no | host future | yes | no | yes | `parser-only` | Not compiled into runtime events. Not included in the v1.0 stable subset. |
+| Inline `{se assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `se` is supported; inline `se` is not included in the v1.0 stable subset. |
+| Inline `{voice assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `voice` is supported; inline `voice` is not included in the v1.0 stable subset. |
+| Text block blank line click wait | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextClickWait`. Not included in the v1.0 stable subset. |
+| Text block `---` page break | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextPageBreak`. Not included in the v1.0 stable subset. |
+| Text block `:meta` | Core text metadata | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Metadata attributes parse but compiler rejects the block metadata. Not included in the v1.0 stable subset. |
 
 ## Standard Plugin Sugar Matrix
 
@@ -128,26 +133,30 @@ templates, and user-facing syntax docs except as clearly historical context.
 
 Before v1.0, the DSL support decision should close these items:
 
-1. Decide whether parser-only text features (`:meta`, page break, click wait,
-   rich inline text, inline events) are explicitly out of the v1.0 stable subset
-   or promoted with compiler/runtime support.
-2. Decide whether `system.*` conditions remain out of scope for v1.0.
-3. Decide whether visual coordinate placement is out of scope for v1.0.
-4. Decide whether audio transitions remain design-only for v1.0 and update
+1. Decide whether `system.*` conditions remain out of scope for v1.0.
+2. Decide whether visual coordinate placement is out of scope for v1.0.
+3. Decide whether audio transitions remain design-only for v1.0 and update
    user-facing docs accordingly.
-5. Decide whether editor / syntax highlighting is a v1.0 blocker or a
+4. Decide whether editor / syntax highlighting is a v1.0 blocker or a
    post-v1.0 improvement.
+
+Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
+rich inline text, inline waits, inline audio events) are not part of the v1.0
+stable subset. They remain post-v1.0 design work.
 
 ## Recommended Issues
 
-### 1. Finalize parser-only text feature scope for v1.0
+### 1. Design rich text and inline event support after v1.0
 
-- Purpose: avoid accidentally promising text block and inline syntax that does
-  not compile today.
-- Scope: `:meta`, blank-line click waits, `---` page breaks, `{text}`,
-  `{delay}`, `{wait}`, inline `{se}`, and inline `{voice}`.
-- Done when: each feature is either explicitly out of v1.0 stable scope or has
-  compiler/runtime tests and user docs.
+- Purpose: design text block controls and inline syntax without overpromising
+  them in v1.0.
+- Scope: renderer message model, text reveal timing, backlog representation,
+  save/load interaction, inline audio events, `:meta`, blank-line click waits,
+  `---` page breaks, `{text}`, `{delay}`, `{wait}`, inline `{se}`, and inline
+  `{voice}`.
+- Done when: each feature has a compiler/runtime design, renderer contract,
+  compatibility notes, tests, and user docs before being promoted from
+  parser-only.
 - Suggested checks: `pnpm --filter @tsuzuru/core test`, `pnpm check`.
 - Risk: making rich text stable too early can constrain renderer and adapter
   behavior.

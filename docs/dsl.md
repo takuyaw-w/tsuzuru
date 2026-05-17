@@ -74,6 +74,13 @@ The currently implemented runnable subset covers:
   ranges listed by the support matrix
 - `end`
 
+For v1.0 planning, the stable text authoring subset is plain narration,
+dialogue shorthand, and `say` block text. Rich inline text markup, inline
+delay/wait, inline `{se}` / `{voice}`, blank-line click waits, `---` page
+breaks, and text block `:meta` are parser-only design syntax and are not part
+of the v1.0 stable subset. Use statement-level plugin commands such as `se` and
+`voice` instead of inline audio events.
+
 Some design-level syntax in `docs/design/dsl-v2.md` may still be parser-only or
 not implemented at runtime. Treat `examples/preact-basic` as the current
 runnable reference, and use the support matrix to distinguish v1.0 stable

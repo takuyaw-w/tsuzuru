@@ -121,6 +121,10 @@ The following syntax is not Core. It is official standard plugin sugar.
   call system.unlockAchievement(id=...)
 ```
 
+The inline audio entries above describe parser-level design syntax only. They
+are not part of the v1.0 stable subset; use statement-level `se` and `voice`
+for current runnable scenarios.
+
 ---
 
 ## 3. Lexical Rules
@@ -390,6 +394,12 @@ narration:
 
 Text block semantics apply inside `say` / character dialogue / `narration`.
 
+v1.0 stable subset note: plain text lines inside narration, dialogue shorthand,
+and `say` blocks are stable candidates. Blank-line click waits, `---` page
+breaks, and `:meta` metadata are parser-level design syntax today; they are
+rejected by the compiler and are not part of the v1.0 stable subset. See
+[`dsl-support-matrix.md`](dsl-support-matrix.md) for the current support status.
+
 ### 10.1 Normal Text Line
 
 ```txt
@@ -473,6 +483,10 @@ continue to next statement
 
 `:meta` defines initial metadata for the entire current dialogue or narration block.
 
+Implementation status: `:meta` is parser-only and not part of the v1.0 stable
+subset. Current compiler behavior rejects text block metadata; renderer and
+save/load behavior are post-v1.0 design work.
+
 ```txt
 mio:
   :meta
@@ -510,6 +524,12 @@ mood=<identifier|string>
 ## 12. Inline Markup
 
 Inline markup may appear inside normal text lines.
+
+Implementation status: this section describes parser-level design syntax.
+Inline `{text}`, `{delay}`, `{wait}`, `{se}`, and `{voice}` are parsed but
+compile-rejected today. They are not part of the v1.0 stable subset; v1.0 text
+authoring should use plain narration/dialogue text and statement-level plugin
+commands such as `se` / `voice`.
 
 General rules:
 
