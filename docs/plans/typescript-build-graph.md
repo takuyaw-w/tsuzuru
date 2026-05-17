@@ -42,7 +42,7 @@ Tsuzuru monorepo.
 - `tsconfig.packages.experimental.json` exists as a dry-validation reference
   list for current pilots. It is exposed through `packages:graph:check` for
   explicit local dependency graph validation, but is not called from CI,
-  `typecheck`, or release-readiness.
+  `typecheck`, or release-readiness. It is also not a v1.0 required gate.
 - Root `packages:build` builds public publishable packages in explicit order
   with package `build:self` scripts.
 - Root `packages:typecheck:self` runs public package `typecheck:self` scripts
@@ -546,6 +546,14 @@ It references the current composite pilots:
 - `packages/plugin-std-visual`
 - `packages/plugin-std-audio`
 
+It does not yet reference the remaining publishable standard plugins:
+
+- `packages/plugin-std-text-sound`
+- `packages/plugin-std-effect`
+- `packages/plugin-std-camera`
+- `packages/plugin-std-particle`
+- `packages/plugin-std-system`
+
 This file is intentionally wired only to the explicit
 `packages:graph:check` root script. It is not wired into CI, `check`,
 `typecheck`, or `release-readiness:check`. The graph can now include core and
@@ -569,6 +577,23 @@ that the explicit visual/audio/preact/vue/standard-ui-preact-to-core and
 cli-to-config/core edges affect build order. It must not be interpreted as a
 complete monorepo build graph until the remaining package dependency references
 are added deliberately and their package-import behavior is checked.
+
+### v1.0 gate status
+
+`packages:graph:check` is not a v1.0 required gate. It remains optional /
+manual validation for the current build-system experiment.
+
+Reasons:
+
+- `tsconfig.packages.experimental.json` is intentionally incomplete and covers
+  only the current pilot packages.
+- `packages:graph:check` runs `tsc -b --dry --verbose`, so it validates
+  TypeScript project reference order without generating publish artifacts.
+- `release-readiness:check` already validates distributable package artifacts
+  through `packages:build`, `examples:check:self`, `pack:dry-run`,
+  `publish-readiness:check`, and local `create-tsuzuru` smoke.
+- Promoting a formal graph to a required gate is build-system scope and should
+  be handled as a dedicated post-v1.0 task.
 
 ### Formal packages graph design direction
 
@@ -675,10 +700,10 @@ the reference build or be retired in the same staged migration.
 - Examples should be designed as a separate graph from the packages graph.
 - `tsconfig.packages.experimental.json` remains an experimental graph input. It
   is used by `packages:graph:check`, but it should not become a CI,
-  `typecheck`, or `release-readiness:check` gate yet because it covers only
-  current pilots, not the complete package dependency graph, and because the
-  existing release flow still depends on explicit package-order builds plus
-  package `exports.types` declaration output.
+  `typecheck`, `release-readiness:check`, or v1.0 required gate because it
+  covers only current pilots, not the complete package dependency graph, and
+  because the existing release flow still depends on explicit package-order
+  builds plus package `exports.types` declaration output.
 
 ## Migration steps
 
@@ -694,7 +719,7 @@ the reference build or be retired in the same staged migration.
    second plugin-to-core edge.
 6. Keep `tsconfig.packages.experimental.json` as dry validation, not as a
    release gate. `packages:graph:check` is the explicit root script for this
-   validation.
+   optional / manual validation.
 7. Prepare `@tsuzuru/core` as a composite reference target before treating the
    graph as dependency-complete.
 8. Add a higher-risk CLI package edge to `@tsuzuru/config` and `@tsuzuru/core`
@@ -727,8 +752,9 @@ the reference build or be retired in the same staged migration.
      and a CSS asset export. The next formal graph should validate dependency
      order while leaving `build:self` responsible for release artifacts.
    - Risk: the experimental graph is still not dependency-complete for all
-     publishable packages, and the root-script integration point for graph
-     validation has not been named.
+     publishable packages. `packages:graph:check` is intentionally optional /
+     manual for v1.0, so any required-gate promotion must be a separate
+     post-v1.0 build-system decision.
 2. Remaining standard plugin-to-core edges
    - Reason: useful to prove repeatability across more plugin packages.
    - Risk: diminishing returns now that visual and audio already cover the

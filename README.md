@@ -308,7 +308,7 @@ pnpm release-readiness:check
 ```
 
 This runs package builds, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
-Template `pnpm-lock.yaml` は現時点では同梱していません。local smoke で generated project の `@tsuzuru/*` dependency を local tarball に書き換えるため、lockfile 採用は rewrite 後の整合性設計と合わせて扱います。TypeScript project references / `tsc -b` による一括 build は [`docs/plans/typescript-build-graph.md`](docs/plans/typescript-build-graph.md) の論点整理後に判断します。
+Template `pnpm-lock.yaml` は現時点では同梱していません。local smoke で generated project の `@tsuzuru/*` dependency を local tarball に書き換えるため、lockfile 採用は rewrite 後の整合性設計と合わせて扱います。`pnpm packages:graph:check` は experimental TypeScript project reference graph の optional / manual validation です。v1.0 required gate や `release-readiness:check` には含めず、正式な package graph は [`docs/plans/typescript-build-graph.md`](docs/plans/typescript-build-graph.md) の post-v1.0 build-system task として扱います。
 
 v1.0 release gate の required / optional / manual / design readiness 分類は
 [`docs/plans/v1.0-release-gate.md`](docs/plans/v1.0-release-gate.md) に整理しています。

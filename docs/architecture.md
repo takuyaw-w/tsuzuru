@@ -1179,7 +1179,7 @@ or `release-readiness:check`; GitHub Actions exposes it through the optional
 manual / scheduled `Examples E2E` workflow. On workflow failure, inspect the
 uploaded Playwright report and `test-results` artifacts.
 The local create-tsuzuru smoke uses workspace-built tarballs for `create-tsuzuru` and generated `@tsuzuru/*` dependencies, then installs the generated project with `pnpm install --prefer-offline`. Registry-backed smoke remains available through `pnpm run smoke:create-tsuzuru:registry`; CI release-readiness should use the local smoke.
-Template lockfile adoption is intentionally deferred because local smoke rewrites generated `@tsuzuru/*` dependencies to `file:<tarball>` entries. TypeScript project references / `tsc -b` are also deferred until the package build graph can be designed as a dedicated build-system change; see `docs/plans/typescript-build-graph.md`.
+Template lockfile adoption is intentionally deferred because local smoke rewrites generated `@tsuzuru/*` dependencies to `file:<tarball>` entries. `pnpm packages:graph:check` is optional / manual validation for the experimental TypeScript project reference graph, not a v1.0 required gate and not part of `release-readiness:check`. Formal package graph completion remains a dedicated post-v1.0 build-system task; see `docs/plans/typescript-build-graph.md`.
 
 Examples:
 
