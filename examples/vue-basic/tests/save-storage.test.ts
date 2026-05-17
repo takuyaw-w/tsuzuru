@@ -130,6 +130,57 @@ describe("vue-basic save storage", () => {
     expect(getLatestSaveSlot(slots)?.id).toBe("slot-2");
   });
 
+  it("filters malformed and invalid snapshot slots while keeping valid slots loadable", () => {
+    const validSaveData = createVueExampleSaveData(runtimeSaveData, "2026-05-17T00:00:00.000Z");
+    const invalidSnapshotSaveData = {
+      ...createVueExampleSaveData(runtimeSaveData, "2026-05-17T01:00:00.000Z"),
+      saveSlot: {
+        ...validSaveData.saveSlot,
+        snapshot: {
+          ...validSaveData.saveSlot.snapshot,
+          version: 3,
+        },
+      },
+    };
+    stubSaveStorage(
+      JSON.stringify([
+        { id: "slot-1", label: "ignored", savedAt: validSaveData.saveSlot.createdAt, data: validSaveData },
+        { id: "slot-2", label: "ignored", savedAt: "2026-05-17T01:00:00.000Z", data: invalidSnapshotSaveData },
+        { id: "slot-3", label: "ignored", savedAt: "2026-05-17T02:00:00.000Z", data: { version: 1 } },
+        "broken-slot",
+      ]),
+    );
+
+    const slots = loadSaveSlots();
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.id).toBe("slot-1");
+    expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
+  });
+
+  it("does not let an invalid newer duplicate replace an older valid slot", () => {
+    const validSaveData = createVueExampleSaveData(runtimeSaveData, "2026-05-17T00:00:00.000Z");
+    const invalidDuplicateSaveData = {
+      ...createVueExampleSaveData(runtimeSaveData, "2026-05-17T01:00:00.000Z"),
+      saveSlot: {
+        ...validSaveData.saveSlot,
+        scenarioVersion: "2",
+      },
+    };
+    stubSaveStorage(
+      JSON.stringify([
+        { id: "slot-1", label: "ignored", savedAt: "2026-05-17T00:00:00.000Z", data: validSaveData },
+        { id: "slot-1", label: "ignored", savedAt: "2026-05-17T01:00:00.000Z", data: invalidDuplicateSaveData },
+      ]),
+    );
+
+    const slots = loadSaveSlots();
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.savedAt).toBe("2026-05-17T00:00:00.000Z");
+    expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
+  });
+
   it("persists a valid slot with the example storage key", () => {
     stubSaveStorage(null);
     const saveData = createVueExampleSaveData(runtimeSaveData, savedAt);

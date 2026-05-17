@@ -246,6 +246,57 @@ describe("save-storage", () => {
     expect(slots[0]?.id).toBe("slot-1");
     expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
   });
+
+  it("filters malformed and invalid snapshot slots while keeping valid slots loadable", () => {
+    const validSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-01T00:00:00.000Z");
+    const invalidSnapshotSaveData = {
+      ...createExampleSaveData(runtimeSaveData, null, "2026-01-02T00:00:00.000Z"),
+      saveSlot: {
+        ...validSaveData.saveSlot,
+        snapshot: {
+          ...validSaveData.saveSlot.snapshot,
+          version: 3,
+        },
+      },
+    };
+    stubSaveStorage(
+      JSON.stringify([
+        { id: "slot-1", label: "ignored", savedAt: validSaveData.saveSlot.createdAt, data: validSaveData },
+        { id: "slot-2", label: "ignored", savedAt: "2026-01-02T00:00:00.000Z", data: invalidSnapshotSaveData },
+        { id: "slot-3", label: "ignored", savedAt: "2026-01-03T00:00:00.000Z", data: { version: 3 } },
+        "broken-slot",
+      ]),
+    );
+
+    const slots = loadSaveSlots();
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.id).toBe("slot-1");
+    expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
+  });
+
+  it("does not let an invalid newer duplicate replace an older valid slot", () => {
+    const validSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-01T00:00:00.000Z");
+    const invalidDuplicateSaveData: ExampleSaveData = {
+      ...createExampleSaveData(runtimeSaveData, null, "2026-01-02T00:00:00.000Z"),
+      saveSlot: {
+        ...validSaveData.saveSlot,
+        scenarioVersion: "2",
+      },
+    };
+    stubSaveStorage(
+      JSON.stringify([
+        { id: "slot-1", label: "ignored", savedAt: "2026-01-01T00:00:00.000Z", data: validSaveData },
+        { id: "slot-1", label: "ignored", savedAt: "2026-01-02T00:00:00.000Z", data: invalidDuplicateSaveData },
+      ]),
+    );
+
+    const slots = loadSaveSlots();
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.savedAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
+  });
 });
 
 function stubSaveStorage(value: string | null): void {

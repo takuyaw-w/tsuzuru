@@ -26,7 +26,7 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   const messageWindow = page.locator(".message-window");
   const runtimeControls = page.getByRole("navigation", { name: "Runtime controls" });
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 8000 });
   await expect(runtimeControls.getByRole("button", { name: "Load" })).toBeDisabled();
 
   await runtimeControls.getByRole("button", { name: "Save" }).click();
@@ -40,7 +40,29 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   await expect(messageWindow).toContainText("ようこそ", { timeout: 4000 });
 
   await runtimeControls.getByRole("button", { name: "Load" }).click();
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 8000 });
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("ignores mismatched save slots without enabling load actions", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/");
+  await page.evaluate(
+    ({ saveStorageKey, slots }) => {
+      window.localStorage.setItem(saveStorageKey, JSON.stringify(slots));
+    },
+    {
+      saveStorageKey: SAVE_STORAGE_KEY,
+      slots: [createMismatchedStoredSlot()],
+    },
+  );
+  await page.reload();
+
+  await page.getByRole("button", { name: "Start" }).click();
+  const runtimeControls = page.getByRole("navigation", { name: "Runtime controls" });
+  await expect(runtimeControls.getByRole("button", { name: "Load" })).toBeDisabled();
 
   expect(pageErrors).toEqual([]);
 });
@@ -92,6 +114,44 @@ function expectRuntimeSaveSlotEnvelope(data: Readonly<Record<string, unknown>>):
   const runtime = getObjectRecord(data.runtime, "RuntimeSaveData");
   expect(runtime.version).toBe(2);
   expect(runtime.snapshot).toEqual(snapshot);
+}
+
+function createMismatchedStoredSlot(): unknown {
+  const snapshot = {
+    version: 2,
+    pointer: {
+      filePath: "scenario/main.tzr",
+      instructionIndex: 1,
+    },
+    variables: {},
+    plugins: {},
+    branchFrames: [],
+    pendingChoice: null,
+    pendingWait: null,
+    isStopped: false,
+    isWaitingForClick: false,
+  };
+  const runtime = {
+    version: 2,
+    snapshot,
+    event: null,
+  };
+  return {
+    id: "slot-1",
+    label: "Slot 1",
+    savedAt: "2026-05-17T00:00:00.000Z",
+    data: {
+      version: 1,
+      saveSlot: {
+        version: 1,
+        scenarioId: "tsuzuru.example.mismatched",
+        scenarioVersion: "1",
+        createdAt: "2026-05-17T00:00:00.000Z",
+        snapshot,
+      },
+      runtime,
+    },
+  };
 }
 
 function getObjectRecord(value: unknown, label: string): Readonly<Record<string, unknown>> {

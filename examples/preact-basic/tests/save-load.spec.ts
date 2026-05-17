@@ -47,6 +47,31 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   expect(pageErrors).toEqual([]);
 });
 
+test("ignores mismatched save slots without enabling load actions", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/");
+  await page.evaluate(
+    ({ saveStorageKey, slots }) => {
+      window.localStorage.setItem(saveStorageKey, JSON.stringify(slots));
+    },
+    {
+      saveStorageKey: SAVE_STORAGE_KEY,
+      slots: [createMismatchedStoredSlot()],
+    },
+  );
+  await page.reload();
+
+  await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  const slot = page.getByLabel("Slot 1");
+  await expect(slot.getByText("Empty")).toBeVisible();
+  await expect(slot.getByRole("button", { name: "Load Slot 1" })).toBeDisabled();
+
+  expect(pageErrors).toEqual([]);
+});
+
 async function disableTextReveal(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByLabel("Text reveal", { exact: true }).uncheck();
@@ -94,6 +119,45 @@ function expectRuntimeSaveSlotEnvelope(data: Readonly<Record<string, unknown>>):
   const runtime = getObjectRecord(data.runtime, "RuntimeSaveData");
   expect(runtime.version).toBe(2);
   expect(runtime.snapshot).toEqual(snapshot);
+}
+
+function createMismatchedStoredSlot(): unknown {
+  const snapshot = {
+    version: 2,
+    pointer: {
+      filePath: "scenario/main.tzr",
+      instructionIndex: 1,
+    },
+    variables: {},
+    plugins: {},
+    branchFrames: [],
+    pendingChoice: null,
+    pendingWait: null,
+    isStopped: false,
+    isWaitingForClick: false,
+  };
+  const runtime = {
+    version: 2,
+    snapshot,
+    event: null,
+  };
+  return {
+    id: "slot-1",
+    label: "Slot 1",
+    savedAt: "2026-05-17T00:00:00.000Z",
+    data: {
+      version: 3,
+      saveSlot: {
+        version: 1,
+        scenarioId: "tsuzuru.example.mismatched",
+        scenarioVersion: "1",
+        createdAt: "2026-05-17T00:00:00.000Z",
+        snapshot,
+      },
+      runtime,
+      retainedMessageEvent: null,
+    },
+  };
 }
 
 function getObjectRecord(value: unknown, label: string): Readonly<Record<string, unknown>> {
