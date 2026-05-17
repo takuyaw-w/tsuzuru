@@ -25,6 +25,11 @@ identity. The project now needs a shared core definition for the minimum
 envelope validation policy without taking over storage, migration, or restore
 UI behavior.
 
+The Preact basic example now uses `RuntimeSaveSlot` inside its example-specific
+save payload. That wrapper still owns retained message presentation state and
+localStorage persistence, while `validateRuntimeSaveSlot` owns scenario identity
+and nested snapshot validation.
+
 ## Decision
 
 Core defines a host-facing save slot envelope:

@@ -1,12 +1,17 @@
 import {
   type CompiledTzrDocument,
   createRuntimeSnapshot,
+  prepareRuntimeStateForSnapshot,
   type RuntimeDiagnostic,
   type RuntimeEvent,
   type RuntimePluginDefinition,
   type RuntimeState,
 } from "@tsuzuru/core";
-import { createStdAudioCommandHandlers, createStdAudioPlugin } from "@tsuzuru/plugin-std-audio";
+import {
+  createStdAudioCommandHandlers,
+  createStdAudioPlugin,
+  prepareStdAudioStateForSnapshot,
+} from "@tsuzuru/plugin-std-audio";
 import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
 import {
   createStdEffectCommandHandlers,
@@ -402,14 +407,16 @@ function RuntimeApp({
   );
   const handleSaveToSlot = useCallback(
     (slotId: string) => {
+      const saveReadyState = prepareRuntimeStateForSnapshot(runtime.state, [
+        prepareStdAudioStateForSnapshot,
+        prepareStdEffectStateForSnapshot,
+      ]);
+      const snapshot = createRuntimeSnapshot(saveReadyState);
       onSaveSlotsChange(
         saveToSlot(
           slotId,
           createExampleSaveData(
-            createRuntimeSaveData(
-              createRuntimeSnapshot(prepareStdEffectStateForSnapshot(runtime.state)),
-              runtime.visibleEvent,
-            ),
+            createRuntimeSaveData(snapshot, runtime.visibleEvent),
             getRetainedMessageForSave(lastMessageEvent),
           ),
         ),

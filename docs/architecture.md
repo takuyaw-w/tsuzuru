@@ -846,6 +846,13 @@ unsupported envelope version, scenario ID mismatch, scenario version mismatch,
 or invalid nested snapshot. It does not restore runtime state, implement
 storage, migrate save data, or deep-validate plugin state.
 
+`examples/preact-basic` stores its example-specific save payload as a wrapper
+around `RuntimeSaveSlot` plus Preact `RuntimeSaveData` and retained message
+presentation state. Its save flow composes std-audio and std-effect snapshot
+prepare helpers before creating the snapshot. Its load flow filters invalid
+save slots, scenario mismatches, and invalid nested snapshots before they reach
+the runtime restore path.
+
 Standard plugin state uses the following save/load policy:
 
 | Package | State category | Snapshot preparation |
