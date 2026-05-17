@@ -832,6 +832,22 @@ Examples may use `localStorage`, but browser storage is not a core responsibilit
 
 Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
 
+Standard plugin state uses the following save/load policy:
+
+| Package | State category | Snapshot preparation |
+| --- | --- | --- |
+| `@tsuzuru/plugin-std-visual` | Durable background and sprite state | Keep plugin state as-is. |
+| `@tsuzuru/plugin-std-audio` | Durable BGM plus one-shot SE/voice events | Host should call `prepareStdAudioStateForSnapshot` before saving to clear one-shot events while preserving BGM and sequence counters. |
+| `@tsuzuru/plugin-std-text-sound` | Durable text sound override profile ID | Keep plugin state as-is. |
+| `@tsuzuru/plugin-std-effect` | One-shot effect events | Host should call `prepareStdEffectStateForSnapshot` before saving to clear one-shot events while preserving the sequence counter. |
+| `@tsuzuru/plugin-std-camera` | Durable camera transform/focus state | Keep plugin state as-is. |
+| `@tsuzuru/plugin-std-particle` | Durable current particle state | Keep plugin state as-is. |
+| `@tsuzuru/plugin-std-system` | Durable unlock state | Keep plugin state as-is. |
+
+Core snapshot creation preserves plugin state but does not automatically clear
+plugin one-shot events. Save-ready cleanup remains a plugin helper / host
+responsibility.
+
 ---
 
 ## Plugin Command Flow
