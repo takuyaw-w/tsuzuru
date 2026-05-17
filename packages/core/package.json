@@ -28,6 +28,7 @@
     "dist/src/runtime-commands.*",
     "dist/src/runtime-control.*",
     "dist/src/runtime-frames.*",
+    "dist/src/runtime-save-slot.*",
     "dist/src/runtime-snapshot.*",
     "dist/src/runtime-types.*",
     "dist/src/scenario-ast.*"

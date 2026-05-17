@@ -18,6 +18,7 @@ import type {
   RuntimeStepResult,
 } from "./runtime-types.js";
 
+export { validateRuntimeSaveSlot } from "./runtime-save-slot.js";
 export { createRuntimeSnapshot, prepareRuntimeStateForSnapshot, restoreRuntimeState } from "./runtime-snapshot.js";
 export type * from "./runtime-types.js";
 

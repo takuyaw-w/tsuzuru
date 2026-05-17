@@ -837,6 +837,15 @@ throwing an `Invalid RuntimeSnapshot` error. Host save slot wrappers remain
 responsible for scenario identity, scenario version, user-facing recovery, and
 storage migration policy.
 
+Core also defines a minimal `RuntimeSaveSlot` envelope for host-facing save slot
+validation. The envelope has its own `version: 1`, required `scenarioId`,
+optional `scenarioVersion`, required `createdAt`, a nested `RuntimeSnapshot`,
+and optional display `label` / `metadata`. `validateRuntimeSaveSlot(value,
+context)` returns a Result-style validation outcome for invalid envelope shape,
+unsupported envelope version, scenario ID mismatch, scenario version mismatch,
+or invalid nested snapshot. It does not restore runtime state, implement
+storage, migrate save data, or deep-validate plugin state.
+
 Standard plugin state uses the following save/load policy:
 
 | Package | State category | Snapshot preparation |

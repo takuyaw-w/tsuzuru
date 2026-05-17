@@ -74,6 +74,36 @@ export interface RuntimeSnapshot {
   readonly isWaitingForClick: boolean;
 }
 
+export interface RuntimeSaveSlot {
+  readonly version: 1;
+  readonly scenarioId: string;
+  readonly scenarioVersion?: string;
+  readonly createdAt: string;
+  readonly snapshot: RuntimeSnapshot;
+  readonly label?: string;
+  readonly metadata?: Readonly<Record<string, unknown>>;
+}
+
+export interface RuntimeSaveSlotContext {
+  readonly scenarioId: string;
+  readonly scenarioVersion?: string;
+}
+
+export type RuntimeSaveSlotValidationErrorReason =
+  | "invalid_slot"
+  | "unsupported_slot_version"
+  | "scenario_id_mismatch"
+  | "scenario_version_mismatch"
+  | "invalid_snapshot";
+
+export type RuntimeSaveSlotValidationResult =
+  | { readonly ok: true; readonly slot: RuntimeSaveSlot }
+  | {
+      readonly ok: false;
+      readonly reason: RuntimeSaveSlotValidationErrorReason;
+      readonly message: string;
+    };
+
 export type RuntimeBlockReason = "wait" | "choice" | "click";
 
 export interface RuntimeStepOptions {

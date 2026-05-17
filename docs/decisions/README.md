@@ -55,6 +55,7 @@ reintroduced.
 | 0027 | [Formal Package TypeScript Build Graph](0027-formal-package-typescript-build-graph.md) | Proposed |
 | 0028 | [RuntimeSnapshot Compatibility](0028-runtime-snapshot-compatibility.md) | Accepted |
 | 0029 | [Host-Facing Save / Load Helper](0029-host-facing-save-load-helper.md) | Accepted |
+| 0030 | [Runtime Save Slot Envelope](0030-runtime-save-slot-envelope.md) | Accepted |
 
 ## Reading Order
 

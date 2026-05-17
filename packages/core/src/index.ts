@@ -88,6 +88,10 @@ export type {
   RuntimePluginDefinition,
   RuntimePluginStates,
   RuntimePointer,
+  RuntimeSaveSlot,
+  RuntimeSaveSlotContext,
+  RuntimeSaveSlotValidationErrorReason,
+  RuntimeSaveSlotValidationResult,
   RuntimeSnapshot,
   RuntimeSnapshotPrepare,
   RuntimeState,
@@ -115,5 +119,6 @@ export {
   resolveChoice,
   restoreRuntimeState,
   stepRuntime,
+  validateRuntimeSaveSlot,
 } from "./runtime.js";
 export type * from "./scenario-ast.js";

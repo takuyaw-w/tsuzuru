@@ -43,7 +43,7 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
   };
 }
 
-function assertRuntimeSnapshot(value: unknown): asserts value is RuntimeSnapshot {
+export function assertRuntimeSnapshot(value: unknown): asserts value is RuntimeSnapshot {
   if (!isObjectRecord(value)) {
     invalidRuntimeSnapshot("snapshot must be an object.");
   }
