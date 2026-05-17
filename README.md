@@ -6,9 +6,9 @@ Tsuzuru は、TypeScript / Vite / Preact を主軸とした、Web-first なノ�
 
 ## 現在のステータス
 
-Tsuzuru は現在、`feature/new-dsl` ブランチで DSL v2 へ移行中です。
+Tsuzuru は現在、`main` を source of truth として DSL v2 を中心に整備中です。
 
-DSL v2 は、このブランチで新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/preact-basic`](examples/preact-basic/) です。
+DSL v2 は、現在新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/preact-basic`](examples/preact-basic/) です。
 
 旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
 
@@ -310,6 +310,9 @@ pnpm release-readiness:check
 This runs package builds, examples, pack dry-run, publish-readiness, and local create-tsuzuru smoke in order.
 Template `pnpm-lock.yaml` は現時点では同梱していません。local smoke で generated project の `@tsuzuru/*` dependency を local tarball に書き換えるため、lockfile 採用は rewrite 後の整合性設計と合わせて扱います。TypeScript project references / `tsc -b` による一括 build は [`docs/plans/typescript-build-graph.md`](docs/plans/typescript-build-graph.md) の論点整理後に判断します。
 
+v1.0 release gate の required / optional / manual / design readiness 分類は
+[`docs/plans/v1.0-release-gate.md`](docs/plans/v1.0-release-gate.md) に整理しています。
+
 ## パッケージ別コマンド
 
 ### Core
@@ -436,7 +439,7 @@ v0.1 では、以下を目標にします。
 - `create-tsuzuru --template vue`
 - cross-file jump existence validation
 - macro argument schema validation
-- save data scenario identity / version / migration
+- save data migration framework
 - Live2D
 - Pixi integration
 - backlog
@@ -447,7 +450,10 @@ v0.1 では、以下を目標にします。
 - cloud save
 - save data compatibility guarantees across scenario/runtime changes
 
-v0.x の save/load は example での確認用です。`RuntimeSaveData` は scenario identity、scenario version、migration metadata を含まず、scenario や runtime/event shape が変わった後の互換性は保証しません。
+v0.x の save/load は example での確認用です。core は `RuntimeSaveSlot`
+で scenario identity / scenario version の検証境界を持ちますが、save
+data migration framework はまだありません。scenario や runtime/event
+shape が変わった後の互換性は v1.0 release gate で明文化します。
 
 ## Codex / Agent 運用
 
