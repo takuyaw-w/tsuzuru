@@ -31,7 +31,7 @@ import {
   type WatchStopHandle,
   watch,
 } from "vue";
-import { createRuntimeSaveData, type RuntimeSaveData, restoreRuntimeSnapshotForView } from "./runtime-save.js";
+import { createRuntimeSaveDataFromState, type RuntimeSaveData, restoreRuntimeSnapshotForView } from "./runtime-save.js";
 
 export interface UseRuntimeOptions {
   readonly plugins?: RuntimeInitialStateOptions["plugins"];
@@ -173,7 +173,7 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
   }
 
   function createSaveData(): RuntimeSaveData {
-    return createRuntimeSaveData(createRuntimeSnapshot(state.value), visibleEvent.value);
+    return createRuntimeSaveDataFromState(state.value, visibleEvent.value);
   }
 
   function restoreSaveData(saveData: RuntimeSaveData): void {

@@ -846,14 +846,22 @@ unsupported envelope version, scenario ID mismatch, scenario version mismatch,
 or invalid nested snapshot. It does not restore runtime state, implement
 storage, migrate save data, or deep-validate plugin state.
 
+Framework adapters provide `createRuntimeSaveDataFromState(state, event,
+options)` as a thin adapter-level helper for converting prepared `RuntimeState`
+into view-oriented `RuntimeSaveData`. It accepts plugin snapshot prepare
+functions using the same `RuntimeSnapshotPrepare` contract as core, then creates
+a core `RuntimeSnapshot`. The helper does not create `RuntimeSaveSlot`, choose
+scenario identity, or own storage.
+
 `examples/preact-basic` stores its example-specific save payload as a wrapper
 around `RuntimeSaveSlot` plus Preact `RuntimeSaveData` and retained message
 presentation state. `examples/vue-basic` uses the same `RuntimeSaveSlot`
 envelope for a smaller example-owned save/load foundation around Vue
 `RuntimeSaveData`. Both examples compose std-audio and std-effect snapshot
-prepare helpers before creating snapshots, and both filter invalid save slots,
+prepare helpers through the adapter helper, and both filter invalid save slots,
 scenario mismatches, and invalid nested snapshots before they reach the runtime
-restore path. Browser storage and save-slot UI remain example-owned.
+restore path. Browser storage, save slot envelopes, and save-slot UI remain
+example-owned.
 
 Standard plugin state uses the following save/load policy:
 

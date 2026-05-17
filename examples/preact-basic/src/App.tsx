@@ -1,11 +1,9 @@
-import {
-  type CompiledTzrDocument,
-  createRuntimeSnapshot,
-  prepareRuntimeStateForSnapshot,
-  type RuntimeDiagnostic,
-  type RuntimeEvent,
-  type RuntimePluginDefinition,
-  type RuntimeState,
+import type {
+  CompiledTzrDocument,
+  RuntimeDiagnostic,
+  RuntimeEvent,
+  RuntimePluginDefinition,
+  RuntimeState,
 } from "@tsuzuru/core";
 import {
   createStdAudioCommandHandlers,
@@ -31,7 +29,7 @@ import {
 } from "@tsuzuru/plugin-std-text-sound";
 import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
-import { createRuntimeSaveData, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
+import { createRuntimeSaveDataFromState, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
   GameShell,
@@ -407,16 +405,13 @@ function RuntimeApp({
   );
   const handleSaveToSlot = useCallback(
     (slotId: string) => {
-      const saveReadyState = prepareRuntimeStateForSnapshot(runtime.state, [
-        prepareStdAudioStateForSnapshot,
-        prepareStdEffectStateForSnapshot,
-      ]);
-      const snapshot = createRuntimeSnapshot(saveReadyState);
       onSaveSlotsChange(
         saveToSlot(
           slotId,
           createExampleSaveData(
-            createRuntimeSaveData(snapshot, runtime.visibleEvent),
+            createRuntimeSaveDataFromState(runtime.state, runtime.visibleEvent, {
+              prepares: [prepareStdAudioStateForSnapshot, prepareStdEffectStateForSnapshot],
+            }),
             getRetainedMessageForSave(lastMessageEvent),
           ),
         ),

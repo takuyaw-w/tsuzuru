@@ -1,8 +1,10 @@
 import {
+  createRuntimeSnapshot,
   getRuntimeBlockReason,
   type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
+  type RuntimeSnapshotPrepare,
   type RuntimeState,
   type RuntimeStepOptions,
   restoreRuntimeState,
@@ -13,6 +15,10 @@ export interface RuntimeSaveData {
   readonly version: 2;
   readonly snapshot: RuntimeSnapshot;
   readonly event: RuntimeEvent | null;
+}
+
+export interface CreateRuntimeSaveDataFromStateOptions {
+  readonly prepares?: readonly RuntimeSnapshotPrepare[];
 }
 
 export interface RestoreSnapshotResult {
@@ -48,6 +54,15 @@ export function createRuntimeSaveData(snapshot: RuntimeSnapshot, event: RuntimeE
   };
 }
 
+export function createRuntimeSaveDataFromState(
+  state: RuntimeState,
+  event: RuntimeEvent | null,
+  options: CreateRuntimeSaveDataFromStateOptions = {},
+): RuntimeSaveData {
+  const preparedState = applyRuntimeSnapshotPrepares(state, options.prepares ?? []);
+  return createRuntimeSaveData(createRuntimeSnapshot(preparedState), event);
+}
+
 export function isRuntimeSaveData(value: unknown): value is RuntimeSaveData {
   if (!isObjectRecord(value) || value.version !== 2 || !isObjectRecord(value.snapshot)) {
     return false;
@@ -72,4 +87,8 @@ export function isRuntimeSaveData(value: unknown): value is RuntimeSaveData {
 
 function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === "object" && value !== null;
+}
+
+function applyRuntimeSnapshotPrepares(state: RuntimeState, prepares: readonly RuntimeSnapshotPrepare[]): RuntimeState {
+  return prepares.reduce((currentState, prepare) => prepare(currentState), state);
 }

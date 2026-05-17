@@ -1,6 +1,7 @@
-export type { RestoreSnapshotResult, RuntimeSaveData } from "./runtime-save.js";
+export type { CreateRuntimeSaveDataFromStateOptions, RestoreSnapshotResult, RuntimeSaveData } from "./runtime-save.js";
 export {
   createRuntimeSaveData,
+  createRuntimeSaveDataFromState,
   isRuntimeSaveData,
   restoreRuntimeSnapshotForView,
 } from "./runtime-save.js";

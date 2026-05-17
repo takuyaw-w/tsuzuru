@@ -1,6 +1,4 @@
 import {
-  createRuntimeSnapshot,
-  prepareRuntimeStateForSnapshot,
   type RuntimeEvent,
   type RuntimeSaveSlot,
   type RuntimeSaveSlotContext,
@@ -10,7 +8,7 @@ import {
 } from "@tsuzuru/core";
 import { prepareStdAudioStateForSnapshot } from "@tsuzuru/plugin-std-audio";
 import { prepareStdEffectStateForSnapshot } from "@tsuzuru/plugin-std-effect";
-import { createRuntimeSaveData, isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/vue";
+import { createRuntimeSaveDataFromState, isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/vue";
 import { scenarioIdentity } from "./scenario.js";
 
 export interface VueExampleSaveData {
@@ -66,12 +64,12 @@ export function createVueExampleSaveDataFromRuntimeState(
   event: RuntimeEvent | null,
   createdAt?: string,
 ): VueExampleSaveData {
-  const saveReadyState = prepareRuntimeStateForSnapshot(state, [
-    prepareStdAudioStateForSnapshot,
-    prepareStdEffectStateForSnapshot,
-  ]);
-  const snapshot = createRuntimeSnapshot(saveReadyState);
-  return createVueExampleSaveData(createRuntimeSaveData(snapshot, event), createdAt);
+  return createVueExampleSaveData(
+    createRuntimeSaveDataFromState(state, event, {
+      prepares: [prepareStdAudioStateForSnapshot, prepareStdEffectStateForSnapshot],
+    }),
+    createdAt,
+  );
 }
 
 export function loadSaveSlots(): readonly VueExampleSaveSlot[] {

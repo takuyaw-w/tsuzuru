@@ -17,7 +17,7 @@ import {
   stepRuntime,
 } from "@tsuzuru/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { createRuntimeSaveData, type RuntimeSaveData, restoreRuntimeSnapshotForView } from "./runtime-save.js";
+import { createRuntimeSaveDataFromState, type RuntimeSaveData, restoreRuntimeSnapshotForView } from "./runtime-save.js";
 
 export interface UseRuntimeOptions {
   readonly plugins?: RuntimeInitialStateOptions["plugins"];
@@ -170,10 +170,7 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
     [document, stepOptions],
   );
 
-  const createSaveData = useCallback(
-    () => createRuntimeSaveData(createRuntimeSnapshot(state), visibleEvent),
-    [state, visibleEvent],
-  );
+  const createSaveData = useCallback(() => createRuntimeSaveDataFromState(state, visibleEvent), [state, visibleEvent]);
 
   const restoreSaveData = useCallback((saveData: RuntimeSaveData) => {
     setState(restoreRuntimeState(saveData.snapshot));
