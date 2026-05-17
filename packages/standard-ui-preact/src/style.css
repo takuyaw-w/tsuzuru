@@ -48,7 +48,7 @@
   height: var(--tzr-standard-ui-message-window-height);
   min-height: 0;
   overflow: visible;
-  padding: 18px 20px;
+  padding: 38px 20px 18px;
   border: 1px solid var(--tzr-standard-ui-window-border);
   background: var(--tzr-standard-ui-window-bg);
 }
@@ -59,14 +59,24 @@
 
 .tzr-message-window__speaker {
   position: absolute;
-  bottom: calc(100% - 8px);
-  left: 20px;
+  top: -1px;
+  left: -1px;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5em;
+  min-height: 30px;
   margin: 0;
-  padding: 4px 12px;
+  padding: 5px 18px;
   border: 1px solid var(--tzr-standard-ui-window-border);
+  border-bottom-color: transparent;
+  border-radius: 0 0 4px 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
   background: var(--tzr-standard-ui-window-bg);
+  color: var(--tzr-standard-ui-text-color);
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .tzr-message-window__lines {
