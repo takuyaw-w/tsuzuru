@@ -19,10 +19,12 @@ export function createRuntimeSnapshot(state: RuntimeState): RuntimeSnapshot {
 }
 
 export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
+  assertRuntimeSnapshot(snapshot);
+
   return {
     pointer: { ...snapshot.pointer },
     variables: { ...snapshot.variables },
-    plugins: clonePluginStates(snapshot.plugins ?? {}),
+    plugins: clonePluginStates(snapshot.plugins),
     branchFrames: snapshot.branchFrames.map((frame) => ({
       instructions: cloneInstructions(frame.instructions),
       instructionIndex: frame.instructionIndex,
@@ -32,6 +34,152 @@ export function restoreRuntimeState(snapshot: RuntimeSnapshot): RuntimeState {
     isStopped: snapshot.isStopped,
     isWaitingForClick: snapshot.isWaitingForClick,
   };
+}
+
+function assertRuntimeSnapshot(value: unknown): asserts value is RuntimeSnapshot {
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot("snapshot must be an object.");
+  }
+
+  assertSnapshotVersion(value.version);
+  assertRuntimePointer(value.pointer, "pointer");
+  assertRuntimeVariables(value.variables);
+  assertPluginStates(value.plugins);
+  assertBranchFrames(value.branchFrames);
+  assertPendingChoice(value.pendingChoice);
+  assertPendingWait(value.pendingWait);
+
+  if (typeof value.isStopped !== "boolean") {
+    invalidRuntimeSnapshot("isStopped must be a boolean.");
+  }
+  if (typeof value.isWaitingForClick !== "boolean") {
+    invalidRuntimeSnapshot("isWaitingForClick must be a boolean.");
+  }
+}
+
+function assertSnapshotVersion(version: unknown): void {
+  if (typeof version !== "number" || !Number.isFinite(version)) {
+    invalidRuntimeSnapshot("version must be 2.");
+  }
+  if (version < 2) {
+    invalidRuntimeSnapshot(`unsupported old snapshot version ${version}; expected version 2.`);
+  }
+  if (version > 2) {
+    invalidRuntimeSnapshot(`unsupported future snapshot version ${version}; expected version 2.`);
+  }
+  if (version !== 2) {
+    invalidRuntimeSnapshot("version must be 2.");
+  }
+}
+
+function assertRuntimePointer(value: unknown, path: string): void {
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot(`${path} must be an object.`);
+  }
+  if (typeof value.filePath !== "string") {
+    invalidRuntimeSnapshot(`${path}.filePath must be a string.`);
+  }
+  assertNonNegativeInteger(value.instructionIndex, `${path}.instructionIndex`);
+}
+
+function assertRuntimeVariables(value: unknown): void {
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot("variables must be an object.");
+  }
+
+  for (const [name, variable] of Object.entries(value)) {
+    if (!isRuntimeValue(variable)) {
+      invalidRuntimeSnapshot(`variables.${name} must be a string, number, boolean, or null.`);
+    }
+  }
+}
+
+function assertPluginStates(value: unknown): void {
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot("plugins must be an object.");
+  }
+}
+
+function assertBranchFrames(value: unknown): void {
+  if (!Array.isArray(value)) {
+    invalidRuntimeSnapshot("branchFrames must be an array.");
+  }
+
+  value.forEach((frame, index) => {
+    const path = `branchFrames[${index}]`;
+    if (!isObjectRecord(frame)) {
+      invalidRuntimeSnapshot(`${path} must be an object.`);
+    }
+    if (!Array.isArray(frame.instructions)) {
+      invalidRuntimeSnapshot(`${path}.instructions must be an array.`);
+    }
+    assertNonNegativeInteger(frame.instructionIndex, `${path}.instructionIndex`);
+  });
+}
+
+function assertPendingChoice(value: unknown): void {
+  if (value === null) {
+    return;
+  }
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot("pendingChoice must be null or an object.");
+  }
+  if (value.kind !== "body") {
+    invalidRuntimeSnapshot('pendingChoice.kind must be "body".');
+  }
+  if (typeof value.question !== "string") {
+    invalidRuntimeSnapshot("pendingChoice.question must be a string.");
+  }
+  if (!Array.isArray(value.items)) {
+    invalidRuntimeSnapshot("pendingChoice.items must be an array.");
+  }
+
+  value.items.forEach((item, index) => {
+    const path = `pendingChoice.items[${index}]`;
+    if (!isObjectRecord(item)) {
+      invalidRuntimeSnapshot(`${path} must be an object.`);
+    }
+    if (item.id !== undefined && typeof item.id !== "string") {
+      invalidRuntimeSnapshot(`${path}.id must be a string when present.`);
+    }
+    if (typeof item.text !== "string") {
+      invalidRuntimeSnapshot(`${path}.text must be a string.`);
+    }
+    if (!Array.isArray(item.body)) {
+      invalidRuntimeSnapshot(`${path}.body must be an array.`);
+    }
+  });
+}
+
+function assertPendingWait(value: unknown): void {
+  if (value === null) {
+    return;
+  }
+  if (!isObjectRecord(value)) {
+    invalidRuntimeSnapshot("pendingWait must be null or an object.");
+  }
+  if (typeof value.durationMs !== "number" || !Number.isFinite(value.durationMs) || value.durationMs < 0) {
+    invalidRuntimeSnapshot("pendingWait.durationMs must be a non-negative number.");
+  }
+}
+
+function assertNonNegativeInteger(value: unknown, path: string): void {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    invalidRuntimeSnapshot(`${path} must be a non-negative integer.`);
+  }
+}
+
+function isRuntimeValue(value: unknown): boolean {
+  return (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "boolean" ||
+    (typeof value === "number" && Number.isFinite(value))
+  );
+}
+
+function invalidRuntimeSnapshot(message: string): never {
+  throw new Error(`Invalid RuntimeSnapshot: ${message}`);
 }
 
 function clonePluginStates(plugins: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
@@ -73,5 +221,5 @@ function clonePlainData<T>(value: T): T {
 }
 
 function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -831,6 +831,11 @@ Preact responsibilities:
 Examples may use `localStorage`, but browser storage is not a core responsibility.
 
 Compatibility is not guaranteed if scenario documents, compiled instruction order, runtime state shape, or event shape change after saving.
+Core currently supports `RuntimeSnapshot.version === 2` only.
+`restoreRuntimeState` rejects missing, old, future, or malformed snapshots by
+throwing an `Invalid RuntimeSnapshot` error. Host save slot wrappers remain
+responsible for scenario identity, scenario version, user-facing recovery, and
+storage migration policy.
 
 Standard plugin state uses the following save/load policy:
 

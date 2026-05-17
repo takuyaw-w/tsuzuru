@@ -53,6 +53,7 @@ reintroduced.
 | 0025 | [Standard System Plugin](0025-std-system-plugin.md) | Accepted |
 | 0026 | [Standard Particle Plugin](0026-std-particle-plugin.md) | Accepted |
 | 0027 | [Formal Package TypeScript Build Graph](0027-formal-package-typescript-build-graph.md) | Proposed |
+| 0028 | [RuntimeSnapshot Compatibility](0028-runtime-snapshot-compatibility.md) | Accepted |
 
 ## Reading Order
 
