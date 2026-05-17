@@ -67,6 +67,7 @@ export function checkQualityGate(rootDir = process.cwd()) {
   assertRootTypecheckScript(context);
   assertScriptCovers(context, "pack:dry-run", publicPackageNames, "pack --dry-run");
   assertReleaseReadinessScript(context);
+  assertReleaseVersionTargets(context);
   assertExamplesHaveSelfScripts(context);
   assertExamplesCheckCoversExamples(context);
   assertExamplesSelfCheckCoversExamples(context);
@@ -168,6 +169,75 @@ function assertReleaseReadinessScript(context) {
     }
     previousIndex = index;
   }
+}
+
+function assertReleaseVersionTargets(context) {
+  const relativePath = "scripts/release-version.sh";
+  const absolutePath = join(context.rootDir, relativePath);
+  if (!existsSync(absolutePath)) {
+    context.failures.push(`${relativePath} is missing.`);
+    return;
+  }
+
+  const source = readFileSync(absolutePath, "utf8");
+  const targets = readReleaseVersionTargetFiles(source);
+  if (targets === undefined) {
+    context.failures.push(`${relativePath} must declare a "const files = [...]" release target list.`);
+    return;
+  }
+
+  const seenTargets = new Set();
+  for (const target of targets) {
+    if (seenTargets.has(target)) {
+      context.failures.push(`${relativePath} target list includes duplicate "${target}".`);
+    }
+    seenTargets.add(target);
+  }
+
+  const expectedTargets = [
+    "package.json",
+    ...context.packageEntries
+      .filter((entry) => entry.packageJson.private !== true)
+      .map((entry) => `packages/${entry.dir}/package.json`),
+    ...context.exampleEntries.map((entry) => `examples/${entry.dir}/package.json`),
+  ].sort();
+  const targetSet = new Set(targets);
+  const expectedTargetSet = new Set(expectedTargets);
+
+  if (!targetSet.has("package.json")) {
+    context.failures.push(`${relativePath} target list must include root package.json.`);
+  }
+
+  for (const packageEntry of context.packageEntries) {
+    if (packageEntry.packageJson.private === true) {
+      continue;
+    }
+    const expected = `packages/${packageEntry.dir}/package.json`;
+    if (!targetSet.has(expected)) {
+      context.failures.push(`${relativePath} target list must include public package ${expected}.`);
+    }
+  }
+
+  for (const exampleEntry of context.exampleEntries) {
+    const expected = `examples/${exampleEntry.dir}/package.json`;
+    if (!targetSet.has(expected)) {
+      context.failures.push(`${relativePath} target list must include example package ${expected}.`);
+    }
+  }
+
+  for (const target of [...targetSet].sort()) {
+    if (!expectedTargetSet.has(target)) {
+      context.failures.push(`${relativePath} target list includes unexpected package target ${target}.`);
+    }
+  }
+}
+
+function readReleaseVersionTargetFiles(source) {
+  const match = source.match(/const files = \[([\s\S]*?)\];/);
+  if (match === null) {
+    return undefined;
+  }
+  return [...match[1].matchAll(/"([^"]*package\.json)"/g)].map((targetMatch) => targetMatch[1]).sort();
 }
 
 function assertPackagesGraphCheckScript(context) {

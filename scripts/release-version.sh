@@ -52,11 +52,21 @@ const version = "$VERSION";
 const files = [
   "package.json",
   "packages/core/package.json",
-  "packages/preact/package.json",
+  "packages/config/package.json",
   "packages/plugin-std-visual/package.json",
   "packages/plugin-std-audio/package.json",
+  "packages/plugin-std-text-sound/package.json",
+  "packages/plugin-std-effect/package.json",
+  "packages/plugin-std-camera/package.json",
+  "packages/plugin-std-particle/package.json",
+  "packages/plugin-std-system/package.json",
+  "packages/preact/package.json",
+  "packages/vue/package.json",
   "packages/standard-ui-preact/package.json",
+  "packages/cli/package.json",
+  "packages/create-tsuzuru/package.json",
   "examples/preact-basic/package.json",
+  "examples/vue-basic/package.json",
 ];
 
 for (const file of files) {

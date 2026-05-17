@@ -131,6 +131,33 @@ describe("checkQualityGate", () => {
     );
   });
 
+  it("fails when release-version.sh omits root package.json", async () => {
+    const root = await createFixtureRepo();
+    await removeReleaseVersionTarget(root, "package.json");
+
+    expect(checkQualityGate(root).failures).toContain(
+      "scripts/release-version.sh target list must include root package.json.",
+    );
+  });
+
+  it("fails when release-version.sh omits a public package", async () => {
+    const root = await createFixtureRepo();
+    await removeReleaseVersionTarget(root, "packages/addon/package.json");
+
+    expect(checkQualityGate(root).failures).toContain(
+      "scripts/release-version.sh target list must include public package packages/addon/package.json.",
+    );
+  });
+
+  it("fails when release-version.sh omits an example package", async () => {
+    const root = await createFixtureRepo();
+    await removeReleaseVersionTarget(root, "examples/example/package.json");
+
+    expect(checkQualityGate(root).failures).toContain(
+      "scripts/release-version.sh target list must include example package examples/example/package.json.",
+    );
+  });
+
   it("fails when release-readiness:check uses the heavy examples check", async () => {
     const root = await createFixtureRepo();
     await mutateRootPackageJson(root, (packageJson) => {
@@ -739,6 +766,12 @@ async function createFixtureRepo() {
   });
   await writeAgents(root);
   await writeExamplesE2eWorkflow(root);
+  await writeReleaseVersionScript(root, [
+    "package.json",
+    "packages/addon/package.json",
+    "packages/core/package.json",
+    "examples/example/package.json",
+  ]);
   await writeTreeInventoryDoc(root, "README.md");
   await writeTreeInventoryDoc(root, "docs/architecture.md");
   await writeTypeScriptBuildGraphPlan(root);
@@ -815,6 +848,26 @@ jobs:
         run: pnpm examples:e2e
 `,
   );
+}
+
+async function writeReleaseVersionScript(root, files) {
+  await mkdir(join(root, "scripts"), { recursive: true });
+  await writeFile(
+    join(root, "scripts/release-version.sh"),
+    `#!/usr/bin/env bash
+node <<NODE
+const files = [
+${files.map((file) => `  "${file}",`).join("\n")}
+];
+NODE
+`,
+  );
+}
+
+async function removeReleaseVersionTarget(root, file) {
+  const relativePath = join(root, "scripts/release-version.sh");
+  const source = await readFile(relativePath, "utf8");
+  await writeFile(relativePath, source.replace(`  "${file}",\n`, ""));
 }
 
 async function writeAgents(root) {
@@ -962,6 +1015,19 @@ async function writePackageCoreReferenceExperimentFiles(root) {
   await writeAgentsWithReferencePilots(root);
   await writeTreeInventoryDocWithReferencePilots(root, "README.md");
   await writeTreeInventoryDocWithReferencePilots(root, "docs/architecture.md");
+  await writeReleaseVersionScript(root, [
+    "package.json",
+    "packages/addon/package.json",
+    "packages/core/package.json",
+    "packages/config/package.json",
+    "packages/cli/package.json",
+    "packages/plugin-std-visual/package.json",
+    "packages/plugin-std-audio/package.json",
+    "packages/preact/package.json",
+    "packages/vue/package.json",
+    "packages/standard-ui-preact/package.json",
+    "examples/example/package.json",
+  ]);
 }
 
 async function writePreactReferenceExperimentFiles(root) {
