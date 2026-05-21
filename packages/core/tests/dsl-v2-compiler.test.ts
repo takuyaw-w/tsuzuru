@@ -1335,6 +1335,18 @@ scene start:
     );
   });
 
+  it("rejects wipe background transitions on sprite and clear statements", () => {
+    expect(expectParseFailure("scene start:\n  show alice_smile at center with wipeLeft(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeLeft".',
+    );
+    expect(expectParseFailure("scene start:\n  hide alice_smile with wipeRight(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeRight".',
+    );
+    expect(expectParseFailure("scene start:\n  clear bg with wipeLeft(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeLeft".',
+    );
+  });
+
   it("rejects standalone transition statements", () => {
     expect(expectParseFailure("scene start:\n  transition fade(duration=500)\n")).toEqual(
       expect.arrayContaining(["Unsupported DSL v2 scene body statement."]),

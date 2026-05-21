@@ -1367,8 +1367,8 @@ Rules:
 - For `bg`, `fade`, `pageTurn`, `blurFade`, `slide`, `wipeLeft`, and
   `wipeRight` are background transition metadata handled by
   `@tsuzuru/plugin-std-visual`.
-- For std-visual metadata, `duration` is required, uses ms, and must be an
-  integer greater than or equal to `0`.
+- For `show`, `hide`, and `clear` std-visual transition metadata, `duration`
+  is required, uses ms, and must be an integer greater than or equal to `0`.
 - For bg background transitions, `duration` is optional and uses std-visual
   effect defaults. If supplied, it must be a positive integer.
 - Custom transition names are not accepted by the current parser; they may be

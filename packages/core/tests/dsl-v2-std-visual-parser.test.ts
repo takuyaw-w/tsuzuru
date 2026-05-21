@@ -260,6 +260,15 @@ describe("parseTzr std visual sugar statements", () => {
     expect(expectVisualFailure("scene start:\n  show alice_smile at center with wipe(duration=300)\n")).toContain(
       'Unknown visual transition "wipe".',
     );
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with wipeLeft(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeLeft".',
+    );
+    expect(expectVisualFailure("scene start:\n  hide alice_smile with wipeRight(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeRight".',
+    );
+    expect(expectVisualFailure("scene start:\n  clear sprites with wipeLeft(duration=300)\n")).toContain(
+      'Unknown visual transition "wipeLeft".',
+    );
     expect(expectVisualFailure("scene start:\n  bg classroom with zoom(duration=300)\n")).toContain(
       'Unknown visual transition "zoom".',
     );
