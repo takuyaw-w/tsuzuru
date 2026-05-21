@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Station background">
+  <defs>
+    <linearGradient id="night" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#101923"/>
+      <stop offset=".62" stop-color="#243846"/>
+      <stop offset="1" stop-color="#11161b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#night)"/>
+  <rect y="392" width="1280" height="118" fill="#3f4d55"/>
+  <rect y="510" width="1280" height="210" fill="#1c2328"/>
+  <rect x="72" y="150" width="1136" height="42" fill="#20282f"/>
+  <rect x="112" y="192" width="28" height="286" fill="#2e3941"/>
+  <rect x="600" y="192" width="28" height="286" fill="#2e3941"/>
+  <rect x="1120" y="192" width="28" height="286" fill="#2e3941"/>
+  <rect x="108" y="222" width="320" height="86" rx="8" fill="#e7f3ee"/>
+  <rect x="124" y="238" width="288" height="54" fill="#246c7a"/>
+  <path d="M0 590h1280M0 636h1280" stroke="#d8d1af" stroke-width="7" opacity=".52"/>
+  <path d="M80 720 448 512M252 720 566 512M1028 720 726 512M1200 720 836 512" stroke="#6b6258" stroke-width="10"/>
+  <g fill="#f6d889">
+    <circle cx="214" cy="176" r="16"/>
+    <circle cx="702" cy="176" r="16"/>
+    <circle cx="1046" cy="176" r="16"/>
+  </g>
+  <g fill="#f6d889" opacity=".18">
+    <path d="M170 192h88l-44 278z"/>
+    <path d="M658 192h88l-44 278z"/>
+    <path d="M1002 192h88l-44 278z"/>
+  </g>
+  <text x="40" y="682" fill="#e7f3ee" font-family="sans-serif" font-size="28" letter-spacing="3">STATION</text>
+</svg>

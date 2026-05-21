@@ -676,6 +676,14 @@ button {
   overflow: hidden;
 }
 
+.visual-layer__scene-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .visual-layer__scene-sun {
   position: absolute;
   top: 12%;

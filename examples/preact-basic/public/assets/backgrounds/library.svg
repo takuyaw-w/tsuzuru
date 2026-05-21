@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Library background">
+  <rect width="1280" height="720" fill="#2d2530"/>
+  <rect y="470" width="1280" height="250" fill="#4b3325"/>
+  <rect x="58" y="72" width="302" height="430" rx="8" fill="#60452f"/>
+  <rect x="486" y="72" width="302" height="430" rx="8" fill="#60452f"/>
+  <rect x="920" y="72" width="302" height="430" rx="8" fill="#60452f"/>
+  <g stroke="#36251d" stroke-width="16">
+    <path d="M76 170h266M76 278h266M76 386h266"/>
+    <path d="M504 170h266M504 278h266M504 386h266"/>
+    <path d="M938 170h266M938 278h266M938 386h266"/>
+  </g>
+  <g fill="#b46e4d">
+    <rect x="94" y="100" width="28" height="64"/><rect x="132" y="110" width="24" height="54"/><rect x="166" y="92" width="30" height="72"/>
+    <rect x="522" y="100" width="30" height="64"/><rect x="562" y="92" width="24" height="72"/><rect x="596" y="118" width="28" height="46"/>
+    <rect x="956" y="102" width="26" height="62"/><rect x="990" y="94" width="28" height="70"/><rect x="1028" y="116" width="24" height="48"/>
+  </g>
+  <g fill="#d2a05c">
+    <rect x="216" y="198" width="26" height="72"/><rect x="252" y="210" width="30" height="60"/>
+    <rect x="636" y="200" width="26" height="70"/><rect x="674" y="188" width="30" height="82"/>
+    <rect x="1070" y="196" width="26" height="74"/><rect x="1106" y="210" width="30" height="60"/>
+  </g>
+  <ellipse cx="640" cy="596" rx="210" ry="50" fill="#2a1d19" opacity=".38"/>
+  <rect x="470" y="510" width="340" height="44" rx="10" fill="#7b5237"/>
+  <rect x="506" y="554" width="24" height="112" fill="#5a3929"/>
+  <rect x="750" y="554" width="24" height="112" fill="#5a3929"/>
+  <circle cx="640" cy="64" r="40" fill="#f0ce88" opacity=".9"/>
+  <path d="M610 104h60l-30 210z" fill="#f0ce88" opacity=".18"/>
+  <text x="40" y="682" fill="#d7bf86" font-family="sans-serif" font-size="28" letter-spacing="3">LIBRARY</text>
+</svg>

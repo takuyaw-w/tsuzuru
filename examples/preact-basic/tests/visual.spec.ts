@@ -171,6 +171,37 @@ test("effect demo choice exposes individual effect paths", async ({ page }) => {
   await expect(messageWindow).toContainText("まずは、僕に寄ってみよう", { timeout: 3000 });
 });
 
+test("transition demo renders 16:9 SVG backgrounds and restores interaction", async ({ page }) => {
+  await page.goto("/");
+  await disableTextReveal(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const choiceLayer = page.locator(".tzr-choice-layer");
+  const transitionLayer = page.locator(".screen-transition-layer");
+
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expectViewportAspectRatio(page);
+  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
+  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
+  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
+  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
+  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 4);
+  await choiceLayer.getByRole("button", { name: "screen transition を試す" }).click();
+
+  await expect(messageWindow).toContainText("まずは教室です。", { timeout: 3000 });
+  await advanceAndExpectBackground(page, messageWindow, transitionLayer, "classroom", "次はページめくり風");
+  await advanceAndExpectBackground(page, messageWindow, transitionLayer, "library", "駅前へ移動します。");
+  await advanceAndExpectBackground(page, messageWindow, transitionLayer, "station", "回想のように");
+  await advanceAndExpectBackground(page, messageWindow, transitionLayer, "rooftop", "最後に廊下へ移動します。");
+  await advanceAndExpectBackground(page, messageWindow, transitionLayer, "hallway", "camera demo を試す？");
+
+  await expect(choiceLayer.getByRole("button", { name: "camera focus を見る" })).toBeVisible();
+  await expect(transitionLayer).toHaveCSS("pointer-events", "none");
+});
+
 test("particle demo renders bounded non-interactive overlay particles", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);
@@ -401,6 +432,49 @@ async function advanceUntilChoice(
     await messageWindow.click();
   }
   await expect(choiceLayer).toContainText(question, { timeout: 3000 });
+}
+
+async function advanceAndExpectBackground(
+  page: Page,
+  messageWindow: Locator,
+  transitionLayer: Locator,
+  assetId: string,
+  nextText: string,
+): Promise<void> {
+  await messageWindow.click();
+  await expect(transitionLayer).toHaveCSS("pointer-events", "auto", { timeout: 1000 });
+  await expectBackgroundAsset(page, assetId);
+  await expect(transitionLayer).toHaveCSS("pointer-events", "none", { timeout: 4000 });
+  await expect(page.locator(".visual-layer__scene")).toHaveAttribute("aria-label", assetId);
+  await expect(page.locator(".visual-layer__scene-image")).toHaveAttribute(
+    "src",
+    new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
+  );
+
+  const choiceLayer = page.locator(".tzr-choice-layer");
+  if (await locatorContainsText(choiceLayer, nextText)) {
+    await expect(choiceLayer).toContainText(nextText, { timeout: 3000 });
+    return;
+  }
+  await expect(messageWindow).toContainText(nextText, { timeout: 3000 });
+}
+
+async function expectBackgroundAsset(page: Page, assetId: string): Promise<void> {
+  await expect(page.locator(".visual-layer__scene-image")).toHaveAttribute(
+    "src",
+    new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
+    { timeout: 3000 },
+  );
+}
+
+async function expectViewportAspectRatio(page: Page): Promise<void> {
+  const box = await page.locator(".app__viewport").boundingBox();
+  expect(box).not.toBeNull();
+  if (box === null) {
+    return;
+  }
+  expect(box.width / box.height).toBeGreaterThan(1.76);
+  expect(box.width / box.height).toBeLessThan(1.79);
 }
 
 async function locatorContainsText(locator: Locator, text: string): Promise<boolean> {

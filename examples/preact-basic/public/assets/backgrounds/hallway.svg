@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Hallway background">
+  <rect width="1280" height="720" fill="#d7c9ad"/>
+  <polygon points="232,116 1048,116 1180,720 100,720" fill="#b49a78"/>
+  <polygon points="392,188 888,188 1040,720 240,720" fill="#8f775e"/>
+  <polygon points="512,254 768,254 900,720 380,720" fill="#6f5d4d"/>
+  <polygon points="594,328 686,328 742,720 538,720" fill="#4e443c"/>
+  <path d="M100 720 512 254M1180 720 768 254M240 720 392 188M1040 720 888 188" stroke="#3f352f" stroke-width="8" opacity=".42"/>
+  <g fill="#6f4d38">
+    <rect x="94" y="172" width="130" height="250" rx="4"/>
+    <rect x="1056" y="172" width="130" height="250" rx="4"/>
+    <rect x="270" y="226" width="82" height="200" rx="4"/>
+    <rect x="928" y="226" width="82" height="200" rx="4"/>
+  </g>
+  <g fill="#f5e8bc">
+    <rect x="586" y="94" width="108" height="28" rx="14"/>
+    <rect x="606" y="172" width="68" height="20" rx="10"/>
+    <rect x="622" y="240" width="36" height="14" rx="7"/>
+  </g>
+  <g stroke="#f8eec8" stroke-width="10" opacity=".44">
+    <path d="M0 512h304M976 512h304"/>
+    <path d="M0 604h220M1060 604h220"/>
+  </g>
+  <text x="40" y="682" fill="#fff4d0" font-family="sans-serif" font-size="28" letter-spacing="3">HALLWAY</text>
+</svg>

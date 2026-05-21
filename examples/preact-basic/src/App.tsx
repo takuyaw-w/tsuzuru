@@ -546,7 +546,7 @@ function RuntimeApp({
             <ParticleLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <EffectLayer runtimeState={runtime.state} />
-            <ScreenTransitionLayer runtimeState={runtime.state} />
+            <ScreenTransitionLayer runtimeState={runtime.state} className="screen-transition-layer" />
             <RuntimeControlBar
               readCount={readCount}
               autoModeEnabled={autoMode.enabled}

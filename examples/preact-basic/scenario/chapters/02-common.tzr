@@ -152,7 +152,7 @@ scene effect_choice_after:
 
 scene transition_demo:
   narration:
-    まずは通常の暗転です。
+    まずは教室です。
 
   bg classroom with fade(duration=500)
   wait 500
@@ -164,22 +164,22 @@ scene transition_demo:
   wait 800
 
   narration:
+    駅前へ移動します。
+
+  bg station with slide(direction="left", duration=650)
+  wait 650
+
+  narration:
     回想のように、屋上へ切り替えます。
 
   bg rooftop with blurFade(duration=700)
   wait 700
 
   narration:
-    階段を上るように、画面をスライドさせます。
+    最後に廊下へ移動します。
 
-  bg hallway with slide(direction="up", duration=650)
-  wait 650
-
-  narration:
-    最後に白フラッシュです。
-
-  transition flash(color="#ffffff", duration=180)
-  wait 180
+  bg hallway with pageTurn(direction="right", duration=800)
+  wait 800
 
   jump camera_choice
 

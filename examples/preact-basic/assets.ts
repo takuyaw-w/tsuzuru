@@ -45,9 +45,30 @@ const textSound = {
 export const assets = {
   visual: {
     backgrounds: {
+      classroom: {
+        className: "visual-layer__background--classroom",
+        label: "CLASSROOM",
+        src: "/assets/backgrounds/classroom.svg",
+      },
+      hallway: {
+        className: "visual-layer__background--hallway",
+        label: "HALLWAY",
+        src: "/assets/backgrounds/hallway.svg",
+      },
+      library: {
+        className: "visual-layer__background--library",
+        label: "LIBRARY",
+        src: "/assets/backgrounds/library.svg",
+      },
+      rooftop: {
+        className: "visual-layer__background--rooftop",
+        label: "ROOFTOP",
+        src: "/assets/backgrounds/rooftop.svg",
+      },
       station: {
         className: "visual-layer__background--station",
         label: "STATION",
+        src: "/assets/backgrounds/station.svg",
       },
     },
     sprites: {

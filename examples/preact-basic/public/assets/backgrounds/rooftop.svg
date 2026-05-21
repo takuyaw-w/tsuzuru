@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Rooftop background">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#355f92"/>
+      <stop offset=".58" stop-color="#f0a96b"/>
+      <stop offset="1" stop-color="#5a3c54"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <circle cx="1004" cy="150" r="74" fill="#ffe2a0" opacity=".82"/>
+  <g fill="#343b50" opacity=".82">
+    <rect x="0" y="442" width="220" height="140"/>
+    <rect x="246" y="404" width="154" height="178"/>
+    <rect x="432" y="454" width="220" height="128"/>
+    <rect x="706" y="420" width="198" height="162"/>
+    <rect x="966" y="388" width="180" height="194"/>
+    <rect x="1168" y="458" width="112" height="124"/>
+  </g>
+  <rect y="542" width="1280" height="178" fill="#54606c"/>
+  <rect y="518" width="1280" height="28" fill="#28313a"/>
+  <g stroke="#d7dee5" stroke-width="9">
+    <path d="M78 336v188M230 336v188M382 336v188M534 336v188M686 336v188M838 336v188M990 336v188M1142 336v188"/>
+    <path d="M40 356h1200M40 438h1200"/>
+  </g>
+  <path d="M0 720h1280V612c-154 32-326 45-516 38-224-8-474 8-764 50z" fill="#404952"/>
+  <path d="M740 246c74-40 132-40 174 0M798 290c42-22 78-22 108 0" fill="none" stroke="#f6e7c8" stroke-width="8" stroke-linecap="round" opacity=".68"/>
+  <text x="40" y="682" fill="#f5e6c8" font-family="sans-serif" font-size="28" letter-spacing="3">ROOFTOP</text>
+</svg>

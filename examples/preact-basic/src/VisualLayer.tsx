@@ -34,10 +34,17 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
         >
           {background === null || backgroundPresentation === null ? null : (
             <div className="visual-layer__scene" aria-label={background.assetId}>
-              <span className="visual-layer__scene-sun" />
-              <span className="visual-layer__scene-platform" />
-              <span className="visual-layer__scene-rail visual-layer__scene-rail--front" />
-              <span className="visual-layer__scene-rail visual-layer__scene-rail--back" />
+              {backgroundPresentation.src === undefined ? null : (
+                <img className="visual-layer__scene-image" src={backgroundPresentation.src} alt="" aria-hidden="true" />
+              )}
+              {backgroundPresentation.src !== undefined ? null : (
+                <>
+                  <span className="visual-layer__scene-sun" />
+                  <span className="visual-layer__scene-platform" />
+                  <span className="visual-layer__scene-rail visual-layer__scene-rail--front" />
+                  <span className="visual-layer__scene-rail visual-layer__scene-rail--back" />
+                </>
+              )}
               <span className="visual-layer__scene-sign">{backgroundPresentation.label}</span>
             </div>
           )}
@@ -90,6 +97,7 @@ function SpritePlaceholder({
 interface AssetPresentation {
   readonly className: string;
   readonly label: string;
+  readonly src?: string;
 }
 
 type SpritePresentation = AssetPresentation;

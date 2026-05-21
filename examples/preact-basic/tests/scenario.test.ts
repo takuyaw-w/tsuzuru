@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { assets } from "../assets.js";
 import { scenarioProject } from "../src/scenario.js";
 
 const messageSpeakers = new Set(["narration", "tone", "noize", "mix"]);
@@ -57,6 +58,23 @@ describe("preact-basic scenario", () => {
     expect(scenario).toContain("particle sakura intensity=normal");
     expect(scenario).toContain("particle dust intensity=light");
     expect(scenario).toContain("stopParticle");
+  });
+
+  it("maps transition demo backgrounds to 16:9 SVG assets", async () => {
+    const expectedBackgrounds = ["classroom", "library", "station", "rooftop", "hallway"] as const;
+    const backgroundRoot = join(import.meta.dirname, "..", "public", "assets", "backgrounds");
+    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "02-common.tzr"), "utf8");
+
+    for (const assetId of expectedBackgrounds) {
+      const background = assets.visual.backgrounds[assetId];
+      expect(background.src).toBe(`/assets/backgrounds/${assetId}.svg`);
+      expect(scenario).toContain(`bg ${assetId} with`);
+
+      const svg = await readFile(join(backgroundRoot, `${assetId}.svg`), "utf8");
+      expect(svg).toContain('viewBox="0 0 1280 720"');
+      expect(svg).not.toContain("<image");
+      expect(svg).not.toContain("href=");
+    }
   });
 
   it("depends on the std-system plugin package", async () => {
