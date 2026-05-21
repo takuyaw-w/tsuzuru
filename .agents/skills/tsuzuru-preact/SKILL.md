@@ -21,6 +21,12 @@ compiler, DSL, or scenario execution semantics.
 5. Relevant tests under `packages/preact/tests`
 6. Relevant core runtime APIs under `packages/core/src`
 
+## Investigation Guidance
+
+Use CodeGraph MCP for structural investigation of hooks, components, adapter
+utilities, and core runtime API usage. Use `rg` and file reads for exact UI text,
+test assertions, docs, config, and example scenario files.
+
 ## Current Constraints
 
 - Core owns narrative semantics and runtime stepping.

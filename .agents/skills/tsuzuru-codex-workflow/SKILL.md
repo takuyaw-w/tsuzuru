@@ -22,6 +22,18 @@ Before editing, read only what is relevant:
 4. The relevant package `package.json`
 5. Relevant source, tests, examples, or docs
 
+## CodeGraph Usage
+
+Follow the repository-wide CodeGraph policy in `AGENTS.md`. Before structural
+code investigation, use CodeGraph MCP when available:
+
+- use `codegraph_search` for symbols
+- use `codegraph_context` for focused implementation context
+- use `codegraph_impact` before refactors, public API changes, or shared behavior changes
+
+Use `rg` and file reads for exact literals, docs, config, `.tzr` files, scripts,
+generated files, and tests that require exact assertion text.
+
 ## Current Constraints
 
 - Treat the modern `.tzr` DSL under `packages/core/src` as current.

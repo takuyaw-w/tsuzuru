@@ -19,6 +19,12 @@ DSL-facing diagnostics, and DSL documentation.
 5. Relevant parser/compiler tests under `packages/core/tests`
 6. Current example scenario under `examples/dsl-v2-basic`
 
+## Investigation Guidance
+
+Use CodeGraph MCP for parser/compiler symbol lookup, relationship tracing, and
+impact analysis. Use `rg` and file reads for `.tzr` scenario files, exact
+syntax examples, diagnostics, docs, and test assertion text.
+
 ## Current Constraints
 
 - The current DSL is implemented under `packages/core/src`.

@@ -370,6 +370,44 @@ Do not update generated templates without checking that they still use the curre
 
 When unsure, preserve the current public API and report the uncertainty.
 
+## CodeGraph Usage
+
+When CodeGraph MCP tools are available and `.codegraph/` exists, prefer
+CodeGraph for structural code exploration before falling back to raw grep or
+file reads.
+
+Use CodeGraph for:
+
+- symbol lookup
+- call graph investigation
+- dependency and relationship tracing
+- impact analysis before refactors or public API changes
+- gathering focused implementation context for a task
+
+Recommended tool usage:
+
+- `codegraph_status` to confirm index availability when results look stale or unclear
+- `codegraph_search` to find symbols by name or concept
+- `codegraph_context` to collect task-focused related code
+- `codegraph_node` to inspect a specific symbol
+- `codegraph_callers` / `codegraph_callees` to trace call flow
+- `codegraph_impact` before changing public APIs, shared runtime behavior, compiler/parser behavior, or package exports
+- `codegraph_files` / `codegraph_explore` when navigating related files or symbol clusters
+
+Do not use CodeGraph as the only source of truth. Use `rg` and file reads for:
+
+- exact literal text
+- Markdown and documentation
+- config files
+- scripts
+- generated files
+- `.tzr` scenario files
+- tests that need exact assertions
+- any file type not reliably represented by CodeGraph
+
+Avoid re-reading large files when CodeGraph has already returned enough
+relevant source context, unless exact verification is needed.
+
 ## Verification Commands
 
 Use these commands before reporting completion for broad repository changes:

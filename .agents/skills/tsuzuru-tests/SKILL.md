@@ -21,6 +21,13 @@ and example build integrity.
 4. relevant source files
 5. relevant tests
 
+## Investigation Guidance
+
+Use CodeGraph MCP to understand source symbols, call flow, and impact before
+adding or changing tests. Use `rg` and file reads for exact test names,
+assertion text, snapshots, fixture contents, diagnostics, and `.tzr` scenario
+text.
+
 ## Current Constraints
 
 - Tests should target the current parser/compiler API exported by `@tsuzuru/core`.

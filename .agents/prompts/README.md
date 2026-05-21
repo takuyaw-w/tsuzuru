@@ -78,6 +78,9 @@ Error:
 - Do not ask Codex to perform broad refactors unless explicitly intended.
 - Do not treat these template files as repository requirements.
 - Do not check TODO items unless the work is actually complete.
+- Follow `AGENTS.md` for CodeGraph usage: prefer it for structural code
+  investigation, and use `rg` / file reads for exact literals, docs, config,
+  `.tzr` files, and test assertion text.
 
 ## Recommended Skill Usage
 

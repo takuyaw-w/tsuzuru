@@ -21,6 +21,13 @@ snapshot/restore primitives.
 4. Relevant tests under `packages/core/tests`
 5. Public exports in `packages/core/src/index.ts` when APIs change
 
+## Investigation Guidance
+
+Use CodeGraph MCP for structural investigation under `packages/core`: symbol
+lookup, parser/compiler/runtime relationships, call flow, and impact analysis.
+Use `rg` and file reads for exact diagnostics, test assertions, docs, config,
+and `.tzr` scenario text.
+
 ## Current Constraints
 
 - Current DSL implementation lives directly under `packages/core/src`.

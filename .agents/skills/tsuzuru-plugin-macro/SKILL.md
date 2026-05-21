@@ -23,6 +23,13 @@ and stage features are deferred unless the user explicitly requests them.
 5. `packages/core/src/runtime.ts` and runtime command files when dispatch is involved
 6. Plugin package source and tests when standard plugin behavior changes
 
+## Investigation Guidance
+
+Use CodeGraph MCP for plugin command symbols, command dispatch call flow,
+schema relationships, and impact analysis before changing command contracts.
+Use `rg` and file reads for exact command literals, docs, tests, config, and
+`.tzr` examples.
+
 ## Current Constraints
 
 - Core owns narrative flow and command dispatch infrastructure.

@@ -23,6 +23,13 @@ new features.
 6. public exports in package entrypoints
 7. root README, docs, and example README files
 
+## Investigation Guidance
+
+Use CodeGraph MCP to inspect package entrypoint symbols, dependency
+relationships, call flow, and impact radius for readiness reviews. Use `rg` and
+file reads for README/docs, package metadata, scripts, generated files, `.tzr`
+scenarios, and exact test or diagnostic text.
+
 ## Current Constraints
 
 - Current parser/compiler API is exported from `@tsuzuru/core`.
