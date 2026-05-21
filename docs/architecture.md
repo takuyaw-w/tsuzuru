@@ -311,10 +311,12 @@ command handlers and a Preact overlay layer.
 Responsibilities:
 
 - maintain standard screen transition plugin state
-- append fade / wipe / flash events
+- append fade / wipe / flash / pageTurn / blurFade / slide events
 - expose sequence-based event consumption state
 - prepare transition state for snapshots by clearing one-shot events
 - handle `transition` command instructions
+- support `bg ... with <screenTransition>(...)` through compiler sugar that
+  combines a screen transition event with a std-visual background update
 
 It does not:
 

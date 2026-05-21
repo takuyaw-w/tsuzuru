@@ -236,17 +236,20 @@ call screen.open(id=notebook, extra=true)
 
 Runtime behavior is handled by runtime plugin command handlers and UI layers. Compile-time plugin command validation checks command names and argument shape, but it does not load assets, check file existence, render images, or play audio.
 
-Std visual transition metadata is compiled as command arguments and remains
-renderer-independent. `transition` and `duration` must be supplied together,
-and `duration` is validated as a finite integer greater than or equal to `0`.
-The std visual plugin stores transition metadata on surviving background and
-sprite state objects; actual animation timing and presentation remain UI or
-renderer responsibilities.
+Std visual transition metadata on `show`, `hide`, and `clear` is compiled as
+command arguments and remains renderer-independent. `transition` and `duration`
+must be supplied together, and `duration` is validated as a finite integer
+greater than or equal to `0`. The std visual plugin stores transition metadata
+on surviving state objects; actual animation timing and presentation remain UI
+or renderer responsibilities.
 
 Std transition DSL sugar compiles to the `transition` plugin command with a
 screen transition effect, normalized duration, and default color/direction
-arguments. Runtime execution appends a one-shot transition event and does not
-block scenario stepping; strict timing should use `wait`.
+arguments. This includes standalone `transition ...` statements and
+`bg ... with <screenTransition>(...)`, where the compiler appends the
+transition command and then updates std-visual background state. Runtime
+execution appends a one-shot transition event and does not block scenario
+stepping; strict timing should use `wait`.
 
 Broader call/return runtime semantics remain deferred.
 

@@ -61,7 +61,7 @@ describe("std-transition commands", () => {
       name: "transition",
       args: {
         kind: "mixed",
-        positional: [{ type: "string", values: ["fade", "wipe", "flash"] }],
+        positional: [{ type: "string", values: ["fade", "wipe", "flash", "pageTurn", "blurFade", "slide"] }],
         named: [
           { name: "duration", type: "number", integer: true, min: 1 },
           { name: "direction", type: "string", optional: true, values: ["left", "right", "up", "down"] },
@@ -71,11 +71,28 @@ describe("std-transition commands", () => {
     });
   });
 
-  it("appends fade, wipe, and flash events with increasing sequences", () => {
+  it("appends fade, wipe, flash, pageTurn, blurFade, and slide events with increasing sequences", () => {
     const result = runStdTransitionCommands(
       command("transition", [positionalString("fade"), namedNumber("duration", 500), namedString("color", "#000000")]),
       command("transition", [positionalString("wipe"), namedNumber("duration", 600), namedString("direction", "left")]),
       command("transition", [positionalString("flash"), namedNumber("duration", 180), namedString("color", "#ffffff")]),
+      command("transition", [
+        positionalString("pageTurn"),
+        namedNumber("duration", 800),
+        namedString("direction", "left"),
+        namedString("color", "#ffffff"),
+      ]),
+      command("transition", [
+        positionalString("blurFade"),
+        namedNumber("duration", 700),
+        namedString("color", "#000000"),
+      ]),
+      command("transition", [
+        positionalString("slide"),
+        namedNumber("duration", 650),
+        namedString("direction", "up"),
+        namedString("color", "#000000"),
+      ]),
     );
 
     expect(getStdTransitionState(result.state)).toEqual({
@@ -83,22 +100,50 @@ describe("std-transition commands", () => {
         { sequence: 1, effect: "fade", durationMs: 500, color: "#000000" },
         { sequence: 2, effect: "wipe", durationMs: 600, direction: "left" },
         { sequence: 3, effect: "flash", durationMs: 180, color: "#ffffff" },
+        { sequence: 4, effect: "pageTurn", durationMs: 800, direction: "left", color: "#ffffff" },
+        { sequence: 5, effect: "blurFade", durationMs: 700, color: "#000000" },
+        { sequence: 6, effect: "slide", durationMs: 650, direction: "up", color: "#000000" },
       ],
-      nextSequence: 4,
+      nextSequence: 7,
     });
   });
 
   it("accepts compiler-supplied default values", () => {
     const result = runStdTransitionCommands(
       command("transition", [positionalString("fade"), namedNumber("duration", 400), namedString("color", "#000000")]),
-      command("transition", [positionalString("wipe"), namedNumber("duration", 400), namedString("direction", "left")]),
-      command("transition", [positionalString("flash"), namedNumber("duration", 400), namedString("color", "#ffffff")]),
+      command("transition", [
+        positionalString("wipe"),
+        namedNumber("duration", 500),
+        namedString("direction", "left"),
+        namedString("color", "#000000"),
+      ]),
+      command("transition", [positionalString("flash"), namedNumber("duration", 180), namedString("color", "#ffffff")]),
+      command("transition", [
+        positionalString("pageTurn"),
+        namedNumber("duration", 800),
+        namedString("direction", "left"),
+        namedString("color", "#ffffff"),
+      ]),
+      command("transition", [
+        positionalString("blurFade"),
+        namedNumber("duration", 700),
+        namedString("color", "#000000"),
+      ]),
+      command("transition", [
+        positionalString("slide"),
+        namedNumber("duration", 600),
+        namedString("direction", "left"),
+        namedString("color", "#000000"),
+      ]),
     );
 
     expect(getStdTransitionState(result.state).events).toEqual([
       { sequence: 1, effect: "fade", durationMs: 400, color: "#000000" },
-      { sequence: 2, effect: "wipe", durationMs: 400, direction: "left" },
-      { sequence: 3, effect: "flash", durationMs: 400, color: "#ffffff" },
+      { sequence: 2, effect: "wipe", durationMs: 500, direction: "left", color: "#000000" },
+      { sequence: 3, effect: "flash", durationMs: 180, color: "#ffffff" },
+      { sequence: 4, effect: "pageTurn", durationMs: 800, direction: "left", color: "#ffffff" },
+      { sequence: 5, effect: "blurFade", durationMs: 700, color: "#000000" },
+      { sequence: 6, effect: "slide", durationMs: 600, direction: "left", color: "#000000" },
     ]);
   });
 

@@ -1,5 +1,5 @@
 scene opening_start:
-  bg station with fade(duration=300)
+  bg station with dissolve(duration=300)
   bgm daily_theme
   show mio_smile at center with dissolve(duration=250)
 

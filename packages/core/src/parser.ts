@@ -1993,7 +1993,7 @@ class TzrParser {
 
     const transitionSource = afterWith.slice(transitionOffset).trimEnd();
     const transitionColumn = restColumn + withIndex + "with".length + transitionOffset;
-    const transition = this.parseVisualTransition(line, transitionSource, transitionColumn);
+    const transition = this.parseVisualTransition(line, transitionSource, transitionColumn, keyword);
     if (transition === undefined) {
       return undefined;
     }
@@ -2009,6 +2009,7 @@ class TzrParser {
     line: SourceLine,
     source: string,
     sourceColumn: number,
+    keyword: "bg" | "show" | "hide" | "clear",
   ): TzrVisualTransition | undefined {
     if (source.startsWith("(")) {
       this.addError(line, sourceColumn, "Visual transition name is required.");
@@ -2030,7 +2031,7 @@ class TzrParser {
       this.addError(line, sourceColumn, "Malformed visual transition syntax.");
       return undefined;
     }
-    if (name !== "fade" && name !== "dissolve") {
+    if (!isVisualTransitionNameAllowed(name, keyword)) {
       this.addError(line, sourceColumn, `Unknown visual transition "${name}".`);
       return undefined;
     }
@@ -2052,14 +2053,21 @@ class TzrParser {
     }
 
     const argsSource = source.slice(openParenIndex + 1, closeParenIndex);
-    const duration = this.parseVisualTransitionDuration(line, argsSource, sourceColumn + openParenIndex + 1);
-    if (duration === undefined) {
+    const argsColumn = sourceColumn + openParenIndex + 1;
+    const args = this.parseNamedArguments(line, argsSource, argsColumn, "transition");
+    if (args === undefined) {
       return undefined;
     }
+    const duration = this.parseVisualTransitionDurationFromArgs(line, args, argsColumn, name, keyword);
 
     return {
       type: "VisualTransition",
       name: name satisfies TzrVisualTransitionName,
+      nameLoc: {
+        start: this.location(line.line, sourceColumn),
+        end: this.location(line.line, sourceColumn + name.length),
+      },
+      args,
       duration,
       loc: {
         start: this.location(line.line, sourceColumn),
@@ -2068,97 +2076,40 @@ class TzrParser {
     };
   }
 
-  private parseVisualTransitionDuration(line: SourceLine, source: string, sourceColumn: number): number | undefined {
-    if (source.trim().length === 0) {
+  private parseVisualTransitionDurationFromArgs(
+    line: SourceLine,
+    args: readonly TzrNamedArgument[],
+    sourceColumn: number,
+    name: TzrVisualTransitionName,
+    keyword: "bg" | "show" | "hide" | "clear",
+  ): number {
+    const isScreenTransition = keyword === "bg" && isStdTransitionEffect(name);
+    if (args.length === 0 && !isScreenTransition) {
       this.addError(line, sourceColumn, "Visual transition duration is required.");
-      return undefined;
-    }
-
-    const parts = this.splitVisualTransitionArguments(line, source, sourceColumn);
-    if (parts === undefined) {
-      return undefined;
+      return 0;
     }
 
     let duration: number | undefined;
-    for (const part of parts) {
-      const equalsIndex = part.source.indexOf("=");
-      if (equalsIndex === -1) {
-        this.addError(line, part.column, "Visual transition positional arguments are not supported.");
-        return undefined;
-      }
-
-      const name = part.source.slice(0, equalsIndex).trim();
-      const nameColumn = part.column + part.source.indexOf(name);
-      if (name !== "duration") {
-        this.addError(line, nameColumn, `Unknown visual transition argument "${name}".`);
-        return undefined;
-      }
-      if (duration !== undefined) {
-        this.addError(line, nameColumn, 'Duplicate visual transition argument "duration".');
-        return undefined;
-      }
-
-      const valueRest = part.source.slice(equalsIndex + 1);
-      const valueOffset = valueRest.search(/\S/);
-      if (valueOffset === -1) {
-        this.addError(line, part.column + equalsIndex + 1, "Invalid visual transition duration.");
-        return undefined;
-      }
-
-      const value = valueRest.slice(valueOffset).trimEnd();
-      const valueColumn = part.column + equalsIndex + 1 + valueOffset;
-      if (!/^\d+$/.test(value)) {
-        this.addError(line, valueColumn, "Invalid visual transition duration.");
-        return undefined;
-      }
-
-      duration = Number(value);
-    }
-
-    if (duration === undefined) {
-      this.addError(line, sourceColumn, "Visual transition duration is required.");
-      return undefined;
-    }
-
-    return duration;
-  }
-
-  private splitVisualTransitionArguments(
-    line: SourceLine,
-    source: string,
-    sourceColumn: number,
-  ): readonly { readonly source: string; readonly column: number }[] | undefined {
-    const parts: { readonly source: string; readonly column: number }[] = [];
-    let partStart = 0;
-    for (let index = 0; index < source.length; index += 1) {
-      if (source[index] !== ",") {
+    for (const arg of args) {
+      if (arg.name !== "duration") {
         continue;
       }
-
-      const part = source.slice(partStart, index);
-      const trimmed = part.trim();
-      if (trimmed.length === 0) {
-        this.addError(line, sourceColumn + partStart, "Malformed visual transition syntax.");
-        return undefined;
+      if (arg.value.type === "NumberValue" && Number.isInteger(arg.value.value) && arg.value.value >= 0) {
+        duration = arg.value.value;
+        continue;
       }
-      parts.push({
-        source: trimmed,
-        column: sourceColumn + partStart + part.indexOf(trimmed),
-      });
-      partStart = index + 1;
+      if (!isScreenTransition) {
+        this.addError(line, arg.value.loc.start.column, "Invalid visual transition duration.");
+        return 0;
+      }
     }
 
-    const lastPart = source.slice(partStart);
-    const trimmed = lastPart.trim();
-    if (trimmed.length === 0) {
-      this.addError(line, sourceColumn + partStart, "Malformed visual transition syntax.");
-      return undefined;
+    if (duration === undefined && !isScreenTransition) {
+      this.addError(line, sourceColumn, "Visual transition duration is required.");
+      return 0;
     }
-    parts.push({
-      source: trimmed,
-      column: sourceColumn + partStart + lastPart.indexOf(trimmed),
-    });
-    return parts;
+
+    return duration ?? 0;
   }
 
   private parseBgmStatement(line: SourceLine, source: string, statementColumn: number): TzrBgmStatement | undefined {
@@ -3896,7 +3847,27 @@ function isEffectStatementSource(source: string): boolean {
 }
 
 function isStdTransitionEffect(value: string): value is TzrStdTransitionEffect {
-  return value === "fade" || value === "wipe" || value === "flash";
+  return (
+    value === "fade" ||
+    value === "wipe" ||
+    value === "flash" ||
+    value === "pageTurn" ||
+    value === "blurFade" ||
+    value === "slide"
+  );
+}
+
+function isVisualTransitionNameAllowed(
+  name: string,
+  keyword: "bg" | "show" | "hide" | "clear",
+): name is TzrVisualTransitionName {
+  if (name === "dissolve") {
+    return true;
+  }
+  if (keyword !== "bg") {
+    return name === "fade";
+  }
+  return isStdTransitionEffect(name);
 }
 
 function isCameraStatementSource(source: string): boolean {

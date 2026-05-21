@@ -109,10 +109,10 @@ promise plugin state migration if the std-visual state shape changes later.
 
 ```txt
 bg classroom
-bg classroom with fade(duration=300)
+bg classroom with dissolve(duration=300)
 ```
 
-`assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。transition が指定された場合、renderer-independent metadata として background state に保存されます。
+`assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。std-visual transition metadata が指定された場合、renderer-independent metadata として background state に保存されます。DSL の `bg ... with fade/pageTurn/blurFade/slide(...)` は `@tsuzuru/plugin-std-transition` の screen transition event として扱われ、std-visual background state には transition metadata を保存しません。
 
 実行後の state:
 
@@ -125,7 +125,7 @@ transition 付きの state:
 ```ts
 background: {
   assetId: "classroom",
-  transition: { type: "fade", durationMs: 300 },
+  transition: { type: "dissolve", durationMs: 300 },
 }
 ```
 
@@ -245,7 +245,7 @@ show alice at top
 
 必須引数がない場合や、許可されていない余分な引数を渡した場合も validation error です。
 
-`bg` / `show` / `hide` / `clearBg` / `clearSprites` は optional named args として `transition` と `duration` を受け取れます。現在の標準 transition 名は `"fade"` / `"dissolve"` です。`transition` と `duration` は必ず一緒に指定する必要があり、`duration` は `0` 以上の有限整数です。DSL sugar では `with fade(duration=300)` のように書き、compiler は `transition` / `duration` command args に変換します。
+`bg` / `show` / `hide` / `clearBg` / `clearSprites` の plugin command は optional named args として `transition` と `duration` を受け取れます。現在の標準 std-visual transition 名は `"fade"` / `"dissolve"` です。`transition` と `duration` は必ず一緒に指定する必要があり、`duration` は `0` 以上の有限整数です。DSL sugar では `show` / `hide` / `clear` の `with fade(duration=300)` を `transition` / `duration` command args に変換します。`bg ... with <screenTransition>(...)` は std-transition と std-visual background update の組み合わせにコンパイルされます。
 
 一方、`hide missing` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
 

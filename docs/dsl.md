@@ -71,7 +71,8 @@ The currently implemented runnable subset covers:
 - std visual sugar: `bg`, `show`, `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
 - std transition sugar: `transition fade(...)`, `transition wipe(...)`,
-  `transition flash(...)`
+  `transition flash(...)`, `transition pageTurn(...)`,
+  `transition blurFade(...)`, `transition slide(...)`
 - std effect, camera, particle, text sound, and system plugin commands in the
   ranges listed by the support matrix
 - `end`
@@ -114,12 +115,15 @@ when `@tsuzuru/plugin-std-system` is registered. Reading that unlock state from
 `system.*` state remains deferred and cannot be targeted or copied by `set`.
 The core runtime emits wait events for `wait 1000`, but does not start browser
 timers; hosts clear the wait after their own timer completes.
-Visual transitions such as `bg station with fade(duration=300)` compile to
+Visual transitions on `show`, `hide`, and `clear` compile to
 renderer-independent std-visual metadata. Core and std-visual do not run DOM,
-CSS, or timer animations for transitions.
-Screen transitions such as `transition fade(duration=500)` compile to
-std-transition one-shot events. They do not block runtime stepping; use
-`wait 500` when scenario timing must match the transition duration.
+CSS, or timer animations for those transitions.
+Screen transitions such as `transition fade(duration=500)` and
+`bg station with pageTurn(direction="left", duration=800)` compile to
+std-transition one-shot events. For `bg ... with ...`, the compiler appends a
+screen transition event and then updates std-visual background state. They do
+not block runtime stepping; use `wait 500` when scenario timing must match the
+transition duration.
 For v1.0 planning, stable std-visual sprite placement is preset-only:
 `show asset at left`, `show asset at center`, and `show asset at right`.
 Coordinate placement such as `show asset at x=320 y=80` is parser-level future

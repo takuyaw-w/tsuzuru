@@ -29,7 +29,7 @@ function expectTransitionFailure(source: string): string[] {
 }
 
 describe("parseTzr std transition statements", () => {
-  it("parses fade, wipe, and flash transition commands", () => {
+  it("parses standalone transition commands", () => {
     expect(parseSingleStatement("scene start:\n  transition fade(duration=500)\n")).toMatchObject({
       type: "StdTransitionStatement",
       effect: "fade",
@@ -50,6 +50,74 @@ describe("parseTzr std transition statements", () => {
         { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
         { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 180 } },
       ],
+    });
+    expect(parseSingleStatement('scene start:\n  transition pageTurn(direction="left", duration=800)\n')).toMatchObject(
+      {
+        type: "StdTransitionStatement",
+        effect: "pageTurn",
+        args: [
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+        ],
+      },
+    );
+    expect(parseSingleStatement("scene start:\n  transition blurFade(duration=700)\n")).toMatchObject({
+      type: "StdTransitionStatement",
+      effect: "blurFade",
+      args: [{ type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } }],
+    });
+    expect(parseSingleStatement('scene start:\n  transition slide(direction="up", duration=650)\n')).toMatchObject({
+      type: "StdTransitionStatement",
+      effect: "slide",
+      args: [
+        { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "up" } },
+        { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 650 } },
+      ],
+    });
+  });
+
+  it("parses bg with screen transitions", () => {
+    expect(parseSingleStatement("scene start:\n  bg station with fade(duration=600)\n")).toMatchObject({
+      type: "BgStatement",
+      transition: {
+        type: "VisualTransition",
+        name: "fade",
+        args: [{ type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 600 } }],
+      },
+    });
+    expect(
+      parseSingleStatement('scene start:\n  bg library with pageTurn(direction="left", duration=800)\n'),
+    ).toMatchObject({
+      type: "BgStatement",
+      transition: {
+        type: "VisualTransition",
+        name: "pageTurn",
+        args: [
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+        ],
+      },
+    });
+    expect(parseSingleStatement("scene start:\n  bg rooftop with blurFade(duration=700)\n")).toMatchObject({
+      type: "BgStatement",
+      transition: {
+        type: "VisualTransition",
+        name: "blurFade",
+        args: [{ type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } }],
+      },
+    });
+    expect(
+      parseSingleStatement('scene start:\n  bg hallway with slide(direction="right", duration=650)\n'),
+    ).toMatchObject({
+      type: "BgStatement",
+      transition: {
+        type: "VisualTransition",
+        name: "slide",
+        args: [
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "right" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 650 } },
+        ],
+      },
     });
   });
 

@@ -281,11 +281,13 @@ export interface TzrVisualCoordinatePlacement {
   readonly loc: SourceRange;
 }
 
-export type TzrVisualTransitionName = "fade" | "dissolve";
+export type TzrVisualTransitionName = "fade" | "dissolve" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
 
 export interface TzrVisualTransition {
   readonly type: "VisualTransition";
   readonly name: TzrVisualTransitionName;
+  readonly nameLoc: SourceRange;
+  readonly args: readonly TzrNamedArgument[];
   readonly duration: number;
   readonly loc: SourceRange;
 }
@@ -333,7 +335,7 @@ export interface TzrStdEffectStatement {
   readonly loc: SourceRange;
 }
 
-export type TzrStdTransitionEffect = "fade" | "wipe" | "flash";
+export type TzrStdTransitionEffect = "fade" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
 
 export interface TzrStdTransitionStatement {
   readonly type: "StdTransitionStatement";

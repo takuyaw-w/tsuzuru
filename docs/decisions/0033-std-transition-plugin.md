@@ -10,9 +10,9 @@ Tsuzuru already separates durable visual state from one-shot presentation
 events. `@tsuzuru/plugin-std-visual` owns background and sprite state, while
 `@tsuzuru/plugin-std-effect` owns transient effect events.
 
-Screen-wide scene transitions such as fade, wipe, and flash need similar
-one-shot handling, but they should not become background or sprite animation
-state.
+Screen-wide scene transitions such as fade, wipe, flash, page turn, blur fade,
+and slide need similar one-shot handling, but they should not become background
+or sprite animation state.
 
 ## Decision
 
@@ -33,18 +33,34 @@ Initial supported effects are:
 - `fade`
 - `wipe`
 - `flash`
+- `pageTurn`
+- `blurFade`
+- `slide`
 
-The DSL statement is:
+The DSL supports standalone transition statements:
 
 ```txt
 transition fade(duration=500)
 transition wipe(direction="left", duration=600)
 transition flash(color="#ffffff", duration=180)
+transition pageTurn(direction="left", duration=800)
+transition blurFade(duration=700)
+transition slide(direction="up", duration=650)
+```
+
+It also supports background changes with a screen transition:
+
+```txt
+bg station with fade(duration=600)
+bg library with pageTurn(direction="left", duration=800)
+bg rooftop with blurFade(duration=700)
+bg hallway with slide(direction="right", duration=650)
 ```
 
 The command appends an event with `sequence: nextSequence` and increments
 `nextSequence`. Runtime execution does not block for animation completion.
-Scenarios that need exact timing should use `wait` after `transition`.
+Scenarios that need exact timing should use `wait` after `transition` or after
+`bg ... with ...`.
 
 The package may use GSAP internally for its Preact layer, but GSAP is not part
 of the public API or naming.
@@ -77,6 +93,7 @@ without requiring core runtime async behavior.
 The following are not part of this decision:
 
 - per-background / per-sprite animation
+- `show` / `hide` asset animation through std-transition
 - scene graph animation
 - runtime async blocking
 - transition completion callbacks in DSL or runtime

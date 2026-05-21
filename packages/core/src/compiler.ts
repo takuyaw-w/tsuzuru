@@ -684,19 +684,43 @@ class TzrCompiler {
   }
 
   private buildBgInstruction(statement: TzrBgStatement): readonly CommandInstruction[] {
+    const bgInstruction = {
+      type: "CommandInstruction",
+      name: "bg",
+      args: [
+        this.positionalArgument(
+          this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
+          statement.assetRef.loc,
+        ),
+        ...this.visualTransitionArguments(
+          this.isScreenTransition(statement.transition) ? undefined : statement.transition,
+        ),
+      ],
+      loc: statement.loc,
+    } satisfies CommandInstruction;
+
+    if (!this.isScreenTransition(statement.transition)) {
+      return [bgInstruction];
+    }
+
+    const transitionArgs = this.buildStdTransitionCommandArguments(
+      statement.transition.name,
+      statement.transition.nameLoc,
+      statement.transition.args,
+      statement.transition.loc,
+    );
+    if (transitionArgs === undefined) {
+      return [bgInstruction];
+    }
+
     return [
       {
         type: "CommandInstruction",
-        name: "bg",
-        args: [
-          this.positionalArgument(
-            this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
-            statement.assetRef.loc,
-          ),
-          ...this.visualTransitionArguments(statement.transition),
-        ],
-        loc: statement.loc,
+        name: "transition",
+        args: transitionArgs,
+        loc: statement.transition.loc,
       },
+      bgInstruction,
     ];
   }
 
@@ -860,7 +884,12 @@ class TzrCompiler {
   }
 
   private buildStdTransitionInstruction(statement: TzrStdTransitionStatement): readonly CommandInstruction[] {
-    const args = this.buildStdTransitionArguments(statement);
+    const args = this.buildStdTransitionCommandArguments(
+      statement.effect,
+      statement.effectLoc,
+      statement.args,
+      statement.loc,
+    );
     if (args === undefined) {
       return [];
     }
@@ -914,14 +943,25 @@ class TzrCompiler {
     }
   }
 
-  private buildStdTransitionArguments(statement: TzrStdTransitionStatement): readonly TzrArgument[] | undefined {
+  private isScreenTransition(transition: TzrVisualTransition | undefined): transition is TzrVisualTransition & {
+    readonly name: TzrStdTransitionEffect;
+  } {
+    return transition !== undefined && isStdTransitionEffect(transition.name);
+  }
+
+  private buildStdTransitionCommandArguments(
+    effect: TzrStdTransitionEffect,
+    effectLoc: SourceRange,
+    args: readonly TzrNamedArgument[],
+    loc: SourceRange,
+  ): readonly TzrArgument[] | undefined {
     let ok = true;
-    let durationMs = 400;
+    let durationMs = defaultStdTransitionDuration(effect);
     let direction: (typeof STD_TRANSITION_DIRECTIONS)[number] | undefined;
     let color: string | undefined;
     const seen = new Set<string>();
 
-    for (const arg of statement.args) {
+    for (const arg of args) {
       if (seen.has(arg.name)) {
         this.addError(arg.loc.start, `Duplicate transition argument "${arg.name}".`);
         ok = false;
@@ -966,20 +1006,18 @@ class TzrCompiler {
     }
 
     const normalized: TzrArgument[] = [
-      this.positionalArgument(this.stringValue(statement.effect, statement.effectLoc), statement.effectLoc),
-      this.namedArgument("duration", { type: "NumberValue", value: durationMs, loc: statement.loc }, statement.loc),
+      this.positionalArgument(this.stringValue(effect, effectLoc), effectLoc),
+      this.namedArgument("duration", { type: "NumberValue", value: durationMs, loc }, loc),
     ];
 
-    const normalizedDirection = statement.effect === "wipe" ? (direction ?? "left") : direction;
+    const normalizedDirection = usesStdTransitionDirection(effect) ? (direction ?? "left") : direction;
     if (normalizedDirection !== undefined) {
-      normalized.push(
-        this.namedArgument("direction", this.stringValue(normalizedDirection, statement.loc), statement.loc),
-      );
+      normalized.push(this.namedArgument("direction", this.stringValue(normalizedDirection, loc), loc));
     }
 
-    const normalizedColor = color ?? defaultStdTransitionColor(statement.effect);
+    const normalizedColor = color ?? defaultStdTransitionColor(effect);
     if (normalizedColor !== undefined) {
-      normalized.push(this.namedArgument("color", this.stringValue(normalizedColor, statement.loc), statement.loc));
+      normalized.push(this.namedArgument("color", this.stringValue(normalizedColor, loc), loc));
     }
 
     return normalized;
@@ -1250,12 +1288,46 @@ function hasAnyNamedArgument(args: readonly TzrArgument[], names: readonly strin
 function defaultStdTransitionColor(effect: TzrStdTransitionEffect): string | undefined {
   switch (effect) {
     case "fade":
+    case "wipe":
+    case "blurFade":
+    case "slide":
       return "#000000";
     case "flash":
+    case "pageTurn":
       return "#ffffff";
-    case "wipe":
-      return undefined;
   }
+}
+
+function defaultStdTransitionDuration(effect: TzrStdTransitionEffect): number {
+  switch (effect) {
+    case "fade":
+      return 400;
+    case "wipe":
+      return 500;
+    case "flash":
+      return 180;
+    case "pageTurn":
+      return 800;
+    case "blurFade":
+      return 700;
+    case "slide":
+      return 600;
+  }
+}
+
+function usesStdTransitionDirection(effect: TzrStdTransitionEffect): boolean {
+  return effect === "wipe" || effect === "pageTurn" || effect === "slide";
+}
+
+function isStdTransitionEffect(value: string): value is TzrStdTransitionEffect {
+  return (
+    value === "fade" ||
+    value === "wipe" ||
+    value === "flash" ||
+    value === "pageTurn" ||
+    value === "blurFade" ||
+    value === "slide"
+  );
 }
 
 function isStdTransitionDirection(value: string): value is (typeof STD_TRANSITION_DIRECTIONS)[number] {

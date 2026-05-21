@@ -144,7 +144,7 @@ function getApproxDisplayWidth(text: string): number {
 function isCommandLine(line: string): boolean {
   return (
     /^".*":\s*$/.test(line) ||
-    /^(?:add|bg|bgm|blur|call|camera|choice|clear|end|flash|hide|if|jump|particle|pulse|reset|se|set|shake|show|stopBgm|stopParticle|voice|wait)\b/.test(
+    /^(?:add|bg|bgm|blur|call|camera|choice|clear|end|flash|hide|if|jump|particle|pulse|reset|se|set|shake|show|stopBgm|stopParticle|transition|voice|wait)\b/.test(
       line,
     )
   );

@@ -42,7 +42,7 @@ describe("std transition save/load integration", () => {
     expect(getStdTransitionState(wipe.state)).toEqual({
       events: [
         { sequence: 1, effect: "fade", durationMs: 500, color: "#000000" },
-        { sequence: 2, effect: "wipe", durationMs: 600, direction: "left" },
+        { sequence: 2, effect: "wipe", durationMs: 600, direction: "left", color: "#000000" },
       ],
       nextSequence: 3,
     });

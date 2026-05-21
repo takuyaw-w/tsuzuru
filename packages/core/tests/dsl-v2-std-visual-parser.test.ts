@@ -143,6 +143,22 @@ describe("parseTzr std visual sugar statements", () => {
       type: "BgStatement",
       transition: { type: "VisualTransition", name: "fade", duration: 300 },
     });
+    expect(
+      parseSingleStatement('scene start:\n  bg library with pageTurn(direction="left", duration=800)\n'),
+    ).toMatchObject({
+      type: "BgStatement",
+      transition: { type: "VisualTransition", name: "pageTurn", duration: 800 },
+    });
+    expect(parseSingleStatement("scene start:\n  bg rooftop with blurFade(duration=700)\n")).toMatchObject({
+      type: "BgStatement",
+      transition: { type: "VisualTransition", name: "blurFade", duration: 700 },
+    });
+    expect(parseSingleStatement('scene start:\n  bg hallway with slide(direction="up", duration=650)\n')).toMatchObject(
+      {
+        type: "BgStatement",
+        transition: { type: "VisualTransition", name: "slide", duration: 650 },
+      },
+    );
     expect(parseSingleStatement("scene start:\n  bg classroom with dissolve(duration=250)\n")).toMatchObject({
       type: "BgStatement",
       transition: { type: "VisualTransition", name: "dissolve", duration: 250 },
@@ -237,8 +253,11 @@ describe("parseTzr std visual sugar statements", () => {
     expect(expectVisualFailure("scene start:\n  bg classroom with (duration=300)\n")).toContain(
       "Visual transition name is required.",
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with wipe(duration=300)\n")).toContain(
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with wipe(duration=300)\n")).toContain(
       'Unknown visual transition "wipe".',
+    );
+    expect(expectVisualFailure("scene start:\n  bg classroom with zoom(duration=300)\n")).toContain(
+      'Unknown visual transition "zoom".',
     );
     expect(expectVisualFailure("scene start:\n  bg classroom with fade\n")).toContain(
       "Visual transition must include parentheses.",
@@ -246,25 +265,25 @@ describe("parseTzr std visual sugar statements", () => {
     expect(expectVisualFailure("scene start:\n  bg classroom with fade(duration=300\n")).toContain(
       "Visual transition is missing closing parenthesis.",
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with fade()\n")).toContain(
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with fade()\n")).toContain(
       "Visual transition duration is required.",
     );
     expect(expectVisualFailure("scene start:\n  bg classroom with fade(duration=300, duration=100)\n")).toContain(
-      'Duplicate visual transition argument "duration".',
+      'Duplicate transition argument "duration".',
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with fade(speed=300)\n")).toContain(
-      'Unknown visual transition argument "speed".',
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with fade(speed=300)\n")).toContain(
+      "Visual transition duration is required.",
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with fade(300)\n")).toContain(
-      "Visual transition positional arguments are not supported.",
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with fade(300)\n")).toContain(
+      "Positional arguments are not supported.",
     );
-    expect(expectVisualFailure('scene start:\n  bg classroom with fade(duration="300")\n')).toContain(
+    expect(expectVisualFailure('scene start:\n  show alice_smile at center with fade(duration="300")\n')).toContain(
       "Invalid visual transition duration.",
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with fade(duration=-1)\n")).toContain(
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with fade(duration=-1)\n")).toContain(
       "Invalid visual transition duration.",
     );
-    expect(expectVisualFailure("scene start:\n  bg classroom with fade(duration=1.5)\n")).toContain(
+    expect(expectVisualFailure("scene start:\n  show alice_smile at center with fade(duration=1.5)\n")).toContain(
       "Invalid visual transition duration.",
     );
     expect(expectVisualFailure("scene start:\n  bg classroom with fade(duration=300) extra\n")).toContain(

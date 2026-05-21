@@ -135,10 +135,12 @@ function addTransitionAnimation(timeline: gsap.core.Timeline, overlay: HTMLEleme
   switch (event.effect) {
     case "fade":
     case "flash":
+    case "blurFade":
       timeline.to(overlay, { opacity: 1, duration: durationSeconds / 2 });
       timeline.to(overlay, { opacity: 0, duration: durationSeconds / 2 });
       return;
     case "wipe":
+    case "slide":
       timeline.to(overlay, {
         xPercent: 0,
         yPercent: 0,
@@ -149,6 +151,21 @@ function addTransitionAnimation(timeline: gsap.core.Timeline, overlay: HTMLEleme
         duration: durationSeconds / 2,
       });
       return;
+    case "pageTurn":
+      timeline.to(overlay, {
+        opacity: 1,
+        rotateY: 0,
+        rotateX: 0,
+        skewX: 0,
+        skewY: 0,
+        duration: durationSeconds / 2,
+      });
+      timeline.to(overlay, {
+        ...pageTurnExitVars(event.direction ?? "left"),
+        opacity: 0,
+        duration: durationSeconds / 2,
+      });
+      return;
   }
 }
 
@@ -156,27 +173,44 @@ function initialTransitionVars(event: StdTransitionEvent): gsap.TweenVars {
   switch (event.effect) {
     case "fade":
     case "flash":
+    case "blurFade":
       return { opacity: 0, xPercent: 0, yPercent: 0 };
     case "wipe":
+    case "slide":
       return {
         opacity: 1,
         ...wipeEnterVars(event.direction ?? "left"),
+      };
+    case "pageTurn":
+      return {
+        opacity: 0,
+        transformPerspective: 900,
+        transformOrigin: pageTurnTransformOrigin(event.direction ?? "left"),
+        ...pageTurnEnterVars(event.direction ?? "left"),
       };
   }
 }
 
 function transitionOverlayStyle(event: StdTransitionEvent): JSX.CSSProperties | undefined {
-  if (event.effect !== "wipe") {
-    return undefined;
-  }
-
-  switch (event.direction ?? "left") {
-    case "left":
-    case "right":
+  switch (event.effect) {
+    case "wipe":
+    case "slide":
       return { width: "100%", height: "100%" };
-    case "up":
-    case "down":
-      return { width: "100%", height: "100%" };
+    case "pageTurn":
+      return {
+        width: "100%",
+        height: "100%",
+        boxShadow: "0 0 38px rgba(0, 0, 0, 0.32)",
+      };
+    case "blurFade":
+      return {
+        width: "100%",
+        height: "100%",
+        backdropFilter: "blur(10px)",
+      };
+    case "fade":
+    case "flash":
+      return undefined;
   }
 }
 
@@ -203,5 +237,44 @@ function wipeExitVars(direction: NonNullable<StdTransitionEvent["direction"]>): 
       return { xPercent: 0, yPercent: 100 };
     case "down":
       return { xPercent: 0, yPercent: -100 };
+  }
+}
+
+function pageTurnTransformOrigin(direction: NonNullable<StdTransitionEvent["direction"]>): string {
+  switch (direction) {
+    case "left":
+      return "left center";
+    case "right":
+      return "right center";
+    case "up":
+      return "center top";
+    case "down":
+      return "center bottom";
+  }
+}
+
+function pageTurnEnterVars(direction: NonNullable<StdTransitionEvent["direction"]>): gsap.TweenVars {
+  switch (direction) {
+    case "left":
+      return { rotateY: -70, skewY: 4 };
+    case "right":
+      return { rotateY: 70, skewY: -4 };
+    case "up":
+      return { rotateX: 70, skewX: 4 };
+    case "down":
+      return { rotateX: -70, skewX: -4 };
+  }
+}
+
+function pageTurnExitVars(direction: NonNullable<StdTransitionEvent["direction"]>): gsap.TweenVars {
+  switch (direction) {
+    case "left":
+      return { xPercent: 100, rotateY: 70, skewY: -4 };
+    case "right":
+      return { xPercent: -100, rotateY: -70, skewY: 4 };
+    case "up":
+      return { yPercent: 100, rotateX: -70, skewX: -4 };
+    case "down":
+      return { yPercent: -100, rotateX: 70, skewX: 4 };
   }
 }

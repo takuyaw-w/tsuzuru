@@ -113,8 +113,12 @@ this matrix instead of defining a separate supported syntax.
 | `hide asset` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Hides matching sprite if present. |
 | `clear sprites` | std-visual sugar | yes | command | plugin handler | std-visual | yes | tests | yes | `plugin-dependent` | Clears sprite state. |
 | `clear bg` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Clears background state. |
-| `with fade(duration=...)` | std-visual transition | yes | command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Renderer owns actual animation. |
+| `show/hide/clear ... with fade(duration=...)` | std-visual transition | yes | command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Renderer owns actual animation. |
 | `with dissolve(duration=...)` | std-visual transition | yes | command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Renderer owns actual animation. |
+| `bg ... with fade(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
+| `bg ... with pageTurn(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Page-turn style location transition; use `wait` for strict timing. |
+| `bg ... with blurFade(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
+| `bg ... with slide(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
 | `bgm asset` | std-audio sugar | yes | `startBgm` command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Durable BGM state. |
 | `stopBgm` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Clears durable BGM state. |
 | `se asset` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | One-shot event; save-ready snapshots clear events through plugin helper. |
@@ -130,6 +134,9 @@ this matrix instead of defining a separate supported syntax.
 | `transition fade(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
 | `transition wipe(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; default direction is `"left"`. |
 | `transition flash(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
+| `transition pageTurn(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot page-turn screen transition event; default direction is `"left"`. |
+| `transition blurFade(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot blur/fade screen transition event. |
+| `transition slide(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot slide screen transition event; default direction is `"left"`. |
 | `camera x=... y=... zoom=...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable camera state. |
 | `camera focus asset ...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable focus target state; renderer resolves coordinates. |
 | `reset camera` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Resets durable camera state. |

@@ -151,20 +151,32 @@ scene effect_choice_after:
       jump camera_choice
 
 scene transition_demo:
-  tone:
-    screen transition は、背景や立ち絵ではなく画面全体に一回だけ重ねる。
+  narration:
+    まずは通常の暗転です。
 
-  transition fade(duration=500)
+  bg classroom with fade(duration=500)
   wait 500
 
-  noize:
-    wipe は方向を持つ。ここでは左から通す。
+  narration:
+    次はページめくり風に、図書室へ移動します。
 
-  transition wipe(direction="left", duration=600)
-  wait 600
+  bg library with pageTurn(direction="left", duration=800)
+  wait 800
 
-  mix:
-    flash は短い光で、場面の切り替えや気づきを軽く示せる。
+  narration:
+    回想のように、屋上へ切り替えます。
+
+  bg rooftop with blurFade(duration=700)
+  wait 700
+
+  narration:
+    階段を上るように、画面をスライドさせます。
+
+  bg hallway with slide(direction="up", duration=650)
+  wait 650
+
+  narration:
+    最後に白フラッシュです。
 
   transition flash(color="#ffffff", duration=180)
   wait 180

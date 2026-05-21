@@ -8,10 +8,17 @@ import {
 } from "@tsuzuru/core";
 
 const STD_TRANSITION_PLUGIN_NAME = "stdTransition";
-const STD_TRANSITION_EFFECTS = ["fade", "wipe", "flash"] as const satisfies readonly StdTransitionEffect[];
+const STD_TRANSITION_EFFECTS = [
+  "fade",
+  "wipe",
+  "flash",
+  "pageTurn",
+  "blurFade",
+  "slide",
+] as const satisfies readonly StdTransitionEffect[];
 const STD_TRANSITION_DIRECTIONS = ["left", "right", "up", "down"] as const satisfies readonly StdTransitionDirection[];
 
-export type StdTransitionEffect = "fade" | "wipe" | "flash";
+export type StdTransitionEffect = "fade" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
 
 export type StdTransitionDirection = "left" | "right" | "up" | "down";
 
@@ -228,7 +235,14 @@ function isStdTransitionEvent(value: unknown): value is StdTransitionEvent {
 }
 
 function isStdTransitionEffect(value: unknown): value is StdTransitionEffect {
-  return value === "fade" || value === "wipe" || value === "flash";
+  return (
+    value === "fade" ||
+    value === "wipe" ||
+    value === "flash" ||
+    value === "pageTurn" ||
+    value === "blurFade" ||
+    value === "slide"
+  );
 }
 
 function isStdTransitionDirection(value: unknown): value is StdTransitionDirection {

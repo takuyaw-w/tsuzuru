@@ -103,7 +103,7 @@ const stdEffectPluginCommands = {
 const stdTransitionPluginCommands = {
   transition: definePluginCommand("transition", {
     kind: "mixed",
-    positional: [{ type: "string", values: ["fade", "wipe", "flash"] }],
+    positional: [{ type: "string", values: ["fade", "wipe", "flash", "pageTurn", "blurFade", "slide"] }],
     named: [
       { name: "duration", type: "number", integer: true, min: 1 },
       { name: "direction", type: "string", optional: true, values: ["left", "right", "up", "down"] },
@@ -718,7 +718,6 @@ scene start:
 
   it("compiles visual transition metadata to command arguments", () => {
     const document = compileSource(`scene start:
-  bg classroom with fade(duration=300)
   show alice_smile at center with dissolve(duration=250)
   hide alice_smile with fade(duration=100)
   clear bg with dissolve(duration=0)
@@ -727,15 +726,6 @@ scene start:
 
     expect(document.instructions).toMatchObject([
       { type: "SceneInstruction", id: "start" },
-      {
-        type: "CommandInstruction",
-        name: "bg",
-        args: [
-          { type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } },
-          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "fade" } },
-          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 300 } },
-        ],
-      },
       {
         type: "CommandInstruction",
         name: "show",
@@ -913,6 +903,9 @@ scene start:
   transition fade(duration=500)
   transition wipe(direction="left", duration=600)
   transition flash(color="#ffffff", duration=180)
+  transition pageTurn(direction="left", duration=800)
+  transition blurFade(duration=700)
+  transition slide(direction="up", duration=650)
 `);
 
     expect(document.instructions).toMatchObject([
@@ -933,6 +926,7 @@ scene start:
           { type: "PositionalArgument", value: { type: "StringValue", value: "wipe" } },
           { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 600 } },
           { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
         ],
       },
       {
@@ -944,6 +938,35 @@ scene start:
           { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
         ],
       },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "pageTurn" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "blurFade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "slide" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 650 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "up" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
     ]);
   });
 
@@ -952,6 +975,9 @@ scene start:
   transition fade()
   transition wipe()
   transition flash()
+  transition pageTurn()
+  transition blurFade()
+  transition slide()
 `);
 
     expect(document.instructions).toMatchObject([
@@ -970,8 +996,9 @@ scene start:
         name: "transition",
         args: [
           { type: "PositionalArgument", value: { type: "StringValue", value: "wipe" } },
-          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 500 } },
           { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
         ],
       },
       {
@@ -979,10 +1006,142 @@ scene start:
         name: "transition",
         args: [
           { type: "PositionalArgument", value: { type: "StringValue", value: "flash" } },
-          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 180 } },
           { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
         ],
       },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "pageTurn" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "blurFade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "slide" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 600 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+    ]);
+  });
+
+  it("compiles bg with screen transition to transition and bg commands", () => {
+    const document = compileSource(`scene start:
+  bg station with fade(duration=600)
+  bg library with pageTurn(direction="left", duration=800)
+  bg rooftop with blurFade(duration=700)
+  bg hallway with slide(direction="right", duration=650)
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 600 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "station" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "pageTurn" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "library" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "blurFade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "rooftop" } }],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "slide" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 650 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "right" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [{ type: "PositionalArgument", value: { type: "StringValue", value: "hallway" } }],
+      },
+    ]);
+  });
+
+  it("compiles bg screen transition defaults", () => {
+    const document = compileSource(`scene start:
+  bg station with pageTurn()
+  bg rooftop with blurFade()
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "pageTurn" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 800 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+      { type: "CommandInstruction", name: "bg" },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "blurFade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 700 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      { type: "CommandInstruction", name: "bg" },
     ]);
   });
 
@@ -1125,7 +1284,7 @@ scene start:
   it("validates std visual plugin commands when metadata is passed through plugins", () => {
     const document = compileSource(
       `scene start:
-  bg classroom with fade(duration=300)
+  bg classroom
   show alice_smile at center with dissolve(duration=250)
   hide alice_smile with fade(duration=100)
   clear bg
@@ -1210,6 +1369,9 @@ scene start:
   transition fade(duration=500)
   transition wipe(direction="left", duration=600)
   transition flash(color="#ffffff", duration=180)
+  transition pageTurn(direction="left", duration=800)
+  transition blurFade(duration=700)
+  transition slide(direction="up", duration=650)
 `,
       { plugins: [{ name: "stdTransition", commands: stdTransitionPluginCommands }] },
     );
@@ -1219,6 +1381,35 @@ scene start:
       { type: "CommandInstruction", name: "transition" },
       { type: "CommandInstruction", name: "transition" },
       { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "transition" },
+    ]);
+  });
+
+  it("compiles and validates bg screen transitions when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  bg station with fade(duration=600)
+  bg library with pageTurn(direction="left", duration=800)
+  bg rooftop with blurFade(duration=700)
+`,
+      {
+        plugins: [
+          { name: "stdVisual", commands: stdVisualPluginCommands },
+          { name: "stdTransition", commands: stdTransitionPluginCommands },
+        ],
+      },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "bg" },
     ]);
   });
 
@@ -1232,10 +1423,19 @@ scene start:
     expect(expectCompileFailure('scene start:\n  transition wipe(direction="diagonal", duration=600)\n')).toContain(
       'transition direction must be "left", "right", "up", or "down".',
     );
+    expect(expectCompileFailure('scene start:\n  transition slide(direction="diagonal", duration=650)\n')).toContain(
+      'transition direction must be "left", "right", "up", or "down".',
+    );
     expect(expectCompileFailure("scene start:\n  transition flash(color=white, duration=180)\n")).toContain(
       "transition color must be a string.",
     );
     expect(expectCompileFailure("scene start:\n  transition fade(speed=fast)\n")).toContain(
+      'Unsupported transition argument "speed".',
+    );
+    expect(expectCompileFailure("scene start:\n  bg station with pageTurn(duration=-1)\n")).toContain(
+      "transition duration must be a positive integer.",
+    );
+    expect(expectCompileFailure("scene start:\n  bg station with blurFade(speed=fast)\n")).toContain(
       'Unsupported transition argument "speed".',
     );
   });

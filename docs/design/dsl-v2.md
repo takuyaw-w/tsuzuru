@@ -115,6 +115,13 @@ The following syntax is not Core. It is official standard plugin sugar.
   transition fade(...)
   transition wipe(...)
   transition flash(...)
+  transition pageTurn(...)
+  transition blurFade(...)
+  transition slide(...)
+  bg <assetRef> with fade(...)
+  bg <assetRef> with pageTurn(...)
+  bg <assetRef> with blurFade(...)
+  bg <assetRef> with slide(...)
 
 @tsuzuru/plugin-std-camera:
   camera
@@ -1334,6 +1341,9 @@ Sprites are unchanged. No warning if already empty.
 
 ```txt
 bg classroom with fade(duration=500)
+bg library with pageTurn(direction="left", duration=800)
+bg rooftop with blurFade(duration=700)
+bg hallway with slide(direction="right", duration=650)
 show mio.normal at center with dissolve(duration=300)
 hide mio.normal with fade(duration=300)
 clear sprites with fade(duration=300)
@@ -1345,20 +1355,31 @@ clear bg with fade(duration=500)
 ```txt
 fade(duration=<ms>)
 dissolve(duration=<ms>)
+wipe(direction=<direction>, duration=<ms>)
+flash(color=<color>, duration=<ms>)
+pageTurn(direction=<direction>, duration=<ms>)
+blurFade(duration=<ms>)
+slide(direction=<direction>, duration=<ms>)
 ```
 
 Rules:
 
-- `duration` is required.
-- `duration` uses ms.
-- `duration` must be an integer greater than or equal to `0`.
-- Negative numbers, decimals, and non-number values are parser errors.
-- Standard transitions are `fade` and `dissolve`.
+- For `show`, `hide`, and `clear`, standard std-visual transition metadata is
+  `fade` or `dissolve`.
+- For `bg`, `fade`, `wipe`, `flash`, `pageTurn`, `blurFade`, and `slide` are
+  screen transitions handled by `@tsuzuru/plugin-std-transition`.
+- For std-visual metadata, `duration` is required, uses ms, and must be an
+  integer greater than or equal to `0`.
+- For bg screen transitions, `duration` is optional and uses the
+  std-transition effect defaults. If supplied, it must be a positive integer.
 - Custom transition names are not accepted by the current parser; they may be
   considered later with renderer, app, or plugin registration.
-- Compiler output stores transition metadata as std visual command arguments.
-- The std visual plugin stores transition metadata on surviving background and
-  sprite state objects.
+- Compiler output stores `show` / `hide` / `clear` transition metadata as std
+  visual command arguments.
+- Compiler output for `bg ... with <screenTransition>(...)` appends a
+  std-transition event command and then updates std-visual background state.
+- The std visual plugin stores std-visual transition metadata on surviving
+  background and sprite state objects.
 - `hide`, `clear sprites`, and `clear bg` accept transition metadata, but do not
   retain it in plugin state after the target is removed.
 - Transition animation execution is renderer / app responsibility.
@@ -1657,6 +1678,14 @@ not background or sprite state, and they do not block runtime stepping. Use
 transition fade([duration=<ms>], [color="<color>"])
 transition wipe([direction="<direction>"], [duration=<ms>])
 transition flash([color="<color>"], [duration=<ms>])
+transition pageTurn([direction="<direction>"], [duration=<ms>])
+transition blurFade([duration=<ms>], [color="<color>"])
+transition slide([direction="<direction>"], [duration=<ms>])
+
+bg <assetRef> with fade(...)
+bg <assetRef> with pageTurn(...)
+bg <assetRef> with blurFade(...)
+bg <assetRef> with slide(...)
 ```
 
 ### 24.6.2 Examples
@@ -1670,19 +1699,33 @@ wait 600
 
 transition flash(color="#ffffff", duration=180)
 wait 180
+
+bg library with pageTurn(direction="left", duration=800)
+wait 800
+
+bg rooftop with blurFade(duration=700)
+wait 700
 ```
 
 ### 24.6.3 Rules
 
-- Effect is `fade`, `wipe`, or `flash`.
-- `duration` is optional, defaults to `400`, uses milliseconds, and must be a
-  positive integer.
-- `wipe direction` is optional and defaults to `"left"`.
+- Effect is `fade`, `wipe`, `flash`, `pageTurn`, `blurFade`, or `slide`.
+- `duration` is optional, uses milliseconds, and must be a positive integer.
+- Default duration is `400` for `fade`, `500` for `wipe`, `180` for `flash`,
+  `800` for `pageTurn`, `700` for `blurFade`, and `600` for `slide`.
+- `wipe`, `pageTurn`, and `slide` direction is optional and defaults to
+  `"left"`.
 - Direction is `"left" | "right" | "up" | "down"`.
 - `fade color` defaults to `"#000000"`.
+- `wipe color` defaults to `"#000000"`.
 - `flash color` defaults to `"#ffffff"`.
+- `pageTurn color` defaults to `"#ffffff"`.
+- `blurFade color` defaults to `"#000000"`.
+- `slide color` defaults to `"#000000"`.
 - Extra named arguments are rejected.
 - Runtime blocking is intentionally not part of transition execution.
+- `bg ... with <screenTransition>(...)` appends the transition event and then
+  updates std-visual background state.
 
 ### 24.6.4 Runtime Model
 

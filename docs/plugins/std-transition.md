@@ -55,7 +55,7 @@ import { ScreenTransitionLayer } from "@tsuzuru/plugin-std-transition/preact";
 ## Runtime State
 
 ```ts
-export type StdTransitionEffect = "fade" | "wipe" | "flash";
+export type StdTransitionEffect = "fade" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
 
 export type StdTransitionDirection = "left" | "right" | "up" | "down";
 
@@ -99,14 +99,30 @@ with a larger sequence.
 transition fade(duration=500)
 transition wipe(direction="left", duration=600)
 transition flash(color="#ffffff", duration=180)
+transition pageTurn(direction="left", duration=800)
+transition blurFade(duration=700)
+transition slide(direction="up", duration=650)
+
+bg station with fade(duration=600)
+bg library with pageTurn(direction="left", duration=800)
+bg rooftop with blurFade(duration=700)
+bg hallway with slide(direction="right", duration=650)
 ```
 
 Defaults:
 
-- `duration`: `400`
-- `wipe direction`: `"left"`
-- `fade color`: `"#000000"`
-- `flash color`: `"#ffffff"`
+- `fade`: `duration=400`, `color="#000000"`
+- `wipe`: `duration=500`, `direction="left"`, `color="#000000"`
+- `flash`: `duration=180`, `color="#ffffff"`
+- `pageTurn`: `duration=800`, `direction="left"`, `color="#ffffff"`
+- `blurFade`: `duration=700`, `color="#000000"`
+- `slide`: `duration=600`, `direction="left"`, `color="#000000"`
+
+Standalone `transition ...` statements are useful for flashbacks, white
+flashes, and screen-wide direction that is not tied to a background change.
+For location changes, prefer `bg <assetId> with <transitionEffect>(...)`.
+Compiler output appends a std-transition event and then updates std-visual
+background state. Runtime still does not wait for animation completion.
 
 `duration` must be a positive integer. `direction` must be `"left"`,
 `"right"`, `"up"`, or `"down"`. Extra named arguments are rejected.
@@ -146,5 +162,6 @@ It does not mutate the original state.
 ## Preact Layer
 
 `ScreenTransitionLayer` watches `stdTransition.events` by sequence and plays
-unconsumed fade, wipe, and flash events. It only absorbs pointer events while a
-transition is active, and it cleans up its GSAP timeline on unmount.
+unconsumed fade, wipe, flash, pageTurn, blurFade, and slide events. It only
+absorbs pointer events while a transition is active, and it cleans up its GSAP
+timeline on unmount.
