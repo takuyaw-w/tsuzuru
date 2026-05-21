@@ -1,5 +1,5 @@
 import type { ComponentChildren, ComponentProps } from "preact";
-import { joinClassNames } from "./class-name.js";
+import { GameViewportFrame } from "./layouts/GameViewportFrame.js";
 
 export type GameViewportAspectRatio = "16:9" | "4:3";
 type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
@@ -22,18 +22,13 @@ export function GameViewport({
   const resolvedAspectRatio = resolveAspectRatio(aspectRatio);
   const resolvedMaxWidth = typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth;
 
-  return (
-    <div
-      className={joinClassNames("tzr-game-viewport", className)}
-      style={{
-        ...style,
-        aspectRatio: resolvedAspectRatio,
-        maxWidth: resolvedMaxWidth,
-      }}
-    >
-      <div className="tzr-game-viewport__inner">{children}</div>
-    </div>
-  );
+  return GameViewportFrame({
+    aspectRatio: resolvedAspectRatio,
+    children,
+    ...(resolvedMaxWidth === undefined ? {} : { maxWidth: resolvedMaxWidth }),
+    ...(className === undefined ? {} : { className }),
+    ...(style === undefined ? {} : { style }),
+  });
 }
 
 function resolveAspectRatio(aspectRatio: GameViewportAspectRatio): string {

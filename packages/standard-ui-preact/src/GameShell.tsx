@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact";
-import { joinClassNames } from "./class-name.js";
+import { GameShellFrame } from "./layouts/GameShellFrame.js";
 
 export interface GameShellProps {
   readonly children?: ComponentChildren;
@@ -7,5 +7,5 @@ export interface GameShellProps {
 }
 
 export function GameShell({ children, className }: GameShellProps): ComponentChildren {
-  return <div className={joinClassNames("tzr-game-shell", className)}>{children}</div>;
+  return GameShellFrame({ children, ...(className === undefined ? {} : { className }) });
 }

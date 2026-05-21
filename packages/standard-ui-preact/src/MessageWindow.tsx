@@ -1,5 +1,9 @@
 import type { ComponentChildren, ComponentProps } from "preact";
+import { AdvanceHint } from "./atoms/AdvanceHint.js";
+import { Panel } from "./atoms/Panel.js";
+import { SpeakerLabel } from "./atoms/SpeakerLabel.js";
 import { joinClassNames } from "./class-name.js";
+import { MessageLines } from "./molecules/MessageLines.js";
 
 type DivProps = ComponentProps<"div">;
 type AdvanceableDivProps = Pick<DivProps, "onClick" | "onKeyDown" | "role" | "tabIndex">;
@@ -54,21 +58,13 @@ export function MessageWindow({
     advanceProps = { onClick: advance, onKeyDown: handleKeyDown, role: "button", tabIndex: 0 };
   }
 
-  return (
-    <div className={windowClassName} {...advanceProps}>
-      {speaker !== undefined ? (
-        <div className="tzr-message-window__speaker" aria-label="Speaker">
-          {speaker}
-        </div>
-      ) : null}
-      <div className="tzr-message-window__lines">
-        {lines.map((line, index) => (
-          <p className="tzr-message-window__line" key={index}>
-            {renderLine === undefined ? line : renderLine({ line, lineIndex: index })}
-          </p>
-        ))}
-      </div>
-      {isAdvanceable ? <div className="tzr-message-window__advance-hint">{advanceHint}</div> : null}
-    </div>
-  );
+  return Panel({
+    className: windowClassName,
+    ...advanceProps,
+    children: [
+      speaker !== undefined ? SpeakerLabel({ children: speaker }) : null,
+      MessageLines({ lines, ...(renderLine === undefined ? {} : { renderLine }) }),
+      isAdvanceable ? AdvanceHint({ children: advanceHint }) : null,
+    ],
+  });
 }

@@ -1,5 +1,6 @@
 import type { ComponentChildren } from "preact";
-import { joinClassNames } from "./class-name.js";
+import { StandardButton } from "./atoms/Button.js";
+import { ScreenOverlay } from "./organisms/ScreenOverlay.js";
 
 export type ScreenComponentProps<TParams = unknown> = {
   readonly params: TParams | undefined;
@@ -29,18 +30,15 @@ export function ScreenHost({ activeScreen, screens, onClose, className }: Screen
 
   const Screen = screens[activeScreen.id];
 
-  return (
-    <div className={joinClassNames("tzr-screen-host", className)}>
-      <div className="tzr-screen-host__backdrop" />
-      <div className="tzr-screen-host__surface">
-        {Screen === undefined ? (
-          <FallbackScreen screenId={activeScreen.id} onClose={onClose} />
-        ) : (
-          <Screen params={activeScreen.params} onClose={onClose} />
-        )}
-      </div>
-    </div>
-  );
+  return ScreenOverlay({
+    ...(className === undefined ? {} : { className }),
+    children:
+      Screen === undefined ? (
+        <FallbackScreen screenId={activeScreen.id} onClose={onClose} />
+      ) : (
+        <Screen params={activeScreen.params} onClose={onClose} />
+      ),
+  });
 }
 
 function FallbackScreen({ screenId, onClose }: { readonly screenId: string; readonly onClose: () => void }) {
@@ -48,9 +46,7 @@ function FallbackScreen({ screenId, onClose }: { readonly screenId: string; read
     <div className="tzr-screen-host__fallback">
       <div className="tzr-screen-host__fallback-title">Unknown screen</div>
       <p className="tzr-screen-host__fallback-message">No screen is registered for "{screenId}".</p>
-      <button className="tzr-screen-host__fallback-button" type="button" onClick={onClose}>
-        Close
-      </button>
+      {StandardButton({ className: "tzr-screen-host__fallback-button", onClick: onClose, children: "Close" })}
     </div>
   );
 }

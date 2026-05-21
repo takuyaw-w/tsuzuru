@@ -13,6 +13,7 @@
     "./style.css": "./dist/style.css"
   },
   "files": [
+    "dist/atoms/**",
     "dist/ChoiceLayer.*",
     "dist/GameShell.*",
     "dist/MessageWindow.*",
@@ -21,6 +22,9 @@
     "dist/class-name.*",
     "dist/game-viewport.*",
     "dist/index.*",
+    "dist/layouts/**",
+    "dist/molecules/**",
+    "dist/organisms/**",
     "dist/screen-host.*",
     "dist/style.css",
     "dist/useAutoMode.*",

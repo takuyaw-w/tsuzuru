@@ -1,5 +1,7 @@
 import type { ComponentChildren } from "preact";
+import { Panel } from "./atoms/Panel.js";
 import { joinClassNames } from "./class-name.js";
+import { ChoiceList } from "./molecules/ChoiceList.js";
 
 export interface ChoiceLayerItem {
   readonly text: string;
@@ -13,18 +15,13 @@ export interface ChoiceLayerProps {
 }
 
 export function ChoiceLayer({ question, choices, onChoice, className }: ChoiceLayerProps): ComponentChildren {
-  return (
-    <div className={joinClassNames("tzr-choice-layer", className)}>
-      <div className="tzr-choice-layer__question">{question}</div>
-      <ol className="tzr-choice-layer__list">
-        {choices.map((choice, index) => (
-          <li className="tzr-choice-layer__item" key={index}>
-            <button className="tzr-choice-layer__button" type="button" onClick={() => onChoice?.(index)}>
-              {choice.text}
-            </button>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
+  return Panel({
+    className: joinClassNames("tzr-choice-layer", className),
+    children: [
+      <div className="tzr-choice-layer__question" key="question">
+        {question}
+      </div>,
+      ChoiceList({ choices, ...(onChoice === undefined ? {} : { onChoice }) }),
+    ],
+  });
 }
