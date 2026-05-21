@@ -449,18 +449,6 @@ describe("checkQualityGate", () => {
     );
   });
 
-  it("fails when the vue source-only pilot typecheck can emit", async () => {
-    const root = await createFixtureRepo();
-    await writePackageCoreReferenceExperimentFiles(root);
-    await mutatePackageJson(root, "packages/vue", (packageJson) => {
-      packageJson.scripts["typecheck:self"] = "tsc -p tsconfig.json";
-    });
-
-    expect(checkQualityGate(root).failures).toContain(
-      '@tsuzuru/vue script "typecheck:self" must use --noEmit for the source-only pilot.',
-    );
-  });
-
   it("fails when the standard UI Preact source-only pilot typecheck can emit", async () => {
     const root = await createFixtureRepo();
     await writePackageCoreReferenceExperimentFiles(root);
@@ -525,18 +513,6 @@ describe("checkQualityGate", () => {
 
     expect(checkQualityGate(root).failures).toContain(
       'packages/preact/tsconfig.json must reference "../core" for the package project reference pilot.',
-    );
-  });
-
-  it("fails when the vue reference experiment omits the core source reference", async () => {
-    const root = await createFixtureRepo();
-    await writePackageCoreReferenceExperimentFiles(root);
-    await mutateJson(join(root, "packages/vue/tsconfig.json"), (tsconfig) => {
-      tsconfig.references = [];
-    });
-
-    expect(checkQualityGate(root).failures).toContain(
-      'packages/vue/tsconfig.json must reference "../core" for the package project reference pilot.',
     );
   });
 
@@ -978,7 +954,6 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     });
   }
   await writePreactReferenceExperimentFiles(root);
-  await writeVueReferenceExperimentFiles(root);
   await writeStandardUiPreactReferenceExperimentFiles(root);
   await writeJson(join(root, "tsconfig.packages.experimental.json"), {
     files: [],
@@ -989,7 +964,6 @@ async function writePackageCoreReferenceExperimentFiles(root) {
       { path: "./packages/plugin-std-audio" },
       { path: "./packages/cli" },
       { path: "./packages/preact" },
-      { path: "./packages/vue" },
       { path: "./packages/standard-ui-preact" },
     ],
   });
@@ -1000,12 +974,10 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/config pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/cli pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/preact pack --dry-run";
-    packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/vue pack --dry-run";
     packageJson.scripts["pack:dry-run"] += " && pnpm --filter @tsuzuru/standard-ui-preact pack --dry-run";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/config test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/cli test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/preact test";
-    packageJson.scripts.test += " && pnpm --filter @tsuzuru/vue test";
     packageJson.scripts.test += " && pnpm --filter @tsuzuru/standard-ui-preact test";
     for (const pluginPilot of pluginPilots) {
       packageJson.scripts["pack:dry-run"] += ` && pnpm --filter ${pluginPilot.name} pack --dry-run`;
@@ -1024,7 +996,6 @@ async function writePackageCoreReferenceExperimentFiles(root) {
     "packages/plugin-std-visual/package.json",
     "packages/plugin-std-audio/package.json",
     "packages/preact/package.json",
-    "packages/vue/package.json",
     "packages/standard-ui-preact/package.json",
     "examples/example/package.json",
   ]);
@@ -1088,29 +1059,6 @@ async function writeStandardUiPreactReferenceExperimentFiles(root) {
   });
 }
 
-async function writeVueReferenceExperimentFiles(root) {
-  await writeFile(join(root, ".gitignore"), "**/.tsbuildinfo/\n*.tsbuildinfo\n");
-  await mkdir(join(root, "packages/vue"), { recursive: true });
-  await writeJson(join(root, "packages/vue/package.json"), {
-    name: "@tsuzuru/vue",
-    scripts: {
-      "typecheck:self": "tsc -p tsconfig.json --noEmit",
-    },
-  });
-  await writeJson(join(root, "packages/vue/tsconfig.json"), {
-    extends: "../../tsconfig.base.json",
-    compilerOptions: {
-      rootDir: "src",
-      outDir: "dist",
-      composite: true,
-      tsBuildInfoFile: ".tsbuildinfo/tsconfig.tsbuildinfo",
-      lib: ["ES2022", "DOM"],
-    },
-    references: [{ path: "../core" }],
-    include: ["src/**/*.ts"],
-  });
-}
-
 async function writeAgentsWithReferencePilots(root) {
   await writeFile(
     join(root, "AGENTS.md"),
@@ -1127,7 +1075,6 @@ packages/preact
 packages/plugin-std-audio
 packages/plugin-std-visual
 packages/standard-ui-preact
-packages/vue
 \`\`\`
 
 Current examples:
@@ -1155,7 +1102,6 @@ packages/
   plugin-std-audio/
   plugin-std-visual/
   standard-ui-preact/
-  vue/
 
 examples/
   example/

@@ -39,7 +39,7 @@ package name は次の通りです。
 - `standard-ui` が主語になる
 - Preact は実装 target として扱える
 - `@tsuzuru/preact` の拡張 package だと誤解されにくい
-- 将来 `@tsuzuru/standard-ui-vue` や `@tsuzuru/standard-ui-react` を検討しやすい
+- 将来 optional non-Preact UI package を検討する場合も境界を保ちやすい
 
 ## Scope
 
@@ -177,7 +177,7 @@ theme system は v0.4 では作りません。theme、animation、advanced respo
 - `create-tsuzuru` template で標準 composition を固定したくなった
 - screen system の設計が固まり、`GameShell` / layer structure を再考する必要が出た
 - standard UI に visual/audio layer を含める必要が明確になった
-- React / Vue 版を作る際に package naming or boundary を見直す必要が出た
+- optional non-Preact UI package を作る際に package naming or boundary を見直す必要が出た
 
 ## Related Documents
 

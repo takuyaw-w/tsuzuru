@@ -75,7 +75,7 @@ renderer-neutral runtime state.
 
 - Authors can configure `note: "E5"` instead of raw frequencies.
 - Character-specific defaults are app configuration, not repeated scenario text.
-- Preact and Vue examples share the same profile resolver and browser player.
+- The Preact example uses the shared profile resolver and browser player.
 - `std-audio`, `std-visual`, and core runtime semantics stay unchanged.
 
 ### Negative

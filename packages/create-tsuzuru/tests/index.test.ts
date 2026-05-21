@@ -117,6 +117,27 @@ describe("runCli", () => {
     }
   });
 
+  it("reports vue as an unknown template", async () => {
+    const root = await createTempRoot();
+    const previousCwd = process.cwd();
+    const errors: string[] = [];
+    vi.spyOn(console, "error").mockImplementation((message?: unknown) => {
+      errors.push(String(message ?? ""));
+    });
+
+    try {
+      process.chdir(root);
+
+      const exitCode = await runCli(["mypage", "--template", "vue"]);
+
+      expect(exitCode).toBe(1);
+      expect(errors.join("\n")).toContain("Unknown template: vue");
+      await expect(readFile(join(root, "mypage", "package.json"), "utf8")).rejects.toThrow();
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
+
   it("keeps --template basic as the default Preact template alias", async () => {
     const root = await createTempRoot();
     const previousCwd = process.cwd();

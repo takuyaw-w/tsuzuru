@@ -2,7 +2,7 @@
 
 Tsuzuru は、TypeScript / Vite / Preact を主軸とした、Web-first なノベルゲームエンジンです。
 
-`.tzr` という読みやすいシナリオ DSL を使い、シナリオ記述・コンパイル・ランタイム実行・framework adapter による表示を分離することを目指しています。Preact が本流の integration で、Vue integration は `@tsuzuru/vue` と [`examples/vue-basic`](examples/vue-basic/) で検証しています。
+`.tzr` という読みやすいシナリオ DSL を使い、シナリオ記述・コンパイル・ランタイム実行・framework adapter による表示を分離することを目指しています。Core は framework-neutral に保ちつつ、v0.x の公式 UI stack、templates、examples は Preact-based JSX に集中します。Vue support は初期スコープ外で、需要が明確になった時点で optional adapter として再検討します。
 
 ## 現在のステータス
 
@@ -25,7 +25,7 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - plugin command metadata / runtime dispatch
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
-- `@tsuzuru/vue`
+- `@tsuzuru/standard-ui-preact`
 - `@tsuzuru/plugin-std-visual`
 - `@tsuzuru/plugin-std-audio`
 - `@tsuzuru/plugin-std-text-sound`
@@ -34,7 +34,6 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/plugin-std-particle`
 - `@tsuzuru/plugin-std-system`
 - Preact basic example
-- Vue basic example
 - DSL v2 design notes
 - legacy cleanup plan
 
@@ -51,7 +50,6 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - skip mode
 - auto mode
 - gallery
-- create-tsuzuru Vue template
 - cloud save
 
 ## 設計方針
@@ -86,7 +84,6 @@ packages/
   cli/
   create-tsuzuru/
   preact/
-  vue/
   standard-ui-preact/
   plugin-std-visual/
   plugin-std-audio/
@@ -98,7 +95,6 @@ packages/
 
 examples/
   preact-basic/
-  vue-basic/
 
 docs/
   design/
@@ -143,22 +139,9 @@ Preact 向け adapter です。
 
 シナリオ実行の本質的なロジックは `@tsuzuru/core` に置きます。
 
-### `@tsuzuru/vue`
+### Official UI Stack
 
-Vue 3 向け adapter です。
-
-主な責務:
-
-- `useRuntime`
-- `useTsuzuruRuntime`
-- Vue component としての `RuntimeView`
-- visible event handling
-- auto-step behavior
-- click-to-advance
-- choice selection
-- save/load adapter utilities
-
-`@tsuzuru/standard-ui-vue` はまだありません。Vue UI は現時点では application/example 側で構成します。
+Tsuzuru Core is framework-neutral, but the official v0.x UI stack, templates, and examples are focused on Preact-based JSX. Vue support is out of the initial scope and may be reconsidered later as an optional adapter.
 
 ## Quickstart
 
@@ -177,7 +160,7 @@ pnpm --filter @tsuzuru/example-preact-basic build
 
 `examples/preact-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
 
-`create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` は削除済みで、`--template vue` はまだありません。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、またはホスト側の手動読み込みで文字列として渡します。
+`create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、またはホスト側の手動読み込みで文字列として渡します。
 
 Release smoke test:
 
@@ -277,7 +260,7 @@ pnpm examples:e2e
 ```
 
 `examples:e2e` runs the Playwright Save -> Load -> Restore smoke for the
-Preact and Vue examples. It is intentionally separate from root `test` and
+Preact example. It is intentionally separate from root `test` and
 `release-readiness:check`. GitHub Actions exposes it through the optional
 `Examples E2E` workflow, which can be run manually and on a nightly schedule.
 When the workflow fails, inspect the uploaded Playwright report and
@@ -354,23 +337,6 @@ pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic typecheck
 ```
 
-### Vue
-
-```sh
-pnpm --filter @tsuzuru/vue test
-pnpm --filter @tsuzuru/vue typecheck
-pnpm --filter @tsuzuru/vue build
-```
-
-### Vue Basic Example
-
-```sh
-pnpm --filter @tsuzuru/example-vue-basic dev
-pnpm --filter @tsuzuru/example-vue-basic check:scenario
-pnpm --filter @tsuzuru/example-vue-basic test
-pnpm --filter @tsuzuru/example-vue-basic build
-```
-
 ## ドキュメント
 
 主要ドキュメント:
@@ -420,7 +386,6 @@ v0.1 では、以下を目標にします。
 - compile 時に主要な DSL エラーを検出できる
 - std visual/audio/effect/camera/particle command を runtime handler に dispatch できる
 - Preact で runtime を表示・操作できる
-- Vue で runtime を表示・操作できる adapter と example がある
 - DSL v2 example が clean checkout から動く
 - README / docs が実装と一致している
 
@@ -438,8 +403,8 @@ v0.1 では、以下を目標にします。
 - scenario-local macro definitions
 - `@tsuzuru/vite`
 - `@tsuzuru/html`
-- `@tsuzuru/standard-ui-vue`
 - `create-tsuzuru --template vue`
+- official Vue adapter / UI packages
 - cross-file jump existence validation
 - macro argument schema validation
 - save data migration framework

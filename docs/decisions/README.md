@@ -57,6 +57,7 @@ reintroduced.
 | 0029 | [Host-Facing Save / Load Helper](0029-host-facing-save-load-helper.md) | Accepted |
 | 0030 | [Runtime Save Slot Envelope](0030-runtime-save-slot-envelope.md) | Accepted |
 | 0031 | [v1.0 Save / Load Compatibility Promise](0031-v1-save-load-compatibility-promise.md) | Accepted |
+| 0032 | [Preact-Based Official UI Stack](0032-preact-based-official-ui-stack.md) | Accepted |
 
 ## Reading Order
 

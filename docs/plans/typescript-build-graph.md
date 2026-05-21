@@ -9,7 +9,7 @@ Tsuzuru monorepo.
   `tsconfig.packages.json`, or `tsconfig.examples.json`.
 - Package and example `tsconfig.json` files extend `tsconfig.base.json`.
 - `packages/core`, `packages/config`, `packages/cli`, `packages/create-tsuzuru`,
-  `packages/preact`, `packages/vue`, `packages/standard-ui-preact`,
+  `packages/preact`, `packages/standard-ui-preact`,
   `packages/plugin-std-visual`, and `packages/plugin-std-audio` are the current
   `composite: true` pilots and write TypeScript build info to
   `.tsbuildinfo/tsconfig.tsbuildinfo`.
@@ -30,9 +30,6 @@ Tsuzuru monorepo.
 - `packages/preact` is the first framework adapter dependency-edge pilot. It
   references `packages/core`, keeps `rootDir: "src"` / `dist/index.*` output,
   and preserves JSX, DOM lib, and `preact` peer dependency behavior.
-- `packages/vue` is the second framework adapter dependency-edge pilot. It
-  references `packages/core`, keeps the same `rootDir: "src"` / `dist/index.*`
-  layout category, and preserves DOM lib and `vue` peer dependency behavior.
 - `packages/standard-ui-preact` is the first CSS-asset UI package
   dependency-edge pilot. It references `packages/core`, keeps the
   `rootDir: "src"` / `dist/index.*` layout category, and preserves JSX, DOM
@@ -85,10 +82,7 @@ Current package shapes:
 - `packages/preact` is the seventh pilot and first framework adapter package.
   Its source `tsconfig.json` already includes only `src/**/*.ts` and
   `src/**/*.tsx`, so it stays source-only without adding `tsconfig.test.json`.
-- `packages/vue` is the eighth pilot and second framework adapter package. Its
-  source `tsconfig.json` already includes only `src/**/*.ts`, so it also stays
-  source-only without adding `tsconfig.test.json`.
-- `packages/standard-ui-preact` is the ninth pilot and first CSS-asset UI
+- `packages/standard-ui-preact` is the eighth pilot and first CSS-asset UI
   package. Its source `tsconfig.json` already includes only `src/**/*.ts` and
   `src/**/*.tsx`, so it also stays source-only without adding
   `tsconfig.test.json`.
@@ -383,50 +377,6 @@ The Preact package import remains stable under NodeNext package resolution:
 `packages/core/dist/src/index.d.ts`. The project reference supplies the build
 graph edge but does not replace the existing built declaration contract.
 
-### `@tsuzuru/vue` pilot
-
-`@tsuzuru/vue` was selected as the eighth pilot because it is the second
-framework adapter package in the project reference experiment. It uses the same
-`rootDir: "src"` / `dist/index.*` publish layout category as Preact, but it
-exercises Vue-specific public types, a `vue` peer dependency, and the Vue
-example application that consumes the built adapter output.
-
-Pilot layout:
-
-```txt
-packages/vue/tsconfig.json  # source build only, keeps rootDir "src" and dist/index layout
-```
-
-`@tsuzuru/vue` already had a source-only tsconfig with
-`include: ["src/**/*.ts"]`, so this pilot does not add `tsconfig.test.json`.
-Its package-level `build` and `typecheck` scripts keep building
-`@tsuzuru/core` first for clean checkout safety. `build:self` remains
-`tsc -p tsconfig.json`, while `typecheck:self` remains
-`tsc -p tsconfig.json --noEmit`.
-
-The source config keeps `lib: ["ES2022", "DOM"]`, uses `composite: true`,
-writes build info to `.tsbuildinfo/tsconfig.tsbuildinfo`, and declares:
-
-```json
-"references": [{ "path": "../core" }]
-```
-
-The pilot keeps the publish layout at `dist/index.js`, `dist/index.d.ts`,
-`dist/runtime-save.*`, `dist/runtime-view.*`, and `dist/use-runtime.*`.
-`.tsbuildinfo` must not appear under `dist`, in pack output, or in
-`publish-readiness:check`. The `vue` peer dependency remains unchanged.
-
-The Vue reference-edge experiment uses the manual package graph validation.
-`tsc -b tsconfig.packages.experimental.json --dry --verbose` lists
-`packages/core/tsconfig.json` before `packages/vue/tsconfig.json`. This
-confirms that TypeScript treats the explicit `vue -> core` reference as a build
-graph edge while preserving the framework adapter output layout.
-
-The Vue package import remains stable under NodeNext package resolution:
-`@tsuzuru/core` resolves through the workspace package link and
-`packages/core/dist/src/index.d.ts`. The project reference supplies the build
-graph edge but does not replace the existing built declaration contract.
-
 ### `@tsuzuru/standard-ui-preact` pilot
 
 `@tsuzuru/standard-ui-preact` was selected as the ninth pilot because it is a
@@ -488,7 +438,6 @@ packages/config/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/cli/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/create-tsuzuru/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/preact/.tsbuildinfo/tsconfig.tsbuildinfo
-packages/vue/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/standard-ui-preact/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-visual/.tsbuildinfo/tsconfig.tsbuildinfo
 packages/plugin-std-audio/.tsbuildinfo/tsconfig.tsbuildinfo
@@ -541,7 +490,6 @@ It references the current composite pilots:
 - `packages/cli`
 - `packages/create-tsuzuru`
 - `packages/preact`
-- `packages/vue`
 - `packages/standard-ui-preact`
 - `packages/plugin-std-visual`
 - `packages/plugin-std-audio`
@@ -558,7 +506,7 @@ This file is intentionally wired only to the explicit
 `packages:graph:check` root script. It is not wired into CI, `check`,
 `typecheck`, or `release-readiness:check`. The graph can now include core and
 config as addressable composite projects, visual/audio explicitly reference
-core, CLI explicitly references config/core, and Preact/Vue/Standard UI Preact
+core, CLI explicitly references config/core, and Preact/Standard UI Preact
 explicitly reference core. It is still not a complete package dependency graph
 because the other workspace package dependency edges have not been designed or
 validated. Today the pilots still resolve workspace imports through package
@@ -573,7 +521,7 @@ pnpm packages:graph:check
 `packages:graph:check` runs
 `pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose`. This
 validates that the current pilot projects can be addressed by `tsc -b`, and
-that the explicit visual/audio/preact/vue/standard-ui-preact-to-core and
+that the explicit visual/audio/preact/standard-ui-preact-to-core and
 cli-to-config/core edges affect build order. It must not be interpreted as a
 complete monorepo build graph until the remaining package dependency references
 are added deliberately and their package-import behavior is checked.
@@ -672,7 +620,7 @@ the reference build or be retired in the same staged migration.
 
 - `tsc -b` is exposed through the explicit `packages:graph:check` script for
   local dependency graph validation, but the
-  visual/audio/preact/vue/standard-ui-preact-to-core and cli-to-config/core
+  visual/audio/preact/standard-ui-preact-to-core and cli-to-config/core
   project reference edges remain isolated pilots.
 - The current `build:self` / `typecheck:self` flow remains the release-readiness
   build strategy. `build:self` remains responsible for package artifacts and
@@ -685,13 +633,13 @@ the reference build or be retired in the same staged migration.
   split first for packages whose source configs include tests. `@tsuzuru/core`,
   `@tsuzuru/config`, `@tsuzuru/cli`, `create-tsuzuru`,
   `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
-  source/test split pilots. `@tsuzuru/preact`, `@tsuzuru/vue`, and
+  source/test split pilots. `@tsuzuru/preact` and
   `@tsuzuru/standard-ui-preact` are source-only already, so they do not add test
   tsconfigs.
 - `@tsuzuru/core`, `@tsuzuru/config`, `@tsuzuru/cli`, `create-tsuzuru`,
-  `@tsuzuru/preact`, `@tsuzuru/vue`, `@tsuzuru/standard-ui-preact`,
+  `@tsuzuru/preact`, `@tsuzuru/standard-ui-preact`,
   `@tsuzuru/plugin-std-visual`, and `@tsuzuru/plugin-std-audio` are the current
-  `composite: true` pilots. The visual/audio plugins, CLI, Preact, Vue, and
+  `composite: true` pilots. The visual/audio plugins, CLI, Preact, and
   Standard UI Preact are also explicit dependency-reference pilots. Do not
   expand `composite` broadly until these packages keep publish layout stable
   under `pack:dry-run` and `publish-readiness:check`.
@@ -727,26 +675,23 @@ the reference build or be retired in the same staged migration.
 9. Add the first framework adapter edge with `@tsuzuru/preact` pointing to
    `@tsuzuru/core`, while preserving `rootDir: "src"`, JSX, DOM lib, peer
    dependency behavior, and `dist/index.*` publish layout.
-10. Add the second framework adapter edge with `@tsuzuru/vue` pointing to
-    `@tsuzuru/core`, while preserving DOM lib, Vue peer dependency behavior,
-    and `dist/index.*` publish layout.
-11. Add the broader Preact UI package edge with
+10. Add the broader Preact UI package edge with
     `@tsuzuru/standard-ui-preact` pointing to `@tsuzuru/core`, while preserving
     JSX, DOM lib, Preact peer dependency behavior, CSS copy, `./style.css`
     export, and `dist/index.*` publish layout.
-12. Define the formal package graph responsibility before wiring it into root
+11. Define the formal package graph responsibility before wiring it into root
     scripts. The graph should validate TypeScript package dependency order; it
     should not replace `build:self` as the release artifact build.
-13. Run `packages:graph:check` as `tsc -b --dry --verbose` graph validation
+12. Run `packages:graph:check` as `tsc -b --dry --verbose` graph validation
     before using it as any broader gate.
-14. If the package layout and publish-readiness checks remain stable, expand to
+13. If the package layout and publish-readiness checks remain stable, expand to
     the package graph.
-15. Treat the examples graph as a separate design.
+14. Treat the examples graph as a separate design.
 
 ## Next Migration Candidates
 
 1. Formal `tsconfig.packages.json` design
-   - Reason: visual/audio, CLI, Preact, Vue, and Standard UI Preact now show
+   - Reason: visual/audio, CLI, Preact, and Standard UI Preact now show
      that explicit package references can coexist with package `exports.types`
      resolution, bin publish layout, framework adapter `dist/index.*` layout,
      and a CSS asset export. The next formal graph should validate dependency

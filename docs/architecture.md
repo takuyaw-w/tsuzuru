@@ -8,7 +8,6 @@ Tsuzuru is a web-first visual novel engine built around:
 - a TypeScript parser / compiler
 - a browser-independent core runtime
 - Preact integration packages
-- Vue integration package
 - standard visual / audio plugins
 - a small runnable example
 
@@ -74,7 +73,6 @@ packages/
   cli/
   create-tsuzuru/
   preact/
-  vue/
   standard-ui-preact/
   plugin-std-visual/
   plugin-std-audio/
@@ -86,7 +84,6 @@ packages/
 
 examples/
   preact-basic/
-  vue-basic/
 ```
 
 Current design / planning docs:
@@ -108,10 +105,9 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
-examples/vue-basic
 ```
 
-Future package candidates such as `@tsuzuru/vite` must not be documented as implemented until they exist and work.
+Tsuzuru Core is framework-neutral, but the official v0.x UI stack, templates, and examples are focused on Preact-based JSX. Vue support is out of the initial scope and may be reconsidered later as an optional adapter. Future package candidates such as `@tsuzuru/vite` must not be documented as implemented until they exist and work.
 
 ---
 
@@ -183,37 +179,6 @@ Responsibilities:
 If behavior belongs to scenario execution, it belongs in `@tsuzuru/core`.
 
 If behavior belongs to rendering or user interaction, it belongs in `@tsuzuru/preact` or userland UI.
-
-### `@tsuzuru/vue`
-
-`@tsuzuru/vue` connects the core runtime to Vue 3 Composition API.
-
-Responsibilities:
-
-- `useRuntime`
-- `useTsuzuruRuntime`
-- runtime event handling for Vue consumers
-- visible event management
-- transient event stepping
-- click-to-advance wiring
-- choice selection wiring
-- Vue-facing save/load adapter utilities
-- view restoration helpers
-
-`@tsuzuru/vue` must not own:
-
-- `.tzr` syntax
-- parser behavior
-- compiler diagnostics
-- IR generation
-- runtime stepping semantics
-- condition evaluation
-- scene jump semantics
-- core state model decisions
-
-There is no `@tsuzuru/standard-ui-vue` package yet. Vue UI layers currently live in `examples/vue-basic` or userland apps.
-
----
 
 ### `@tsuzuru/standard-ui-preact`
 
@@ -425,7 +390,6 @@ Current examples:
 
 ```txt
 examples/preact-basic
-examples/vue-basic
 ```
 
 Example responsibilities:
@@ -867,10 +831,8 @@ renderable event, not a migration or scenario identity layer.
 
 `examples/preact-basic` stores its example-specific save payload as a wrapper
 around `RuntimeSaveSlot` plus Preact `RuntimeSaveData` and retained message
-presentation state. `examples/vue-basic` uses the same `RuntimeSaveSlot`
-envelope for a smaller example-owned save/load foundation around Vue
-`RuntimeSaveData`. Both examples compose std-audio and std-effect snapshot
-prepare helpers through the adapter helper, and both filter invalid save slots,
+presentation state. The example composes std-audio and std-effect snapshot
+prepare helpers through the adapter helper, and filters invalid save slots,
 scenario mismatches, and invalid nested snapshots before they reach the runtime
 restore path. Browser storage, example save payloads, and save-slot UI remain
 example-owned.
@@ -1172,7 +1134,7 @@ For package-focused work, run the relevant filtered checks first.
 `packages:build` is the release-readiness package build gate. It uses explicit dependency order and package `build:self` scripts to avoid rebuilding dependency packages repeatedly in the root release flow, while package-level `build` scripts keep dependency builds for focused package work.
 `packages:typecheck:self` is the package typecheck gate after `packages:build`. Root `typecheck` builds package `dist` once through `packages:build`, then runs public package `typecheck:self` scripts against that output; package-level `typecheck` scripts keep dependency builds for focused package work.
 `examples:check` remains the standalone example gate and builds workspace dependencies through each example package. Its example `check:scenario` scripts use the normal `tsuzuru check` bin. `examples:check:self` is the release-readiness example gate; it assumes `packages:build` has already run and uses example `check:scenario:self` / `typecheck:self` / `build:self` to avoid rebuilding packages and to run the built CLI entry directly when a clean install did not create the `tsuzuru` bin shim before CLI dist existed.
-`examples:e2e` is a browser E2E smoke for the Preact and Vue examples. It runs
+`examples:e2e` is a browser E2E smoke for the Preact example. It runs
 Playwright Save -> Load -> Restore coverage and verifies the example-owned
 RuntimeSaveSlot path in a browser. It is intentionally not part of root `test`
 or `release-readiness:check`; GitHub Actions exposes it through the optional

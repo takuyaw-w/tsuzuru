@@ -13,7 +13,6 @@ Tsuzuru now has several TypeScript project reference pilots:
 - `@tsuzuru/cli -> @tsuzuru/config` / `@tsuzuru/core`
 - `create-tsuzuru`
 - `@tsuzuru/preact -> @tsuzuru/core`
-- `@tsuzuru/vue -> @tsuzuru/core`
 - `@tsuzuru/standard-ui-preact -> @tsuzuru/core`
 - `@tsuzuru/plugin-std-visual -> @tsuzuru/core`
 - `@tsuzuru/plugin-std-audio -> @tsuzuru/core`

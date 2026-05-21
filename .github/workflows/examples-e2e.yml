@@ -61,5 +61,3 @@ jobs:
           path: |
             examples/preact-basic/playwright-report
             examples/preact-basic/test-results
-            examples/vue-basic/playwright-report
-            examples/vue-basic/test-results

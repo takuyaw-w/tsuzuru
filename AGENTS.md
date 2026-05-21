@@ -9,7 +9,7 @@ The project aims to let creators:
 - Write scenarios in readable `.tzr` files
 - Compile scenarios into a runtime document
 - Run visual novel scenarios in a browser-first runtime
-- Build UI with framework adapters such as Preact and Vue
+- Build UI with framework adapters such as Preact
 - Extend presentation behavior with TypeScript plugins
 - Distribute games as static web applications
 
@@ -51,7 +51,6 @@ packages/config
 packages/cli
 packages/create-tsuzuru
 packages/preact
-packages/vue
 packages/standard-ui-preact
 packages/plugin-std-visual
 packages/plugin-std-audio
@@ -66,7 +65,6 @@ Current examples:
 
 ```txt
 examples/preact-basic
-examples/vue-basic
 ```
 
 Primary runnable example:
@@ -116,11 +114,6 @@ Package responsibilities:
 - `@tsuzuru/preact`
   - connects the core runtime to Preact
   - provides hooks and runtime-facing UI integration
-  - must not own scenario semantics
-
-- `@tsuzuru/vue`
-  - connects the core runtime to Vue
-  - provides composables and runtime-facing UI integration
   - must not own scenario semantics
 
 - `@tsuzuru/standard-ui-preact`
@@ -273,6 +266,8 @@ The runtime must not depend on:
 - application-specific assets
 
 Framework adapters and examples may depend on browser/framework APIs. Core must not.
+Vue adapter is out of the initial v0.x official scope and may be reconsidered
+later as an optional package.
 
 ## Plugin Policy
 
@@ -433,9 +428,6 @@ pnpm --filter create-tsuzuru typecheck
 pnpm --filter @tsuzuru/preact test
 pnpm --filter @tsuzuru/preact typecheck
 
-pnpm --filter @tsuzuru/vue test
-pnpm --filter @tsuzuru/vue typecheck
-
 pnpm --filter @tsuzuru/standard-ui-preact test
 pnpm --filter @tsuzuru/standard-ui-preact typecheck
 
@@ -468,15 +460,6 @@ pnpm --filter @tsuzuru/example-preact-basic check:scenario
 pnpm --filter @tsuzuru/example-preact-basic test
 pnpm --filter @tsuzuru/example-preact-basic typecheck
 pnpm --filter @tsuzuru/example-preact-basic build
-```
-
-For Vue adapter or Vue example changes, also run:
-
-```sh
-pnpm --filter @tsuzuru/example-vue-basic check:scenario
-pnpm --filter @tsuzuru/example-vue-basic test
-pnpm --filter @tsuzuru/example-vue-basic typecheck
-pnpm --filter @tsuzuru/example-vue-basic build
 ```
 
 For package publishing, package exports, `files`, generated templates, or release-readiness changes, also run:

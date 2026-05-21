@@ -2,9 +2,8 @@
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata are
 > current, and `createStdCameraPlugin()` exposes metadata for compiler
-> validation. The runnable integrations are
-> [`examples/preact-basic`](../../examples/preact-basic/) and
-> [`examples/vue-basic`](../../examples/vue-basic/).
+> validation. The runnable integration is
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-camera` is Tsuzuru's standard durable camera state plugin.
 
@@ -133,8 +132,8 @@ runtime snapshot as-is. There is no `prepareStdCameraStateForSnapshot()` helper.
 
 ## Presentation Policy
 
-Actual transform behavior is renderer / app responsibility. The Preact and Vue
-examples consume `stdCamera`, translate `x`, `y`, `zoom`, `duration`, and
+Actual transform behavior is renderer / app responsibility. The Preact example
+consumes `stdCamera`, translates `x`, `y`, `zoom`, `duration`, and
 `easing` into CSS custom properties, and use `stdVisual.sprites` for a simple
 left / center / right focus policy.
 

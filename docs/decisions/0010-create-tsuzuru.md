@@ -35,5 +35,4 @@ Out of scope for the first package:
 - publish and provenance work
 - Vite plugin work
 - `tsuzuru dev` and `tsuzuru build`
-- Vue template work; the current Vue route is `@tsuzuru/vue` plus
-  `examples/vue-basic`
+- Vue template work; Vue support is out of the initial v0.x official scope

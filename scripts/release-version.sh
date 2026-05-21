@@ -61,12 +61,10 @@ const files = [
   "packages/plugin-std-particle/package.json",
   "packages/plugin-std-system/package.json",
   "packages/preact/package.json",
-  "packages/vue/package.json",
   "packages/standard-ui-preact/package.json",
   "packages/cli/package.json",
   "packages/create-tsuzuru/package.json",
   "examples/preact-basic/package.json",
-  "examples/vue-basic/package.json",
 ];
 
 for (const file of files) {

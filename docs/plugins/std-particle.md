@@ -2,9 +2,8 @@
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata are
 > current, and `createStdParticlePlugin()` exposes metadata for compiler
-> validation. The runnable integrations are
-> [`examples/preact-basic`](../../examples/preact-basic/) and
-> [`examples/vue-basic`](../../examples/vue-basic/).
+> validation. The runnable integration is
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-particle` is Tsuzuru's standard durable particle overlay
 state plugin.
@@ -110,9 +109,9 @@ helper.
 
 ## Presentation Policy
 
-Actual rendering is renderer / app responsibility. The Preact and Vue examples
-consume `stdParticle.current` and implement lightweight CSS overlays for rain,
-snow, sakura, and dust with `pointer-events: none` and reduced-motion handling.
+Actual rendering is renderer / app responsibility. The Preact example consumes
+`stdParticle.current` and implements lightweight CSS overlays for rain, snow,
+sakura, and dust with `pointer-events: none` and reduced-motion handling.
 
 The MVP intentionally does not include multiple simultaneous particle layers,
 wind, direction, speed, size, color, density, smoke, fog, embers, leaves, or

@@ -51,8 +51,9 @@ Preact project. It includes host TSX screens for title, load, settings, backlog,
 and gallery.
 
 The removed `html` template is no longer available. Passing `--template html`
-returns an unknown template error. Vue scaffolding is not implemented yet; the
-current Vue route is `@tsuzuru/vue` plus `examples/vue-basic`.
+returns an unknown template error. Passing `--template vue` also returns an
+unknown template error. Tsuzuru Core remains framework-neutral, but the
+official v0.x generator path is the Preact-based JSX template.
 
 The generated project keeps these scripts:
 

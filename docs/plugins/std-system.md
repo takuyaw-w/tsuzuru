@@ -2,9 +2,8 @@
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata are
 > current, and `createStdSystemPlugin()` exposes metadata for compiler
-> validation. The runnable integrations are
-> [`examples/preact-basic`](../../examples/preact-basic/) and
-> [`examples/vue-basic`](../../examples/vue-basic/).
+> validation. The runnable integration is
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-system` is Tsuzuru's standard system unlock state plugin.
 

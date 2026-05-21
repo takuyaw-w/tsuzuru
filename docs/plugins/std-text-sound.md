@@ -163,11 +163,11 @@ Volume preferences, throttle interval, punctuation skip, and speaker mapping are
 presentation policy. The plugin provides helpers for common behavior, but the
 renderer / app decides when to call playback from text reveal.
 
-The Preact and Vue examples wire `resolveStdTextSoundProfile()`,
+The Preact example wires `resolveStdTextSoundProfile()`,
 `shouldPlayStdTextSoundCharacter()`, and `createStdTextSoundPlayer()` to their
 text reveal callbacks. They do not include real audio assets.
 
-`examples/preact-basic` and `examples/vue-basic` include a Text Sound Lab
-scenario with `tone`, `noize`, and `mix` characters so the `tone`, `noise`, and
-`mix` profile differences can be heard through character defaults. `noize` is a
-character ID only; profile types still use the valid `"noise"` spelling.
+`examples/preact-basic` includes a Text Sound Lab scenario with `tone`, `noize`,
+and `mix` characters so the `tone`, `noise`, and `mix` profile differences can
+be heard through character defaults. `noize` is a character ID only; profile
+types still use the valid `"noise"` spelling.

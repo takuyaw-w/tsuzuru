@@ -30,13 +30,9 @@ save payload. That wrapper still owns retained message presentation state and
 localStorage persistence, while `validateRuntimeSaveSlot` owns scenario identity
 and nested snapshot validation.
 
-The Vue basic example also uses `RuntimeSaveSlot` for a smaller save/load
-foundation. Its storage remains example-owned, and the example uses Vue
-`RuntimeSaveData` for adapter-facing restore behavior.
-
-Both Preact and Vue adapters expose `createRuntimeSaveDataFromState` to create
-adapter `RuntimeSaveData` from a runtime state and optional plugin prepare
-functions. That adapter helper intentionally stops before the envelope boundary:
+`@tsuzuru/preact` exposes `createRuntimeSaveDataFromState` to create adapter
+`RuntimeSaveData` from a runtime state and optional plugin prepare functions.
+That adapter helper intentionally stops before the envelope boundary:
 `RuntimeSaveSlot` creation, scenario identity checks, storage, and migration
 remain host or example responsibilities.
 

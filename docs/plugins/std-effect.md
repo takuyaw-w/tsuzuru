@@ -2,9 +2,8 @@
 
 > Status: DSL v2-first. Runtime handlers and plugin command metadata are
 > current, and `createStdEffectPlugin()` exposes metadata for compiler
-> validation. The runnable integrations are
-> [`examples/preact-basic`](../../examples/preact-basic/) and
-> [`examples/vue-basic`](../../examples/vue-basic/).
+> validation. The runnable integration is
+> [`examples/preact-basic`](../../examples/preact-basic/).
 
 `@tsuzuru/plugin-std-effect` is Tsuzuru's standard one-shot screen effect plugin.
 
@@ -162,8 +161,8 @@ It does not mutate the original state.
 
 ## Presentation Policy
 
-Actual animation is renderer / app responsibility. The Preact and Vue examples
-consume `stdEffect.events`, track sequence consumption, and implement CSS
+Actual animation is renderer / app responsibility. The Preact example consumes
+`stdEffect.events`, tracks sequence consumption, and implements CSS
 animations for screen, message, sprite, flash overlay, and screen blur targets.
 
 The plugin intentionally does not include particle, rain, snow, sakura, smoke,

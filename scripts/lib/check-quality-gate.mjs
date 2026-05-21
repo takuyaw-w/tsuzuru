@@ -7,7 +7,6 @@ const TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES = [
   { dir: "cli", name: "@tsuzuru/cli" },
   { dir: "create-tsuzuru", name: "create-tsuzuru" },
   { dir: "preact", name: "@tsuzuru/preact", testTsconfig: false },
-  { dir: "vue", name: "@tsuzuru/vue", testTsconfig: false },
   { dir: "standard-ui-preact", name: "@tsuzuru/standard-ui-preact", testTsconfig: false, styleCssExport: true },
   { dir: "plugin-std-visual", name: "@tsuzuru/plugin-std-visual" },
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio" },
@@ -18,7 +17,6 @@ const TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS = [
   { dir: "plugin-std-audio", name: "@tsuzuru/plugin-std-audio", referencePaths: ["../core"] },
   { dir: "cli", name: "@tsuzuru/cli", referencePaths: ["../config", "../core"] },
   { dir: "preact", name: "@tsuzuru/preact", referencePaths: ["../core"] },
-  { dir: "vue", name: "@tsuzuru/vue", referencePaths: ["../core"] },
   { dir: "standard-ui-preact", name: "@tsuzuru/standard-ui-preact", referencePaths: ["../core"] },
 ];
 

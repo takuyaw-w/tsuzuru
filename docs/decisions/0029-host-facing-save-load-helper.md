@@ -56,7 +56,7 @@ plugin one-shot events. Plugin-specific prepare helpers remain plugin-owned, and
 the host chooses which helpers to apply for its save slot policy.
 
 Framework adapters may wrap this core helper when producing view-oriented
-adapter save data. `@tsuzuru/preact` and `@tsuzuru/vue` expose
+adapter save data. `@tsuzuru/preact` exposes
 `createRuntimeSaveDataFromState(state, event, { prepares })` to apply the same
 prepare chain and return adapter `RuntimeSaveData`. That wrapper remains below
 the save slot boundary: it does not create `RuntimeSaveSlot`, choose scenario

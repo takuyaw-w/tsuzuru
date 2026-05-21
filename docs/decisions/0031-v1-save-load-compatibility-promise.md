@@ -10,7 +10,7 @@ Tsuzuru now has layered save/load primitives:
 
 - core `RuntimeSnapshot.version === 2`
 - core `RuntimeSaveSlot.version === 1`
-- adapter `RuntimeSaveData.version === 2` for Preact and Vue
+- adapter `RuntimeSaveData.version === 2` for Preact
 - example-owned localStorage wrappers
 - plugin-owned durable and one-shot state
 
@@ -53,7 +53,7 @@ formats. It does not promise migration.
 
 `RuntimeSaveData`:
 
-- Preact and Vue adapter save data use `version === 2`.
+- Preact adapter save data uses `version === 2`.
 - Adapter save data contains a `RuntimeSnapshot` and the current renderable
   runtime event.
 - Adapter save data does not own scenario identity, scenario version, storage,
@@ -69,8 +69,8 @@ Plugin state:
 
 Examples:
 
-- `examples/preact-basic` and `examples/vue-basic` filter invalid save slots,
-  scenario mismatches, and invalid nested snapshots before runtime restore.
+- `examples/preact-basic` filters invalid save slots, scenario mismatches, and
+  invalid nested snapshots before runtime restore.
 - example storage remains example-owned.
 - invalid save slots may be silently filtered from loadable UI.
 
@@ -158,6 +158,4 @@ Revisit this decision when:
 - `packages/core/src/runtime-snapshot.ts`
 - `packages/core/src/runtime-save-slot.ts`
 - `packages/preact/src/runtime-save.ts`
-- `packages/vue/src/runtime-save.ts`
 - `examples/preact-basic/src/save-storage.ts`
-- `examples/vue-basic/src/save-storage.ts`
