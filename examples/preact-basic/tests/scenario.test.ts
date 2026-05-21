@@ -68,7 +68,7 @@ describe("preact-basic scenario", () => {
     for (const assetId of expectedBackgrounds) {
       const background = assets.visual.backgrounds[assetId];
       expect(background.src).toBe(`/assets/backgrounds/${assetId}.svg`);
-      expect(scenario).toContain(`bg ${assetId} with`);
+      expect(scenario).toMatch(new RegExp(`bg ${assetId}(?: with|\\n)`));
 
       const svg = await readFile(join(backgroundRoot, `${assetId}.svg`), "utf8");
       expect(svg).toContain('viewBox="0 0 1280 720"');

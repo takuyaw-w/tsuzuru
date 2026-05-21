@@ -15,7 +15,7 @@ const filePath = "scenario/std-visual-save-load.tzr";
 describe("std visual save/load integration", () => {
   it("keeps durable background and sprite state across snapshot restore and resumes without replaying commands", () => {
     const document = compileSource(`scene start:
-  bg station with dissolve(duration=300)
+  bg station with fade(duration=500)
   show mio_smile at left with dissolve(duration=200)
   narration:
     After visual state.
@@ -36,14 +36,14 @@ describe("std visual save/load integration", () => {
     expect(getStdVisualState(background.state)).toEqual({
       background: {
         assetId: "station",
-        transition: { type: "dissolve", durationMs: 300 },
+        transition: { effect: "fade", durationMs: 500, color: "#000000" },
       },
       sprites: {},
     });
     expect(getStdVisualState(sprite.state)).toEqual({
       background: {
         assetId: "station",
-        transition: { type: "dissolve", durationMs: 300 },
+        transition: { effect: "fade", durationMs: 500, color: "#000000" },
       },
       sprites: {
         mio_smile: {
@@ -59,7 +59,7 @@ describe("std visual save/load integration", () => {
     expect(getStdVisualState(restored)).toEqual({
       background: {
         assetId: "station",
-        transition: { type: "dissolve", durationMs: 300 },
+        transition: { effect: "fade", durationMs: 500, color: "#000000" },
       },
       sprites: {
         mio_smile: {
@@ -81,7 +81,7 @@ describe("std visual save/load integration", () => {
     expect(getStdVisualState(hide.state)).toEqual({
       background: {
         assetId: "station",
-        transition: { type: "dissolve", durationMs: 300 },
+        transition: { effect: "fade", durationMs: 500, color: "#000000" },
       },
       sprites: {},
     });

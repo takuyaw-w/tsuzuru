@@ -12,15 +12,25 @@ const STD_VISUAL_PLUGIN_NAME = "stdVisual";
 const HIDE_TARGET_NOT_FOUND_WARNING_CODE = "plugin.stdVisual.hideTargetNotFound";
 
 export type StdVisualSpritePosition = "left" | "center" | "right";
+export type StdVisualTransitionEffect = "fade" | "dissolve";
+export type StdVisualBackgroundTransitionEffect = "cut" | "fade" | "pageTurn" | "blurFade" | "slide";
+export type StdVisualDirection = "left" | "right" | "up" | "down";
 
 export interface StdVisualTransition {
-  readonly type: string;
+  readonly type: StdVisualTransitionEffect;
   readonly durationMs: number;
+}
+
+export interface StdVisualBackgroundTransition {
+  readonly effect: StdVisualBackgroundTransitionEffect;
+  readonly durationMs: number;
+  readonly direction?: StdVisualDirection;
+  readonly color?: string;
 }
 
 export interface StdVisualBackground {
   readonly assetId: string;
-  readonly transition?: StdVisualTransition;
+  readonly transition?: StdVisualBackgroundTransition;
 }
 
 export interface StdVisualSprite {
@@ -36,6 +46,38 @@ export interface StdVisualState {
 }
 
 const STD_VISUAL_TRANSITION_TYPES = ["fade", "dissolve"] as const;
+const STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS = ["fade", "pageTurn", "blurFade", "slide"] as const;
+const STD_VISUAL_DIRECTIONS = ["left", "right", "up", "down"] as const;
+
+const STD_VISUAL_BACKGROUND_TRANSITION_NAMED_ARGS = [
+  {
+    name: "transition",
+    type: "string",
+    optional: true,
+    values: STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS,
+  },
+  {
+    name: "duration",
+    type: "number",
+    optional: true,
+    integer: true,
+    min: 1,
+    requiredWith: ["transition"],
+  },
+  {
+    name: "direction",
+    type: "string",
+    optional: true,
+    values: STD_VISUAL_DIRECTIONS,
+    requiredWith: ["transition"],
+  },
+  {
+    name: "color",
+    type: "string",
+    optional: true,
+    requiredWith: ["transition"],
+  },
+] as const;
 
 const STD_VISUAL_TRANSITION_NAMED_ARGS = [
   {
@@ -59,7 +101,7 @@ export const stdVisualPluginCommands = {
   bg: definePluginCommand("bg", {
     kind: "mixed",
     positional: [{ type: "string", nonEmpty: true }],
-    named: STD_VISUAL_TRANSITION_NAMED_ARGS,
+    named: STD_VISUAL_BACKGROUND_TRANSITION_NAMED_ARGS,
   }),
   show: definePluginCommand("show", {
     kind: "mixed",
@@ -113,7 +155,7 @@ export function getStdVisualState(runtimeState: RuntimeState): StdVisualState {
 
 function handleBg(state: RuntimeState, instruction: CommandInstruction): ReturnType<RuntimePluginCommandHandler> {
   const assetId = getRequiredPositionalString(instruction, 0);
-  const transition = getOptionalTransition(instruction);
+  const transition = getOptionalBackgroundTransition(instruction);
   const current = getStdVisualState(state);
 
   return {
@@ -259,7 +301,31 @@ function getOptionalTransition(instruction: CommandInstruction): StdVisualTransi
   return { type, durationMs };
 }
 
-function getNamedTransitionType(instruction: CommandInstruction, name: string): string | undefined {
+function getOptionalBackgroundTransition(instruction: CommandInstruction): StdVisualBackgroundTransition | undefined {
+  const effect = getNamedBackgroundTransitionEffect(instruction, "transition");
+  const durationMs = getNamedPositiveTransitionDuration(instruction, "duration");
+  const direction = getNamedBackgroundTransitionDirection(instruction, "direction", effect);
+  const color = getNamedTransitionColor(instruction, "color");
+
+  if (effect === undefined && durationMs === undefined && direction === undefined && color === undefined) {
+    return undefined;
+  }
+  if (effect === undefined) {
+    throwInvalidRuntimeArguments(instruction);
+  }
+
+  const normalizedDirection = direction ?? defaultBackgroundTransitionDirection(effect);
+  const normalizedColor = color ?? defaultBackgroundTransitionColor(effect);
+
+  return {
+    effect,
+    durationMs: durationMs ?? defaultBackgroundTransitionDuration(effect),
+    ...(normalizedDirection === undefined ? {} : { direction: normalizedDirection }),
+    ...(normalizedColor === undefined ? {} : { color: normalizedColor }),
+  };
+}
+
+function getNamedTransitionType(instruction: CommandInstruction, name: string): StdVisualTransitionEffect | undefined {
   const argument = instruction.args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
   if (argument?.type !== "NamedArgument") {
     return undefined;
@@ -281,6 +347,58 @@ function getNamedTransitionDuration(instruction: CommandInstruction, name: strin
     !Number.isInteger(argument.value.value) ||
     argument.value.value < 0
   ) {
+    throwInvalidRuntimeArguments(instruction);
+  }
+  return argument.value.value;
+}
+
+function getNamedPositiveTransitionDuration(instruction: CommandInstruction, name: string): number | undefined {
+  const durationMs = getNamedTransitionDuration(instruction, name);
+  if (durationMs !== undefined && durationMs <= 0) {
+    throwInvalidRuntimeArguments(instruction);
+  }
+  return durationMs;
+}
+
+function getNamedBackgroundTransitionEffect(
+  instruction: CommandInstruction,
+  name: string,
+): StdVisualBackgroundTransitionEffect | undefined {
+  const argument = instruction.args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
+  if (argument?.type !== "NamedArgument") {
+    return undefined;
+  }
+  if (argument.value.type !== "StringValue" || !isStdVisualNamedBackgroundTransitionEffect(argument.value.value)) {
+    throwInvalidRuntimeArguments(instruction);
+  }
+  return argument.value.value;
+}
+
+function getNamedBackgroundTransitionDirection(
+  instruction: CommandInstruction,
+  name: string,
+  effect: StdVisualBackgroundTransitionEffect | undefined,
+): StdVisualDirection | undefined {
+  const argument = instruction.args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
+  if (argument?.type !== "NamedArgument") {
+    return undefined;
+  }
+  if (
+    argument.value.type !== "StringValue" ||
+    !isStdVisualDirection(argument.value.value) ||
+    (effect === "pageTurn" && argument.value.value !== "left" && argument.value.value !== "right")
+  ) {
+    throwInvalidRuntimeArguments(instruction);
+  }
+  return argument.value.value;
+}
+
+function getNamedTransitionColor(instruction: CommandInstruction, name: string): string | undefined {
+  const argument = instruction.args.find((arg) => arg.type === "NamedArgument" && arg.name === name);
+  if (argument?.type !== "NamedArgument") {
+    return undefined;
+  }
+  if (argument.value.type !== "StringValue") {
     throwInvalidRuntimeArguments(instruction);
   }
   return argument.value.value;
@@ -310,7 +428,7 @@ function isStdVisualBackground(value: unknown): value is StdVisualBackground {
   return (
     isObjectRecord(value) &&
     typeof value.assetId === "string" &&
-    (value.transition === undefined || isStdVisualTransition(value.transition))
+    (value.transition === undefined || isStdVisualBackgroundTransition(value.transition))
   );
 }
 
@@ -329,7 +447,7 @@ function isStdVisualSpritePosition(value: unknown): value is StdVisualSpritePosi
 function isStdVisualTransition(value: unknown): value is StdVisualTransition {
   return (
     isObjectRecord(value) &&
-    typeof value.type === "string" &&
+    isStdVisualTransitionType(value.type) &&
     typeof value.durationMs === "number" &&
     Number.isFinite(value.durationMs) &&
     Number.isInteger(value.durationMs) &&
@@ -337,8 +455,77 @@ function isStdVisualTransition(value: unknown): value is StdVisualTransition {
   );
 }
 
+function isStdVisualBackgroundTransition(value: unknown): value is StdVisualBackgroundTransition {
+  return (
+    isObjectRecord(value) &&
+    isStdVisualBackgroundTransitionEffect(value.effect) &&
+    typeof value.durationMs === "number" &&
+    Number.isFinite(value.durationMs) &&
+    Number.isInteger(value.durationMs) &&
+    value.durationMs >= (value.effect === "cut" ? 0 : 1) &&
+    (value.direction === undefined || isStdVisualDirection(value.direction)) &&
+    (value.color === undefined || typeof value.color === "string")
+  );
+}
+
 function isStdVisualTransitionType(value: unknown): value is (typeof STD_VISUAL_TRANSITION_TYPES)[number] {
   return STD_VISUAL_TRANSITION_TYPES.some((type) => type === value);
+}
+
+function isStdVisualBackgroundTransitionEffect(value: unknown): value is StdVisualBackgroundTransitionEffect {
+  return value === "cut" || STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS.some((effect) => effect === value);
+}
+
+function isStdVisualNamedBackgroundTransitionEffect(
+  value: unknown,
+): value is (typeof STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS)[number] {
+  return STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS.some((effect) => effect === value);
+}
+
+function isStdVisualDirection(value: unknown): value is StdVisualDirection {
+  return STD_VISUAL_DIRECTIONS.some((direction) => direction === value);
+}
+
+function defaultBackgroundTransitionDuration(effect: StdVisualBackgroundTransitionEffect): number {
+  switch (effect) {
+    case "cut":
+      return 0;
+    case "fade":
+      return 500;
+    case "pageTurn":
+      return 800;
+    case "blurFade":
+      return 700;
+    case "slide":
+      return 650;
+  }
+}
+
+function defaultBackgroundTransitionDirection(
+  effect: StdVisualBackgroundTransitionEffect,
+): StdVisualDirection | undefined {
+  switch (effect) {
+    case "pageTurn":
+    case "slide":
+      return "left";
+    case "cut":
+    case "fade":
+    case "blurFade":
+      return undefined;
+  }
+}
+
+function defaultBackgroundTransitionColor(effect: StdVisualBackgroundTransitionEffect): string | undefined {
+  switch (effect) {
+    case "fade":
+    case "blurFade":
+    case "slide":
+      return "#000000";
+    case "pageTurn":
+      return "#ffffff";
+    case "cut":
+      return undefined;
+  }
 }
 
 function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {

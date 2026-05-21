@@ -48,8 +48,6 @@ import type {
   TzrStdEffectStatement,
   TzrStdParticleCommandName,
   TzrStdParticleStatement,
-  TzrStdTransitionEffect,
-  TzrStdTransitionStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrStringValue,
@@ -458,9 +456,6 @@ class TzrParser {
     }
     if (isEffectStatementSource(source)) {
       return this.parseStdEffectStatement(line, source, statementColumn);
-    }
-    if (source === "transition" || source.startsWith("transition ")) {
-      return this.parseStdTransitionStatement(line, source, statementColumn);
     }
     if (isCameraStatementSource(source)) {
       return this.parseStdCameraStatement(line, source, statementColumn);
@@ -2083,8 +2078,8 @@ class TzrParser {
     name: TzrVisualTransitionName,
     keyword: "bg" | "show" | "hide" | "clear",
   ): number {
-    const isScreenTransition = keyword === "bg" && isStdTransitionEffect(name);
-    if (args.length === 0 && !isScreenTransition) {
+    const isBackgroundTransition = keyword === "bg" && isBackgroundTransitionEffect(name);
+    if (args.length === 0 && !isBackgroundTransition) {
       this.addError(line, sourceColumn, "Visual transition duration is required.");
       return 0;
     }
@@ -2098,13 +2093,13 @@ class TzrParser {
         duration = arg.value.value;
         continue;
       }
-      if (!isScreenTransition) {
+      if (!isBackgroundTransition) {
         this.addError(line, arg.value.loc.start.column, "Invalid visual transition duration.");
         return 0;
       }
     }
 
-    if (duration === undefined && !isScreenTransition) {
+    if (duration === undefined && !isBackgroundTransition) {
       this.addError(line, sourceColumn, "Visual transition duration is required.");
       return 0;
     }
@@ -2321,88 +2316,6 @@ class TzrParser {
     return {
       type: "StdEffectStatement",
       name,
-      args,
-      loc: this.lineRange(line),
-    };
-  }
-
-  private parseStdTransitionStatement(
-    line: SourceLine,
-    source: string,
-    statementColumn: number,
-  ): TzrStdTransitionStatement | undefined {
-    const rest = source.slice("transition".length).trim();
-    const restColumn =
-      rest.length === 0 ? statementColumn + "transition".length : statementColumn + source.indexOf(rest);
-
-    if (rest.length === 0) {
-      this.addError(line, statementColumn, "transition effect is required.");
-      this.cursor += 1;
-      return undefined;
-    }
-    if (rest.startsWith("(")) {
-      this.addError(line, restColumn, "transition effect is required.");
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const openParenIndex = rest.indexOf("(");
-    if (openParenIndex === -1) {
-      this.addError(line, restColumn, "transition statement must include parentheses.");
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const effectSource = rest.slice(0, openParenIndex).trim();
-    if (effectSource.length === 0) {
-      this.addError(line, restColumn, "transition effect is required.");
-      this.cursor += 1;
-      return undefined;
-    }
-    const effectColumn = restColumn + rest.indexOf(effectSource);
-    if (!isValidTzrIdentifier(effectSource)) {
-      this.addError(line, effectColumn, "Malformed transition syntax.");
-      this.cursor += 1;
-      return undefined;
-    }
-    if (!isStdTransitionEffect(effectSource)) {
-      this.addError(line, effectColumn, `Unknown transition effect "${effectSource}".`);
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const closeParenIndex = this.findCallWaitClosingParenthesis(rest, openParenIndex);
-    if (closeParenIndex === undefined) {
-      this.addError(line, restColumn + openParenIndex, "transition statement is missing closing parenthesis.");
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const trailing = rest.slice(closeParenIndex + 1);
-    if (trailing.trim().length > 0) {
-      this.addError(
-        line,
-        restColumn + closeParenIndex + 1 + trailing.search(/\S/),
-        "transition statement must not have extra trailing tokens.",
-      );
-      this.cursor += 1;
-      return undefined;
-    }
-
-    const argsSource = rest.slice(openParenIndex + 1, closeParenIndex);
-    const args = this.parseNamedArguments(line, argsSource, restColumn + openParenIndex + 1, "transition");
-    this.cursor += 1;
-    if (args === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "StdTransitionStatement",
-      effect: effectSource,
-      effectLoc: {
-        start: this.location(line.line, effectColumn),
-        end: this.location(line.line, effectColumn + effectSource.length),
-      },
       args,
       loc: this.lineRange(line),
     };
@@ -3846,28 +3759,23 @@ function isEffectStatementSource(source: string): boolean {
   );
 }
 
-function isStdTransitionEffect(value: string): value is TzrStdTransitionEffect {
-  return (
-    value === "fade" ||
-    value === "wipe" ||
-    value === "flash" ||
-    value === "pageTurn" ||
-    value === "blurFade" ||
-    value === "slide"
-  );
+function isBackgroundTransitionEffect(
+  value: string,
+): value is Extract<TzrVisualTransitionName, "fade" | "pageTurn" | "blurFade" | "slide"> {
+  return value === "fade" || value === "pageTurn" || value === "blurFade" || value === "slide";
 }
 
 function isVisualTransitionNameAllowed(
   name: string,
   keyword: "bg" | "show" | "hide" | "clear",
 ): name is TzrVisualTransitionName {
-  if (name === "dissolve") {
+  if (keyword !== "bg" && name === "dissolve") {
     return true;
   }
   if (keyword !== "bg") {
     return name === "fade";
   }
-  return isStdTransitionEffect(name);
+  return isBackgroundTransitionEffect(name);
 }
 
 function isCameraStatementSource(source: string): boolean {

@@ -111,13 +111,7 @@ The following syntax is not Core. It is official standard plugin sugar.
   pulse
   blur
 
-@tsuzuru/plugin-std-transition:
-  transition fade(...)
-  transition wipe(...)
-  transition flash(...)
-  transition pageTurn(...)
-  transition blurFade(...)
-  transition slide(...)
+@tsuzuru/plugin-std-visual background transitions:
   bg <assetRef> with fade(...)
   bg <assetRef> with pageTurn(...)
   bg <assetRef> with blurFade(...)
@@ -1355,8 +1349,6 @@ clear bg with fade(duration=500)
 ```txt
 fade(duration=<ms>)
 dissolve(duration=<ms>)
-wipe(direction=<direction>, duration=<ms>)
-flash(color=<color>, duration=<ms>)
 pageTurn(direction=<direction>, duration=<ms>)
 blurFade(duration=<ms>)
 slide(direction=<direction>, duration=<ms>)
@@ -1366,18 +1358,18 @@ Rules:
 
 - For `show`, `hide`, and `clear`, standard std-visual transition metadata is
   `fade` or `dissolve`.
-- For `bg`, `fade`, `wipe`, `flash`, `pageTurn`, `blurFade`, and `slide` are
-  screen transitions handled by `@tsuzuru/plugin-std-transition`.
+- For `bg`, `fade`, `pageTurn`, `blurFade`, and `slide` are background
+  transition metadata handled by `@tsuzuru/plugin-std-visual`.
 - For std-visual metadata, `duration` is required, uses ms, and must be an
   integer greater than or equal to `0`.
-- For bg screen transitions, `duration` is optional and uses the
-  std-transition effect defaults. If supplied, it must be a positive integer.
+- For bg background transitions, `duration` is optional and uses std-visual
+  effect defaults. If supplied, it must be a positive integer.
 - Custom transition names are not accepted by the current parser; they may be
   considered later with renderer, app, or plugin registration.
 - Compiler output stores `show` / `hide` / `clear` transition metadata as std
   visual command arguments.
-- Compiler output for `bg ... with <screenTransition>(...)` appends a
-  std-transition event command and then updates std-visual background state.
+- Compiler output for `bg ... with <backgroundTransition>(...)` stores
+  transition metadata on the std-visual `bg` command.
 - The std visual plugin stores std-visual transition metadata on surviving
   background and sprite state objects.
 - `hide`, `clear sprites`, and `clear bg` accept transition metadata, but do not
@@ -1663,25 +1655,19 @@ EffectTarget
 
 ---
 
-## 24.6 Screen Transition Statements
+## 24.6 Background Transition Statements
 
-Screen transition statements are sugar for
-`@tsuzuru/plugin-std-transition`.
+Background transition statements are std-visual `bg ... with ...` sugar.
+Tsuzuru does not support a standalone `transition ...` statement, a separate
+std-transition plugin, or a GSAP dependency in the standard stack.
 
-Screen transitions are one-shot events for the whole screen surface. They are
-not background or sprite state, and they do not block runtime stepping. Use
-`wait` when scenario timing needs to line up with the transition duration.
+Background transitions are metadata on durable background state. They do not
+block runtime stepping. Use `wait` when scenario timing needs to line up with
+the transition duration.
 
 ### 24.6.1 Syntax
 
 ```txt
-transition fade([duration=<ms>], [color="<color>"])
-transition wipe([direction="<direction>"], [duration=<ms>])
-transition flash([color="<color>"], [duration=<ms>])
-transition pageTurn([direction="<direction>"], [duration=<ms>])
-transition blurFade([duration=<ms>], [color="<color>"])
-transition slide([direction="<direction>"], [duration=<ms>])
-
 bg <assetRef> with fade(...)
 bg <assetRef> with pageTurn(...)
 bg <assetRef> with blurFade(...)
@@ -1691,14 +1677,8 @@ bg <assetRef> with slide(...)
 ### 24.6.2 Examples
 
 ```txt
-transition fade(duration=500)
+bg library with fade(duration=500)
 wait 500
-
-transition wipe(direction="left", duration=600)
-wait 600
-
-transition flash(color="#ffffff", duration=180)
-wait 180
 
 bg library with pageTurn(direction="left", duration=800)
 wait 800
@@ -1709,39 +1689,43 @@ wait 700
 
 ### 24.6.3 Rules
 
-- Effect is `fade`, `wipe`, `flash`, `pageTurn`, `blurFade`, or `slide`.
+- Effect is `fade`, `pageTurn`, `blurFade`, or `slide`.
 - `duration` is optional, uses milliseconds, and must be a positive integer.
-- Default duration is `400` for `fade`, `500` for `wipe`, `180` for `flash`,
-  `800` for `pageTurn`, `700` for `blurFade`, and `600` for `slide`.
-- `wipe`, `pageTurn`, and `slide` direction is optional and defaults to
-  `"left"`.
+- Default duration is `500` for `fade`, `800` for `pageTurn`, `700` for
+  `blurFade`, and `650` for `slide`.
+- `pageTurn` and `slide` direction is optional and defaults to `"left"`.
 - Direction is `"left" | "right" | "up" | "down"`.
+- `pageTurn` direction is limited to `"left" | "right"`.
 - `fade color` defaults to `"#000000"`.
-- `wipe color` defaults to `"#000000"`.
-- `flash color` defaults to `"#ffffff"`.
 - `pageTurn color` defaults to `"#ffffff"`.
 - `blurFade color` defaults to `"#000000"`.
 - `slide color` defaults to `"#000000"`.
 - Extra named arguments are rejected.
 - Runtime blocking is intentionally not part of transition execution.
-- `bg ... with <screenTransition>(...)` appends the transition event and then
-  updates std-visual background state.
+- `bg ... with <backgroundTransition>(...)` updates std-visual background
+  state with transition metadata.
 
 ### 24.6.4 Runtime Model
 
-The std-transition plugin stores events under
-`runtimeState.plugins.stdTransition`:
+The std-visual plugin stores background transition metadata under
+`runtimeState.plugins.stdVisual.background.transition`:
 
 ```ts
 {
-  events: StdTransitionEvent[],
-  nextSequence: number,
+  background: {
+    assetId: string,
+    transition?: {
+      effect: "fade" | "pageTurn" | "blurFade" | "slide",
+      durationMs: number,
+      direction?: "left" | "right" | "up" | "down",
+      color?: string,
+    },
+  },
 }
 ```
 
-Each command appends an event using `nextSequence`, then increments
-`nextSequence`. Snapshot preparation clears `events` and preserves
-`nextSequence` so load / restore does not replay old transitions.
+Snapshots preserve std-visual state as durable state. Renderers should avoid
+replaying a transition merely because a snapshot was restored.
 
 ---
 

@@ -74,7 +74,6 @@ export type TzrSceneStatement =
   | TzrTextSoundStatement
   | TzrStopTextSoundStatement
   | TzrStdEffectStatement
-  | TzrStdTransitionStatement
   | TzrStdCameraStatement
   | TzrStdParticleStatement
   | TzrJumpStatement
@@ -281,7 +280,7 @@ export interface TzrVisualCoordinatePlacement {
   readonly loc: SourceRange;
 }
 
-export type TzrVisualTransitionName = "fade" | "dissolve" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
+export type TzrVisualTransitionName = "fade" | "dissolve" | "pageTurn" | "blurFade" | "slide";
 
 export interface TzrVisualTransition {
   readonly type: "VisualTransition";
@@ -332,16 +331,6 @@ export interface TzrStdEffectStatement {
   readonly type: "StdEffectStatement";
   readonly name: TzrStdEffectCommandName;
   readonly args: readonly TzrArgument[];
-  readonly loc: SourceRange;
-}
-
-export type TzrStdTransitionEffect = "fade" | "wipe" | "flash" | "pageTurn" | "blurFade" | "slide";
-
-export interface TzrStdTransitionStatement {
-  readonly type: "StdTransitionStatement";
-  readonly effect: TzrStdTransitionEffect;
-  readonly effectLoc: SourceRange;
-  readonly args: readonly TzrNamedArgument[];
   readonly loc: SourceRange;
 }
 

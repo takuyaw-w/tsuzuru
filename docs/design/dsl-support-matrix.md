@@ -115,10 +115,10 @@ this matrix instead of defining a separate supported syntax.
 | `clear bg` | std-visual sugar | yes | command | plugin handler | std-visual | yes | yes | yes | `plugin-dependent` | Clears background state. |
 | `show/hide/clear ... with fade(duration=...)` | std-visual transition | yes | command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Renderer owns actual animation. |
 | `with dissolve(duration=...)` | std-visual transition | yes | command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Renderer owns actual animation. |
-| `bg ... with fade(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
-| `bg ... with pageTurn(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Page-turn style location transition; use `wait` for strict timing. |
-| `bg ... with blurFade(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
-| `bg ... with slide(...)` | std-transition sugar | yes | transition command + bg command | plugin handler | std-transition + std-visual | yes | yes | yes | `plugin-dependent` | Screen transition event plus durable background state update. |
+| `bg ... with fade(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
+| `bg ... with pageTurn(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Page-turn style background update metadata; use `wait` for strict timing. |
+| `bg ... with blurFade(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
+| `bg ... with slide(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
 | `bgm asset` | std-audio sugar | yes | `startBgm` command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Durable BGM state. |
 | `stopBgm` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Clears durable BGM state. |
 | `se asset` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | One-shot event; save-ready snapshots clear events through plugin helper. |
@@ -131,12 +131,7 @@ this matrix instead of defining a separate supported syntax.
 | `flash ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
 | `pulse ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
 | `blur ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
-| `transition fade(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
-| `transition wipe(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; default direction is `"left"`. |
-| `transition flash(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
-| `transition pageTurn(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot page-turn screen transition event; default direction is `"left"`. |
-| `transition blurFade(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot blur/fade screen transition event. |
-| `transition slide(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot slide screen transition event; default direction is `"left"`. |
+| `transition fade(...)` | standalone transition | no | no | no | none | no | no | yes | `unsupported` | Standalone screen transition statements are not part of the current DSL. |
 | `camera x=... y=... zoom=...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable camera state. |
 | `camera focus asset ...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable focus target state; renderer resolves coordinates. |
 | `reset camera` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Resets durable camera state. |

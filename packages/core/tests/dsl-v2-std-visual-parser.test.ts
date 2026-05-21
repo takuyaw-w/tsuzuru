@@ -159,10 +159,6 @@ describe("parseTzr std visual sugar statements", () => {
         transition: { type: "VisualTransition", name: "slide", duration: 650 },
       },
     );
-    expect(parseSingleStatement("scene start:\n  bg classroom with dissolve(duration=250)\n")).toMatchObject({
-      type: "BgStatement",
-      transition: { type: "VisualTransition", name: "dissolve", duration: 250 },
-    });
     expect(parseSingleStatement("scene start:\n  show alice_smile at center with fade(duration=300)\n")).toMatchObject({
       type: "ShowStatement",
       transition: { type: "VisualTransition", name: "fade", duration: 300 },
@@ -258,6 +254,9 @@ describe("parseTzr std visual sugar statements", () => {
     );
     expect(expectVisualFailure("scene start:\n  bg classroom with zoom(duration=300)\n")).toContain(
       'Unknown visual transition "zoom".',
+    );
+    expect(expectVisualFailure("scene start:\n  bg classroom with dissolve(duration=250)\n")).toContain(
+      'Unknown visual transition "dissolve".',
     );
     expect(expectVisualFailure("scene start:\n  bg classroom with fade\n")).toContain(
       "Visual transition must include parentheses.",

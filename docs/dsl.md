@@ -68,11 +68,9 @@ The currently implemented runnable subset covers:
 - `if` / `elif` / `else`
 - `set` and `add`
 - `wait 1000` timed waits in milliseconds
-- std visual sugar: `bg`, `show`, `hide`, `clear bg`, `clear sprites`
+- std visual sugar: `bg`, `bg ... with fade/pageTurn/blurFade/slide(...)`,
+  `show`, `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
-- std transition sugar: `transition fade(...)`, `transition wipe(...)`,
-  `transition flash(...)`, `transition pageTurn(...)`,
-  `transition blurFade(...)`, `transition slide(...)`
 - std effect, camera, particle, text sound, and system plugin commands in the
   ranges listed by the support matrix
 - `end`
@@ -118,12 +116,13 @@ timers; hosts clear the wait after their own timer completes.
 Visual transitions on `show`, `hide`, and `clear` compile to
 renderer-independent std-visual metadata. Core and std-visual do not run DOM,
 CSS, or timer animations for those transitions.
-Screen transitions such as `transition fade(duration=500)` and
+Background transitions such as
 `bg station with pageTurn(direction="left", duration=800)` compile to
-std-transition one-shot events. For `bg ... with ...`, the compiler appends a
-screen transition event and then updates std-visual background state. They do
-not block runtime stepping; use `wait 500` when scenario timing must match the
-transition duration.
+std-visual background update metadata. They are not screen-wide one-shot
+events, do not require a separate std-transition plugin, and do not use GSAP.
+They do not block runtime stepping; use `wait 800` when scenario timing must
+match the transition duration. Standalone `transition fade(...)` statements are
+not supported.
 For v1.0 planning, stable std-visual sprite placement is preset-only:
 `show asset at left`, `show asset at center`, and `show asset at right`.
 Coordinate placement such as `show asset at x=320 y=80` is parser-level future

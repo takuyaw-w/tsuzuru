@@ -57,7 +57,6 @@ const files = [
   "packages/plugin-std-audio/package.json",
   "packages/plugin-std-text-sound/package.json",
   "packages/plugin-std-effect/package.json",
-  "packages/plugin-std-transition/package.json",
   "packages/plugin-std-camera/package.json",
   "packages/plugin-std-particle/package.json",
   "packages/plugin-std-system/package.json",

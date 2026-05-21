@@ -144,7 +144,7 @@ scene effect_choice_after:
     "別の effect を試す" id=tryAnotherEffect:
       jump effect_choice
 
-    "screen transition を試す" id=tryTransition:
+    "背景切り替えを試す" id=tryTransition:
       jump transition_demo
 
     "Text Sound Lab に戻る" id=returnToLab:
@@ -152,34 +152,36 @@ scene effect_choice_after:
 
 scene transition_demo:
   narration:
-    まずは教室です。
+    教室から始めます。
 
-  bg classroom with fade(duration=500)
-  wait 500
+  bg classroom
 
   narration:
-    次はページめくり風に、図書室へ移動します。
+    ページをめくるように図書室へ移動します。
 
   bg library with pageTurn(direction="left", duration=800)
   wait 800
 
   narration:
-    駅前へ移動します。
-
-  bg station with slide(direction="left", duration=650)
-  wait 650
-
-  narration:
-    回想のように、屋上へ切り替えます。
+    ぼんやりと屋上へ切り替わります。
 
   bg rooftop with blurFade(duration=700)
   wait 700
 
   narration:
-    最後に廊下へ移動します。
+    階段を上がるように廊下へ移動します。
 
-  bg hallway with pageTurn(direction="right", duration=800)
-  wait 800
+  bg hallway with slide(direction="up", duration=650)
+  wait 650
+
+  narration:
+    最後は暗転で駅前へ移動します。
+
+  bg station with fade(duration=500)
+  wait 500
+
+  narration:
+    背景切り替え demo はここまでです。
 
   jump camera_choice
 

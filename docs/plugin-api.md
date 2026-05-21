@@ -139,16 +139,15 @@ const compiled = compileTzr(document, {
   plugins: [
     createStdVisualPlugin(),
     createStdAudioPlugin(),
-    createStdTransitionPlugin(),
     createStdSystemPlugin(),
   ],
 });
 ```
 
 Passing metadata enables compile-time validation for emitted plugin commands. If
-no plugin metadata is passed, current std visual/audio/text-sound/effect/
-transition/camera DSL sugar remains compatible and is compiled without plugin
-command metadata validation. `call system.*(...)` commands require std-system
+no plugin metadata is passed, current std visual/audio/text-sound/effect/camera
+DSL sugar remains compatible and is compiled without plugin command metadata
+validation. `call system.*(...)` commands require std-system
 metadata because generic `call` is only compile-supported through plugin
 command registration.
 
@@ -243,13 +242,13 @@ greater than or equal to `0`. The std visual plugin stores transition metadata
 on surviving state objects; actual animation timing and presentation remain UI
 or renderer responsibilities.
 
-Std transition DSL sugar compiles to the `transition` plugin command with a
-screen transition effect, normalized duration, and default color/direction
-arguments. This includes standalone `transition ...` statements and
-`bg ... with <screenTransition>(...)`, where the compiler appends the
-transition command and then updates std-visual background state. Runtime
-execution appends a one-shot transition event and does not block scenario
-stepping; strict timing should use `wait`.
+Background transition DSL sugar belongs to std-visual. `bg ... with
+fade/pageTurn/blurFade/slide(...)` compiles to a std-visual `bg` command with
+normalized background transition metadata (`transition`, `duration`,
+`direction`, and `color` where applicable). Runtime execution updates durable
+background state and does not block scenario stepping; strict timing should use
+`wait`. There is no standalone `transition ...` statement or std-transition
+plugin in the standard stack.
 
 Broader call/return runtime semantics remain deferred.
 

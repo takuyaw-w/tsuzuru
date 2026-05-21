@@ -662,6 +662,17 @@ button {
   font-size: clamp(1.4rem, 6vw, 3.6rem);
   font-weight: 700;
   text-transform: uppercase;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: opacity, transform, filter, clip-path;
+}
+
+.visual-layer__background--current {
+  z-index: 0;
+}
+
+.visual-layer__background--previous {
+  z-index: 1;
 }
 
 .visual-layer__background--empty {
@@ -736,12 +747,59 @@ button {
   font-weight: 600;
 }
 
-.visual-layer__background--transition-fade {
-  animation: visual-layer-fade-in var(--tzr-visual-transition-duration, 240ms) ease-out both;
+.visual-layer__background--transition-incoming.visual-layer__background--transition-fade {
+  animation: visual-layer-bg-fade-in var(--tzr-visual-transition-duration, 500ms) ease-out both;
 }
 
-.visual-layer__background--transition-dissolve {
-  animation: visual-layer-dissolve-in var(--tzr-visual-transition-duration, 280ms) ease-out both;
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-fade {
+  animation: visual-layer-bg-fade-out var(--tzr-visual-transition-duration, 500ms) ease-out both;
+}
+
+.visual-layer__background--transition-incoming.visual-layer__background--transition-blurFade {
+  animation: visual-layer-bg-blur-fade-in var(--tzr-visual-transition-duration, 700ms) ease-out both;
+}
+
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-blurFade {
+  animation: visual-layer-bg-blur-fade-out var(--tzr-visual-transition-duration, 700ms) ease-out both;
+}
+
+.visual-layer__background--transition-incoming.visual-layer__background--transition-slide {
+  animation: visual-layer-bg-slide-in var(--tzr-visual-transition-duration, 650ms) ease-out both;
+}
+
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-slide {
+  animation: visual-layer-bg-slide-out var(--tzr-visual-transition-duration, 650ms) ease-out both;
+}
+
+.visual-layer__background--transition-pageTurn {
+  transform-origin: var(--tzr-bg-turn-origin, left center);
+}
+
+.visual-layer__background--transition-incoming.visual-layer__background--transition-pageTurn {
+  animation: visual-layer-bg-page-in var(--tzr-visual-transition-duration, 800ms) ease-out both;
+}
+
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-pageTurn {
+  animation: visual-layer-bg-page-out var(--tzr-visual-transition-duration, 800ms) ease-in both;
+}
+
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-pageTurn.visual-layer__background--direction-right {
+  animation-name: visual-layer-bg-page-out-right;
+}
+
+.visual-layer__background--transition-pageTurn::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--tzr-bg-transition-color, #ffffff) 62%, transparent)),
+    linear-gradient(90deg, transparent 0 46%, rgba(0, 0, 0, 0.24));
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.visual-layer__background--transition-outgoing.visual-layer__background--transition-pageTurn::after {
+  animation: visual-layer-bg-page-overlay var(--tzr-visual-transition-duration, 800ms) ease-out both;
 }
 
 .visual-layer__sprites {
@@ -1057,6 +1115,124 @@ button {
   }
 }
 
+@keyframes visual-layer-bg-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes visual-layer-bg-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes visual-layer-bg-blur-fade-in {
+  from {
+    opacity: 0;
+    filter: blur(18px) saturate(0.72);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes visual-layer-bg-blur-fade-out {
+  from {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(16px) saturate(0.8);
+  }
+}
+
+@keyframes visual-layer-bg-slide-in {
+  from {
+    transform: translate3d(calc(var(--tzr-bg-slide-x, -100%) * -1), calc(var(--tzr-bg-slide-y, 0) * -1), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes visual-layer-bg-slide-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(var(--tzr-bg-slide-x, -100%), var(--tzr-bg-slide-y, 0), 0);
+  }
+}
+
+@keyframes visual-layer-bg-page-in {
+  from {
+    filter: brightness(0.92);
+  }
+
+  to {
+    filter: brightness(1);
+  }
+}
+
+@keyframes visual-layer-bg-page-out {
+  from {
+    clip-path: inset(0 0 0 0);
+    transform: perspective(900px) rotateY(0deg);
+    filter: brightness(1);
+  }
+
+  to {
+    clip-path: inset(0 100% 0 0);
+    transform: perspective(900px) rotateY(-14deg);
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes visual-layer-bg-page-out-right {
+  from {
+    clip-path: inset(0 0 0 0);
+    transform: perspective(900px) rotateY(0deg);
+    filter: brightness(1);
+  }
+
+  to {
+    clip-path: inset(0 0 0 100%);
+    transform: perspective(900px) rotateY(14deg);
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes visual-layer-bg-page-overlay {
+  0% {
+    opacity: 0;
+    transform: translateX(-20%);
+  }
+
+  42% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(28%);
+  }
+}
+
 @keyframes particle-rain-fall {
   from {
     transform: translate3d(0, -24vh, 0) rotate(12deg);
@@ -1241,7 +1417,9 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .visual-layer__background--transition-fade,
-  .visual-layer__background--transition-dissolve,
+  .visual-layer__background--transition-pageTurn,
+  .visual-layer__background--transition-blurFade,
+  .visual-layer__background--transition-slide,
   .visual-layer__sprite--transition-fade,
   .visual-layer__sprite--transition-dissolve,
   .visual-layer__camera,

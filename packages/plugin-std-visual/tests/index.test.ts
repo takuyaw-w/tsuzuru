@@ -58,15 +58,27 @@ describe("std-visual commands", () => {
             name: "transition",
             type: "string",
             optional: true,
-            values: ["fade", "dissolve"],
-            requiredWith: ["duration"],
+            values: ["fade", "pageTurn", "blurFade", "slide"],
           },
           {
             name: "duration",
             type: "number",
             optional: true,
             integer: true,
-            min: 0,
+            min: 1,
+            requiredWith: ["transition"],
+          },
+          {
+            name: "direction",
+            type: "string",
+            optional: true,
+            values: ["left", "right", "up", "down"],
+            requiredWith: ["transition"],
+          },
+          {
+            name: "color",
+            type: "string",
+            optional: true,
             requiredWith: ["transition"],
           },
         ],
@@ -180,12 +192,28 @@ describe("std-visual commands", () => {
 
   it("stores transition metadata on backgrounds", () => {
     const result = runStdVisualCommands(
-      command("bg", [positionalString("classroom"), namedString("transition", "fade"), namedNumber("duration", 300)]),
+      command("bg", [
+        positionalString("classroom"),
+        namedString("transition", "pageTurn"),
+        namedNumber("duration", 800),
+        namedString("direction", "right"),
+      ]),
     );
 
     expect(getStdVisualState(result.state).background).toEqual({
       assetId: "classroom",
-      transition: { type: "fade", durationMs: 300 },
+      transition: { effect: "pageTurn", durationMs: 800, direction: "right", color: "#ffffff" },
+    });
+  });
+
+  it("applies background transition defaults", () => {
+    const result = runStdVisualCommands(
+      command("bg", [positionalString("library"), namedString("transition", "fade")]),
+    );
+
+    expect(getStdVisualState(result.state).background).toEqual({
+      assetId: "library",
+      transition: { effect: "fade", durationMs: 500, color: "#000000" },
     });
   });
 
@@ -318,7 +346,16 @@ describe("std-visual commands", () => {
       runStdVisualCommands(command("show", [positionalString("alice"), namedString("position", "top")])),
     ).toThrow("Invalid @show runtime arguments. Expected validated std visual command arguments.");
     expect(() =>
-      runStdVisualCommands(command("bg", [positionalString("classroom"), namedString("transition", "fade")])),
+      runStdVisualCommands(command("bg", [positionalString("classroom"), namedString("transition", "dissolve")])),
+    ).toThrow("Invalid @bg runtime arguments. Expected validated std visual command arguments.");
+    expect(() =>
+      runStdVisualCommands(
+        command("bg", [
+          positionalString("classroom"),
+          namedString("transition", "pageTurn"),
+          namedString("direction", "up"),
+        ]),
+      ),
     ).toThrow("Invalid @bg runtime arguments. Expected validated std visual command arguments.");
   });
 });

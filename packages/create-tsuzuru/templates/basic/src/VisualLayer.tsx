@@ -12,18 +12,15 @@ export function VisualLayer({ runtimeState }: VisualLayerProps) {
   const visualState = getStdVisualState(runtimeState);
   const background = visualState.background;
   const sprites = Object.entries(visualState.sprites);
-  const backgroundTransition = toTransitionPresentation("visual-layer__background", background?.transition);
 
   return (
     <div className="visual-layer" aria-label="std-visual placeholder layer">
       <div
-        key={background === null ? "empty" : transitionKey(background.assetId, background.transition)}
+        key={background === null ? "empty" : background.assetId}
         className={joinClassNames(
           "visual-layer__background",
           background === null ? "visual-layer__background--empty" : undefined,
-          backgroundTransition.className,
         )}
-        style={backgroundTransition.style}
       >
         {background === null ? null : <span>{background.assetId}</span>}
       </div>

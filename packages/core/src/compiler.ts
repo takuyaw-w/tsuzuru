@@ -43,8 +43,6 @@ import type {
   TzrStdCameraStatement,
   TzrStdEffectStatement,
   TzrStdParticleStatement,
-  TzrStdTransitionEffect,
-  TzrStdTransitionStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrTextBlockItem,
@@ -62,6 +60,10 @@ const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 const STD_EFFECT_HEX_COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 const STD_TRANSITION_DIRECTIONS = ["left", "right", "up", "down"] as const;
+type StdVisualBackgroundTransitionEffect = Extract<
+  TzrVisualTransition["name"],
+  "fade" | "pageTurn" | "blurFade" | "slide"
+>;
 
 export interface TzrCompilePluginDefinition {
   readonly name: string;
@@ -446,9 +448,6 @@ class TzrCompiler {
         case "StdEffectStatement":
           instructions.push(...this.buildStdEffectInstruction(statement));
           break;
-        case "StdTransitionStatement":
-          instructions.push(...this.buildStdTransitionInstruction(statement));
-          break;
         case "StdCameraStatement":
           instructions.push(...this.buildStdCameraInstruction(statement));
           break;
@@ -684,43 +683,24 @@ class TzrCompiler {
   }
 
   private buildBgInstruction(statement: TzrBgStatement): readonly CommandInstruction[] {
-    const bgInstruction = {
-      type: "CommandInstruction",
-      name: "bg",
-      args: [
-        this.positionalArgument(
-          this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
-          statement.assetRef.loc,
-        ),
-        ...this.visualTransitionArguments(
-          this.isScreenTransition(statement.transition) ? undefined : statement.transition,
-        ),
-      ],
-      loc: statement.loc,
-    } satisfies CommandInstruction;
-
-    if (!this.isScreenTransition(statement.transition)) {
-      return [bgInstruction];
-    }
-
-    const transitionArgs = this.buildStdTransitionCommandArguments(
-      statement.transition.name,
-      statement.transition.nameLoc,
-      statement.transition.args,
-      statement.transition.loc,
-    );
+    const transitionArgs = this.backgroundTransitionArguments(statement.transition);
     if (transitionArgs === undefined) {
-      return [bgInstruction];
+      return [];
     }
 
     return [
       {
         type: "CommandInstruction",
-        name: "transition",
-        args: transitionArgs,
-        loc: statement.transition.loc,
+        name: "bg",
+        args: [
+          this.positionalArgument(
+            this.stringValue(this.visualAssetRefValue(statement.assetRef), statement.assetRef.loc),
+            statement.assetRef.loc,
+          ),
+          ...transitionArgs,
+        ],
+        loc: statement.loc,
       },
-      bgInstruction,
     ];
   }
 
@@ -790,6 +770,24 @@ class TzrCompiler {
         transition.loc,
       ),
     ];
+  }
+
+  private backgroundTransitionArguments(
+    transition: TzrVisualTransition | undefined,
+  ): readonly TzrArgument[] | undefined {
+    if (transition === undefined) {
+      return [];
+    }
+    if (!isBackgroundTransitionEffect(transition.name)) {
+      this.addError(transition.nameLoc.start, `Unknown visual transition "${transition.name}".`);
+      return undefined;
+    }
+    return this.buildBackgroundTransitionCommandArguments(
+      transition.name,
+      transition.nameLoc,
+      transition.args,
+      transition.loc,
+    );
   }
 
   private visualAssetRefValue(assetRef: TzrVisualAssetRef): string {
@@ -883,27 +881,6 @@ class TzrCompiler {
     ];
   }
 
-  private buildStdTransitionInstruction(statement: TzrStdTransitionStatement): readonly CommandInstruction[] {
-    const args = this.buildStdTransitionCommandArguments(
-      statement.effect,
-      statement.effectLoc,
-      statement.args,
-      statement.loc,
-    );
-    if (args === undefined) {
-      return [];
-    }
-
-    return [
-      {
-        type: "CommandInstruction",
-        name: "transition",
-        args,
-        loc: statement.loc,
-      },
-    ];
-  }
-
   private buildStdCameraInstruction(statement: TzrStdCameraStatement): readonly CommandInstruction[] {
     this.validateStdCameraSugar(statement);
 
@@ -943,20 +920,14 @@ class TzrCompiler {
     }
   }
 
-  private isScreenTransition(transition: TzrVisualTransition | undefined): transition is TzrVisualTransition & {
-    readonly name: TzrStdTransitionEffect;
-  } {
-    return transition !== undefined && isStdTransitionEffect(transition.name);
-  }
-
-  private buildStdTransitionCommandArguments(
-    effect: TzrStdTransitionEffect,
+  private buildBackgroundTransitionCommandArguments(
+    effect: StdVisualBackgroundTransitionEffect,
     effectLoc: SourceRange,
     args: readonly TzrNamedArgument[],
     loc: SourceRange,
   ): readonly TzrArgument[] | undefined {
     let ok = true;
-    let durationMs = defaultStdTransitionDuration(effect);
+    let durationMs = defaultBackgroundTransitionDuration(effect);
     let direction: (typeof STD_TRANSITION_DIRECTIONS)[number] | undefined;
     let color: string | undefined;
     const seen = new Set<string>();
@@ -979,8 +950,8 @@ class TzrCompiler {
           durationMs = arg.value.value;
           break;
         case "direction":
-          if (arg.value.type !== "StringValue" || !isStdTransitionDirection(arg.value.value)) {
-            this.addError(arg.value.loc.start, 'transition direction must be "left", "right", "up", or "down".');
+          if (arg.value.type !== "StringValue" || !isBackgroundTransitionDirection(effect, arg.value.value)) {
+            this.addError(arg.value.loc.start, backgroundTransitionDirectionError(effect));
             ok = false;
             continue;
           }
@@ -1006,16 +977,16 @@ class TzrCompiler {
     }
 
     const normalized: TzrArgument[] = [
-      this.positionalArgument(this.stringValue(effect, effectLoc), effectLoc),
+      this.namedArgument("transition", this.stringValue(effect, effectLoc), effectLoc),
       this.namedArgument("duration", { type: "NumberValue", value: durationMs, loc }, loc),
     ];
 
-    const normalizedDirection = usesStdTransitionDirection(effect) ? (direction ?? "left") : direction;
+    const normalizedDirection = usesBackgroundTransitionDirection(effect) ? (direction ?? "left") : direction;
     if (normalizedDirection !== undefined) {
       normalized.push(this.namedArgument("direction", this.stringValue(normalizedDirection, loc), loc));
     }
 
-    const normalizedColor = color ?? defaultStdTransitionColor(effect);
+    const normalizedColor = color ?? defaultBackgroundTransitionColor(effect);
     if (normalizedColor !== undefined) {
       normalized.push(this.namedArgument("color", this.stringValue(normalizedColor, loc), loc));
     }
@@ -1285,53 +1256,53 @@ function hasAnyNamedArgument(args: readonly TzrArgument[], names: readonly strin
   return names.some((name) => findNamedArgument(args, name) !== undefined);
 }
 
-function defaultStdTransitionColor(effect: TzrStdTransitionEffect): string | undefined {
+function defaultBackgroundTransitionColor(effect: StdVisualBackgroundTransitionEffect): string | undefined {
   switch (effect) {
     case "fade":
-    case "wipe":
     case "blurFade":
     case "slide":
       return "#000000";
-    case "flash":
     case "pageTurn":
       return "#ffffff";
   }
 }
 
-function defaultStdTransitionDuration(effect: TzrStdTransitionEffect): number {
+function defaultBackgroundTransitionDuration(effect: StdVisualBackgroundTransitionEffect): number {
   switch (effect) {
     case "fade":
-      return 400;
-    case "wipe":
       return 500;
-    case "flash":
-      return 180;
     case "pageTurn":
       return 800;
     case "blurFade":
       return 700;
     case "slide":
-      return 600;
+      return 650;
   }
 }
 
-function usesStdTransitionDirection(effect: TzrStdTransitionEffect): boolean {
-  return effect === "wipe" || effect === "pageTurn" || effect === "slide";
+function usesBackgroundTransitionDirection(effect: StdVisualBackgroundTransitionEffect): boolean {
+  return effect === "pageTurn" || effect === "slide";
 }
 
-function isStdTransitionEffect(value: string): value is TzrStdTransitionEffect {
-  return (
-    value === "fade" ||
-    value === "wipe" ||
-    value === "flash" ||
-    value === "pageTurn" ||
-    value === "blurFade" ||
-    value === "slide"
-  );
+function isBackgroundTransitionEffect(value: string): value is StdVisualBackgroundTransitionEffect {
+  return value === "fade" || value === "pageTurn" || value === "blurFade" || value === "slide";
 }
 
-function isStdTransitionDirection(value: string): value is (typeof STD_TRANSITION_DIRECTIONS)[number] {
-  return STD_TRANSITION_DIRECTIONS.includes(value as (typeof STD_TRANSITION_DIRECTIONS)[number]);
+function isBackgroundTransitionDirection(
+  effect: StdVisualBackgroundTransitionEffect,
+  value: string,
+): value is (typeof STD_TRANSITION_DIRECTIONS)[number] {
+  if (!STD_TRANSITION_DIRECTIONS.includes(value as (typeof STD_TRANSITION_DIRECTIONS)[number])) {
+    return false;
+  }
+  return effect !== "pageTurn" || value === "left" || value === "right";
+}
+
+function backgroundTransitionDirectionError(effect: StdVisualBackgroundTransitionEffect): string {
+  if (effect === "pageTurn") {
+    return 'pageTurn direction must be "left" or "right".';
+  }
+  return 'transition direction must be "left", "right", "up", or "down".';
 }
 
 function buildSceneIndexes(instructions: readonly TzrInstruction[]): Readonly<Record<string, DeclarationIndexEntry>> {
