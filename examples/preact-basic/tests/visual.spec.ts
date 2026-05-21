@@ -179,6 +179,7 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
   const messageWindow = page.locator(".tzr-message-window");
   const choiceLayer = page.locator(".tzr-choice-layer");
   const visualLayer = page.locator(".visual-layer");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
   await expectViewportAspectRatio(page);
@@ -191,11 +192,24 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
   await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 4);
   await choiceLayer.getByRole("button", { name: "背景切り替えを試す" }).click();
 
-  await expect(messageWindow).toContainText("教室から始めます。", { timeout: 3000 });
-  await advanceAndExpectBackground(page, messageWindow, "classroom", "ページをめくるように");
-  await advanceAndExpectBackground(page, messageWindow, "library", "ぼんやりと屋上へ");
-  await advanceAndExpectBackground(page, messageWindow, "rooftop", "階段を上がるように");
-  await advanceAndExpectBackground(page, messageWindow, "hallway", "最後は暗転で駅前へ");
+  await expect(messageWindow).toContainText("放課後の教室から", { timeout: 3000 });
+  await advanceAndExpectBackground(page, messageWindow, "classroom", "まずは暗転で廊下へ");
+  await advanceAndExpectBackground(page, messageWindow, "hallway", "左から景色が流れて");
+  await advanceAndExpectBackground(page, messageWindow, "library", "右へ抜けるように");
+  await expect(page.locator(".visual-layer__background--previous")).toHaveCount(0, { timeout: 1000 });
+  await runtimeMenu.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save Slot 1" }).click();
+  await expectSavedBackgroundTransition(page, "library", "wipeLeft");
+
+  await advanceAndExpectBackground(page, messageWindow, "rooftop", "最後は駅前で");
+  await runtimeMenu.getByRole("button", { name: "Load" }).click();
+  await page.getByRole("button", { name: "Load Slot 1" }).click();
+  await expectBackgroundAsset(page, "library");
+  await expect(page.locator(".visual-layer__background--previous")).toHaveCount(0);
+  await expect(page.locator(".visual-layer__background--current")).not.toHaveClass(/transition-/);
+  await expect(messageWindow).toContainText("右へ抜けるように", { timeout: 3000 });
+
+  await advanceAndExpectBackground(page, messageWindow, "rooftop", "最後は駅前で");
   await advanceAndExpectBackground(page, messageWindow, "station", "背景切り替え demo はここまで");
 
   await messageWindow.click();
@@ -468,6 +482,31 @@ async function expectBackgroundAsset(page: Page, assetId: string): Promise<void>
   );
 }
 
+async function expectSavedBackgroundTransition(page: Page, assetId: string, effect: string): Promise<void> {
+  const rawValue = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), SAVE_STORAGE_KEY);
+  expect(rawValue).not.toBeNull();
+
+  const parsed: unknown = JSON.parse(rawValue ?? "null");
+  if (!Array.isArray(parsed)) {
+    throw new Error("Expected preact-basic save storage to contain a slot array.");
+  }
+
+  const slot = getObjectRecord(parsed[0], "stored save slot");
+  const data = getObjectRecord(slot.data, "stored save slot data");
+  const runtime = getObjectRecord(data.runtime, "RuntimeSaveData");
+  const snapshot = getObjectRecord(runtime.snapshot, "RuntimeSaveData.snapshot");
+  const plugins = getObjectRecord(snapshot.plugins, "RuntimeSaveData.snapshot.plugins");
+  const stdVisual = getObjectRecord(plugins.stdVisual, "RuntimeSaveData.snapshot.plugins.stdVisual");
+  const background = getObjectRecord(stdVisual.background, "RuntimeSaveData.snapshot.plugins.stdVisual.background");
+  const transition = getObjectRecord(
+    background.transition,
+    "RuntimeSaveData.snapshot.plugins.stdVisual.background.transition",
+  );
+
+  expect(background.assetId).toBe(assetId);
+  expect(transition.effect).toBe(effect);
+}
+
 async function expectViewportAspectRatio(page: Page): Promise<void> {
   const box = await page.locator(".app__viewport").boundingBox();
   expect(box).not.toBeNull();
@@ -487,4 +526,11 @@ async function readCount(locator: Locator): Promise<number> {
   const textContent = await locator.textContent();
   const match = textContent?.match(/Read: (\d+)/);
   return match === null || match === undefined ? 0 : Number(match[1]);
+}
+
+function getObjectRecord(value: unknown, label: string): Readonly<Record<string, unknown>> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`Expected ${label} to be an object.`);
+  }
+  return value;
 }

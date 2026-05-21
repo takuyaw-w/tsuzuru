@@ -305,10 +305,10 @@ Animation and reduced-motion policy belong to the app, renderer, or example.
 ### Background Transitions
 
 Background transition metadata belongs to `@tsuzuru/plugin-std-visual`.
-`bg ... with fade/pageTurn/blurFade/slide(...)` compiles to a std-visual `bg`
-command with renderer-neutral background update metadata. There is no separate
-std-transition plugin, no standalone `transition` statement, and no GSAP
-dependency in the standard stack.
+`bg ... with fade/pageTurn/blurFade/slide/wipeLeft/wipeRight(...)` compiles to
+a std-visual `bg` command with renderer-neutral background update metadata.
+There is no separate std-transition plugin, no standalone `transition`
+statement, and no GSAP dependency in the standard stack.
 
 Strict scenario timing should combine `bg ... with ...` with the core `wait`
 statement. Animation execution remains renderer-owned.

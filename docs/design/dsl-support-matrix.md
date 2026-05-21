@@ -119,6 +119,8 @@ this matrix instead of defining a separate supported syntax.
 | `bg ... with pageTurn(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Page-turn style background update metadata; use `wait` for strict timing. |
 | `bg ... with blurFade(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
 | `bg ... with slide(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
+| `bg ... with wipeLeft(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
+| `bg ... with wipeRight(...)` | std-visual background transition | yes | bg command metadata | plugin state metadata | std-visual | yes | yes | yes | `plugin-dependent` | Background update metadata; use `wait` for strict timing. |
 | `bgm asset` | std-audio sugar | yes | `startBgm` command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Durable BGM state. |
 | `stopBgm` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | Clears durable BGM state. |
 | `se asset` | std-audio sugar | yes | command | plugin handler | std-audio | yes | yes | yes | `plugin-dependent` | One-shot event; save-ready snapshots clear events through plugin helper. |

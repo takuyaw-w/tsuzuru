@@ -24,15 +24,27 @@ export const stdVisualPluginCommands = {
         name: "transition",
         type: "string",
         optional: true,
-        values: ["fade", "dissolve"],
-        requiredWith: ["duration"],
+        values: ["fade", "pageTurn", "blurFade", "slide", "wipeLeft", "wipeRight"],
       },
       {
         name: "duration",
         type: "number",
         optional: true,
         integer: true,
-        min: 0,
+        min: 1,
+        requiredWith: ["transition"],
+      },
+      {
+        name: "direction",
+        type: "string",
+        optional: true,
+        values: ["left", "right", "up", "down"],
+        requiredWith: ["transition"],
+      },
+      {
+        name: "color",
+        type: "string",
+        optional: true,
         requiredWith: ["transition"],
       },
     ],
@@ -243,12 +255,12 @@ on surviving state objects; actual animation timing and presentation remain UI
 or renderer responsibilities.
 
 Background transition DSL sugar belongs to std-visual. `bg ... with
-fade/pageTurn/blurFade/slide(...)` compiles to a std-visual `bg` command with
-normalized background transition metadata (`transition`, `duration`,
-`direction`, and `color` where applicable). Runtime execution updates durable
-background state and does not block scenario stepping; strict timing should use
-`wait`. There is no standalone `transition ...` statement or std-transition
-plugin in the standard stack.
+fade/pageTurn/blurFade/slide/wipeLeft/wipeRight(...)` compiles to a std-visual
+`bg` command with normalized background transition metadata (`transition`,
+`duration`, `direction`, and `color` where applicable). Runtime execution
+updates durable background state and does not block scenario stepping; strict
+timing should use `wait`. There is no standalone `transition ...` statement or
+std-transition plugin in the standard stack.
 
 Broader call/return runtime semantics remain deferred.
 

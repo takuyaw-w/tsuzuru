@@ -3761,8 +3761,15 @@ function isEffectStatementSource(source: string): boolean {
 
 function isBackgroundTransitionEffect(
   value: string,
-): value is Extract<TzrVisualTransitionName, "fade" | "pageTurn" | "blurFade" | "slide"> {
-  return value === "fade" || value === "pageTurn" || value === "blurFade" || value === "slide";
+): value is Extract<TzrVisualTransitionName, "fade" | "pageTurn" | "blurFade" | "slide" | "wipeLeft" | "wipeRight"> {
+  return (
+    value === "fade" ||
+    value === "pageTurn" ||
+    value === "blurFade" ||
+    value === "slide" ||
+    value === "wipeLeft" ||
+    value === "wipeRight"
+  );
 }
 
 function isVisualTransitionNameAllowed(

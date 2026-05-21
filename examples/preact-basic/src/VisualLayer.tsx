@@ -16,13 +16,19 @@ type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
 
 interface VisualLayerProps {
   readonly runtimeState: RuntimeState;
+  readonly backgroundAnimationSuppression: BackgroundAnimationSuppression;
 }
 
-export function VisualLayer({ runtimeState }: VisualLayerProps) {
+interface BackgroundAnimationSuppression {
+  readonly key: number;
+  readonly assetId: string | null;
+}
+
+export function VisualLayer({ runtimeState, backgroundAnimationSuppression }: VisualLayerProps) {
   const visualState = getStdVisualState(runtimeState);
   const cameraState = getStdCameraState(runtimeState);
   const background = visualState.background;
-  const backgroundAnimation = useBackgroundAnimation(background);
+  const backgroundAnimation = useBackgroundAnimation(background, backgroundAnimationSuppression);
   const sprites = Object.entries(visualState.sprites);
   const cameraPresentation = toCameraPresentation(cameraState, visualState.sprites);
 
@@ -59,13 +65,19 @@ interface BackgroundAnimationState {
   readonly transition?: StdVisualBackgroundTransition;
 }
 
-function useBackgroundAnimation(background: StdVisualBackground | null): BackgroundAnimationState {
+function useBackgroundAnimation(
+  background: StdVisualBackground | null,
+  suppression: BackgroundAnimationSuppression,
+): BackgroundAnimationState {
   const previousBackground = useRef<StdVisualBackground | null>(background);
+  const consumedSuppressionKey = useRef(suppression.key);
   const timeoutRef = useRef<number | undefined>(undefined);
   const animationKey = useRef(0);
   const [animation, setAnimation] = useState<BackgroundAnimationState>({ key: 0, previous: null });
 
   useLayoutEffect(() => {
+    const shouldSuppressAnimation =
+      consumedSuppressionKey.current !== suppression.key && background?.assetId === suppression.assetId;
     const previous = previousBackground.current;
     previousBackground.current = background;
 
@@ -75,11 +87,15 @@ function useBackgroundAnimation(background: StdVisualBackground | null): Backgro
     }
 
     if (
+      shouldSuppressAnimation ||
       previous === null ||
       background === null ||
       previous.assetId === background.assetId ||
       !isRenderedBackgroundTransition(background.transition)
     ) {
+      if (shouldSuppressAnimation) {
+        consumedSuppressionKey.current = suppression.key;
+      }
       setAnimation({ key: animationKey.current, previous: null });
       return;
     }
@@ -98,7 +114,7 @@ function useBackgroundAnimation(background: StdVisualBackground | null): Backgro
         timeoutRef.current = undefined;
       }
     };
-  }, [background]);
+  }, [background, suppression]);
 
   return animation;
 }

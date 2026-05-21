@@ -68,8 +68,9 @@ The currently implemented runnable subset covers:
 - `if` / `elif` / `else`
 - `set` and `add`
 - `wait 1000` timed waits in milliseconds
-- std visual sugar: `bg`, `bg ... with fade/pageTurn/blurFade/slide(...)`,
-  `show`, `hide`, `clear bg`, `clear sprites`
+- std visual sugar: `bg`,
+  `bg ... with fade/pageTurn/blurFade/slide/wipeLeft/wipeRight(...)`, `show`,
+  `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
 - std effect, camera, particle, text sound, and system plugin commands in the
   ranges listed by the support matrix

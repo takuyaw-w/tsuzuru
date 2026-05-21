@@ -62,7 +62,7 @@ const STD_EFFECT_HEX_COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-F
 const STD_TRANSITION_DIRECTIONS = ["left", "right", "up", "down"] as const;
 type StdVisualBackgroundTransitionEffect = Extract<
   TzrVisualTransition["name"],
-  "fade" | "pageTurn" | "blurFade" | "slide"
+  "fade" | "pageTurn" | "blurFade" | "slide" | "wipeLeft" | "wipeRight"
 >;
 
 export interface TzrCompilePluginDefinition {
@@ -1261,6 +1261,8 @@ function defaultBackgroundTransitionColor(effect: StdVisualBackgroundTransitionE
     case "fade":
     case "blurFade":
     case "slide":
+    case "wipeLeft":
+    case "wipeRight":
       return "#000000";
     case "pageTurn":
       return "#ffffff";
@@ -1277,6 +1279,9 @@ function defaultBackgroundTransitionDuration(effect: StdVisualBackgroundTransiti
       return 700;
     case "slide":
       return 650;
+    case "wipeLeft":
+    case "wipeRight":
+      return 450;
   }
 }
 
@@ -1285,7 +1290,14 @@ function usesBackgroundTransitionDirection(effect: StdVisualBackgroundTransition
 }
 
 function isBackgroundTransitionEffect(value: string): value is StdVisualBackgroundTransitionEffect {
-  return value === "fade" || value === "pageTurn" || value === "blurFade" || value === "slide";
+  return (
+    value === "fade" ||
+    value === "pageTurn" ||
+    value === "blurFade" ||
+    value === "slide" ||
+    value === "wipeLeft" ||
+    value === "wipeRight"
+  );
 }
 
 function isBackgroundTransitionDirection(
@@ -1295,12 +1307,18 @@ function isBackgroundTransitionDirection(
   if (!STD_TRANSITION_DIRECTIONS.includes(value as (typeof STD_TRANSITION_DIRECTIONS)[number])) {
     return false;
   }
+  if (effect === "wipeLeft" || effect === "wipeRight") {
+    return false;
+  }
   return effect !== "pageTurn" || value === "left" || value === "right";
 }
 
 function backgroundTransitionDirectionError(effect: StdVisualBackgroundTransitionEffect): string {
   if (effect === "pageTurn") {
     return 'pageTurn direction must be "left" or "right".';
+  }
+  if (effect === "wipeLeft" || effect === "wipeRight") {
+    return `${effect} direction is not supported.`;
   }
   return 'transition direction must be "left", "right", "up", or "down".';
 }

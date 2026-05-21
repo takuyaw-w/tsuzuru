@@ -280,7 +280,14 @@ export interface TzrVisualCoordinatePlacement {
   readonly loc: SourceRange;
 }
 
-export type TzrVisualTransitionName = "fade" | "dissolve" | "pageTurn" | "blurFade" | "slide";
+export type TzrVisualTransitionName =
+  | "fade"
+  | "dissolve"
+  | "pageTurn"
+  | "blurFade"
+  | "slide"
+  | "wipeLeft"
+  | "wipeRight";
 
 export interface TzrVisualTransition {
   readonly type: "VisualTransition";

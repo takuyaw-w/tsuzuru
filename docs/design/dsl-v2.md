@@ -116,6 +116,8 @@ The following syntax is not Core. It is official standard plugin sugar.
   bg <assetRef> with pageTurn(...)
   bg <assetRef> with blurFade(...)
   bg <assetRef> with slide(...)
+  bg <assetRef> with wipeLeft(...)
+  bg <assetRef> with wipeRight(...)
 
 @tsuzuru/plugin-std-camera:
   camera
@@ -1338,6 +1340,8 @@ bg classroom with fade(duration=500)
 bg library with pageTurn(direction="left", duration=800)
 bg rooftop with blurFade(duration=700)
 bg hallway with slide(direction="right", duration=650)
+bg station with wipeLeft(duration=450)
+bg classroom with wipeRight(duration=450)
 show mio.normal at center with dissolve(duration=300)
 hide mio.normal with fade(duration=300)
 clear sprites with fade(duration=300)
@@ -1352,14 +1356,17 @@ dissolve(duration=<ms>)
 pageTurn(direction=<direction>, duration=<ms>)
 blurFade(duration=<ms>)
 slide(direction=<direction>, duration=<ms>)
+wipeLeft(duration=<ms>)
+wipeRight(duration=<ms>)
 ```
 
 Rules:
 
 - For `show`, `hide`, and `clear`, standard std-visual transition metadata is
   `fade` or `dissolve`.
-- For `bg`, `fade`, `pageTurn`, `blurFade`, and `slide` are background
-  transition metadata handled by `@tsuzuru/plugin-std-visual`.
+- For `bg`, `fade`, `pageTurn`, `blurFade`, `slide`, `wipeLeft`, and
+  `wipeRight` are background transition metadata handled by
+  `@tsuzuru/plugin-std-visual`.
 - For std-visual metadata, `duration` is required, uses ms, and must be an
   integer greater than or equal to `0`.
 - For bg background transitions, `duration` is optional and uses std-visual
@@ -1672,6 +1679,8 @@ bg <assetRef> with fade(...)
 bg <assetRef> with pageTurn(...)
 bg <assetRef> with blurFade(...)
 bg <assetRef> with slide(...)
+bg <assetRef> with wipeLeft(...)
+bg <assetRef> with wipeRight(...)
 ```
 
 ### 24.6.2 Examples
@@ -1685,21 +1694,27 @@ wait 800
 
 bg rooftop with blurFade(duration=700)
 wait 700
+
+bg station with wipeLeft(duration=450)
+wait 450
 ```
 
 ### 24.6.3 Rules
 
-- Effect is `fade`, `pageTurn`, `blurFade`, or `slide`.
+- Effect is `fade`, `pageTurn`, `blurFade`, `slide`, `wipeLeft`, or
+  `wipeRight`.
 - `duration` is optional, uses milliseconds, and must be a positive integer.
 - Default duration is `500` for `fade`, `800` for `pageTurn`, `700` for
-  `blurFade`, and `650` for `slide`.
+  `blurFade`, `650` for `slide`, and `450` for `wipeLeft` / `wipeRight`.
 - `pageTurn` and `slide` direction is optional and defaults to `"left"`.
 - Direction is `"left" | "right" | "up" | "down"`.
 - `pageTurn` direction is limited to `"left" | "right"`.
+- `wipeLeft` and `wipeRight` do not accept `direction`.
 - `fade color` defaults to `"#000000"`.
 - `pageTurn color` defaults to `"#ffffff"`.
 - `blurFade color` defaults to `"#000000"`.
 - `slide color` defaults to `"#000000"`.
+- `wipeLeft` and `wipeRight` color defaults to `"#000000"`.
 - Extra named arguments are rejected.
 - Runtime blocking is intentionally not part of transition execution.
 - `bg ... with <backgroundTransition>(...)` updates std-visual background
@@ -1715,7 +1730,7 @@ The std-visual plugin stores background transition metadata under
   background: {
     assetId: string,
     transition?: {
-      effect: "fade" | "pageTurn" | "blurFade" | "slide",
+      effect: "fade" | "pageTurn" | "blurFade" | "slide" | "wipeLeft" | "wipeRight",
       durationMs: number,
       direction?: "left" | "right" | "up" | "down",
       color?: string,

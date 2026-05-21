@@ -152,30 +152,30 @@ scene effect_choice_after:
 
 scene transition_demo:
   narration:
-    教室から始めます。
+    放課後の教室から、帰り道をたどります。
 
   bg classroom
 
   narration:
-    ページをめくるように図書室へ移動します。
+    まずは暗転で廊下へ出ます。
 
-  bg library with pageTurn(direction="left", duration=800)
-  wait 800
-
-  narration:
-    ぼんやりと屋上へ切り替わります。
-
-  bg rooftop with blurFade(duration=700)
-  wait 700
+  bg hallway with fade(duration=500)
+  wait 500
 
   narration:
-    階段を上がるように廊下へ移動します。
+    左から景色が流れて、図書室の前を通ります。
 
-  bg hallway with slide(direction="up", duration=650)
-  wait 650
+  bg library with wipeLeft(duration=450)
+  wait 450
 
   narration:
-    最後は暗転で駅前へ移動します。
+    右へ抜けるように階段を上がり、屋上へ寄ります。
+
+  bg rooftop with wipeRight(duration=450)
+  wait 450
+
+  narration:
+    最後は駅前で一息つきます。
 
   bg station with fade(duration=500)
   wait 500

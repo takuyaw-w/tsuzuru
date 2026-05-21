@@ -279,6 +279,10 @@ function RuntimeApp({
     autoStepTransientEvents: true,
   });
   const hasRestoredInitialSaveDataRef = useRef(false);
+  const [backgroundAnimationSuppression, setBackgroundAnimationSuppression] = useState({
+    key: 0,
+    assetId: null as string | null,
+  });
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
@@ -432,6 +436,10 @@ function RuntimeApp({
       if (slot === undefined) {
         return;
       }
+      setBackgroundAnimationSuppression((current) => ({
+        key: current.key + 1,
+        assetId: getRestoredBackgroundAssetId(slot.data),
+      }));
       runtime.restoreSaveData(slot.data.runtime);
       setLastMessageEvent(slot.data.retainedMessageEvent);
       setOverlay(null);
@@ -480,6 +488,10 @@ function RuntimeApp({
       return;
     }
     hasRestoredInitialSaveDataRef.current = true;
+    setBackgroundAnimationSuppression((current) => ({
+      key: current.key + 1,
+      assetId: getRestoredBackgroundAssetId(initialSaveData),
+    }));
     runtime.restoreSaveData(initialSaveData.runtime);
     setLastMessageEvent(initialSaveData.retainedMessageEvent);
   }, [initialSaveData, runtime]);
@@ -530,7 +542,7 @@ function RuntimeApp({
       <GameViewport aspectRatio="16:9" className="app__viewport" maxWidth="100vw">
         <GameShell className="app__shell">
           <div className="app__interaction-surface" onClick={handleViewportClick}>
-            <VisualLayer runtimeState={runtime.state} />
+            <VisualLayer runtimeState={runtime.state} backgroundAnimationSuppression={backgroundAnimationSuppression} />
             <ParticleLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <EffectLayer runtimeState={runtime.state} />
@@ -703,6 +715,24 @@ function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
     start = end + 1;
   }
   return ranges;
+}
+
+function getRestoredBackgroundAssetId(saveData: ExampleSaveData): string | null {
+  const stdVisual = saveData.runtime.snapshot.plugins.stdVisual;
+  if (!isObjectRecord(stdVisual)) {
+    return null;
+  }
+
+  const background = stdVisual.background;
+  if (!isObjectRecord(background)) {
+    return null;
+  }
+
+  return typeof background.assetId === "string" ? background.assetId : null;
+}
+
+function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }
 
 function useTextSoundPlayback(

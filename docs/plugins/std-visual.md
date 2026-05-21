@@ -53,7 +53,7 @@ state の形は次のとおりです。
   background: null | {
     assetId: string,
     transition?: {
-      effect: "cut" | "fade" | "pageTurn" | "blurFade" | "slide",
+      effect: "cut" | "fade" | "pageTurn" | "blurFade" | "slide" | "wipeLeft" | "wipeRight",
       durationMs: number,
       direction?: "left" | "right" | "up" | "down",
       color?: string
@@ -115,6 +115,8 @@ bg library with fade(duration=500)
 bg station with pageTurn(direction="left", duration=800)
 bg rooftop with blurFade(duration=700)
 bg hallway with slide(direction="up", duration=650)
+bg library with wipeLeft(duration=450)
+bg classroom with wipeRight(duration=450)
 ```
 
 `assetId` は非空文字列である必要があります。`bg` を再実行すると、以前の背景は常に上書きされます。同じ `assetId` を再指定してもエラーにはなりません。`bg ... with ...` は背景切り替え演出であり、std-visual の renderer-independent background transition metadata として background state に保存されます。独立した std-transition plugin、standalone `transition` statement、GSAP dependency は採用しません。
@@ -134,7 +136,7 @@ background: {
 }
 ```
 
-初期対応 effect は `fade` / `pageTurn` / `blurFade` / `slide` です。未指定の `bg assetId` は即時切り替えです。内部的には `cut` 相当の扱いですが、既存 state 互換のため transition metadata は省略できます。
+初期対応 effect は `fade` / `pageTurn` / `blurFade` / `slide` / `wipeLeft` / `wipeRight` です。未指定の `bg assetId` は即時切り替えです。内部的には `cut` 相当の扱いですが、既存 state 互換のため transition metadata は省略できます。
 
 default:
 
@@ -144,6 +146,8 @@ default:
 | `pageTurn` | `800` | `"left"` | `"#ffffff"` |
 | `blurFade` | `700` | none | `"#000000"` |
 | `slide` | `650` | `"left"` | `"#000000"` |
+| `wipeLeft` | `450` | none | `"#000000"` |
+| `wipeRight` | `450` | none | `"#000000"` |
 
 transition 実行は runtime を block しません。シナリオ上で厳密な待機が必要な場合は `wait` と組み合わせます。
 
@@ -265,7 +269,7 @@ show alice at top
 
 `show` / `hide` / `clearBg` / `clearSprites` の plugin command は optional named args として `transition` と `duration` を受け取れます。現在の標準 sprite / clear transition 名は `"fade"` / `"dissolve"` です。`transition` と `duration` は必ず一緒に指定する必要があり、`duration` は `0` 以上の有限整数です。DSL sugar では `show` / `hide` / `clear` の `with fade(duration=300)` を `transition` / `duration` command args に変換します。
 
-`bg` の plugin command は background transition metadata として `transition` / `duration` / `direction` / `color` を受け取れます。`transition` は `"fade"` / `"pageTurn"` / `"blurFade"` / `"slide"`、`duration` は正の整数、`direction` は `"left"` / `"right"` / `"up"` / `"down"`、`color` は string です。`pageTurn` の direction は `"left"` / `"right"` に制限されます。未対応引数は validation error です。
+`bg` の plugin command は background transition metadata として `transition` / `duration` / `direction` / `color` を受け取れます。`transition` は `"fade"` / `"pageTurn"` / `"blurFade"` / `"slide"` / `"wipeLeft"` / `"wipeRight"`、`duration` は正の整数、`direction` は `"left"` / `"right"` / `"up"` / `"down"`、`color` は string です。`pageTurn` の direction は `"left"` / `"right"` に制限されます。`wipeLeft` / `wipeRight` は `direction` を受け取りません。未対応引数は validation error です。
 
 一方、`hide missing` は script の構造としては有効です。対象 sprite が runtime state に存在しないだけなので、validation error ではなく no-op + runtime warning になります。
 

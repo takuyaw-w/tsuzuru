@@ -159,6 +159,14 @@ describe("parseTzr std visual sugar statements", () => {
         transition: { type: "VisualTransition", name: "slide", duration: 650 },
       },
     );
+    expect(parseSingleStatement("scene start:\n  bg hallway with wipeLeft(duration=450)\n")).toMatchObject({
+      type: "BgStatement",
+      transition: { type: "VisualTransition", name: "wipeLeft", duration: 450 },
+    });
+    expect(parseSingleStatement("scene start:\n  bg classroom with wipeRight(duration=450)\n")).toMatchObject({
+      type: "BgStatement",
+      transition: { type: "VisualTransition", name: "wipeRight", duration: 450 },
+    });
     expect(parseSingleStatement("scene start:\n  show alice_smile at center with fade(duration=300)\n")).toMatchObject({
       type: "ShowStatement",
       transition: { type: "VisualTransition", name: "fade", duration: 300 },

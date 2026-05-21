@@ -14,7 +14,12 @@ const stdVisualTransitionNamedArgs = [
 ] as const;
 
 const stdVisualBackgroundTransitionNamedArgs = [
-  { name: "transition", type: "string", optional: true, values: ["fade", "pageTurn", "blurFade", "slide"] },
+  {
+    name: "transition",
+    type: "string",
+    optional: true,
+    values: ["fade", "pageTurn", "blurFade", "slide", "wipeLeft", "wipeRight"],
+  },
   { name: "duration", type: "number", optional: true, integer: true, min: 1, requiredWith: ["transition"] },
   {
     name: "direction",
@@ -914,6 +919,8 @@ scene start:
   bg library with pageTurn(direction="left", duration=800)
   bg rooftop with blurFade(duration=700)
   bg hallway with slide(direction="right", duration=650)
+  bg classroom with wipeLeft(duration=450)
+  bg station with wipeRight(duration=450)
 `);
 
     expect(document.instructions).toMatchObject([
@@ -960,6 +967,26 @@ scene start:
           { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
         ],
       },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "wipeLeft" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 450 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "station" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "wipeRight" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 450 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
     ]);
   });
 
@@ -969,6 +996,8 @@ scene start:
   bg station with pageTurn()
   bg rooftop with blurFade()
   bg hallway with slide()
+  bg classroom with wipeLeft()
+  bg library with wipeRight()
 `);
 
     expect(document.instructions).toMatchObject([
@@ -1012,6 +1041,26 @@ scene start:
           { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "slide" } },
           { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 650 } },
           { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "classroom" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "wipeLeft" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 450 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "bg",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "library" } },
+          { type: "NamedArgument", name: "transition", value: { type: "StringValue", value: "wipeRight" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 450 } },
           { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
         ],
       },
@@ -1243,6 +1292,8 @@ scene start:
   bg library with pageTurn(direction="left", duration=800)
   bg rooftop with blurFade(duration=700)
   bg hallway with slide(direction="up", duration=650)
+  bg classroom with wipeLeft(duration=450)
+  bg station with wipeRight(duration=450)
 `,
       {
         plugins: [{ name: "stdVisual", commands: stdVisualPluginCommands }],
@@ -1251,6 +1302,8 @@ scene start:
 
     expect(document.instructions).toMatchObject([
       { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "bg" },
+      { type: "CommandInstruction", name: "bg" },
       { type: "CommandInstruction", name: "bg" },
       { type: "CommandInstruction", name: "bg" },
       { type: "CommandInstruction", name: "bg" },
@@ -1271,6 +1324,9 @@ scene start:
     expect(expectCompileFailure('scene start:\n  bg station with pageTurn(direction="up", duration=800)\n')).toContain(
       'pageTurn direction must be "left" or "right".',
     );
+    expect(
+      expectCompileFailure('scene start:\n  bg station with wipeLeft(direction="left", duration=450)\n'),
+    ).toContain("wipeLeft direction is not supported.");
     expect(expectCompileFailure("scene start:\n  bg station with fade(color=white, duration=500)\n")).toContain(
       "transition color must be a string.",
     );

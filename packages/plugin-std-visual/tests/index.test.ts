@@ -58,7 +58,7 @@ describe("std-visual commands", () => {
             name: "transition",
             type: "string",
             optional: true,
-            values: ["fade", "pageTurn", "blurFade", "slide"],
+            values: ["fade", "pageTurn", "blurFade", "slide", "wipeLeft", "wipeRight"],
           },
           {
             name: "duration",
@@ -208,12 +208,27 @@ describe("std-visual commands", () => {
 
   it("applies background transition defaults", () => {
     const result = runStdVisualCommands(
-      command("bg", [positionalString("library"), namedString("transition", "fade")]),
+      command("bg", [positionalString("library"), namedString("transition", "wipeLeft")]),
     );
 
     expect(getStdVisualState(result.state).background).toEqual({
       assetId: "library",
-      transition: { effect: "fade", durationMs: 500, color: "#000000" },
+      transition: { effect: "wipeLeft", durationMs: 450, color: "#000000" },
+    });
+  });
+
+  it("stores wipe background transition metadata", () => {
+    const result = runStdVisualCommands(
+      command("bg", [
+        positionalString("hallway"),
+        namedString("transition", "wipeRight"),
+        namedNumber("duration", 450),
+      ]),
+    );
+
+    expect(getStdVisualState(result.state).background).toEqual({
+      assetId: "hallway",
+      transition: { effect: "wipeRight", durationMs: 450, color: "#000000" },
     });
   });
 
@@ -354,6 +369,15 @@ describe("std-visual commands", () => {
           positionalString("classroom"),
           namedString("transition", "pageTurn"),
           namedString("direction", "up"),
+        ]),
+      ),
+    ).toThrow("Invalid @bg runtime arguments. Expected validated std visual command arguments.");
+    expect(() =>
+      runStdVisualCommands(
+        command("bg", [
+          positionalString("classroom"),
+          namedString("transition", "wipeRight"),
+          namedString("direction", "right"),
         ]),
       ),
     ).toThrow("Invalid @bg runtime arguments. Expected validated std visual command arguments.");

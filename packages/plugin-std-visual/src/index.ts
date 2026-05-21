@@ -13,7 +13,14 @@ const HIDE_TARGET_NOT_FOUND_WARNING_CODE = "plugin.stdVisual.hideTargetNotFound"
 
 export type StdVisualSpritePosition = "left" | "center" | "right";
 export type StdVisualTransitionEffect = "fade" | "dissolve";
-export type StdVisualBackgroundTransitionEffect = "cut" | "fade" | "pageTurn" | "blurFade" | "slide";
+export type StdVisualBackgroundTransitionEffect =
+  | "cut"
+  | "fade"
+  | "pageTurn"
+  | "blurFade"
+  | "slide"
+  | "wipeLeft"
+  | "wipeRight";
 export type StdVisualDirection = "left" | "right" | "up" | "down";
 
 export interface StdVisualTransition {
@@ -46,7 +53,14 @@ export interface StdVisualState {
 }
 
 const STD_VISUAL_TRANSITION_TYPES = ["fade", "dissolve"] as const;
-const STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS = ["fade", "pageTurn", "blurFade", "slide"] as const;
+const STD_VISUAL_BACKGROUND_TRANSITION_EFFECTS = [
+  "fade",
+  "pageTurn",
+  "blurFade",
+  "slide",
+  "wipeLeft",
+  "wipeRight",
+] as const;
 const STD_VISUAL_DIRECTIONS = ["left", "right", "up", "down"] as const;
 
 const STD_VISUAL_BACKGROUND_TRANSITION_NAMED_ARGS = [
@@ -386,7 +400,9 @@ function getNamedBackgroundTransitionDirection(
   if (
     argument.value.type !== "StringValue" ||
     !isStdVisualDirection(argument.value.value) ||
-    (effect === "pageTurn" && argument.value.value !== "left" && argument.value.value !== "right")
+    (effect === "pageTurn" && argument.value.value !== "left" && argument.value.value !== "right") ||
+    effect === "wipeLeft" ||
+    effect === "wipeRight"
   ) {
     throwInvalidRuntimeArguments(instruction);
   }
@@ -463,7 +479,7 @@ function isStdVisualBackgroundTransition(value: unknown): value is StdVisualBack
     Number.isFinite(value.durationMs) &&
     Number.isInteger(value.durationMs) &&
     value.durationMs >= (value.effect === "cut" ? 0 : 1) &&
-    (value.direction === undefined || isStdVisualDirection(value.direction)) &&
+    (value.direction === undefined || isStdVisualBackgroundTransitionDirection(value.effect, value.direction)) &&
     (value.color === undefined || typeof value.color === "string")
   );
 }
@@ -486,6 +502,13 @@ function isStdVisualDirection(value: unknown): value is StdVisualDirection {
   return STD_VISUAL_DIRECTIONS.some((direction) => direction === value);
 }
 
+function isStdVisualBackgroundTransitionDirection(
+  effect: StdVisualBackgroundTransitionEffect,
+  value: unknown,
+): value is StdVisualDirection {
+  return isStdVisualDirection(value) && effect !== "wipeLeft" && effect !== "wipeRight";
+}
+
 function defaultBackgroundTransitionDuration(effect: StdVisualBackgroundTransitionEffect): number {
   switch (effect) {
     case "cut":
@@ -498,6 +521,9 @@ function defaultBackgroundTransitionDuration(effect: StdVisualBackgroundTransiti
       return 700;
     case "slide":
       return 650;
+    case "wipeLeft":
+    case "wipeRight":
+      return 450;
   }
 }
 
@@ -511,6 +537,8 @@ function defaultBackgroundTransitionDirection(
     case "cut":
     case "fade":
     case "blurFade":
+    case "wipeLeft":
+    case "wipeRight":
       return undefined;
   }
 }
@@ -520,6 +548,8 @@ function defaultBackgroundTransitionColor(effect: StdVisualBackgroundTransitionE
     case "fade":
     case "blurFade":
     case "slide":
+    case "wipeLeft":
+    case "wipeRight":
       return "#000000";
     case "pageTurn":
       return "#ffffff";
