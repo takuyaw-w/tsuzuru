@@ -28,6 +28,12 @@ import {
   shouldPlayStdTextSoundCharacter,
 } from "@tsuzuru/plugin-std-text-sound";
 import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
+import {
+  createStdTransitionCommandHandlers,
+  createStdTransitionPlugin,
+  prepareStdTransitionStateForSnapshot,
+} from "@tsuzuru/plugin-std-transition";
+import { ScreenTransitionLayer } from "@tsuzuru/plugin-std-transition/preact";
 import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 import { createRuntimeSaveDataFromState, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
@@ -218,6 +224,7 @@ function RuntimeApp({
       createStdAudioPlugin(),
       createStdTextSoundPlugin(),
       createStdEffectPlugin(),
+      createStdTransitionPlugin(),
       createStdCameraPlugin(),
       createStdParticlePlugin(),
       createStdSystemPlugin(),
@@ -230,6 +237,7 @@ function RuntimeApp({
       ...createStdAudioCommandHandlers(),
       ...createStdTextSoundCommandHandlers(),
       ...createStdEffectCommandHandlers(),
+      ...createStdTransitionCommandHandlers(),
       ...createStdCameraCommandHandlers(),
       ...createStdParticleCommandHandlers(),
       ...createStdSystemCommandHandlers(),
@@ -410,7 +418,11 @@ function RuntimeApp({
           slotId,
           createExampleSaveData(
             createRuntimeSaveDataFromState(runtime.state, runtime.visibleEvent, {
-              prepares: [prepareStdAudioStateForSnapshot, prepareStdEffectStateForSnapshot],
+              prepares: [
+                prepareStdAudioStateForSnapshot,
+                prepareStdEffectStateForSnapshot,
+                prepareStdTransitionStateForSnapshot,
+              ],
             }),
             getRetainedMessageForSave(lastMessageEvent),
           ),
@@ -534,6 +546,7 @@ function RuntimeApp({
             <ParticleLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
             <EffectLayer runtimeState={runtime.state} />
+            <ScreenTransitionLayer runtimeState={runtime.state} />
             <RuntimeControlBar
               readCount={readCount}
               autoModeEnabled={autoMode.enabled}

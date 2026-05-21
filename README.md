@@ -30,6 +30,7 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/plugin-std-audio`
 - `@tsuzuru/plugin-std-text-sound`
 - `@tsuzuru/plugin-std-effect`
+- `@tsuzuru/plugin-std-transition`
 - `@tsuzuru/plugin-std-camera`
 - `@tsuzuru/plugin-std-particle`
 - `@tsuzuru/plugin-std-system`
@@ -89,6 +90,7 @@ packages/
   plugin-std-audio/
   plugin-std-text-sound/
   plugin-std-effect/
+  plugin-std-transition/
   plugin-std-camera/
   plugin-std-particle/
   plugin-std-system/

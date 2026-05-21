@@ -1,0 +1,59 @@
+{
+  "name": "@tsuzuru/plugin-std-transition",
+  "version": "1.0.0",
+  "description": "Standard screen transition plugin state, command handlers, and Preact layer for Tsuzuru.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./preact": {
+      "types": "./dist/src/preact.d.ts",
+      "import": "./dist/src/preact.js"
+    }
+  },
+  "files": [
+    "dist/src/index.*",
+    "dist/src/preact.*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-transition"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-transition#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "plugin",
+    "transition"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
+    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:^",
+    "gsap": "^3.13.0"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
+  },
+  "devDependencies": {
+    "preact": "^10.0.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -5,6 +5,7 @@ import { createStdEffectPlugin } from "@tsuzuru/plugin-std-effect";
 import { createStdParticlePlugin } from "@tsuzuru/plugin-std-particle";
 import { createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
+import { createStdTransitionPlugin } from "@tsuzuru/plugin-std-transition";
 import { createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 
 export default defineTsuzuruConfig({
@@ -17,6 +18,7 @@ export default defineTsuzuruConfig({
     createStdAudioPlugin(),
     createStdTextSoundPlugin(),
     createStdEffectPlugin(),
+    createStdTransitionPlugin(),
     createStdCameraPlugin(),
     createStdParticlePlugin(),
     createStdSystemPlugin(),

@@ -111,6 +111,11 @@ The following syntax is not Core. It is official standard plugin sugar.
   pulse
   blur
 
+@tsuzuru/plugin-std-transition:
+  transition fade(...)
+  transition wipe(...)
+  transition flash(...)
+
 @tsuzuru/plugin-std-camera:
   camera
   camera focus
@@ -1634,6 +1639,66 @@ BlurStatement
 EffectTarget
   ::= "screen" | "message" | "sprites"
 ```
+
+---
+
+## 24.6 Screen Transition Statements
+
+Screen transition statements are sugar for
+`@tsuzuru/plugin-std-transition`.
+
+Screen transitions are one-shot events for the whole screen surface. They are
+not background or sprite state, and they do not block runtime stepping. Use
+`wait` when scenario timing needs to line up with the transition duration.
+
+### 24.6.1 Syntax
+
+```txt
+transition fade([duration=<ms>], [color="<color>"])
+transition wipe([direction="<direction>"], [duration=<ms>])
+transition flash([color="<color>"], [duration=<ms>])
+```
+
+### 24.6.2 Examples
+
+```txt
+transition fade(duration=500)
+wait 500
+
+transition wipe(direction="left", duration=600)
+wait 600
+
+transition flash(color="#ffffff", duration=180)
+wait 180
+```
+
+### 24.6.3 Rules
+
+- Effect is `fade`, `wipe`, or `flash`.
+- `duration` is optional, defaults to `400`, uses milliseconds, and must be a
+  positive integer.
+- `wipe direction` is optional and defaults to `"left"`.
+- Direction is `"left" | "right" | "up" | "down"`.
+- `fade color` defaults to `"#000000"`.
+- `flash color` defaults to `"#ffffff"`.
+- Extra named arguments are rejected.
+- Runtime blocking is intentionally not part of transition execution.
+
+### 24.6.4 Runtime Model
+
+The std-transition plugin stores events under
+`runtimeState.plugins.stdTransition`:
+
+```ts
+{
+  events: StdTransitionEvent[],
+  nextSequence: number,
+}
+```
+
+Each command appends an event using `nextSequence`, then increments
+`nextSequence`. Snapshot preparation clears `events` and preserves
+`nextSequence` so load / restore does not replay old transitions.
 
 ---
 

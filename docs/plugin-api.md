@@ -136,15 +136,21 @@ Standard plugins expose metadata on the plugin object returned by their
 
 ```ts
 const compiled = compileTzr(document, {
-  plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdSystemPlugin()],
+  plugins: [
+    createStdVisualPlugin(),
+    createStdAudioPlugin(),
+    createStdTransitionPlugin(),
+    createStdSystemPlugin(),
+  ],
 });
 ```
 
 Passing metadata enables compile-time validation for emitted plugin commands. If
-no plugin metadata is passed, current std visual/audio/text-sound/effect/camera
-DSL sugar remains compatible and is compiled without plugin command metadata
-validation. `call system.*(...)` commands require std-system metadata because
-generic `call` is only compile-supported through plugin command registration.
+no plugin metadata is passed, current std visual/audio/text-sound/effect/
+transition/camera DSL sugar remains compatible and is compiled without plugin
+command metadata validation. `call system.*(...)` commands require std-system
+metadata because generic `call` is only compile-supported through plugin
+command registration.
 
 When metadata validation is enabled, the compiler validates every emitted
 non-core command against the supplied registry. If a scenario uses standard
@@ -236,6 +242,11 @@ and `duration` is validated as a finite integer greater than or equal to `0`.
 The std visual plugin stores transition metadata on surviving background and
 sprite state objects; actual animation timing and presentation remain UI or
 renderer responsibilities.
+
+Std transition DSL sugar compiles to the `transition` plugin command with a
+screen transition effect, normalized duration, and default color/direction
+arguments. Runtime execution appends a one-shot transition event and does not
+block scenario stepping; strict timing should use `wait`.
 
 Broader call/return runtime semantics remain deferred.
 

@@ -74,6 +74,7 @@ export type TzrSceneStatement =
   | TzrTextSoundStatement
   | TzrStopTextSoundStatement
   | TzrStdEffectStatement
+  | TzrStdTransitionStatement
   | TzrStdCameraStatement
   | TzrStdParticleStatement
   | TzrJumpStatement
@@ -329,6 +330,16 @@ export interface TzrStdEffectStatement {
   readonly type: "StdEffectStatement";
   readonly name: TzrStdEffectCommandName;
   readonly args: readonly TzrArgument[];
+  readonly loc: SourceRange;
+}
+
+export type TzrStdTransitionEffect = "fade" | "wipe" | "flash";
+
+export interface TzrStdTransitionStatement {
+  readonly type: "StdTransitionStatement";
+  readonly effect: TzrStdTransitionEffect;
+  readonly effectLoc: SourceRange;
+  readonly args: readonly TzrNamedArgument[];
   readonly loc: SourceRange;
 }
 

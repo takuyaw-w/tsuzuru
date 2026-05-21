@@ -43,6 +43,8 @@ import type {
   TzrStdCameraStatement,
   TzrStdEffectStatement,
   TzrStdParticleStatement,
+  TzrStdTransitionEffect,
+  TzrStdTransitionStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
   TzrTextBlockItem,
@@ -59,6 +61,7 @@ import type {
 const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
 const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 const STD_EFFECT_HEX_COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+const STD_TRANSITION_DIRECTIONS = ["left", "right", "up", "down"] as const;
 
 export interface TzrCompilePluginDefinition {
   readonly name: string;
@@ -442,6 +445,9 @@ class TzrCompiler {
           break;
         case "StdEffectStatement":
           instructions.push(...this.buildStdEffectInstruction(statement));
+          break;
+        case "StdTransitionStatement":
+          instructions.push(...this.buildStdTransitionInstruction(statement));
           break;
         case "StdCameraStatement":
           instructions.push(...this.buildStdCameraInstruction(statement));
@@ -853,6 +859,22 @@ class TzrCompiler {
     ];
   }
 
+  private buildStdTransitionInstruction(statement: TzrStdTransitionStatement): readonly CommandInstruction[] {
+    const args = this.buildStdTransitionArguments(statement);
+    if (args === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args,
+        loc: statement.loc,
+      },
+    ];
+  }
+
   private buildStdCameraInstruction(statement: TzrStdCameraStatement): readonly CommandInstruction[] {
     this.validateStdCameraSugar(statement);
 
@@ -890,6 +912,77 @@ class TzrCompiler {
     if (!STD_EFFECT_HEX_COLOR_PATTERN.test(color.value.value)) {
       this.addError(color.value.loc.start, "flash color must be a HEX color literal.");
     }
+  }
+
+  private buildStdTransitionArguments(statement: TzrStdTransitionStatement): readonly TzrArgument[] | undefined {
+    let ok = true;
+    let durationMs = 400;
+    let direction: (typeof STD_TRANSITION_DIRECTIONS)[number] | undefined;
+    let color: string | undefined;
+    const seen = new Set<string>();
+
+    for (const arg of statement.args) {
+      if (seen.has(arg.name)) {
+        this.addError(arg.loc.start, `Duplicate transition argument "${arg.name}".`);
+        ok = false;
+        continue;
+      }
+      seen.add(arg.name);
+
+      switch (arg.name) {
+        case "duration":
+          if (arg.value.type !== "NumberValue" || !Number.isInteger(arg.value.value) || arg.value.value <= 0) {
+            this.addError(arg.value.loc.start, "transition duration must be a positive integer.");
+            ok = false;
+            continue;
+          }
+          durationMs = arg.value.value;
+          break;
+        case "direction":
+          if (arg.value.type !== "StringValue" || !isStdTransitionDirection(arg.value.value)) {
+            this.addError(arg.value.loc.start, 'transition direction must be "left", "right", "up", or "down".');
+            ok = false;
+            continue;
+          }
+          direction = arg.value.value;
+          break;
+        case "color":
+          if (arg.value.type !== "StringValue") {
+            this.addError(arg.value.loc.start, "transition color must be a string.");
+            ok = false;
+            continue;
+          }
+          color = arg.value.value;
+          break;
+        default:
+          this.addError(arg.loc.start, `Unsupported transition argument "${arg.name}".`);
+          ok = false;
+          break;
+      }
+    }
+
+    if (!ok) {
+      return undefined;
+    }
+
+    const normalized: TzrArgument[] = [
+      this.positionalArgument(this.stringValue(statement.effect, statement.effectLoc), statement.effectLoc),
+      this.namedArgument("duration", { type: "NumberValue", value: durationMs, loc: statement.loc }, statement.loc),
+    ];
+
+    const normalizedDirection = statement.effect === "wipe" ? (direction ?? "left") : direction;
+    if (normalizedDirection !== undefined) {
+      normalized.push(
+        this.namedArgument("direction", this.stringValue(normalizedDirection, statement.loc), statement.loc),
+      );
+    }
+
+    const normalizedColor = color ?? defaultStdTransitionColor(statement.effect);
+    if (normalizedColor !== undefined) {
+      normalized.push(this.namedArgument("color", this.stringValue(normalizedColor, statement.loc), statement.loc));
+    }
+
+    return normalized;
   }
 
   private validateStdCameraSugar(statement: TzrStdCameraStatement): void {
@@ -1152,6 +1245,21 @@ function findNamedArgument(
 
 function hasAnyNamedArgument(args: readonly TzrArgument[], names: readonly string[]): boolean {
   return names.some((name) => findNamedArgument(args, name) !== undefined);
+}
+
+function defaultStdTransitionColor(effect: TzrStdTransitionEffect): string | undefined {
+  switch (effect) {
+    case "fade":
+      return "#000000";
+    case "flash":
+      return "#ffffff";
+    case "wipe":
+      return undefined;
+  }
+}
+
+function isStdTransitionDirection(value: string): value is (typeof STD_TRANSITION_DIRECTIONS)[number] {
+  return STD_TRANSITION_DIRECTIONS.includes(value as (typeof STD_TRANSITION_DIRECTIONS)[number]);
 }
 
 function buildSceneIndexes(instructions: readonly TzrInstruction[]): Readonly<Record<string, DeclarationIndexEntry>> {

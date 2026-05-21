@@ -56,6 +56,7 @@ packages/plugin-std-visual
 packages/plugin-std-audio
 packages/plugin-std-text-sound
 packages/plugin-std-effect
+packages/plugin-std-transition
 packages/plugin-std-camera
 packages/plugin-std-particle
 packages/plugin-std-system
@@ -144,6 +145,12 @@ Package responsibilities:
   - owns transient effect plugin state updates
   - clears one-shot events before snapshots when requested by the host
   - does not render animations or own persistent visual state
+
+- `@tsuzuru/plugin-std-transition`
+  - provides standard screen transition command handlers
+  - owns transient screen transition event state updates
+  - clears one-shot events before snapshots when requested by the host
+  - does not own background, sprite, or scene flow state
 
 - `@tsuzuru/plugin-std-camera`
   - provides standard camera command handlers
@@ -480,6 +487,9 @@ pnpm --filter @tsuzuru/plugin-std-text-sound typecheck
 
 pnpm --filter @tsuzuru/plugin-std-effect test
 pnpm --filter @tsuzuru/plugin-std-effect typecheck
+
+pnpm --filter @tsuzuru/plugin-std-transition test
+pnpm --filter @tsuzuru/plugin-std-transition typecheck
 
 pnpm --filter @tsuzuru/plugin-std-camera test
 pnpm --filter @tsuzuru/plugin-std-camera typecheck

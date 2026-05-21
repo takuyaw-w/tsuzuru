@@ -100,6 +100,18 @@ const stdEffectPluginCommands = {
   }),
 };
 
+const stdTransitionPluginCommands = {
+  transition: definePluginCommand("transition", {
+    kind: "mixed",
+    positional: [{ type: "string", values: ["fade", "wipe", "flash"] }],
+    named: [
+      { name: "duration", type: "number", integer: true, min: 1 },
+      { name: "direction", type: "string", optional: true, values: ["left", "right", "up", "down"] },
+      { name: "color", type: "string", optional: true },
+    ],
+  }),
+};
+
 const stdCameraPluginCommands = {
   camera: definePluginCommand("camera", {
     kind: "named",
@@ -896,6 +908,84 @@ scene start:
     ]);
   });
 
+  it("compiles std transition sugar to plugin command instructions", () => {
+    const document = compileSource(`scene start:
+  transition fade(duration=500)
+  transition wipe(direction="left", duration=600)
+  transition flash(color="#ffffff", duration=180)
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 500 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "wipe" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 600 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "flash" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 180 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+    ]);
+  });
+
+  it("compiles std transition defaults", () => {
+    const document = compileSource(`scene start:
+  transition fade()
+  transition wipe()
+  transition flash()
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "fade" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#000000" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "wipe" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+          { type: "NamedArgument", name: "direction", value: { type: "StringValue", value: "left" } },
+        ],
+      },
+      {
+        type: "CommandInstruction",
+        name: "transition",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "flash" } },
+          { type: "NamedArgument", name: "duration", value: { type: "NumberValue", value: 400 } },
+          { type: "NamedArgument", name: "color", value: { type: "StringValue", value: "#ffffff" } },
+        ],
+      },
+    ]);
+  });
+
   it("compiles std particle sugar to plugin command instructions", () => {
     const document = compileSource(`scene start:
   particle rain intensity=normal
@@ -1114,6 +1204,50 @@ scene start:
     ]);
   });
 
+  it("compiles and validates std transition plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  transition fade(duration=500)
+  transition wipe(direction="left", duration=600)
+  transition flash(color="#ffffff", duration=180)
+`,
+      { plugins: [{ name: "stdTransition", commands: stdTransitionPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "transition" },
+      { type: "CommandInstruction", name: "transition" },
+    ]);
+  });
+
+  it("rejects invalid std transition arguments", () => {
+    expect(expectCompileFailure("scene start:\n  transition fade(duration=0)\n")).toContain(
+      "transition duration must be a positive integer.",
+    );
+    expect(expectCompileFailure("scene start:\n  transition fade(duration=-1)\n")).toContain(
+      "transition duration must be a positive integer.",
+    );
+    expect(expectCompileFailure('scene start:\n  transition wipe(direction="diagonal", duration=600)\n')).toContain(
+      'transition direction must be "left", "right", "up", or "down".',
+    );
+    expect(expectCompileFailure("scene start:\n  transition flash(color=white, duration=180)\n")).toContain(
+      "transition color must be a string.",
+    );
+    expect(expectCompileFailure("scene start:\n  transition fade(speed=fast)\n")).toContain(
+      'Unsupported transition argument "speed".',
+    );
+  });
+
+  it("rejects std transition sugar when plugin metadata is enabled but std transition is not registered", () => {
+    expect(
+      expectCompileFailure("scene start:\n  transition fade(duration=500)\n", {
+        pluginCommands: [],
+      }),
+    ).toContain('Unknown plugin command "transition".');
+  });
+
   it("rejects invalid std effect plugin command arguments when metadata is enabled", () => {
     expect(
       expectCompileFailure("scene start:\n  shake stage duration=100\n", {
@@ -1295,13 +1429,14 @@ scene start:
     ).toContain('Unknown plugin command "cameraFocus".');
   });
 
-  it("keeps std visual, audio, text sound, effect, camera, and particle command compilation compatible without plugin metadata", () => {
+  it("keeps std visual, audio, text sound, effect, transition, camera, and particle command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
   bgm daily_theme
   textSound soft
   shake screen duration=180
+  transition fade(duration=500)
   camera focus tone_stand zoom=1.2 duration=400
   particle rain
   stopParticle
@@ -1314,6 +1449,7 @@ scene start:
       { type: "CommandInstruction", name: "startBgm" },
       { type: "CommandInstruction", name: "textSound" },
       { type: "CommandInstruction", name: "shake" },
+      { type: "CommandInstruction", name: "transition" },
       { type: "CommandInstruction", name: "cameraFocus" },
       { type: "CommandInstruction", name: "particle" },
       { type: "CommandInstruction", name: "stopParticle" },

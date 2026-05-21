@@ -78,6 +78,7 @@ packages/
   plugin-std-audio/
   plugin-std-text-sound/
   plugin-std-effect/
+  plugin-std-transition/
   plugin-std-camera/
   plugin-std-particle/
   plugin-std-system/
@@ -299,6 +300,32 @@ It does not:
 - own runtime stepping
 
 Animation and reduced-motion policy belong to the app, renderer, or example.
+
+---
+
+### `@tsuzuru/plugin-std-transition`
+
+`@tsuzuru/plugin-std-transition` provides standard one-shot screen transition
+command handlers and a Preact overlay layer.
+
+Responsibilities:
+
+- maintain standard screen transition plugin state
+- append fade / wipe / flash events
+- expose sequence-based event consumption state
+- prepare transition state for snapshots by clearing one-shot events
+- handle `transition` command instructions
+
+It does not:
+
+- own background or sprite state
+- render from core runtime
+- block runtime stepping until an animation finishes
+- own scene flow
+- expose GSAP as public API
+
+Strict scenario timing should combine `transition` with the core `wait`
+statement. The Preact overlay implementation may use GSAP internally.
 
 ---
 
@@ -853,6 +880,7 @@ The detailed v1.0 release-gate matrix is tracked in
 | `@tsuzuru/plugin-std-audio` | Durable BGM plus one-shot SE/voice events | Host should call `prepareStdAudioStateForSnapshot` before saving to clear one-shot events while preserving BGM and sequence counters. |
 | `@tsuzuru/plugin-std-text-sound` | Durable text sound override profile ID | Keep plugin state as-is. |
 | `@tsuzuru/plugin-std-effect` | One-shot effect events | Host should call `prepareStdEffectStateForSnapshot` before saving to clear one-shot events while preserving the sequence counter. |
+| `@tsuzuru/plugin-std-transition` | One-shot screen transition events | Host should call `prepareStdTransitionStateForSnapshot` before saving to clear one-shot events while preserving the sequence counter. |
 | `@tsuzuru/plugin-std-camera` | Durable camera transform/focus state | Keep plugin state as-is. |
 | `@tsuzuru/plugin-std-particle` | Durable current particle state | Keep plugin state as-is. |
 | `@tsuzuru/plugin-std-system` | Durable unlock state | Keep plugin state as-is. |
@@ -1155,6 +1183,7 @@ pnpm --filter @tsuzuru/plugin-std-visual test
 pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-text-sound test
 pnpm --filter @tsuzuru/plugin-std-effect test
+pnpm --filter @tsuzuru/plugin-std-transition test
 pnpm --filter @tsuzuru/plugin-std-camera test
 pnpm --filter @tsuzuru/plugin-std-particle test
 pnpm --filter @tsuzuru/plugin-std-system test

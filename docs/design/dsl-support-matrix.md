@@ -127,6 +127,9 @@ this matrix instead of defining a separate supported syntax.
 | `flash ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
 | `pulse ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
 | `blur ...` | std-effect sugar | yes | command | plugin handler | std-effect | yes | yes | yes | `plugin-dependent` | One-shot effect event. |
+| `transition fade(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
+| `transition wipe(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; default direction is `"left"`. |
+| `transition flash(...)` | std-transition sugar | yes | command | plugin handler | std-transition | yes | yes | yes | `plugin-dependent` | One-shot screen transition event; use `wait` for strict timing. |
 | `camera x=... y=... zoom=...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable camera state. |
 | `camera focus asset ...` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Durable focus target state; renderer resolves coordinates. |
 | `reset camera` | std-camera sugar | yes | command | plugin handler | std-camera | yes | yes | yes | `plugin-dependent` | Resets durable camera state. |

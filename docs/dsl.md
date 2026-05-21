@@ -70,6 +70,8 @@ The currently implemented runnable subset covers:
 - `wait 1000` timed waits in milliseconds
 - std visual sugar: `bg`, `show`, `hide`, `clear bg`, `clear sprites`
 - std audio sugar: `bgm`, `stopBgm`, `se`, `voice`
+- std transition sugar: `transition fade(...)`, `transition wipe(...)`,
+  `transition flash(...)`
 - std effect, camera, particle, text sound, and system plugin commands in the
   ranges listed by the support matrix
 - `end`
@@ -115,6 +117,9 @@ timers; hosts clear the wait after their own timer completes.
 Visual transitions such as `bg station with fade(duration=300)` compile to
 renderer-independent std-visual metadata. Core and std-visual do not run DOM,
 CSS, or timer animations for transitions.
+Screen transitions such as `transition fade(duration=500)` compile to
+std-transition one-shot events. They do not block runtime stepping; use
+`wait 500` when scenario timing must match the transition duration.
 For v1.0 planning, stable std-visual sprite placement is preset-only:
 `show asset at left`, `show asset at center`, and `show asset at right`.
 Coordinate placement such as `show asset at x=320 y=80` is parser-level future
