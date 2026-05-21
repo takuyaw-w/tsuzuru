@@ -27,6 +27,7 @@
     "dist/organisms/**",
     "dist/screen-host.*",
     "dist/style.css",
+    "dist/tsuzuru-game.*",
     "dist/useAutoMode.*",
     "dist/useMessageHistory.*",
     "dist/useTextReveal.*"
@@ -50,14 +51,17 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm --filter @tsuzuru/core build && pnpm run build:self",
+    "build": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
     "test": "vitest run --dir tests",
-    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
+    "typecheck": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tsuzuru/core": "workspace:^"
+    "@tsuzuru/core": "workspace:^",
+    "@tsuzuru/plugin-std-audio": "workspace:^",
+    "@tsuzuru/plugin-std-visual": "workspace:^",
+    "@tsuzuru/preact": "workspace:^"
   },
   "peerDependencies": {
     "preact": "^10.0.0"

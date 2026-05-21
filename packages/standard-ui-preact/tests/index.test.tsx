@@ -16,6 +16,7 @@ import {
   type ScreenHostProps,
   StatusLayer,
   type StatusLayerProps,
+  defineTsuzuruGameScenario,
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;
@@ -127,6 +128,50 @@ describe("GameViewport", () => {
     );
 
     expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9", maxWidth: "80vw" });
+  });
+});
+
+describe("defineTsuzuruGameScenario", () => {
+  it("compiles a scenario with standard visual and audio commands", () => {
+    const scenario = defineTsuzuruGameScenario({
+      entryId: "scenario/standard-game.tzr",
+      documents: [
+        {
+          id: "scenario/standard-game.tzr",
+          source: [
+            'title "Standard Game"',
+            "",
+            "scene start:",
+            "  bg station",
+            "  bgm daily_theme",
+            "  narration:",
+            "    Opening line.",
+            "  end",
+          ].join("\n"),
+        },
+      ],
+    });
+
+    expect(scenario.ok).toBe(true);
+    if (!scenario.ok) {
+      throw new Error("scenario did not compile");
+    }
+
+    expect(scenario.document.filePath).toBe("scenario/standard-game.tzr");
+    expect(scenario.document.instructions.map((instruction) => instruction.type)).toContain("CommandInstruction");
+  });
+
+  it("returns parse diagnostics instead of throwing", () => {
+    const scenario = defineTsuzuruGameScenario({
+      entryId: "scenario/broken.tzr",
+      documents: [{ id: "scenario/broken.tzr", source: "scene start:\n  choice:\n" }],
+    });
+
+    expect(scenario.ok).toBe(false);
+    if (scenario.ok) {
+      throw new Error("scenario unexpectedly compiled");
+    }
+    expect(scenario.errors[0]?.filePath).toBe("scenario/broken.tzr");
   });
 });
 

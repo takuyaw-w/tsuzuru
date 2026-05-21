@@ -182,7 +182,8 @@ If behavior belongs to rendering or user interaction, it belongs in `@tsuzuru/pr
 
 ### `@tsuzuru/standard-ui-preact`
 
-`@tsuzuru/standard-ui-preact` provides reusable Preact UI components.
+`@tsuzuru/standard-ui-preact` provides reusable Preact UI components and a
+starter-level `TsuzuruGame` component for the standard visual/audio plugin set.
 
 Responsibilities:
 
@@ -191,14 +192,16 @@ Responsibilities:
 - choice layer components
 - viewport / shell style components
 - standard UI building blocks
+- creator-facing starter runtime wiring for `std-visual` / `std-audio`
 
 It must not own:
 
 - parser behavior
 - compiler behavior
-- runtime stepping
+- core runtime stepping semantics
 - scenario semantics
 - plugin state semantics
+- save/load, backlog, gallery, settings, or app-specific asset policy
 
 Standard UI components should be replaceable by userland components.
 

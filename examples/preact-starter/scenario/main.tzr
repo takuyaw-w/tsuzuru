@@ -1,0 +1,52 @@
+title "はじめてのTsuzuru"
+
+character mio name="美緒"
+character sora name="空"
+
+scene start:
+  bg classroom with fade(duration=300)
+  show mio_smile at center with fade(duration=200)
+
+  mio:
+    こんにちは。
+    これはTsuzuruで作ったノベルゲームです。
+
+  narration:
+    シナリオは scenario/main.tzr に書きます。
+    背景や立ち絵の対応は src/assets.ts で登録します。
+
+  choice "どこへ向かう？":
+    "駅前へ行く" id=goStation:
+      jump station
+
+    "部屋に戻る" id=goRoom:
+      jump room
+
+scene station:
+  bg station with fade(duration=300)
+  show sora_normal at right with fade(duration=200)
+
+  sora:
+    場所を変えると、背景も切り替わります。
+
+  mio:
+    本物の素材がなくても、まずは物語を書き始められます。
+
+  jump ending
+
+scene room:
+  bg room with fade(duration=300)
+
+  mio:
+    ここから新しい場面を増やしていけます。
+
+  jump ending
+
+scene ending:
+  hide mio_smile with fade(duration=200)
+  hide sora_normal with fade(duration=200)
+
+  narration:
+    次は scene を追加して、jump でつないでみてください。
+
+  end

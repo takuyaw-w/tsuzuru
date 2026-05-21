@@ -1,0 +1,96 @@
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #15171d;
+}
+
+.starter-background {
+  overflow: hidden;
+}
+
+.starter-background::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 72px 72px;
+  content: "";
+  mask-image: linear-gradient(to bottom, #000, transparent 76%);
+}
+
+.starter-background--classroom {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(145deg, #8ecae6 0%, #f8f1d8 54%, #52796f 100%);
+}
+
+.starter-background--station {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(145deg, #5e60ce 0%, #80ffdb 50%, #4a5759 100%);
+}
+
+.starter-background--room {
+  background:
+    radial-gradient(circle at 72% 28%, rgba(255, 245, 157, 0.42), transparent 26%),
+    linear-gradient(145deg, #7b2cbf 0%, #293241 52%, #e0fbfc 100%);
+}
+
+.starter-character {
+  position: relative;
+  display: grid;
+  width: min(220px, 82%);
+  height: 58%;
+  min-height: 190px;
+  place-items: end center;
+  border: 0;
+  background: transparent;
+}
+
+.starter-character::before {
+  position: absolute;
+  bottom: 94px;
+  width: 74px;
+  height: 74px;
+  border: 3px solid rgba(255, 255, 255, 0.82);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  content: "";
+}
+
+.starter-character::after {
+  position: absolute;
+  bottom: 0;
+  width: 138px;
+  height: 132px;
+  border: 3px solid rgba(255, 255, 255, 0.82);
+  border-radius: 46px 46px 18px 18px;
+  background: rgba(255, 255, 255, 0.18);
+  content: "";
+}
+
+.starter-character--mio::before,
+.starter-character--mio::after {
+  box-shadow: inset 0 0 48px rgba(244, 114, 182, 0.58), 0 18px 70px rgba(131, 24, 67, 0.34);
+}
+
+.starter-character--sora::before,
+.starter-character--sora::after {
+  box-shadow: inset 0 0 48px rgba(56, 189, 248, 0.58), 0 18px 70px rgba(12, 74, 110, 0.34);
+}
+
+.starter-character .tzr-tsuzuru-game__asset-label {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(15, 23, 42, 0.74);
+  color: #fff;
+}

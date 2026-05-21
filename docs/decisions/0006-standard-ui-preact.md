@@ -4,6 +4,12 @@
 
 Accepted
 
+2026-05 update: the original low-level component boundary remains useful, but
+`@tsuzuru/standard-ui-preact` now also exposes `TsuzuruGame` as a starter-level
+convenience component for the standard visual/audio plugin set. This narrows the
+creator entry path while keeping the existing low-level components available for
+apps that need to own runtime wiring directly.
+
 ## Context
 
 v0.1 から v0.3 までで、Core runtime、Preact adapter、std-visual plugin、std-audio plugin は整ってきました。Tsuzuru は scenario execution、runtime state、plugin state、Preact からの runtime 操作を分離して扱えるようになっています。
@@ -69,21 +75,25 @@ examples/standard-ui-preact
 
 `@tsuzuru/standard-ui-preact` は UI component package です。
 
-`@tsuzuru/standard-ui-preact` は `useRuntime` を内包しません。また、`@tsuzuru/preact` に依存しません。
+v0.4 初期の境界では、`@tsuzuru/standard-ui-preact` は `useRuntime` を内包せず、`@tsuzuru/preact` に依存しませんでした。
 
-app / example 側で `useRuntime` と standard UI components を組み合わせます。
+現在は creator-facing starter として `TsuzuruGame` を提供するため、package は `@tsuzuru/preact` に依存し、`TsuzuruGame` の内部で `useRuntime` を利用します。
 
-これにより、runtime の生成、進行、save/load、plugin 登録は adapter / app 側に残し、standard UI package は component 提供に集中できます。
+app / example 側で `useRuntime` と standard UI components を組み合わせる低レベル構成も引き続き有効です。
+
+低レベル構成では、runtime の生成、進行、save/load、plugin 登録を adapter / app 側に残せます。`TsuzuruGame` は入口を簡単にする starter convenience として扱い、save/load や screen system までは内包しません。
 
 ## Boundary with std-visual / std-audio
 
-`@tsuzuru/standard-ui-preact` は `@tsuzuru/plugin-std-visual` と `@tsuzuru/plugin-std-audio` に依存しません。
+v0.4 初期の境界では、`@tsuzuru/standard-ui-preact` は `@tsuzuru/plugin-std-visual` と `@tsuzuru/plugin-std-audio` に依存しませんでした。
 
-visual / audio integration は app / example 側に置きます。
+現在は `TsuzuruGame` の starter runtime wiring に限って、std-visual / std-audio の plugin 定義・command handler・state reader に依存します。
+
+`TsuzuruGame` の範囲を超える visual / audio integration は app / example 側に置きます。
 
 `examples/standard-ui-preact` の `VisualLayer` / `AudioLayer` は example-local implementation です。これらは std-visual / std-audio state を読み、asset map と browser API に接続するための例です。
 
-package には `VisualLayer` / `AudioLayer` を含めません。
+package には public `VisualLayer` / `AudioLayer` を含めません。
 
 ## Component Design
 

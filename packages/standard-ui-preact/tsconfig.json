@@ -12,6 +12,11 @@
     "composite": true,
     "tsBuildInfoFile": ".tsbuildinfo/tsconfig.tsbuildinfo"
   },
-  "references": [{ "path": "../core" }],
+  "references": [
+    { "path": "../core" },
+    { "path": "../plugin-std-audio" },
+    { "path": "../plugin-std-visual" },
+    { "path": "../preact" }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

@@ -11,6 +11,17 @@ export type { RuntimeMessageLayerProps } from "./RuntimeMessageLayer.js";
 export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
+export type {
+  TsuzuruGameAssets,
+  TsuzuruGameAudioAsset,
+  TsuzuruGameDiagnostic,
+  TsuzuruGameImageAsset,
+  TsuzuruGameProps,
+  TsuzuruGameScenario,
+  TsuzuruGameTextOptions,
+  TsuzuruGameViewportOptions,
+} from "./tsuzuru-game.js";
+export { defineTsuzuruGameScenario, TsuzuruGame } from "./tsuzuru-game.js";
 
 export type {
   ActiveScreen,
