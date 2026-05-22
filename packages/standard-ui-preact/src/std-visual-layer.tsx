@@ -33,6 +33,7 @@ export function StdVisualLayer({
       <div className="tzr-tsuzuru-game__sprite-layer">
         {Object.entries(sprites).map(([assetId, sprite]) =>
           renderImageAsset({
+            key: assetId,
             assetId,
             asset: resolveImageAsset(spriteAssets, assetId),
             baseClassName: joinClassNames("tzr-tsuzuru-game__sprite", `tzr-tsuzuru-game__sprite--${sprite.position}`),
@@ -45,11 +46,13 @@ export function StdVisualLayer({
 }
 
 function renderImageAsset({
+  key,
   assetId,
   asset,
   baseClassName,
   placeholderClassName,
 }: {
+  readonly key?: string;
   readonly assetId: string;
   readonly asset: ResolvedImageAsset;
   readonly baseClassName: string;
@@ -58,6 +61,7 @@ function renderImageAsset({
   if (asset.src !== undefined) {
     return (
       <img
+        key={key}
         className={joinClassNames(baseClassName, asset.className)}
         src={asset.src}
         alt={asset.alt}
@@ -67,7 +71,11 @@ function renderImageAsset({
   }
 
   return (
-    <div className={joinClassNames(baseClassName, placeholderClassName, asset.className)} aria-label={assetId}>
+    <div
+      key={key}
+      className={joinClassNames(baseClassName, placeholderClassName, asset.className)}
+      aria-label={assetId}
+    >
       <span className="tzr-tsuzuru-game__asset-label">{asset.label}</span>
     </div>
   );
