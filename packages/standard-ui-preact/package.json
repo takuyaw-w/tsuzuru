@@ -29,12 +29,14 @@
     "dist/runtime-control-bar.*",
     "dist/screen-host.*",
     "dist/std-audio-layer.*",
+    "dist/std-audio-status-panel.*",
     "dist/std-effect-layer.*",
     "dist/std-visual-layer.*",
     "dist/style.css",
     "dist/tsuzuru-game.*",
     "dist/useAutoMode.*",
     "dist/useMessageHistory.*",
+    "dist/useStdAudioNotices.*",
     "dist/useTextReveal.*"
   ],
   "repository": {

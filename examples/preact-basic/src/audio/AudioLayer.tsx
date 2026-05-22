@@ -1,12 +1,14 @@
 import type { RuntimeState } from "@tsuzuru/core";
 import { getStdAudioState } from "@tsuzuru/plugin-std-audio";
-import { StdAudioLayer } from "@tsuzuru/standard-ui-preact";
+import {
+  createAudioAssetsWithVolume,
+  StdAudioLayer,
+  StdAudioStatusPanel,
+  useStdAudioNotices,
+} from "@tsuzuru/standard-ui-preact";
 import { useMemo } from "preact/hooks";
 import { assets } from "../../assets.js";
 import type { ExamplePreferences } from "../preferences.js";
-import { AudioStatusPanel } from "./AudioStatusPanel.js";
-import { createAudioAssetsWithVolume } from "./audio-assets.js";
-import { useAudioNotices } from "./useAudioNotices.js";
 
 interface AudioLayerProps {
   readonly runtimeState: RuntimeState;
@@ -17,7 +19,7 @@ export function AudioLayer({ runtimeState, preferences }: AudioLayerProps) {
   const audioState = getStdAudioState(runtimeState);
   const latestSe = audioState.seEvents.at(-1);
   const latestVoice = audioState.voiceEvents.at(-1);
-  const { notices, handleAudioDiagnostic } = useAudioNotices();
+  const { notices, handleAudioDiagnostic } = useStdAudioNotices();
   const bgmAssets = useMemo(
     () => createAudioAssetsWithVolume(assets.audio.bgm, preferences.bgmVolume),
     [preferences.bgmVolume],
@@ -42,7 +44,8 @@ export function AudioLayer({ runtimeState, preferences }: AudioLayerProps) {
         voiceAssets={voiceAssets}
         onDiagnostic={handleAudioDiagnostic}
       />
-      <AudioStatusPanel
+      <StdAudioStatusPanel
+        className="audio-layer"
         bgmAssetId={audioState.bgm?.assetId}
         latestSe={latestSe}
         latestVoice={latestVoice}

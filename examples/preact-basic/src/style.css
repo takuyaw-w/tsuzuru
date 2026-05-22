@@ -1017,27 +1017,27 @@ button {
   backdrop-filter: blur(8px);
 }
 
-.audio-layer__row {
+.audio-layer .tzr-std-audio-status-panel__row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 6px;
 }
 
-.audio-layer__row:last-child {
+.audio-layer .tzr-std-audio-status-panel__row:last-child {
   margin-bottom: 0;
 }
 
-.audio-layer__row span,
-.audio-layer__row strong {
+.audio-layer .tzr-std-audio-status-panel__row span,
+.audio-layer .tzr-std-audio-status-panel__row strong {
   overflow-wrap: anywhere;
 }
 
-.audio-layer__row span {
+.audio-layer .tzr-std-audio-status-panel__row span {
   color: rgba(255, 255, 255, 0.66);
 }
 
-.audio-layer__notices {
+.audio-layer .tzr-std-audio-status-panel__notices {
   margin: 8px 0 0;
   padding-left: 16px;
   color: rgba(255, 220, 143, 0.9);

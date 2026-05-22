@@ -245,6 +245,44 @@
   cursor: not-allowed;
 }
 
+.tzr-std-audio-status-panel {
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 250, 240, 0.16);
+  border-radius: 8px;
+  background: rgba(8, 10, 13, 0.38);
+  color: rgba(255, 250, 240, 0.84);
+  font-size: 0.78rem;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+
+.tzr-std-audio-status-panel__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.tzr-std-audio-status-panel__row:last-child {
+  margin-bottom: 0;
+}
+
+.tzr-std-audio-status-panel__row span,
+.tzr-std-audio-status-panel__row strong {
+  overflow-wrap: anywhere;
+}
+
+.tzr-std-audio-status-panel__row span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.tzr-std-audio-status-panel__notices {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: rgba(255, 220, 143, 0.9);
+}
+
 .tzr-screen-host {
   position: absolute;
   inset: 0;

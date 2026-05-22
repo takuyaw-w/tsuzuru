@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAudioAssetsWithVolume } from "../src/audio/audio-assets.js";
+import { createAudioAssetsWithVolume } from "../src/index.js";
 
 describe("createAudioAssetsWithVolume", () => {
   it("maps audio asset paths to volume-aware asset objects", () => {

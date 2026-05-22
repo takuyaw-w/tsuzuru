@@ -26,6 +26,13 @@ export interface TsuzuruGameAssets {
   };
 }
 
+export function createAudioAssetsWithVolume(
+  assets: Readonly<Record<string, string>>,
+  volume: number,
+): Readonly<Record<string, TsuzuruGameAudioAsset>> {
+  return Object.fromEntries(Object.entries(assets).map(([assetId, src]) => [assetId, { src, volume }]));
+}
+
 export interface ResolvedImageAsset {
   readonly src?: string;
   readonly label: string;

@@ -1,6 +1,6 @@
 import { type ComponentChildren, isValidElement, type VNode } from "preact";
 import { describe, expect, it } from "vitest";
-import { AudioStatusPanel } from "../src/audio/AudioStatusPanel.js";
+import { StdAudioStatusPanel } from "../src/index.js";
 
 interface TestNodeProps {
   readonly className?: string | undefined;
@@ -52,25 +52,26 @@ function findByClass(value: ComponentChildren, className: string): readonly VNod
   return [...matches, ...findByClass(vnode.props.children, className)];
 }
 
-describe("AudioStatusPanel", () => {
+describe("StdAudioStatusPanel", () => {
   it("returns null when there is no audio state or notice to show", () => {
-    expect(AudioStatusPanel({ notices: [] })).toBeNull();
+    expect(StdAudioStatusPanel({ notices: [] })).toBeNull();
   });
 
   it("renders current BGM and latest one-shot audio events", () => {
     const node = expectVNode(
-      AudioStatusPanel({
+      StdAudioStatusPanel({
         bgmAssetId: "daily_theme",
         latestSe: { assetId: "page", sequence: 2 },
         latestVoice: { assetId: "mio_001", sequence: 3 },
         notices: [],
+        className: "audio-layer",
       }),
     );
 
     expect(node.type).toBe("aside");
-    expect(node.props.className).toBe("audio-layer");
+    expect(node.props.className).toBe("tzr-std-audio-status-panel audio-layer");
     expect(node.props["aria-label"]).toBe("std-audio state");
-    expect(findByClass(node, "audio-layer__row")).toHaveLength(3);
+    expect(findByClass(node, "tzr-std-audio-status-panel__row")).toHaveLength(3);
     expect(getNodeText(node)).toContain("BGM");
     expect(getNodeText(node)).toContain("daily_theme");
     expect(getNodeText(node)).toContain("SE");
@@ -80,7 +81,7 @@ describe("AudioStatusPanel", () => {
   });
 
   it("renders none for missing channels when another channel is active", () => {
-    const node = expectVNode(AudioStatusPanel({ latestSe: { assetId: "page", sequence: 4 }, notices: [] }));
+    const node = expectVNode(StdAudioStatusPanel({ latestSe: { assetId: "page", sequence: 4 }, notices: [] }));
 
     expect(getNodeText(node)).toContain("BGMnone");
     expect(getNodeText(node)).toContain("SEpage #4");
@@ -89,12 +90,25 @@ describe("AudioStatusPanel", () => {
 
   it("renders notices only when present", () => {
     const node = expectVNode(
-      AudioStatusPanel({
+      StdAudioStatusPanel({
         notices: ['Missing BGM audio asset "daily_theme".'],
       }),
     );
 
-    expect(findByClass(node, "audio-layer__notices")).toHaveLength(1);
+    expect(findByClass(node, "tzr-std-audio-status-panel__notices")).toHaveLength(1);
     expect(getNodeText(node)).toContain('Missing BGM audio asset "daily_theme".');
+  });
+
+  it("uses custom labels", () => {
+    const node = expectVNode(
+      StdAudioStatusPanel({
+        bgmAssetId: "daily_theme",
+        labels: { panel: "audio state", bgm: "Music", none: "なし", notices: "Warnings" },
+      }),
+    );
+
+    expect(node.props["aria-label"]).toBe("audio state");
+    expect(getNodeText(node)).toContain("Music");
+    expect(getNodeText(node)).toContain("SEなし");
   });
 });

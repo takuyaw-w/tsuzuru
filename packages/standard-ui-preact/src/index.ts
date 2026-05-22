@@ -3,6 +3,7 @@ export type {
   TsuzuruGameAudioAsset,
   TsuzuruGameImageAsset,
 } from "./assets.js";
+export { createAudioAssetsWithVolume } from "./assets.js";
 export type { ChoiceLayerItem, ChoiceLayerProps } from "./ChoiceLayer.js";
 export { ChoiceLayer } from "./ChoiceLayer.js";
 
@@ -41,6 +42,8 @@ export {
   STD_AUDIO_PLAYBACK_DIAGNOSTIC_CODE,
   StdAudioLayer,
 } from "./std-audio-layer.js";
+export type { StdAudioStatusPanelLabels, StdAudioStatusPanelProps } from "./std-audio-status-panel.js";
+export { StdAudioStatusPanel } from "./std-audio-status-panel.js";
 export type {
   StdEffectLayerDiagnostic,
   StdEffectLayerProps,
@@ -74,5 +77,7 @@ export {
   isMessageHistoryEvent,
   useMessageHistory,
 } from "./useMessageHistory.js";
+export type { StdAudioNoticesState, UseStdAudioNoticesOptions } from "./useStdAudioNotices.js";
+export { useStdAudioNotices } from "./useStdAudioNotices.js";
 export type { TextRevealCharacterEvent, TextRevealState, UseTextRevealOptions } from "./useTextReveal.js";
 export { useTextReveal } from "./useTextReveal.js";

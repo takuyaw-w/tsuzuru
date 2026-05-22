@@ -29,9 +29,12 @@ import {
   GameViewport,
   RuntimeControlBar,
   RuntimeMessageLayer,
+  createAudioAssetsWithVolume,
   StdAudioLayer,
+  StdAudioStatusPanel,
   StdEffectLayer,
   StdVisualLayer,
+  useStdAudioNotices,
 } from "@tsuzuru/standard-ui-preact";
 import "@tsuzuru/standard-ui-preact/style.css";
 ```
@@ -50,6 +53,12 @@ logic.
 `@tsuzuru/plugin-std-effect`, such as flash, shake, pulse, and blur. Applications
 can pass custom target selectors when their DOM structure differs from the
 standard game shell.
+
+`StdAudioLayer` handles browser playback side effects, while
+`StdAudioStatusPanel` can display the current BGM, latest SE/Voice event, and
+audio notices. `useStdAudioNotices` converts playback diagnostics into a small
+deduplicated notice list, and `createAudioAssetsWithVolume` turns simple asset
+path maps into volume-aware audio asset maps.
 
 `TsuzuruGame` handles the standard starter runtime wiring for visual/audio/effect
 plugins, message display, choices, click/keyboard advance, text reveal, basic
