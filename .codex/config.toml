@@ -1,3 +1,9 @@
 [agents]
 max_threads = 4
 max_depth = 1
+
+[[hooks.Stop]]
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bash -lc '$HOME/.local/bin/codex-done-sound'"
+timeout = 5

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted, updated by the standard audio runtime layer
 
 ## Context
 
@@ -10,20 +10,23 @@ Accepted
 sequence events for SE and Voice. It intentionally does not load files or control
 browser playback.
 
-`examples/preact-basic` previously displayed that std-audio state for debugging,
-but did not attempt actual playback. The example needs a small browser playback
-MVP without changing public APIs in core, Preact, standard UI, or the std-audio
-plugin.
+`examples/preact-basic` originally proved browser playback with an example-local
+`AudioLayer`. After that behavior stabilized, the reusable browser playback and
+status bridge moved to `@tsuzuru/standard-ui-preact` as `StdAudioRuntimeLayer`.
 
 ## Decision
 
-Implement audio playback in `examples/preact-basic` as host-owned presentation
-behavior.
+Provide reusable standard audio playback/status presentation in
+`@tsuzuru/standard-ui-preact`.
 
-The example's `AudioLayer` reads std-audio runtime state, resolves asset IDs
-through an example-local asset map, and attempts BGM / SE / Voice playback with
-browser audio elements. BGM / SE / Voice volume preferences are also
-example-owned Settings preferences.
+`StdAudioRuntimeLayer` accepts `StdAudioState`, volume-aware asset maps, and
+optional status/notice configuration. It composes `StdAudioLayer`,
+`StdAudioStatusPanel`, and `useStdAudioNotices`.
+
+Applications still own asset ID to URL maps, file bundling policy, and volume
+preferences. `examples/preact-basic` keeps those example-specific concerns in
+`assets.ts` and Settings preferences, then passes the prepared asset maps to
+`StdAudioRuntimeLayer`.
 
 Audio files are not bundled. Users can place files under
 `examples/preact-basic/public/assets/audio/...` matching the example asset map.
@@ -34,11 +37,12 @@ with notices or console warnings. They must not stop the app.
 ## Rationale
 
 This keeps the std-audio plugin focused on runtime state and event emission. File
-URLs, host asset layout, volume policy, and browser playback behavior vary by
-application and should not become core or plugin policy at this stage.
+URLs, host asset layout, and volume policy vary by application and should not
+become core or plugin policy at this stage.
 
-Keeping playback in the example also proves the integration path while preserving
-the current package boundaries and public APIs.
+Keeping the reusable browser playback/status bridge in `standard-ui-preact`
+lets examples and starter-style apps share the same UI behavior without moving
+host asset policy into core or plugins.
 
 ## Responsibility boundaries
 
@@ -48,12 +52,14 @@ dispatch.
 `@tsuzuru/plugin-std-audio` owns std-audio command handlers and plugin state:
 current BGM asset ID, SE events, Voice events, and event sequences.
 
-`@tsuzuru/preact` and `@tsuzuru/standard-ui-preact` do not own audio playback or
-asset resolution.
+`@tsuzuru/preact` does not own audio playback or asset resolution.
 
-`examples/preact-basic` owns the playback controller, asset ID to URL map,
-browser audio element lifecycle, volume preferences, and fallback behavior for
-missing or blocked audio.
+`@tsuzuru/standard-ui-preact` owns the reusable browser playback/status bridge:
+audio element lifecycle, playback diagnostics, notices, and optional status
+display.
+
+`examples/preact-basic` owns the asset ID to URL map, volume preferences, and
+the decision to show the standard audio status panel in its fullscreen layout.
 
 ## Current limitations
 
@@ -69,8 +75,8 @@ activation. This is treated as a non-fatal host playback issue.
 
 ## Future work
 
-Consider a reusable example-side audio controller hook or standard helper once
-more host requirements are known.
+Continue keeping host-specific asset resolution and preferences outside
+`standard-ui-preact`.
 
 Future work may add fades, crossfades, channel policy, better asset resolvers,
 or save/load integration for presentation state. Those should be designed without

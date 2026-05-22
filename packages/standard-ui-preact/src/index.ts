@@ -42,6 +42,8 @@ export {
   STD_AUDIO_PLAYBACK_DIAGNOSTIC_CODE,
   StdAudioLayer,
 } from "./std-audio-layer.js";
+export type { StdAudioRuntimeLayerProps } from "./std-audio-runtime-layer.js";
+export { StdAudioRuntimeLayer } from "./std-audio-runtime-layer.js";
 export type { StdAudioStatusPanelLabels, StdAudioStatusPanelProps } from "./std-audio-status-panel.js";
 export { StdAudioStatusPanel } from "./std-audio-status-panel.js";
 export type {

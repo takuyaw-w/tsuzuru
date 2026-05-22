@@ -28,14 +28,13 @@ example-side host state persisted with localStorage; `@tsuzuru/core`,
 policy.
 
 The example also includes an Audio Playback MVP. The std-audio plugin records
-BGM, SE, and Voice state/events, and the example-side `AudioLayer` resolves
-those asset IDs through `assets.ts`, then delegates browser playback to
-`StdAudioLayer` from `@tsuzuru/standard-ui-preact`. BGM / SE / Voice volume can
-be changed from Settings. Audio files are not bundled; place files under
-`public/assets/audio/...` to match the asset map. Playback and asset resolution
-are host-owned presentation behavior, not core or plugin behavior. The example
-keeps only the example-specific asset/preferences glue around the standard audio
-playback layer, status panel, notice helper, and volume mapping utility.
+BGM, SE, and Voice state/events, and the runtime view passes that state to
+`StdAudioRuntimeLayer` from `@tsuzuru/standard-ui-preact`. BGM / SE / Voice
+volume can be changed from Settings. Audio files are not bundled; place files
+under `public/assets/audio/...` to match the asset map. Playback and asset
+resolution are host-owned presentation behavior, not core or plugin behavior.
+The example keeps only the example-specific asset and preferences glue around
+the standard audio runtime layer.
 
 Text Sound Lab is the bundled scenario. It uses three characters, `tone`,
 `noize`, and `mix`, to demonstrate `tone`, `noise`, and `mix` profiles from

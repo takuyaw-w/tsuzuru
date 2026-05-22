@@ -8,6 +8,7 @@ import type {
 import {
   createStdAudioCommandHandlers,
   createStdAudioPlugin,
+  getStdAudioState,
   prepareStdAudioStateForSnapshot,
 } from "@tsuzuru/plugin-std-audio";
 import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/plugin-std-camera";
@@ -33,12 +34,14 @@ import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/
 import { createRuntimeSaveDataFromState, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
+  createAudioAssetsWithVolume,
   GameShell,
   GameViewport,
   type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
   RuntimeControlBar,
   RuntimeMessageLayer,
+  StdAudioRuntimeLayer,
   StdEffectLayer,
   type TextRevealCharacterEvent,
   useAutoMode,
@@ -49,7 +52,6 @@ import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
 import scenario from "../scenario/main.tzr";
-import { AudioLayer } from "./AudioLayer.js";
 import { ParticleLayer } from "./ParticleLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import {
@@ -266,6 +268,7 @@ function RuntimeApp({
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const audioState = getStdAudioState(runtime.state);
   const effectState = getStdEffectState(runtime.state);
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [backgroundAnimationSuppression, setBackgroundAnimationSuppression] = useState({
@@ -294,6 +297,18 @@ function RuntimeApp({
     visiblePresentationEvent,
     preferences,
     textSoundPlayer,
+  );
+  const bgmAssets = useMemo(
+    () => createAudioAssetsWithVolume(assets.audio.bgm, preferences.bgmVolume),
+    [preferences.bgmVolume],
+  );
+  const seAssets = useMemo(
+    () => createAudioAssetsWithVolume(assets.audio.se, preferences.seVolume),
+    [preferences.seVolume],
+  );
+  const voiceAssets = useMemo(
+    () => createAudioAssetsWithVolume(assets.audio.voice, preferences.voiceVolume),
+    [preferences.voiceVolume],
   );
   const textReveal = useTextReveal(revealText, {
     enabled: messageLines !== null && preferences.textRevealEnabled,
@@ -533,7 +548,13 @@ function RuntimeApp({
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} backgroundAnimationSuppression={backgroundAnimationSuppression} />
             <ParticleLayer runtimeState={runtime.state} />
-            <AudioLayer runtimeState={runtime.state} preferences={preferences} />
+            <StdAudioRuntimeLayer
+              audioState={audioState}
+              bgmAssets={bgmAssets}
+              seAssets={seAssets}
+              voiceAssets={voiceAssets}
+              statusPanelClassName="audio-layer"
+            />
             <StdEffectLayer
               className="effect-layer"
               events={effectState.events}

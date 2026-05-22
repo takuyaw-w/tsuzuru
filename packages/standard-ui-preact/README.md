@@ -31,6 +31,7 @@ import {
   RuntimeMessageLayer,
   createAudioAssetsWithVolume,
   StdAudioLayer,
+  StdAudioRuntimeLayer,
   StdAudioStatusPanel,
   StdEffectLayer,
   StdVisualLayer,
@@ -54,16 +55,18 @@ logic.
 can pass custom target selectors when their DOM structure differs from the
 standard game shell.
 
-`StdAudioLayer` handles browser playback side effects, while
-`StdAudioStatusPanel` can display the current BGM, latest SE/Voice event, and
-audio notices. `useStdAudioNotices` converts playback diagnostics into a small
-deduplicated notice list, and `createAudioAssetsWithVolume` turns simple asset
-path maps into volume-aware audio asset maps.
+`StdAudioRuntimeLayer` connects a `StdAudioState` to standard browser playback,
+audio notices, and an optional status panel. `StdAudioLayer` handles the
+playback side effects, while `StdAudioStatusPanel` can display the current BGM,
+latest SE/Voice event, and audio notices. `useStdAudioNotices` converts playback
+diagnostics into a small deduplicated notice list, and
+`createAudioAssetsWithVolume` turns simple asset path maps into volume-aware
+audio asset maps. Applications still own asset maps and volume preferences.
 
 `TsuzuruGame` handles the standard starter runtime wiring for visual/audio/effect
 plugins, message display, choices, click/keyboard advance, text reveal, basic
 asset playback, and simple standard effects. It does not own save/load, backlog,
 gallery, settings, custom screens, or project-specific asset bundling policy.
-Use `@tsuzuru/preact` directly with `StdVisualLayer` / `StdAudioLayer` /
-`StdEffectLayer` / `RuntimeControlBar` when an app needs full runtime control but
-still wants the standard presentation layers.
+Use `@tsuzuru/preact` directly with `StdVisualLayer` /
+`StdAudioRuntimeLayer` / `StdEffectLayer` / `RuntimeControlBar` when an app
+needs full runtime control but still wants the standard presentation layers.
