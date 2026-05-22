@@ -2,9 +2,9 @@
 
 Standard game storage helpers for Tsuzuru.
 
-This package currently provides preferences and read tracking storage helpers.
-Future work can move additional reusable browser game storage helpers out of
-`examples/preact-basic` in small steps.
+This package currently provides preferences, read tracking, and save slot
+storage helpers. Future work can move additional reusable browser game storage
+helpers out of `examples/preact-basic` in small steps.
 
 Available APIs:
 
@@ -24,10 +24,17 @@ Available APIs:
 - `serializeReadTrackingState`
 - `parseReadTrackingStorageData`
 - `createLocalStorageReadTrackingStore`
+- `StandardSaveSlot`
+- `StandardSaveSlotDefinition`
+- `StandardSaveSlotStore`
+- `sortSaveSlotsByDefinition`
+- `dedupeSaveSlotsByNewest`
+- `getLatestSaveSlot`
+- `createLocalStorageSaveSlotStore`
 
 Planned areas:
 
-- save slot storage
+- example-specific save data migration helpers
 
 Current non-goals:
 

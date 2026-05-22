@@ -2,6 +2,11 @@ import type { TsuzuruProjectConfig } from "@tsuzuru/config";
 import type { RuntimeEvent, RuntimeSaveSlot, RuntimeSaveSlotContext, RuntimeSnapshot } from "@tsuzuru/core";
 import { validateRuntimeSaveSlot } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
+import {
+  createLocalStorageSaveSlotStore,
+  type StandardSaveSlot,
+  type StandardSaveSlotDefinition,
+} from "@tsuzuru/standard-game-storage";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
@@ -15,17 +20,9 @@ export interface ExampleSaveData {
   readonly retainedMessageEvent: RetainedMessageEvent | null;
 }
 
-export interface ExampleSaveSlot {
-  readonly id: string;
-  readonly label: string;
-  readonly savedAt: string;
-  readonly data: ExampleSaveData;
-}
+export type ExampleSaveSlot = StandardSaveSlot<ExampleSaveData>;
 
-export interface ExampleSaveSlotDefinition {
-  readonly id: string;
-  readonly label: string;
-}
+export type ExampleSaveSlotDefinition = StandardSaveSlotDefinition;
 
 // The storage key stays v1; slot payloads accept both legacy RuntimeSaveData and ExampleSaveData.
 export const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
@@ -41,32 +38,16 @@ const runtimeSaveSlotContext = {
   scenarioVersion: projectIdentity.version,
 } satisfies RuntimeSaveSlotContext;
 
+const saveSlotStore = createLocalStorageSaveSlotStore<ExampleSaveData>({
+  storageKey: SAVE_STORAGE_KEY,
+  project: projectIdentity,
+  slots: SAVE_SLOT_DEFINITIONS,
+  parseData: (value, context) => parseExampleSaveData(value, context.savedAt),
+  getSavedAt: (data) => data.saveSlot.createdAt,
+});
+
 export function loadSaveSlots(): readonly ExampleSaveSlot[] {
-  const rawValue = readStorageValue();
-  if (rawValue === null) {
-    return [];
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(rawValue);
-  } catch {
-    return [];
-  }
-
-  if (!Array.isArray(parsed)) {
-    return [];
-  }
-
-  const slots: ExampleSaveSlot[] = [];
-  for (const item of parsed) {
-    const slot = parseSaveSlot(item);
-    if (slot !== null) {
-      slots.push(slot);
-    }
-  }
-
-  return sortBySlotOrder(dedupeSlots(slots));
+  return saveSlotStore.loadSlots();
 }
 
 export function createExampleSaveData(
@@ -89,37 +70,15 @@ export function createExampleSaveData(
 }
 
 export function saveToSlot(slotId: string, data: ExampleSaveData): readonly ExampleSaveSlot[] {
-  const definition = getSaveSlotDefinition(slotId);
-  if (definition === null) {
-    return loadSaveSlots();
-  }
-
-  const nextSlot: ExampleSaveSlot = {
-    id: definition.id,
-    label: definition.label,
-    savedAt: data.saveSlot.createdAt,
-    data,
-  };
-  const slots = loadSaveSlots().filter((slot) => slot.id !== slotId);
-  const nextSlots = sortBySlotOrder([...slots, nextSlot]);
-  writeSaveSlots(nextSlots);
-  return nextSlots;
+  return saveSlotStore.saveToSlot(slotId, data);
 }
 
 export function deleteSaveSlot(slotId: string): readonly ExampleSaveSlot[] {
-  const nextSlots = loadSaveSlots().filter((slot) => slot.id !== slotId);
-  writeSaveSlots(nextSlots);
-  return nextSlots;
+  return saveSlotStore.deleteSlot(slotId);
 }
 
 export function getLatestSaveSlot(slots: readonly ExampleSaveSlot[]): ExampleSaveSlot | null {
-  let latestSlot: ExampleSaveSlot | null = null;
-  for (const slot of slots) {
-    if (latestSlot === null || slot.savedAt > latestSlot.savedAt) {
-      latestSlot = slot;
-    }
-  }
-  return latestSlot;
+  return saveSlotStore.getLatestSlot(slots);
 }
 
 export function isExampleSaveData(value: unknown): value is ExampleSaveData {
@@ -136,42 +95,6 @@ export function isRetainedMessageEvent(value: unknown): value is RetainedMessage
   }
 
   return value.type !== "dialogue" || typeof value.speaker === "string";
-}
-
-function readStorageValue(): string | null {
-  try {
-    return window.localStorage.getItem(SAVE_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeSaveSlots(slots: readonly ExampleSaveSlot[]): void {
-  try {
-    window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(slots));
-  } catch {
-    // Storage can be unavailable or full. The example keeps running without persistence.
-  }
-}
-
-function parseSaveSlot(value: unknown): ExampleSaveSlot | null {
-  if (!isObjectRecord(value)) {
-    return null;
-  }
-
-  const definition = typeof value.id === "string" ? getSaveSlotDefinition(value.id) : null;
-  const savedAt = typeof value.savedAt === "string" ? value.savedAt : null;
-  const data = parseExampleSaveData(value.data, savedAt ?? undefined);
-  if (definition === null || typeof value.savedAt !== "string" || data === null) {
-    return null;
-  }
-
-  return {
-    id: definition.id,
-    label: definition.label,
-    savedAt: value.savedAt,
-    data,
-  };
 }
 
 export function parseExampleSaveData(value: unknown, createdAt?: string): ExampleSaveData | null {
@@ -270,29 +193,6 @@ function isCompatibleScenarioIdentity(value: ExampleScenarioIdentity): boolean {
 
 function isScenarioIdentity(value: unknown): value is ExampleScenarioIdentity {
   return isObjectRecord(value) && typeof value.id === "string" && typeof value.version === "string";
-}
-
-function dedupeSlots(slots: readonly ExampleSaveSlot[]): readonly ExampleSaveSlot[] {
-  const latestById = new Map<string, ExampleSaveSlot>();
-  for (const slot of slots) {
-    const current = latestById.get(slot.id);
-    if (current === undefined || slot.savedAt > current.savedAt) {
-      latestById.set(slot.id, slot);
-    }
-  }
-  return [...latestById.values()];
-}
-
-function sortBySlotOrder(slots: readonly ExampleSaveSlot[]): readonly ExampleSaveSlot[] {
-  return [...slots].sort((left, right) => getSlotIndex(left.id) - getSlotIndex(right.id));
-}
-
-function getSlotIndex(slotId: string): number {
-  return SAVE_SLOT_DEFINITIONS.findIndex((definition) => definition.id === slotId);
-}
-
-function getSaveSlotDefinition(slotId: string): ExampleSaveSlotDefinition | null {
-  return SAVE_SLOT_DEFINITIONS.find((definition) => definition.id === slotId) ?? null;
 }
 
 function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {

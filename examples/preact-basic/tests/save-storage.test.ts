@@ -2,13 +2,16 @@ import type { RuntimeSaveData } from "@tsuzuru/preact";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createExampleSaveData,
+  deleteSaveSlot,
   type ExampleSaveData,
   getLatestSaveSlot,
   isExampleSaveData,
   loadSaveSlots,
   parseExampleSaveData,
   type RetainedMessageEvent,
+  SAVE_SLOT_DEFINITIONS,
   SAVE_STORAGE_KEY,
+  saveToSlot,
 } from "../src/save-storage.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
@@ -50,6 +53,15 @@ describe("save-storage", () => {
       id: PROJECT_ID,
       version: PROJECT_VERSION,
     });
+  });
+
+  it("keeps the stable save storage key and slot definitions", () => {
+    expect(SAVE_STORAGE_KEY).toBe("tsuzuru:example-preact-basic:saves:v1");
+    expect(SAVE_SLOT_DEFINITIONS).toEqual([
+      { id: "slot-1", label: "Slot 1" },
+      { id: "slot-2", label: "Slot 2" },
+      { id: "slot-3", label: "Slot 3" },
+    ]);
   });
 
   it("creates v3 save data with a RuntimeSaveSlot for the current scenario identity", () => {
@@ -228,8 +240,47 @@ describe("save-storage", () => {
     expect(parseExampleSaveData(saveData)?.retainedMessageEvent).toEqual(retainedMessageEvent);
   });
 
+  it("rejects malformed retained message events in v1, v2, and v3 save data", () => {
+    const invalidRetainedMessageEvent = {
+      type: "dialogue",
+      lines: [{ text: "Missing speaker." }],
+    };
+    const saveData = createExampleSaveData(runtimeSaveData, null, savedAt);
+
+    expect(
+      parseExampleSaveData({
+        ...saveData,
+        retainedMessageEvent: invalidRetainedMessageEvent,
+      }),
+    ).toBeNull();
+    expect(
+      parseExampleSaveData(
+        {
+          version: 1,
+          runtime: runtimeSaveData,
+          retainedMessageEvent: invalidRetainedMessageEvent,
+        },
+        savedAt,
+      ),
+    ).toBeNull();
+    expect(
+      parseExampleSaveData(
+        {
+          version: 2,
+          scenario: projectIdentity,
+          runtime: runtimeSaveData,
+          retainedMessageEvent: invalidRetainedMessageEvent,
+        },
+        savedAt,
+      ),
+    ).toBeNull();
+  });
+
   it("ignores broken JSON and invalid payloads", () => {
     stubSaveStorage("not-json");
+    expect(loadSaveSlots()).toEqual([]);
+
+    stubSaveStorage(JSON.stringify({ slots: [] }));
     expect(loadSaveSlots()).toEqual([]);
 
     stubSaveStorage(
@@ -243,6 +294,64 @@ describe("save-storage", () => {
       ]),
     );
     expect(loadSaveSlots()).toEqual([]);
+  });
+
+  it("migrates legacy save data payloads when loading stored slots", () => {
+    const firstSavedAt = "2026-01-01T00:00:00.000Z";
+    const secondSavedAt = "2026-01-02T00:00:00.000Z";
+    const thirdSavedAt = "2026-01-03T00:00:00.000Z";
+    stubSaveStorage(
+      JSON.stringify([
+        {
+          id: "slot-1",
+          label: "ignored",
+          savedAt: firstSavedAt,
+          data: {
+            version: 1,
+            runtime: runtimeSaveData,
+            retainedMessageEvent,
+          },
+        },
+        {
+          id: "slot-2",
+          label: "ignored",
+          savedAt: secondSavedAt,
+          data: {
+            version: 2,
+            scenario: projectIdentity,
+            runtime: runtimeSaveData,
+            retainedMessageEvent,
+          },
+        },
+        {
+          id: "slot-3",
+          label: "ignored",
+          savedAt: thirdSavedAt,
+          data: runtimeSaveData,
+        },
+      ]),
+    );
+
+    expect(loadSaveSlots()).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt: firstSavedAt,
+        data: createExampleSaveData(runtimeSaveData, retainedMessageEvent, firstSavedAt),
+      },
+      {
+        id: "slot-2",
+        label: "Slot 2",
+        savedAt: secondSavedAt,
+        data: createExampleSaveData(runtimeSaveData, retainedMessageEvent, secondSavedAt),
+      },
+      {
+        id: "slot-3",
+        label: "Slot 3",
+        savedAt: thirdSavedAt,
+        data: createExampleSaveData(runtimeSaveData, null, thirdSavedAt),
+      },
+    ]);
   });
 
   it("uses only compatible slots when selecting the latest save slot", () => {
@@ -326,6 +435,61 @@ describe("save-storage", () => {
     expect(slots).toHaveLength(1);
     expect(slots[0]?.savedAt).toBe("2026-01-01T00:00:00.000Z");
     expect(getLatestSaveSlot(slots)?.id).toBe("slot-1");
+  });
+
+  it("keeps the newest compatible duplicate slot", () => {
+    const olderSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-01T00:00:00.000Z");
+    const newerSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-02T00:00:00.000Z");
+    stubSaveStorage(
+      JSON.stringify([
+        { id: "slot-1", label: "ignored", savedAt: "2026-01-01T00:00:00.000Z", data: olderSaveData },
+        { id: "slot-1", label: "ignored", savedAt: "2026-01-02T00:00:00.000Z", data: newerSaveData },
+      ]),
+    );
+
+    const slots = loadSaveSlots();
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.savedAt).toBe("2026-01-02T00:00:00.000Z");
+    expect(slots[0]?.data).toEqual(newerSaveData);
+  });
+
+  it("keeps save and delete wrapper behavior on the example storage key", () => {
+    stubSaveStorage(null);
+    const firstSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-01T00:00:00.000Z");
+    const secondSaveData = createExampleSaveData(runtimeSaveData, null, "2026-01-02T00:00:00.000Z");
+
+    expect(saveToSlot("slot-2", secondSaveData)).toEqual([
+      {
+        id: "slot-2",
+        label: "Slot 2",
+        savedAt: "2026-01-02T00:00:00.000Z",
+        data: secondSaveData,
+      },
+    ]);
+    expect(saveToSlot("slot-1", firstSaveData)).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt: "2026-01-01T00:00:00.000Z",
+        data: firstSaveData,
+      },
+      {
+        id: "slot-2",
+        label: "Slot 2",
+        savedAt: "2026-01-02T00:00:00.000Z",
+        data: secondSaveData,
+      },
+    ]);
+    expect(saveToSlot("unknown", firstSaveData)).toHaveLength(2);
+    expect(deleteSaveSlot("slot-2")).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt: "2026-01-01T00:00:00.000Z",
+        data: firstSaveData,
+      },
+    ]);
   });
 });
 
