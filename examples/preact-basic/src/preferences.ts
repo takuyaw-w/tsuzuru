@@ -1,104 +1,39 @@
-export const TEXT_SPEED_OPTIONS = [30, 60, 120] as const;
+import {
+  createLocalStoragePreferencesStore,
+  DEFAULT_STANDARD_GAME_PREFERENCES,
+  STANDARD_GAME_TEXT_SPEED_OPTIONS,
+  type StandardGamePreferences,
+} from "@tsuzuru/standard-game-storage";
+
+export const TEXT_SPEED_OPTIONS = STANDARD_GAME_TEXT_SPEED_OPTIONS;
 
 export type TextSpeedCharactersPerSecond = (typeof TEXT_SPEED_OPTIONS)[number];
 
-export interface ExamplePreferences {
-  readonly textRevealEnabled: boolean;
+export interface ExamplePreferences extends StandardGamePreferences {
   readonly textSpeedCharactersPerSecond: TextSpeedCharactersPerSecond;
-  readonly textSoundEnabled: boolean;
-  readonly textSoundVolume: number;
-  readonly bgmVolume: number;
-  readonly seVolume: number;
-  readonly voiceVolume: number;
 }
 
 export const DEFAULT_EXAMPLE_PREFERENCES: ExamplePreferences = {
-  textRevealEnabled: true,
+  ...DEFAULT_STANDARD_GAME_PREFERENCES,
   textSpeedCharactersPerSecond: 60,
-  textSoundEnabled: true,
-  textSoundVolume: 0.55,
-  bgmVolume: 0.6,
-  seVolume: 0.8,
-  voiceVolume: 0.9,
 };
 
 export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
 
+const preferencesStore = createLocalStoragePreferencesStore({
+  storageKey: PREFERENCES_STORAGE_KEY,
+  defaults: DEFAULT_EXAMPLE_PREFERENCES,
+  textSpeedOptions: TEXT_SPEED_OPTIONS,
+});
+
 export function loadPreferences(): ExamplePreferences {
-  const storage = getLocalStorage();
-  if (storage === null) {
-    return DEFAULT_EXAMPLE_PREFERENCES;
-  }
-
-  const rawValue = storage.getItem(PREFERENCES_STORAGE_KEY);
-  if (rawValue === null) {
-    return DEFAULT_EXAMPLE_PREFERENCES;
-  }
-
-  try {
-    return normalizePreferences(JSON.parse(rawValue));
-  } catch {
-    return DEFAULT_EXAMPLE_PREFERENCES;
-  }
+  return preferencesStore.load() as ExamplePreferences;
 }
 
 export function savePreferences(preferences: ExamplePreferences): ExamplePreferences {
-  const normalizedPreferences = normalizePreferences(preferences);
-  const storage = getLocalStorage();
-  if (storage === null) {
-    return normalizedPreferences;
-  }
-
-  try {
-    storage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(normalizedPreferences));
-  } catch {
-    return normalizedPreferences;
-  }
-  return normalizedPreferences;
+  return preferencesStore.save(preferences) as ExamplePreferences;
 }
 
 export function normalizePreferences(value: unknown): ExamplePreferences {
-  if (!isRecord(value)) {
-    return DEFAULT_EXAMPLE_PREFERENCES;
-  }
-
-  return {
-    textRevealEnabled:
-      typeof value.textRevealEnabled === "boolean"
-        ? value.textRevealEnabled
-        : DEFAULT_EXAMPLE_PREFERENCES.textRevealEnabled,
-    textSpeedCharactersPerSecond: isTextSpeedCharactersPerSecond(value.textSpeedCharactersPerSecond)
-      ? value.textSpeedCharactersPerSecond
-      : DEFAULT_EXAMPLE_PREFERENCES.textSpeedCharactersPerSecond,
-    textSoundEnabled:
-      typeof value.textSoundEnabled === "boolean"
-        ? value.textSoundEnabled
-        : DEFAULT_EXAMPLE_PREFERENCES.textSoundEnabled,
-    textSoundVolume: isUnitVolume(value.textSoundVolume)
-      ? value.textSoundVolume
-      : DEFAULT_EXAMPLE_PREFERENCES.textSoundVolume,
-    bgmVolume: isUnitVolume(value.bgmVolume) ? value.bgmVolume : DEFAULT_EXAMPLE_PREFERENCES.bgmVolume,
-    seVolume: isUnitVolume(value.seVolume) ? value.seVolume : DEFAULT_EXAMPLE_PREFERENCES.seVolume,
-    voiceVolume: isUnitVolume(value.voiceVolume) ? value.voiceVolume : DEFAULT_EXAMPLE_PREFERENCES.voiceVolume,
-  };
-}
-
-function isTextSpeedCharactersPerSecond(value: unknown): value is TextSpeedCharactersPerSecond {
-  return typeof value === "number" && TEXT_SPEED_OPTIONS.includes(value as TextSpeedCharactersPerSecond);
-}
-
-function isUnitVolume(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function getLocalStorage(): Storage | null {
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return null;
-  }
+  return preferencesStore.normalize(value) as ExamplePreferences;
 }

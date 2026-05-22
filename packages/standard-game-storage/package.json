@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist/src/index.*"
+    "dist/src/index.*",
+    "dist/src/preferences.*"
   ],
   "repository": {
     "type": "git",

@@ -71,6 +71,9 @@ importers:
       '@tsuzuru/preact':
         specifier: workspace:*
         version: link:../../packages/preact
+      '@tsuzuru/standard-game-storage':
+        specifier: workspace:*
+        version: link:../../packages/standard-game-storage
       '@tsuzuru/standard-ui-preact':
         specifier: workspace:*
         version: link:../../packages/standard-ui-preact
