@@ -8,54 +8,24 @@ import {
   type TzrCompileProjectResult,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin, getStdAudioState } from "@tsuzuru/plugin-std-audio";
-import {
-  createStdVisualCommandHandlers,
-  createStdVisualPlugin,
-  getStdVisualState,
-  type StdVisualSpritePosition,
-} from "@tsuzuru/plugin-std-visual";
+import { createStdVisualCommandHandlers, createStdVisualPlugin, getStdVisualState } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/preact";
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { TsuzuruGameAssets } from "./assets.js";
 import { joinClassNames } from "./class-name.js";
 import { GameShell } from "./GameShell.js";
 import { GameViewport, type GameViewportAspectRatio } from "./game-viewport.js";
 import { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
 import { StatusLayer } from "./StatusLayer.js";
+import { StdAudioLayer, type StdAudioLayerDiagnostic } from "./std-audio-layer.js";
+import { StdVisualLayer } from "./std-visual-layer.js";
 import { useTextReveal } from "./useTextReveal.js";
 
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type DivStyle = Extract<NonNullable<ComponentProps<"div">["style"]>, object>;
 
 export type TsuzuruGameScenario = RuntimeDocument | TzrCompileProjectResult;
-
-export type TsuzuruGameImageAsset =
-  | string
-  | {
-      readonly src?: string;
-      readonly label?: string;
-      readonly alt?: string;
-      readonly className?: string;
-    };
-
-export type TsuzuruGameAudioAsset =
-  | string
-  | {
-      readonly src: string;
-      readonly volume?: number;
-    };
-
-export interface TsuzuruGameAssets {
-  readonly visual?: {
-    readonly backgrounds?: Readonly<Record<string, TsuzuruGameImageAsset>>;
-    readonly sprites?: Readonly<Record<string, TsuzuruGameImageAsset>>;
-  };
-  readonly audio?: {
-    readonly bgm?: Readonly<Record<string, TsuzuruGameAudioAsset>>;
-    readonly se?: Readonly<Record<string, TsuzuruGameAudioAsset>>;
-    readonly voice?: Readonly<Record<string, TsuzuruGameAudioAsset>>;
-  };
-}
 
 export type TsuzuruGameDiagnostic =
   | {
@@ -106,31 +76,12 @@ interface TsuzuruGameRuntimeProps extends Omit<TsuzuruGameProps, "scenario"> {
   readonly document: RuntimeDocument;
 }
 
-interface ResolvedImageAsset {
-  readonly src?: string;
-  readonly label: string;
-  readonly alt: string;
-  readonly className?: string;
-}
-
-interface ResolvedAudioAsset {
-  readonly src: string;
-  readonly volume?: number;
-}
-
-interface OneShotAudioEvent {
-  readonly assetId: string;
-  readonly sequence: number;
-}
-
 interface LineRange {
   readonly start: number;
   readonly end: number;
 }
 
 const STARTER_PLUGINS: readonly RuntimePluginDefinition[] = [createStdVisualPlugin(), createStdAudioPlugin()];
-const AUDIO_MISSING_DIAGNOSTIC_CODE = "standardUi.audioAssetMissing";
-const AUDIO_PLAYBACK_DIAGNOSTIC_CODE = "standardUi.audioPlaybackFailed";
 
 export function defineTsuzuruGameScenario(input: TzrCompileProjectInput): TzrCompileProjectResult {
   return compileTzrProject(input, {
@@ -204,7 +155,8 @@ function TsuzuruGameRuntime({
     [recordDiagnostic],
   );
   const recordAssetDiagnostic = useCallback(
-    (key: string, message: string) => {
+    (diagnostic: StdAudioLayerDiagnostic) => {
+      const key = `${diagnostic.code}:${diagnostic.channel}:${diagnostic.assetId}`;
       if (assetDiagnosticKeysRef.current.has(key)) {
         return;
       }
@@ -213,7 +165,7 @@ function TsuzuruGameRuntime({
         source: "asset",
         severity: "warning",
         code: key,
-        message,
+        message: diagnostic.message,
       });
     },
     [recordDiagnostic],
@@ -282,10 +234,6 @@ function TsuzuruGameRuntime({
     [handleAdvanceRequest],
   );
 
-  useBgmAudio(audioState.bgm?.assetId, assets?.audio?.bgm, recordAssetDiagnostic);
-  useOneShotAudioEvents(audioState.seEvents, assets?.audio?.se, "SE", recordAssetDiagnostic);
-  useOneShotAudioEvents(audioState.voiceEvents, assets?.audio?.voice, "Voice", recordAssetDiagnostic);
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isInteractiveTarget(event.target)) {
@@ -313,13 +261,20 @@ function TsuzuruGameRuntime({
 
   return (
     <TsuzuruGameFrame className={className} viewport={viewport} onClick={handleSurfaceClick}>
-      <VisualLayer
+      <StdVisualLayer
+        background={visualState.background}
         sprites={visualState.sprites}
-        {...(visualState.background?.assetId === undefined
-          ? {}
-          : { backgroundAssetId: visualState.background.assetId })}
         {...(assets?.visual?.backgrounds === undefined ? {} : { backgroundAssets: assets.visual.backgrounds })}
         {...(assets?.visual?.sprites === undefined ? {} : { spriteAssets: assets.visual.sprites })}
+      />
+      <StdAudioLayer
+        bgm={audioState.bgm}
+        seEvents={audioState.seEvents}
+        voiceEvents={audioState.voiceEvents}
+        {...(assets?.audio?.bgm === undefined ? {} : { bgmAssets: assets.audio.bgm })}
+        {...(assets?.audio?.se === undefined ? {} : { seAssets: assets.audio.se })}
+        {...(assets?.audio?.voice === undefined ? {} : { voiceAssets: assets.audio.voice })}
+        onDiagnostic={recordAssetDiagnostic}
       />
       <div className="tzr-tsuzuru-game__message-layer">
         {visibleEvent === null ? null : (
@@ -371,73 +326,6 @@ function TsuzuruGameFrame({
   );
 }
 
-function VisualLayer({
-  backgroundAssetId,
-  sprites,
-  backgroundAssets,
-  spriteAssets,
-}: {
-  readonly backgroundAssetId?: string | undefined;
-  readonly sprites: Readonly<Record<string, { readonly position: StdVisualSpritePosition }>>;
-  readonly backgroundAssets?: Readonly<Record<string, TsuzuruGameImageAsset>> | undefined;
-  readonly spriteAssets?: Readonly<Record<string, TsuzuruGameImageAsset>> | undefined;
-}): ComponentChildren {
-  return (
-    <div className="tzr-tsuzuru-game__visual-layer" aria-hidden="true">
-      {backgroundAssetId === undefined ? (
-        <div className="tzr-tsuzuru-game__background tzr-tsuzuru-game__background--empty" />
-      ) : (
-        <ImageAsset
-          assetId={backgroundAssetId}
-          asset={resolveImageAsset(backgroundAssets, backgroundAssetId)}
-          baseClassName="tzr-tsuzuru-game__background"
-          placeholderClassName="tzr-tsuzuru-game__background-placeholder"
-        />
-      )}
-      <div className="tzr-tsuzuru-game__sprite-layer">
-        {Object.entries(sprites).map(([assetId, sprite]) => (
-          <ImageAsset
-            key={assetId}
-            assetId={assetId}
-            asset={resolveImageAsset(spriteAssets, assetId)}
-            baseClassName={joinClassNames("tzr-tsuzuru-game__sprite", `tzr-tsuzuru-game__sprite--${sprite.position}`)}
-            placeholderClassName="tzr-tsuzuru-game__sprite-placeholder"
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ImageAsset({
-  assetId,
-  asset,
-  baseClassName,
-  placeholderClassName,
-}: {
-  readonly assetId: string;
-  readonly asset: ResolvedImageAsset;
-  readonly baseClassName: string;
-  readonly placeholderClassName: string;
-}): ComponentChildren {
-  if (asset.src !== undefined) {
-    return (
-      <img
-        className={joinClassNames(baseClassName, asset.className)}
-        src={asset.src}
-        alt={asset.alt}
-        draggable={false}
-      />
-    );
-  }
-
-  return (
-    <div className={joinClassNames(baseClassName, placeholderClassName, asset.className)} aria-label={assetId}>
-      <span className="tzr-tsuzuru-game__asset-label">{asset.label}</span>
-    </div>
-  );
-}
-
 function DiagnosticsList({
   diagnostics,
   onDiagnostics,
@@ -460,138 +348,6 @@ function DiagnosticsList({
       ))}
     </ul>
   );
-}
-
-function useBgmAudio(
-  assetId: string | undefined,
-  assets: Readonly<Record<string, TsuzuruGameAudioAsset>> | undefined,
-  recordAssetDiagnostic: (key: string, message: string) => void,
-): void {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    audioRef.current?.pause();
-    audioRef.current = null;
-
-    if (assetId === undefined) {
-      return;
-    }
-
-    const resolved = resolveAudioAsset(assets, assetId);
-    if (resolved === null) {
-      recordAssetDiagnostic(`${AUDIO_MISSING_DIAGNOSTIC_CODE}:BGM:${assetId}`, `Missing BGM audio asset "${assetId}".`);
-      return;
-    }
-    if (typeof Audio === "undefined") {
-      return;
-    }
-
-    const audio = new Audio(resolved.src);
-    audio.loop = true;
-    audio.volume = resolved.volume ?? 1;
-    audioRef.current = audio;
-    void audio.play().catch(() => {
-      recordAssetDiagnostic(
-        `${AUDIO_PLAYBACK_DIAGNOSTIC_CODE}:BGM:${assetId}`,
-        `BGM playback was blocked or failed: ${assetId}.`,
-      );
-    });
-
-    return () => {
-      audio.pause();
-    };
-  }, [assetId, assets, recordAssetDiagnostic]);
-}
-
-function useOneShotAudioEvents(
-  events: readonly OneShotAudioEvent[],
-  assets: Readonly<Record<string, TsuzuruGameAudioAsset>> | undefined,
-  kind: "SE" | "Voice",
-  recordAssetDiagnostic: (key: string, message: string) => void,
-): void {
-  const lastSequenceRef = useRef(0);
-
-  useEffect(() => {
-    const maxSequence = events.reduce((current, event) => Math.max(current, event.sequence), 0);
-    if (maxSequence < lastSequenceRef.current) {
-      lastSequenceRef.current = 0;
-    }
-
-    for (const event of events) {
-      if (event.sequence <= lastSequenceRef.current) {
-        continue;
-      }
-
-      const resolved = resolveAudioAsset(assets, event.assetId);
-      if (resolved === null) {
-        recordAssetDiagnostic(
-          `${AUDIO_MISSING_DIAGNOSTIC_CODE}:${kind}:${event.assetId}`,
-          `Missing ${kind} audio asset "${event.assetId}".`,
-        );
-        continue;
-      }
-
-      playOneShotAudio(resolved, kind, event.assetId, recordAssetDiagnostic);
-    }
-
-    lastSequenceRef.current = maxSequence;
-  }, [assets, events, kind, recordAssetDiagnostic]);
-}
-
-function playOneShotAudio(
-  asset: ResolvedAudioAsset,
-  kind: "SE" | "Voice",
-  assetId: string,
-  recordAssetDiagnostic: (key: string, message: string) => void,
-): void {
-  if (typeof Audio === "undefined") {
-    return;
-  }
-
-  const audio = new Audio(asset.src);
-  audio.volume = asset.volume ?? 1;
-  void audio.play().catch(() => {
-    recordAssetDiagnostic(
-      `${AUDIO_PLAYBACK_DIAGNOSTIC_CODE}:${kind}:${assetId}`,
-      `${kind} playback was blocked or failed: ${assetId}.`,
-    );
-  });
-}
-
-function resolveImageAsset(
-  assets: Readonly<Record<string, TsuzuruGameImageAsset>> | undefined,
-  assetId: string,
-): ResolvedImageAsset {
-  const asset = assets?.[assetId];
-  if (asset === undefined) {
-    return { label: assetId, alt: assetId };
-  }
-  if (typeof asset === "string") {
-    return { src: asset, label: assetId, alt: "" };
-  }
-  return {
-    ...(asset.src === undefined ? {} : { src: asset.src }),
-    label: asset.label ?? assetId,
-    alt: asset.alt ?? "",
-    ...(asset.className === undefined ? {} : { className: asset.className }),
-  };
-}
-
-function resolveAudioAsset(
-  assets: Readonly<Record<string, TsuzuruGameAudioAsset>> | undefined,
-  assetId: string,
-): ResolvedAudioAsset | null {
-  const asset = assets?.[assetId];
-  if (asset === undefined) {
-    return null;
-  }
-  if (typeof asset === "string") {
-    return { src: asset };
-  }
-  return {
-    src: asset.src,
-    ...(asset.volume === undefined ? {} : { volume: asset.volume }),
-  };
 }
 
 function useVisibleEventPresentationKey(event: Parameters<typeof getMessageLines>[0]): string {

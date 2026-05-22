@@ -1,3 +1,8 @@
+export type {
+  TsuzuruGameAssets,
+  TsuzuruGameAudioAsset,
+  TsuzuruGameImageAsset,
+} from "./assets.js";
 export type { ChoiceLayerItem, ChoiceLayerProps } from "./ChoiceLayer.js";
 export { ChoiceLayer } from "./ChoiceLayer.js";
 
@@ -20,10 +25,19 @@ export type {
 } from "./screen-host.js";
 export { ScreenHost } from "./screen-host.js";
 export type {
-  TsuzuruGameAssets,
-  TsuzuruGameAudioAsset,
+  StdAudioLayerChannel,
+  StdAudioLayerDiagnostic,
+  StdAudioLayerProps,
+} from "./std-audio-layer.js";
+export {
+  STD_AUDIO_MISSING_DIAGNOSTIC_CODE,
+  STD_AUDIO_PLAYBACK_DIAGNOSTIC_CODE,
+  StdAudioLayer,
+} from "./std-audio-layer.js";
+export type { StdVisualLayerProps } from "./std-visual-layer.js";
+export { StdVisualLayer } from "./std-visual-layer.js";
+export type {
   TsuzuruGameDiagnostic,
-  TsuzuruGameImageAsset,
   TsuzuruGameProps,
   TsuzuruGameScenario,
   TsuzuruGameTextOptions,

@@ -4,17 +4,13 @@ Reusable Preact UI components and a starter game shell for Tsuzuru visual novel 
 
 ## Usage
 
-For a creator-facing starter, compile a scenario project with the built-in
-standard visual/audio plugin set and pass it to `TsuzuruGame`.
+For a creator-facing Vite starter, import a `.tzr` file through
+`@tsuzuru/vite-plugin` and pass the compiled scenario to `TsuzuruGame`.
 
 ```tsx
-import { defineTsuzuruGameScenario, TsuzuruGame } from "@tsuzuru/standard-ui-preact";
+import { TsuzuruGame } from "@tsuzuru/standard-ui-preact";
 import "@tsuzuru/standard-ui-preact/style.css";
-
-export const scenario = defineTsuzuruGameScenario({
-  entryId: "scenario/main.tzr",
-  documents: [{ id: "scenario/main.tzr", source }],
-});
+import scenario from "../scenario/main.tzr";
 
 export function App() {
   return <TsuzuruGame scenario={scenario} assets={assets} />;
@@ -28,16 +24,24 @@ Lower-level components remain available when an app wants to own runtime wiring
 directly.
 
 ```tsx
-import { GameShell, GameViewport, RuntimeMessageLayer } from "@tsuzuru/standard-ui-preact";
+import {
+  GameShell,
+  GameViewport,
+  RuntimeMessageLayer,
+  StdAudioLayer,
+  StdVisualLayer,
+} from "@tsuzuru/standard-ui-preact";
 import "@tsuzuru/standard-ui-preact/style.css";
 ```
 
 The package provides UI components such as `GameViewport`, `GameShell`,
-`MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`, and
-`ScreenHost`, plus the high-level `TsuzuruGame` starter component.
+`MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`,
+`StdVisualLayer`, `StdAudioLayer`, and `ScreenHost`, plus the high-level
+`TsuzuruGame` starter component.
 
 `TsuzuruGame` handles the standard starter runtime wiring for visual/audio
 plugins, message display, choices, click/keyboard advance, text reveal, and
 basic asset playback. It does not own save/load, backlog, gallery, settings,
 custom screens, or project-specific asset bundling policy. Use `@tsuzuru/preact`
-directly when an app needs full runtime control.
+directly with `StdVisualLayer` / `StdAudioLayer` when an app needs full runtime
+control but still wants the standard visual and audio presentation layers.

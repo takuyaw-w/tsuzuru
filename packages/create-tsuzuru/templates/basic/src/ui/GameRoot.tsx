@@ -1,12 +1,11 @@
 import { TsuzuruGame, type TsuzuruGameScenario } from "@tsuzuru/standard-ui-preact";
-import type { ComponentChildren } from "preact";
 import { assets } from "../assets.js";
 
 interface GameRootProps {
   readonly scenario: TsuzuruGameScenario;
 }
 
-export function GameRoot({ scenario }: GameRootProps): ComponentChildren {
+export function GameRoot({ scenario }: GameRootProps) {
   return (
     <main className="starter-app starter-game-root">
       <TsuzuruGame
