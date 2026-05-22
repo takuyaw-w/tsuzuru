@@ -75,6 +75,7 @@ packages/
   create-tsuzuru/
   preact/
   standard-ui-preact/
+  standard-game-storage/
   plugin-std-visual/
   plugin-std-audio/
   plugin-std-text-sound/
@@ -207,6 +208,31 @@ It must not own:
 - save/load, backlog, gallery, settings, or app-specific asset policy
 
 Standard UI components should be replaceable by userland components.
+
+---
+
+### `@tsuzuru/standard-game-storage`
+
+`@tsuzuru/standard-game-storage` provides reusable game storage helpers.
+
+Responsibilities:
+
+- storage helper entry points for future preferences, read tracking, and save
+  slot extraction
+- storage adapter boundaries
+- recoverable storage failure handling
+
+It must not own:
+
+- parser behavior
+- compiler behavior
+- core runtime stepping semantics
+- scenario semantics
+- Preact hooks or UI components
+- storage key selection
+- host migration policy
+
+The initial package skeleton does not move any example storage behavior.
 
 ---
 
@@ -1171,6 +1197,7 @@ pnpm --filter @tsuzuru/core typecheck
 pnpm --filter @tsuzuru/preact test
 pnpm --filter @tsuzuru/preact typecheck
 pnpm --filter @tsuzuru/standard-ui-preact test
+pnpm --filter @tsuzuru/standard-game-storage test
 pnpm --filter @tsuzuru/plugin-std-visual test
 pnpm --filter @tsuzuru/plugin-std-audio test
 pnpm --filter @tsuzuru/plugin-std-text-sound test

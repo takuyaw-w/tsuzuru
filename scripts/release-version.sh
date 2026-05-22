@@ -53,6 +53,7 @@ const files = [
   "package.json",
   "packages/core/package.json",
   "packages/config/package.json",
+  "packages/standard-game-storage/package.json",
   "packages/plugin-std-visual/package.json",
   "packages/plugin-std-audio/package.json",
   "packages/plugin-std-text-sound/package.json",

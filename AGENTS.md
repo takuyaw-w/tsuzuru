@@ -53,6 +53,7 @@ packages/vite-plugin
 packages/create-tsuzuru
 packages/preact
 packages/standard-ui-preact
+packages/standard-game-storage
 packages/plugin-std-visual
 packages/plugin-std-audio
 packages/plugin-std-text-sound
@@ -128,6 +129,12 @@ Package responsibilities:
   - provides reusable Preact UI components
   - may provide layout, message, choice, control, and helper UI components
   - must not own parser/compiler/runtime semantics
+
+- `@tsuzuru/standard-game-storage`
+  - provides reusable game storage helpers
+  - may provide preferences, read tracking, and save slot storage helpers
+  - must not own parser/compiler/runtime semantics
+  - must not own UI components, Preact hooks, storage keys, or host migration policy
 
 - `@tsuzuru/plugin-std-visual`
   - provides standard visual command handlers
@@ -476,6 +483,9 @@ pnpm --filter @tsuzuru/preact typecheck
 
 pnpm --filter @tsuzuru/standard-ui-preact test
 pnpm --filter @tsuzuru/standard-ui-preact typecheck
+
+pnpm --filter @tsuzuru/standard-game-storage test
+pnpm --filter @tsuzuru/standard-game-storage typecheck
 
 pnpm --filter @tsuzuru/plugin-std-visual test
 pnpm --filter @tsuzuru/plugin-std-visual typecheck

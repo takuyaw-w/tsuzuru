@@ -26,6 +26,7 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
 - `@tsuzuru/standard-ui-preact`
+- `@tsuzuru/standard-game-storage`
 - `@tsuzuru/plugin-std-visual`
 - `@tsuzuru/plugin-std-audio`
 - `@tsuzuru/plugin-std-text-sound`
@@ -87,6 +88,7 @@ packages/
   create-tsuzuru/
   preact/
   standard-ui-preact/
+  standard-game-storage/
   plugin-std-visual/
   plugin-std-audio/
   plugin-std-text-sound/

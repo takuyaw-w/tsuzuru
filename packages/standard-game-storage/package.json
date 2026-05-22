@@ -1,0 +1,45 @@
+{
+  "name": "@tsuzuru/standard-game-storage",
+  "version": "1.0.0",
+  "description": "Standard game storage helpers for Tsuzuru.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/src/index.*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/standard-game-storage"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/standard-game-storage#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "storage"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm run typecheck:self",
+    "typecheck:self": "tsc -p tsconfig.test.json"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
