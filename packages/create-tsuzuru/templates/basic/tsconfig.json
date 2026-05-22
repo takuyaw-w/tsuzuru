@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "types": ["vite/client"],
+    "types": ["vite/client", "@tsuzuru/vite-plugin/client"],
     "noEmit": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tsuzuru.config.ts"]

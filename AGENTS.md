@@ -49,6 +49,7 @@ Current packages:
 packages/core
 packages/config
 packages/cli
+packages/vite-plugin
 packages/create-tsuzuru
 packages/preact
 packages/standard-ui-preact
@@ -105,6 +106,11 @@ Package responsibilities:
   - scenario file discovery
   - scenario validation entry points
   - must not duplicate core parser/compiler semantics
+
+- `@tsuzuru/vite-plugin`
+  - Vite plugin for importing `.tzr` files as compiled runtime documents
+  - owns Vite module loading, include file reading, and Vite diagnostics
+  - must not own runtime initialization, UI, asset resolution, or scenario semantics
 
 - `create-tsuzuru`
   - project scaffolding

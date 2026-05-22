@@ -71,6 +71,7 @@ packages/
   core/
   config/
   cli/
+  vite-plugin/
   create-tsuzuru/
   preact/
   standard-ui-preact/

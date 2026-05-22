@@ -60,6 +60,7 @@ const files = [
   "packages/plugin-std-camera/package.json",
   "packages/plugin-std-particle/package.json",
   "packages/plugin-std-system/package.json",
+  "packages/vite-plugin/package.json",
   "packages/preact/package.json",
   "packages/standard-ui-preact/package.json",
   "packages/cli/package.json",
