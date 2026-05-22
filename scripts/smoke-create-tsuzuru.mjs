@@ -255,6 +255,7 @@ async function main() {
       projectDir,
     );
     await runStep("check generated scenario", "pnpm", ["check:scenario"], projectDir);
+    await runStep("typecheck generated project", "pnpm", ["typecheck"], projectDir);
     await runStep("build generated project", "pnpm", ["build"], projectDir);
 
     if (keepTempDir) {

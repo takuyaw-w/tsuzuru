@@ -35,6 +35,10 @@ pnpm build
 - `public/assets/audio/`
   BGM、効果音、ボイスを置きます。
 
+- `src/game-storage.ts`
+  save/load/settings/read tracking で使う storage 設定をまとめています。
+  slot 数を変える場合は `slots`、storage namespace を変える場合は `storagePrefix` を変更してください。
+
 ## シナリオを書く
 
 `scenario/main.tzr` では、次のような id を使います。
@@ -60,7 +64,7 @@ show mio_smile at center
 タイトル画面の見た目は `src/screens/TitleScreen.tsx` と `src/styles.css` にあります。
 
 Load / Config は starter では未実装です。ボタンだけ置いてあります。
-save/load や設定画面が必要になったら、`src/` 以下を編集して追加してください。
+save/load や設定画面が必要になったら、storage 設定は `src/game-storage.ts` から使えます。
 
 ## 慣れてきたら
 
@@ -75,6 +79,7 @@ public/assets/images/
 public/assets/audio/
 src/App.tsx
 src/assets.ts
+src/game-storage.ts
 src/screens/TitleScreen.tsx
 src/ui/GameRoot.tsx
 src/styles.css

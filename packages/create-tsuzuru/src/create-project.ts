@@ -2,7 +2,9 @@ import { access, cp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getTemplateDir } from "./template.js";
 
-const PACKAGE_JSON_PLACEHOLDER = "{{projectName}}";
+const PROJECT_NAME_PLACEHOLDER = "{{projectName}}";
+
+const PROJECT_NAME_TEMPLATE_FILES = ["package.json", "tsuzuru.config.ts", "src/game-storage.ts"] as const;
 
 export interface CreateProjectOptions {
   readonly projectName: string;
@@ -36,7 +38,7 @@ export async function createProject(options: CreateProjectOptions): Promise<Crea
     errorOnExist: true,
     force: false,
   });
-  await replacePackageName(join(targetDir, "package.json"), projectName);
+  await replaceProjectNamePlaceholders(targetDir, projectName);
 
   return {
     projectName,
@@ -68,9 +70,18 @@ export function validateProjectName(projectName: string | undefined): string | n
   return null;
 }
 
-async function replacePackageName(packageJsonPath: string, projectName: string): Promise<void> {
-  const source = await readFile(packageJsonPath, "utf8");
-  await writeFile(packageJsonPath, source.replaceAll(PACKAGE_JSON_PLACEHOLDER, projectName));
+async function replaceProjectNamePlaceholders(targetDir: string, projectName: string): Promise<void> {
+  await Promise.all(
+    PROJECT_NAME_TEMPLATE_FILES.map(async (file) => {
+      const path = join(targetDir, file);
+      if (!(await pathExists(path))) {
+        return;
+      }
+
+      const source = await readFile(path, "utf8");
+      await writeFile(path, source.replaceAll(PROJECT_NAME_PLACEHOLDER, projectName));
+    }),
+  );
 }
 
 async function pathExists(path: string): Promise<boolean> {

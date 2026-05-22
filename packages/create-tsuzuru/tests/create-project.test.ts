@@ -37,6 +37,7 @@ describe("createProject", () => {
     };
 
     expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/standard-game-storage"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/plugin-std-effect"]).toBeDefined();
     expect(packageJson.devDependencies["@preact/preset-vite"]).toBeDefined();
@@ -99,9 +100,11 @@ describe("createProject", () => {
 
     await createProject({ cwd: root, projectName: "my-game" });
     const appSource = await readFile(join(root, "my-game", "src", "App.tsx"), "utf8");
+    const gameStorageSource = await readFile(join(root, "my-game", "src", "game-storage.ts"), "utf8");
     const gameRootSource = await readFile(join(root, "my-game", "src", "ui", "GameRoot.tsx"), "utf8");
     const assetsSource = await readFile(join(root, "my-game", "src", "assets.ts"), "utf8");
     const readmeSource = await readFile(join(root, "my-game", "README.md"), "utf8");
+    const tsuzuruConfigSource = await readFile(join(root, "my-game", "tsuzuru.config.ts"), "utf8");
     const viteConfigSource = await readFile(join(root, "my-game", "vite.config.ts"), "utf8");
 
     await expect(access(join(root, "my-game", "src", "scenario.ts"))).rejects.toThrow();
@@ -112,12 +115,24 @@ describe("createProject", () => {
     expect(appSource).not.toContain("useRuntime");
     expect(appSource).not.toContain("parseTzr");
     expect(appSource).not.toContain("compileTzrProject");
+    expect(gameStorageSource).toContain('import { createStandardGameStorage } from "@tsuzuru/standard-game-storage"');
+    expect(gameStorageSource).toContain('storagePrefix: "tsuzuru:my-game"');
+    expect(gameStorageSource).toContain("slots: 3");
+    expect(gameStorageSource).not.toContain("{{projectName}}");
+    expect(gameStorageSource).not.toContain("@tsuzuru/standard-game-storage/src");
+    expect(gameStorageSource).not.toContain("localStorage");
+    expect(gameStorageSource).not.toContain("RuntimeSave");
+    expect(gameStorageSource).not.toContain("readEntry");
     expect(gameRootSource).toContain("TsuzuruGame");
     expect(assetsSource).toContain("classroom");
     expect(assetsSource).toContain("mio_smile");
     expect(readmeSource).not.toContain("scenario.ts");
     expect(readmeSource).not.toContain("parseTzr");
     expect(readmeSource).not.toContain("compileTzr");
+    expect(readmeSource).toContain("src/game-storage.ts");
+    expect(tsuzuruConfigSource).toContain('id: "my-game"');
+    expect(tsuzuruConfigSource).toContain("project: projectIdentity");
+    expect(tsuzuruConfigSource).not.toContain("{{projectName}}");
     expect(viteConfigSource).toContain("@preact/preset-vite");
     expect(viteConfigSource).toContain("@tsuzuru/vite-plugin");
     expect(viteConfigSource).toContain("createStdEffectPlugin()");
@@ -147,6 +162,7 @@ describe("createProject", () => {
     };
 
     expect(packageJson.scripts["check:scenario"]).toBe("tsuzuru check");
+    expect(packageJson.scripts.typecheck).toBe("tsc -p tsconfig.json --noEmit");
   });
 
   it("does not include removed legacy DSL syntax in scenario template files", async () => {
