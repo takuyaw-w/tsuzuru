@@ -13,7 +13,8 @@
   },
   "files": [
     "dist/src/index.*",
-    "dist/src/preferences.*"
+    "dist/src/preferences.*",
+    "dist/src/read-tracking.*"
   ],
   "repository": {
     "type": "git",

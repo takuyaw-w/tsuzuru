@@ -59,6 +59,7 @@ import scenario from "../scenario/main.tzr";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import {
   createReadEntryKey,
+  createReadEntryKeyFromText,
   isRead,
   isReadTrackableEvent,
   loadReadTrackingState,
@@ -753,10 +754,18 @@ function getMessageLines(event: RuntimeEvent): readonly string[] | null {
 }
 
 function createReadEntryKeyFromMessageHistoryEntry(entry: MessageHistoryEntry): ReadEntryKey {
-  if (entry.kind === "dialogue") {
-    return `dialogue:${entry.speakerName ?? ""}:${entry.text}`;
-  }
-  return `narration:${entry.text}`;
+  return createReadEntryKeyFromText(
+    entry.kind === "dialogue"
+      ? {
+          kind: "dialogue",
+          speaker: entry.speakerName ?? "",
+          text: entry.text,
+        }
+      : {
+          kind: "narration",
+          text: entry.text,
+        },
+  );
 }
 
 function buildLineRanges(lines: readonly string[]): readonly LineRange[] {

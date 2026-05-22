@@ -2,8 +2,8 @@
 
 Standard game storage helpers for Tsuzuru.
 
-This package currently provides preferences storage helpers. Future work can
-move additional reusable browser game storage helpers out of
+This package currently provides preferences and read tracking storage helpers.
+Future work can move additional reusable browser game storage helpers out of
 `examples/preact-basic` in small steps.
 
 Available APIs:
@@ -13,10 +13,20 @@ Available APIs:
 - `STANDARD_GAME_TEXT_SPEED_OPTIONS`
 - `normalizeStandardGamePreferences`
 - `createLocalStoragePreferencesStore`
+- `StandardReadTrackingState`
+- `StandardReadTrackingProject`
+- `isReadTrackableEvent`
+- `createReadEntryKey`
+- `createReadEntryKeyFromText`
+- `createInitialReadTrackingState`
+- `markRead`
+- `isRead`
+- `serializeReadTrackingState`
+- `parseReadTrackingStorageData`
+- `createLocalStorageReadTrackingStore`
 
 Planned areas:
 
-- read tracking storage
 - save slot storage
 
 Current non-goals:

@@ -38,6 +38,24 @@ describe("read-tracking", () => {
     expect(createReadEntryKey(dialogueEvent)).toBe("dialogue:mio:遅いよ。");
   });
 
+  it("keeps the example read tracking storage key stable", () => {
+    expect(READ_TRACKING_STORAGE_KEY).toBe("tsuzuru:example-preact-basic:read-tracking:v1");
+    expect(projectIdentity).toEqual({
+      id: PROJECT_ID,
+      version: PROJECT_VERSION,
+    });
+  });
+
+  it("joins multiline read entry text with newline characters", () => {
+    expect(
+      createReadEntryKey({
+        type: "dialogue",
+        speaker: "mio",
+        lines: [{ text: "一行目" }, { text: "二行目" }],
+      }),
+    ).toBe("dialogue:mio:一行目\n二行目");
+  });
+
   it("adds read keys when marking messages as read", () => {
     const key = createReadEntryKey(narrationEvent);
     const state = markRead(createInitialReadTrackingState(), key);
