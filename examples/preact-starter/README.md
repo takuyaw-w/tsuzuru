@@ -4,6 +4,7 @@
 
 起動するとタイトル画面が表示され、Start から 16:9 のゲーム画面へ進みます。
 `scenario/main.tzr` と `src/assets.ts` を編集すれば、自分の物語と素材に差し替えられます。
+`scenario/main.tzr` は `@tsuzuru/vite-plugin` により、アプリから直接読み込まれます。
 
 ## 起動
 

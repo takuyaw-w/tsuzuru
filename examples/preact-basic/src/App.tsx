@@ -45,6 +45,7 @@ import {
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
+import scenario from "../scenario/main.tzr";
 import { AudioLayer } from "./AudioLayer.js";
 import { EffectLayer } from "./EffectLayer.js";
 import { ParticleLayer } from "./ParticleLayer.js";
@@ -70,7 +71,6 @@ import {
   type RetainedMessageEvent,
   saveToSlot,
 } from "./save-storage.js";
-import { scenarioProject } from "./scenario.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";
@@ -79,9 +79,6 @@ import { SettingsScreen } from "./screens/SettingsScreen.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
 import { VisualLayer } from "./VisualLayer.js";
 
-type DocumentResult =
-  | { readonly ok: true; readonly document: CompiledTzrDocument }
-  | { readonly ok: false; readonly message: string };
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
 type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
@@ -91,12 +88,6 @@ const SKIP_MODE_ADVANCE_DELAY_MS = 120;
 const TEXT_SOUND_MIN_INTERVAL_MS = 45;
 
 export function App() {
-  const documentResult = useMemo((): DocumentResult => {
-    if (!scenarioProject.ok) {
-      return { ok: false, message: formatDiagnostics(scenarioProject.errors) };
-    }
-    return { ok: true, document: scenarioProject.document };
-  }, []);
   const [screen, setScreen] = useState<AppScreen>("title");
   const [saveSlots, setSaveSlots] = useState<readonly ExampleSaveSlot[]>(() => loadSaveSlots());
   const [initialSaveData, setInitialSaveData] = useState<ExampleSaveData | null>(null);
@@ -131,14 +122,10 @@ export function App() {
     setSaveSlots(deleteSaveSlot(slotId));
   }, []);
 
-  if (!documentResult.ok) {
-    return <pre className="app app--error">{documentResult.message}</pre>;
-  }
-
   if (screen === "runtime") {
     return (
       <RuntimeApp
-        document={documentResult.document}
+        document={scenario}
         initialSaveData={initialSaveData}
         saveSlots={saveSlots}
         preferences={preferences}
@@ -790,12 +777,4 @@ function getRuntimeEventTextKey(event: RuntimeEvent): string {
     return event.items.map((item) => item.text).join("\u0000");
   }
   return "";
-}
-
-interface DiagnosticLike {
-  readonly message: string;
-}
-
-function formatDiagnostics(diagnostics: readonly DiagnosticLike[]): string {
-  return diagnostics.map((diagnostic) => diagnostic.message).join("\n");
 }

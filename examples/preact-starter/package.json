@@ -24,6 +24,7 @@
     "preact": "^10.0.0"
   },
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
     "@tsuzuru/vite-plugin": "workspace:*",
     "typescript": "catalog:",
     "vitest": "catalog:",

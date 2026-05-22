@@ -67,6 +67,41 @@ describe("tsuzuru", () => {
     });
   });
 
+  it("passes compile plugin definitions to project compilation", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+    const result = await loadScenarioModule(
+      tsuzuru({
+        plugins: [
+          {
+            name: "test",
+            commands: {
+              "test.unlock": { name: "test.unlock" },
+            },
+          },
+        ],
+      }),
+      root,
+      scenarioPath,
+    );
+
+    expect(result.document.type).toBe("CompiledTzrDocument");
+  });
+
+  it("reports unsupported plugin calls when no compile plugin is provided", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+
+    await expect(loadScenarioModule(tsuzuru(), root, scenarioPath)).rejects.toMatchObject({
+      message: expect.stringContaining('CallStatement" is not compile-supported yet'),
+      loc: {
+        file: scenarioPath,
+        line: 2,
+        column: 3,
+      },
+    });
+  });
+
   it("reports parse diagnostics as Vite errors", async () => {
     const root = await createTempRoot();
     const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start\n  end\n");

@@ -12,7 +12,7 @@ import {
   saveReadTrackingState,
   serializeReadTrackingState,
 } from "../src/read-tracking.js";
-import { scenarioIdentity } from "../src/scenario.js";
+import { scenarioIdentity } from "../src/scenario-identity.js";
 
 const narrationEvent: ReadTrackableEvent = {
   type: "narration",

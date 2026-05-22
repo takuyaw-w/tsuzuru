@@ -24,6 +24,23 @@ export default defineConfig({
 });
 ```
 
+When a scenario uses plugin-owned `call` commands, pass the same compile-time
+plugin definitions used by scenario checks:
+
+```ts
+import { createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
+import { tsuzuru } from "@tsuzuru/vite-plugin";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [
+    tsuzuru({
+      plugins: [createStdSystemPlugin()],
+    }),
+  ],
+});
+```
+
 The primary import form is queryless `.tzr`:
 
 ```ts
@@ -82,5 +99,3 @@ line, column, and a one-line source frame.
 - Runtime initialization, UI, save/load, asset path resolution, and audio or
   image loading remain app/runtime responsibilities.
 - Source maps for generated scenario modules are not emitted yet.
-- Compile-time plugin command metadata is not configurable through the Vite
-  plugin yet.

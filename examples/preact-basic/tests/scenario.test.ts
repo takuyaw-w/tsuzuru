@@ -2,15 +2,16 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assets } from "../assets.js";
-import { scenarioProject } from "../src/scenario.js";
+import scenario from "../scenario/main.tzr";
 
 const messageSpeakers = new Set(["narration", "tone", "noize", "mix"]);
 const maxMessageBlockLineCount = 3;
 const maxMessageLineDisplayWidth = 72;
 
 describe("preact-basic scenario", () => {
-  it("compiles the scenario project", () => {
-    expect(scenarioProject.ok).toBe(true);
+  it("imports the scenario project through the Vite plugin", () => {
+    expect(scenario.type).toBe("CompiledTzrDocument");
+    expect(scenario.scenes.opening_start).toBeDefined();
   });
 
   it("keeps message blocks within three short text lines", async () => {

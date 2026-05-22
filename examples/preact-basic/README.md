@@ -1,6 +1,6 @@
 # Tsuzuru Preact Basic Fullscreen Example
 
-This example runs a multi-file scenario project from `scenario/main.tzr` as a fullscreen visual-novel style browser screen. It compiles the project with `compileTzrProject` and drives the compiled document through `@tsuzuru/preact`'s `useRuntime`.
+This example runs a multi-file scenario project from `scenario/main.tzr` as a fullscreen visual-novel style browser screen. The app imports the `.tzr` entry directly through `@tsuzuru/vite-plugin`, then drives the compiled document through `@tsuzuru/preact`'s `useRuntime`.
 
 It demonstrates the current runnable DSL v2 subset: `include "./path.tzr"` compile-time directives, cross-file scene jumps with `jump targetScene`, visual sugar including clear commands and transition metadata, audio sugar, dialogue, narration, state updates, `if` / `else`, conditional body choices, waits, and `end`.
 
@@ -62,17 +62,17 @@ runtime feature, and the MVP uses only current-session Read Tracking rather than
 persistent read state.
 
 Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
-them from `scenario/main.tzr` with `include "./path.tzr"`. Asset IDs and their
-example-side presentation mapping live in `assets.ts`, with CSS placeholder
-presentation in addition to audio URLs. `src/scenario.ts`
-automatically collects `scenario/**/*.tzr` with Vite and usually does not need
-editing. Title, load, settings, backlog, and gallery UI belong in `src/screens`.
+them from `scenario/main.tzr` with `include "./path.tzr"`. The app imports
+`scenario/main.tzr` directly, and `@tsuzuru/vite-plugin` follows those include
+directives during Vite dev/build. Asset IDs and their example-side presentation
+mapping live in `assets.ts`, with CSS placeholder presentation in addition to
+audio URLs. Title, load, settings, backlog, and gallery UI belong in
+`src/screens`.
 
 `tsuzuru.config.ts` is consumed by the first CLI command, `tsuzuru check`.
 The command reads `scenario.entry`, expands `scenario.files`, loads the matched
-`.tzr` files, and validates the scenario project with `compileTzrProject`.
-`dev`, `build`, Vite integration, and create-tsuzuru wiring remain future work;
-the running example still collects scenario files through `src/scenario.ts`.
+`.tzr` files, and validates the scenario project. Vite dev/build use the same
+creator-facing entry file through `@tsuzuru/vite-plugin`.
 
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 

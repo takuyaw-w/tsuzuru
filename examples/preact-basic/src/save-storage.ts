@@ -1,7 +1,7 @@
 import type { RuntimeEvent, RuntimeSaveSlot, RuntimeSaveSlotContext, RuntimeSnapshot } from "@tsuzuru/core";
 import { validateRuntimeSaveSlot } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
-import { scenarioIdentity } from "./scenario.js";
+import { scenarioIdentity } from "./scenario-identity.js";
 
 export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 

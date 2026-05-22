@@ -24,6 +24,23 @@ export default defineConfig({
 });
 ```
 
+When a scenario uses plugin-owned `call` commands, pass the same compile-time
+plugin definitions that `tsuzuru.config.ts` uses for scenario checks:
+
+```ts
+import { createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
+import { tsuzuru } from "@tsuzuru/vite-plugin";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [
+    tsuzuru({
+      plugins: [createStdSystemPlugin()],
+    }),
+  ],
+});
+```
+
 The plugin also accepts the explicit query form when a project needs it:
 
 ```ts
@@ -64,5 +81,3 @@ column when available.
 - The plugin compiles scenarios only; it does not initialize the runtime.
 - Asset IDs in `.tzr` files remain renderer or application concerns.
 - Source maps for generated modules are not emitted yet.
-- Compile-time plugin command metadata is not configured through this package
-  yet.

@@ -10,7 +10,7 @@ import {
   type RetainedMessageEvent,
   SAVE_STORAGE_KEY,
 } from "../src/save-storage.js";
-import { scenarioIdentity } from "../src/scenario.js";
+import { scenarioIdentity } from "../src/scenario-identity.js";
 
 const runtimeSaveData: RuntimeSaveData = {
   version: 2,

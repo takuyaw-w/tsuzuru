@@ -1,8 +1,8 @@
 import "@tsuzuru/standard-ui-preact/style.css";
 import "./style.css";
 import { useState } from "preact/hooks";
+import scenario from "../scenario/main.tzr";
 import { assets } from "./assets.js";
-import { scenario } from "./scenario.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
 import { GameRoot } from "./ui/GameRoot.js";
 

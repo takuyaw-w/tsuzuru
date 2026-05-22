@@ -1,11 +1,18 @@
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
-import { compileTzrProject, type Diagnostic, parseTzr, type TzrProjectDocumentInput } from "@tsuzuru/core";
+import {
+  compileTzrProject,
+  type Diagnostic,
+  parseTzr,
+  type TzrCompileOptions,
+  type TzrProjectDocumentInput,
+} from "@tsuzuru/core";
 import type { Plugin } from "vite";
 
 export interface TsuzuruVitePluginOptions {
   readonly include?: string | readonly string[];
   readonly exclude?: string | readonly string[];
+  readonly plugins?: TzrCompileOptions["plugins"];
 }
 
 interface TzrRequest {
@@ -52,10 +59,13 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
         this.addWatchFile(file);
       }
 
-      const result = compileTzrProject({
-        entryId: project.entryId,
-        documents: project.documents,
-      });
+      const result = compileTzrProject(
+        {
+          entryId: project.entryId,
+          documents: project.documents,
+        },
+        createCompileOptions(options),
+      );
       if (!result.ok) {
         this.error(createViteDiagnosticError(result.errors, project.fileByDocumentId));
       }
@@ -66,6 +76,13 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
       };
     },
   };
+}
+
+function createCompileOptions(options: TsuzuruVitePluginOptions): TzrCompileOptions {
+  if (options.plugins === undefined) {
+    return {};
+  }
+  return { plugins: options.plugins };
 }
 
 function parseTzrRequest(id: string): TzrRequest | null {

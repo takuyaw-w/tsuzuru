@@ -1,5 +1,5 @@
 import type { RuntimeEvent } from "@tsuzuru/core";
-import { scenarioIdentity } from "./scenario.js";
+import { scenarioIdentity } from "./scenario-identity.js";
 
 export type ReadTrackableEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 
