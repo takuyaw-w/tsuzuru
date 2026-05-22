@@ -33,6 +33,8 @@ import {
   StdAudioLayer,
   StdAudioRuntimeLayer,
   StdAudioStatusPanel,
+  StdCameraLayer,
+  StdCameraRuntimeLayer,
   StdEffectLayer,
   StdParticleLayer,
   StdParticleRuntimeLayer,
@@ -46,8 +48,8 @@ import "@tsuzuru/standard-ui-preact/style.css";
 The package provides UI components such as `GameViewport`, `GameShell`,
 `MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`,
 `RuntimeControlBar`, `StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and
-`StdParticleLayer`, `ScreenHost`, plus the high-level `TsuzuruGame` starter
-component.
+`StdCameraLayer`, `StdParticleLayer`, `ScreenHost`, plus the high-level
+`TsuzuruGame` starter component.
 
 `RuntimeControlBar` provides a reusable in-game control bar for actions such as
 Auto, Skip, Save, Load, Backlog, Settings, and Title. It is presentational only;
@@ -66,12 +68,18 @@ snow, sakura, and dust. `StdParticleRuntimeLayer` is a thin bridge that reads
 
 `StdVisualRuntimeLayer` is a thin bridge that reads `stdVisual` state from a
 runtime state and delegates rendering to `StdVisualLayer`. It does not handle
-camera state, save/load transition suppression, or example-specific
-placeholders. `StdVisualLayer` renders basic std-visual background update
+camera state or example-specific placeholders. `StdVisualLayer` renders basic
+std-visual background update
 transitions and sprite show transitions without blocking runtime progression.
 Initial mount uses the current visual state without replaying durable transition
 metadata; `hide` / `clearBg` / `clearSprites` exit transitions are not handled
 yet.
+
+`StdCameraLayer` wraps visual children in a standard camera transform container.
+`StdCameraRuntimeLayer` is a thin bridge that reads `stdCamera` state from the
+runtime and delegates to `StdCameraLayer`. Applications can pass a
+`resolveFocusOffset` callback when `cameraFocus` targets need app-specific
+coordinate policy.
 
 `StdAudioRuntimeLayer` connects a `StdAudioState` to standard browser playback,
 audio notices, and an optional status panel. `StdAudioLayer` handles the
@@ -86,6 +94,6 @@ plugins, message display, choices, click/keyboard advance, text reveal, basic
 asset playback, and simple standard effects. It does not own save/load, backlog,
 gallery, settings, custom screens, or project-specific asset bundling policy.
 Use `@tsuzuru/preact` directly with `StdVisualLayer` /
-`StdVisualRuntimeLayer` / `StdAudioRuntimeLayer` / `StdEffectLayer` /
-`StdParticleRuntimeLayer` / `RuntimeControlBar` when an app needs full runtime
-control but still wants the standard presentation layers.
+`StdVisualRuntimeLayer` / `StdCameraRuntimeLayer` / `StdAudioRuntimeLayer` /
+`StdEffectLayer` / `StdParticleRuntimeLayer` / `RuntimeControlBar` when an app
+needs full runtime control but still wants the standard presentation layers.

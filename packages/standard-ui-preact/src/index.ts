@@ -46,6 +46,13 @@ export type { StdAudioRuntimeLayerProps } from "./std-audio-runtime-layer.js";
 export { StdAudioRuntimeLayer } from "./std-audio-runtime-layer.js";
 export type { StdAudioStatusPanelLabels, StdAudioStatusPanelProps } from "./std-audio-status-panel.js";
 export { StdAudioStatusPanel } from "./std-audio-status-panel.js";
+export type { StdCameraLayerProps, StdCameraOffset } from "./std-camera-layer.js";
+export { StdCameraLayer } from "./std-camera-layer.js";
+export type {
+  StdCameraFocusOffsetResolver,
+  StdCameraRuntimeLayerProps,
+} from "./std-camera-runtime-layer.js";
+export { StdCameraRuntimeLayer } from "./std-camera-runtime-layer.js";
 export type {
   StdEffectLayerDiagnostic,
   StdEffectLayerProps,

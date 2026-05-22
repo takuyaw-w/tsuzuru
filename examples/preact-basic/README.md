@@ -66,9 +66,8 @@ Scenario files live under `scenario/`. Add new `.tzr` files there, then referenc
 them from `scenario/main.tzr` with `include "./path.tzr"`. The app imports
 `scenario/main.tzr` directly, and `@tsuzuru/vite-plugin` follows those include
 directives during Vite dev/build. Asset IDs and their example-side presentation
-mapping live in `assets.ts`, with CSS placeholder presentation in addition to
-audio URLs. Title, load, settings, backlog, and gallery UI belong in
-`src/screens`.
+mapping live in `assets.ts`, including visual asset URLs and audio URLs. Title,
+load, settings, backlog, and gallery UI belong in `src/screens`.
 
 `tsuzuru.config.ts` is consumed by the first CLI command, `tsuzuru check`.
 The command reads `scenario.entry`, expands `scenario.files`, loads the matched
@@ -80,19 +79,18 @@ want existing local saves to remain loadable.
 
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 
-The visual layer reads std-visual transition metadata and renders
-entrance/update transitions with example-side CSS.
-`@tsuzuru/standard-ui-preact` now provides the same basic std-visual transition
-rendering in `StdVisualLayer`, but this example keeps its local visual wrapper
-until camera composition is split into a standard camera layer. Transition
-execution is not part of the core runtime. Exit transitions for `hide`,
-`clear bg`, and `clear sprites` remain future scope because those operations
-remove the surviving visual state.
+Visual state is rendered with `StdCameraRuntimeLayer` and
+`StdVisualRuntimeLayer` from `@tsuzuru/standard-ui-preact`. The example still
+owns the small `cameraFocus` offset policy that maps sprite positions to camera
+offsets, while the standard UI package owns the camera transform wrapper and
+basic std-visual transition rendering. Transition execution is not part of the
+core runtime. Exit transitions for `hide`, `clear bg`, and `clear sprites`
+remain future scope because those operations remove the surviving visual state.
 
 Standard effect events are rendered with `StdEffectLayer` from
 `@tsuzuru/standard-ui-preact`. This example passes its own target selectors so
 shake, pulse, and blur can target the fullscreen surface, message layer, and
-example-specific sprite container.
+standard sprite layer.
 
 Standard particle state is rendered with `StdParticleRuntimeLayer` from
 `@tsuzuru/standard-ui-preact`. The example still owns the scenario commands that
@@ -134,6 +132,8 @@ If Chromium has not been installed for Playwright yet, run:
 pnpm exec playwright install chromium
 ```
 
-The visual layer intentionally uses asset IDs as placeholders, so no image files
-are required. Audio asset IDs are mapped by the example, but audio files are not
-required for the smoke test; missing files are reported without stopping the app.
+The standard visual layer can fall back to asset ID placeholders when an image is
+not mapped. This example maps background SVG files and leaves sprite entries as
+label placeholders. Audio asset IDs are mapped by the example, but audio files
+are not required for the smoke test; missing files are reported without stopping
+the app.

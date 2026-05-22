@@ -355,6 +355,8 @@
 }
 
 .tzr-tsuzuru-game__interaction-surface,
+.tzr-std-camera-layer,
+.tzr-std-camera-layer__inner,
 .tzr-tsuzuru-game__visual-layer,
 .tzr-tsuzuru-game__sprite-layer,
 .tzr-std-effect-layer,
@@ -366,6 +368,19 @@
 .tzr-tsuzuru-game__interaction-surface {
   overflow: hidden;
   cursor: pointer;
+}
+
+.tzr-std-camera-layer {
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tzr-std-camera-layer__inner {
+  transform: translate(var(--tzr-camera-x, 0), var(--tzr-camera-y, 0)) scale(var(--tzr-camera-zoom, 1));
+  transform-origin: center center;
+  transition: transform var(--tzr-camera-duration, 0ms) var(--tzr-camera-easing, ease);
+  will-change: transform;
 }
 
 .tzr-tsuzuru-game__visual-layer {
@@ -995,6 +1010,7 @@
   .tzr-tsuzuru-game__background--transition-outgoing,
   .tzr-tsuzuru-game__sprite--transition-fade,
   .tzr-tsuzuru-game__sprite--transition-dissolve,
+  .tzr-std-camera-layer__inner,
   .tzr-std-particle-layer__particle {
     animation-duration: 1ms;
     transition-duration: 1ms;

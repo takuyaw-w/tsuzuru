@@ -304,6 +304,9 @@ importers:
       '@tsuzuru/plugin-std-audio':
         specifier: workspace:^
         version: link:../plugin-std-audio
+      '@tsuzuru/plugin-std-camera':
+        specifier: workspace:^
+        version: link:../plugin-std-camera
       '@tsuzuru/plugin-std-effect':
         specifier: workspace:^
         version: link:../plugin-std-effect

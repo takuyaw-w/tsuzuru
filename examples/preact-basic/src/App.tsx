@@ -30,7 +30,7 @@ import {
   shouldPlayStdTextSoundCharacter,
 } from "@tsuzuru/plugin-std-text-sound";
 import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plugin-std-text-sound/browser";
-import { createStdVisualCommandHandlers, createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
+import { createStdVisualCommandHandlers, createStdVisualPlugin, getStdVisualState } from "@tsuzuru/plugin-std-visual";
 import { createRuntimeSaveDataFromState, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
   ChoiceLayer,
@@ -42,8 +42,11 @@ import {
   RuntimeControlBar,
   RuntimeMessageLayer,
   StdAudioRuntimeLayer,
+  type StdCameraFocusOffsetResolver,
+  StdCameraRuntimeLayer,
   StdEffectLayer,
   StdParticleRuntimeLayer,
+  StdVisualRuntimeLayer,
   type TextRevealCharacterEvent,
   useAutoMode,
   useMessageHistory,
@@ -80,7 +83,6 @@ import { LoadScreen } from "./screens/LoadScreen.js";
 import { SaveScreen } from "./screens/SaveScreen.js";
 import { SettingsScreen } from "./screens/SettingsScreen.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
-import { VisualLayer } from "./VisualLayer.js";
 
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
@@ -270,11 +272,10 @@ function RuntimeApp({
   });
   const audioState = getStdAudioState(runtime.state);
   const effectState = getStdEffectState(runtime.state);
+  const visualState = getStdVisualState(runtime.state);
   const hasRestoredInitialSaveDataRef = useRef(false);
-  const [backgroundAnimationSuppression, setBackgroundAnimationSuppression] = useState({
-    key: 0,
-    assetId: null as string | null,
-  });
+  const restoreVisualTransitionTimerRef = useRef<number | undefined>(undefined);
+  const [visualTransitionsEnabled, setVisualTransitionsEnabled] = useState(true);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
@@ -310,6 +311,28 @@ function RuntimeApp({
     () => createAudioAssetsWithVolume(assets.audio.voice, preferences.voiceVolume),
     [preferences.voiceVolume],
   );
+  const resolveCameraFocusOffset = useCallback<StdCameraFocusOffsetResolver>((focusTarget, context) => {
+    const position = context.visualState?.sprites[focusTarget]?.position;
+    switch (position) {
+      case "left":
+        return { x: 160 };
+      case "right":
+        return { x: -160 };
+      case "center":
+      case undefined:
+        return { x: 0 };
+    }
+  }, []);
+  const suppressVisualTransitionsForRestore = useCallback(() => {
+    if (restoreVisualTransitionTimerRef.current !== undefined) {
+      window.clearTimeout(restoreVisualTransitionTimerRef.current);
+    }
+    setVisualTransitionsEnabled(false);
+    restoreVisualTransitionTimerRef.current = window.setTimeout(() => {
+      restoreVisualTransitionTimerRef.current = undefined;
+      setVisualTransitionsEnabled(true);
+    }, 0);
+  }, []);
   const textReveal = useTextReveal(revealText, {
     enabled: messageLines !== null && preferences.textRevealEnabled,
     charactersPerSecond: preferences.textSpeedCharactersPerSecond,
@@ -440,15 +463,12 @@ function RuntimeApp({
       if (slot === undefined) {
         return;
       }
-      setBackgroundAnimationSuppression((current) => ({
-        key: current.key + 1,
-        assetId: getRestoredBackgroundAssetId(slot.data),
-      }));
+      suppressVisualTransitionsForRestore();
       runtime.restoreSaveData(slot.data.runtime);
       setLastMessageEvent(slot.data.retainedMessageEvent);
       setOverlay(null);
     },
-    [runtime, saveSlots],
+    [runtime, saveSlots, suppressVisualTransitionsForRestore],
   );
 
   useEffect(() => {
@@ -484,6 +504,9 @@ function RuntimeApp({
   useEffect(() => {
     return () => {
       textSoundPlayer.destroy();
+      if (restoreVisualTransitionTimerRef.current !== undefined) {
+        window.clearTimeout(restoreVisualTransitionTimerRef.current);
+      }
     };
   }, [textSoundPlayer]);
 
@@ -492,13 +515,10 @@ function RuntimeApp({
       return;
     }
     hasRestoredInitialSaveDataRef.current = true;
-    setBackgroundAnimationSuppression((current) => ({
-      key: current.key + 1,
-      assetId: getRestoredBackgroundAssetId(initialSaveData),
-    }));
+    suppressVisualTransitionsForRestore();
     runtime.restoreSaveData(initialSaveData.runtime);
     setLastMessageEvent(initialSaveData.retainedMessageEvent);
-  }, [initialSaveData, runtime]);
+  }, [initialSaveData, runtime, suppressVisualTransitionsForRestore]);
 
   useEffect(() => {
     if (runtime.visibleEvent !== null && isMessageEvent(runtime.visibleEvent)) {
@@ -546,7 +566,19 @@ function RuntimeApp({
       <GameViewport aspectRatio="16:9" className="app__viewport" maxWidth="100vw">
         <GameShell className="app__shell">
           <div className="app__interaction-surface" onClick={handleViewportClick}>
-            <VisualLayer runtimeState={runtime.state} backgroundAnimationSuppression={backgroundAnimationSuppression} />
+            <StdCameraRuntimeLayer
+              runtimeState={runtime.state}
+              visualState={visualState}
+              resolveFocusOffset={resolveCameraFocusOffset}
+              className="visual-layer"
+            >
+              <StdVisualRuntimeLayer
+                runtimeState={runtime.state}
+                backgroundAssets={assets.visual.backgrounds}
+                spriteAssets={assets.visual.sprites}
+                transitions={{ enabled: visualTransitionsEnabled }}
+              />
+            </StdCameraRuntimeLayer>
             <StdParticleRuntimeLayer runtimeState={runtime.state} />
             <StdAudioRuntimeLayer
               audioState={audioState}
@@ -562,7 +594,7 @@ function RuntimeApp({
               targetSelectors={{
                 screen: ".app__interaction-surface",
                 message: ".app__message-layer",
-                sprites: ".visual-layer__sprites",
+                sprites: ".tzr-tsuzuru-game__sprite-layer",
               }}
             />
             <RuntimeControlBar
@@ -736,24 +768,6 @@ function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
     start = end + 1;
   }
   return ranges;
-}
-
-function getRestoredBackgroundAssetId(saveData: ExampleSaveData): string | null {
-  const stdVisual = saveData.runtime.snapshot.plugins.stdVisual;
-  if (!isObjectRecord(stdVisual)) {
-    return null;
-  }
-
-  const background = stdVisual.background;
-  if (!isObjectRecord(background)) {
-    return null;
-  }
-
-  return typeof background.assetId === "string" ? background.assetId : null;
-}
-
-function isObjectRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null;
 }
 
 function useTextSoundPlayback(

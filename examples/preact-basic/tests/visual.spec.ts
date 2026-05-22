@@ -196,7 +196,7 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
   await advanceAndExpectBackground(page, messageWindow, "classroom", "まずは暗転で廊下へ");
   await advanceAndExpectBackground(page, messageWindow, "hallway", "左から景色が流れて");
   await advanceAndExpectBackground(page, messageWindow, "library", "右へ抜けるように");
-  await expect(page.locator(".visual-layer__background--previous")).toHaveCount(0, { timeout: 1000 });
+  await expect(page.locator(".tzr-tsuzuru-game__background--previous")).toHaveCount(0, { timeout: 1000 });
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
   await expectSavedBackgroundTransition(page, "library", "wipeLeft");
@@ -205,8 +205,8 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
   await runtimeMenu.getByRole("button", { name: "Load" }).click();
   await page.getByRole("button", { name: "Load Slot 1" }).click();
   await expectBackgroundAsset(page, "library");
-  await expect(page.locator(".visual-layer__background--previous")).toHaveCount(0);
-  await expect(page.locator(".visual-layer__background--current")).not.toHaveClass(/transition-/);
+  await expect(page.locator(".tzr-tsuzuru-game__background--previous")).toHaveCount(0);
+  await expect(page.locator(".tzr-tsuzuru-game__background--current")).not.toHaveClass(/transition-/);
   await expect(messageWindow).toContainText("右へ抜けるように", { timeout: 3000 });
 
   await advanceAndExpectBackground(page, messageWindow, "rooftop", "最後は駅前で");
@@ -214,7 +214,7 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
 
   await messageWindow.click();
   await expect(choiceLayer.getByRole("button", { name: "camera focus を見る" })).toBeVisible();
-  await expect(visualLayer.locator(".visual-layer__background").first()).toHaveCSS("pointer-events", "none");
+  await expect(visualLayer.locator(".tzr-tsuzuru-game__background").first()).toHaveCSS("pointer-events", "none");
 });
 
 test("particle demo renders bounded non-interactive overlay particles", async ({ page }) => {
@@ -457,11 +457,7 @@ async function advanceAndExpectBackground(
 ): Promise<void> {
   await messageWindow.click();
   await expectBackgroundAsset(page, assetId);
-  await expect(page.locator(".visual-layer__background--current .visual-layer__scene")).toHaveAttribute(
-    "aria-label",
-    assetId,
-  );
-  await expect(page.locator(".visual-layer__background--current .visual-layer__scene-image")).toHaveAttribute(
+  await expect(page.locator(".tzr-tsuzuru-game__background--current")).toHaveAttribute(
     "src",
     new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
   );
@@ -475,7 +471,7 @@ async function advanceAndExpectBackground(
 }
 
 async function expectBackgroundAsset(page: Page, assetId: string): Promise<void> {
-  await expect(page.locator(".visual-layer__background--current .visual-layer__scene-image")).toHaveAttribute(
+  await expect(page.locator(".tzr-tsuzuru-game__background--current")).toHaveAttribute(
     "src",
     new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
     { timeout: 3000 },

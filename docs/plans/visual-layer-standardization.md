@@ -2,8 +2,11 @@
 
 ## Status
 
-Step 1 and Step 2 are complete. Step 3 is implemented in
-`StdVisualLayer`; Step 4 remains blocked on camera composition.
+Step 1 through Step 6 are complete for the current minimal scope.
+`StdVisualLayer` owns std-visual rendering and transitions,
+`StdVisualRuntimeLayer` bridges std-visual state, `StdCameraLayer` /
+`StdCameraRuntimeLayer` own camera composition, and
+`examples/preact-basic/src/VisualLayer.tsx` has been removed.
 
 This document records the responsibility split for
 `examples/preact-basic/src/VisualLayer.tsx` before moving any more visual
@@ -16,7 +19,8 @@ Those responsibilities need separate boundaries before implementation.
 
 ## Current Responsibilities
 
-`examples/preact-basic/src/VisualLayer.tsx` currently does all of the following:
+The removed `examples/preact-basic/src/VisualLayer.tsx` previously did all of
+the following:
 
 - Reads `stdVisual` plugin state with `getStdVisualState(runtimeState)`.
 - Reads `stdCamera` plugin state with `getStdCameraState(runtimeState)`.
@@ -25,7 +29,7 @@ Those responsibilities need separate boundaries before implementation.
 - Temporarily renders the previous background during background transitions.
 - Converts std-visual background transition metadata to CSS classes and
   variables.
-- Suppresses background transition replay after save/load restore through
+- Suppressed background transition replay after save/load restore through
   `backgroundAnimationSuppression`.
 - Renders visible sprites and maps sprite positions to DOM placement.
 - Converts sprite show transition metadata to CSS classes and variables.
@@ -35,7 +39,7 @@ Those responsibilities need separate boundaries before implementation.
 - Renders example-specific placeholder background DOM such as sun, platform,
   rails, and sign labels.
 - Renders example-specific placeholder sprite DOM such as head, body, and name.
-- Provides class names used by example CSS, Playwright tests, and
+- Provided class names used by example CSS, Playwright tests, and
   `StdEffectLayer` target selectors.
 
 This makes it an integration component, not a reusable standard UI primitive.
@@ -68,7 +72,8 @@ These can be standardized, but should be opt-in or staged:
   `StdVisualBackground.transition`.
 - Sprite show transitions derived from `StdVisualSprite.transition`.
 - CSS classes and CSS variables for transition duration, direction, and color.
-- A host-controlled suppression mechanism for restore flows.
+- Restore replay suppression through initial-mount skip and same-asset change
+  detection.
 
 The first transition pass should support only state that is recoverable from
 durable std-visual state:
@@ -85,8 +90,6 @@ longer exists unless runtime events or plugin state are extended.
 
 These should remain example-owned:
 
-- `backgroundAnimationSuppression` wiring from save/load restore flows until a
-  generic host API exists.
 - Example-specific background art placeholders: sun, platform, rails, signs.
 - Example-specific sprite body/head/name placeholder DOM.
 - Example-specific colors, layout density, and visual style.
@@ -105,12 +108,12 @@ current example uses a simple sprite-position heuristic and hard-coded
 horizontal offsets. That is useful demo code, but not a universal standard
 policy.
 
-Future camera work should be a separate task:
+Camera is implemented as a separate standard UI layer:
 
 - `StdCameraLayer` accepts `StdCameraState` and wraps children.
 - `StdCameraRuntimeLayer` reads `stdCamera` from `RuntimeState` and delegates.
 - Focus target resolution is configurable, for example via
-  `resolveFocusOffset` or a target-to-rect map.
+  `resolveFocusOffset`.
 - Camera CSS variables are standard, but target coordinate policy is host-owned.
 
 ## Recommended APIs
@@ -294,23 +297,19 @@ standard layer's restore risk without widening the public surface.
 
 ### Step 4: Rewire `examples/preact-basic` Around Package Primitives
 
-Keep the example `VisualLayer` temporarily, but make it thinner:
+Rewire the example around package primitives:
 
-- use `StdVisualLayer` or `StdVisualRuntimeLayer` for background/sprite DOM
-- keep example-specific placeholder styling through asset maps and CSS
-- keep save/load transition suppression in the example
-- keep Playwright behavior assertions
+- use `StdVisualRuntimeLayer` for background/sprite DOM
+- use `StdCameraRuntimeLayer` for camera composition
+- keep example-specific `cameraFocus` offset policy in `App.tsx`
+- keep Playwright behavior assertions updated to standard classes
 
-This step should preserve selectors intentionally or update tests in the same
-change.
+Implemented. The example now targets the standard sprite layer in
+`StdEffectLayer` selectors.
 
-Not implemented yet. The example `VisualLayer` still owns std-camera
-composition, focus offsets, and example selectors used by `StdEffectLayer` and
-Playwright tests. Deleting it before Step 5 would drop camera behavior.
+### Step 5: Add Camera Separately
 
-### Step 5: Design Camera Separately
-
-Add a separate camera design document or decision before implementation:
+Implemented as a separate standard UI layer:
 
 - `StdCameraLayer`
 - `StdCameraRuntimeLayer`
@@ -320,8 +319,8 @@ Add a separate camera design document or decision before implementation:
 
 ### Step 6: Remove Example Local `VisualLayer`
 
-Only after transitions and camera composition have package-level tests and a
-stable API should `examples/preact-basic/src/VisualLayer.tsx` be deleted.
+Implemented. `examples/preact-basic/src/VisualLayer.tsx` has been deleted after
+transition and camera composition received package-level tests.
 
 ## Grill-Me Results
 
@@ -346,20 +345,12 @@ The main objections are valid and should constrain the design:
 
 ## Next Implementation Task
 
-The safest next task is:
+The next visual standardization task is:
 
 ```txt
-Add StdVisualRuntimeLayer to @tsuzuru/standard-ui-preact.
-
-Scope:
-- runtimeState -> getStdVisualState(runtimeState)
-- pass background/sprites/assets/className to StdVisualLayer
-- public export and package files
-- unit tests
-- no camera
-- no transition behavior changes beyond existing StdVisualLayer behavior
-- no preact-basic VisualLayer deletion
+Evaluate whether richer app-specific placeholders need explicit render override
+hooks.
 ```
 
-After that, tackle transition rendering as a separate task with explicit
-restore-suppression behavior.
+Keep this out of the package until there is a concrete caller; the current
+standard placeholder contract remains `src` / `label` / `alt` / `className`.
