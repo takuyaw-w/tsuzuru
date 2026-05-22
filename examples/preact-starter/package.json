@@ -10,6 +10,8 @@
     "check:scenario": "tsuzuru check",
     "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
     "dev": "pnpm run build:deps && vite",
+    "test": "vitest run tests/*.test.ts",
+    "test:ui": "playwright test -c playwright.config.ts",
     "typecheck": "pnpm run build:deps && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"
   },
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "vite": "^8.0.10"
   }
 }

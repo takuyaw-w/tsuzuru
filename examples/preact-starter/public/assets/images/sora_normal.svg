@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 620" role="img" aria-label="Sora character placeholder">
+  <defs>
+    <linearGradient id="soraCoat" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#74c7e8" />
+      <stop offset="1" stop-color="#1c4e6f" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="180" cy="584" rx="112" ry="22" fill="#000" opacity="0.24" />
+  <path d="M96 162c4-78 42-124 88-124 58 0 92 46 86 124l-24 98H116z" fill="#203548" />
+  <circle cx="180" cy="146" r="78" fill="#efc09f" />
+  <path d="M104 130c28-62 90-92 148-30-42 4-82 18-148 30z" fill="#273d54" />
+  <circle cx="150" cy="150" r="7" fill="#20242b" />
+  <circle cx="212" cy="150" r="7" fill="#20242b" />
+  <path d="M158 184c14 10 30 10 44 0" fill="none" stroke="#935b60" stroke-width="6" stroke-linecap="round" />
+  <path d="M90 322c18-72 56-112 90-112s74 40 92 112l34 204H54z" fill="url(#soraCoat)" />
+  <path d="M102 342 48 436M258 342l54 94" stroke="#efc09f" stroke-width="28" stroke-linecap="round" />
+  <path d="M130 290h100" stroke="#e7f5f8" stroke-width="18" stroke-linecap="round" opacity="0.82" />
+  <text x="180" y="570" text-anchor="middle" fill="#f1fbff" font-family="system-ui, sans-serif" font-size="30" font-weight="700">Sora</text>
+</svg>

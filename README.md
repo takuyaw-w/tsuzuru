@@ -8,7 +8,7 @@ Tsuzuru は、TypeScript / Vite / Preact を主軸とした、Web-first なノ�
 
 Tsuzuru は現在、`main` を source of truth として DSL v2 を中心に整備中です。
 
-DSL v2 は、現在新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable example は [`examples/preact-basic`](examples/preact-basic/) です。
+DSL v2 は、現在新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable examples は [`examples/preact-starter`](examples/preact-starter/) と [`examples/preact-basic`](examples/preact-basic/) です。
 
 旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
 
@@ -33,7 +33,8 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/plugin-std-camera`
 - `@tsuzuru/plugin-std-particle`
 - `@tsuzuru/plugin-std-system`
-- Preact basic example
+- Preact starter example
+- Preact basic integration example
 - DSL v2 design notes
 - legacy cleanup plan
 
@@ -95,6 +96,7 @@ packages/
 
 examples/
   preact-basic/
+  preact-starter/
 
 docs/
   design/
@@ -145,20 +147,22 @@ Tsuzuru Core is framework-neutral, but the official v0.x UI stack, templates, an
 
 ## Quickstart
 
-DSL v2 の current runnable example は [`examples/preact-basic`](examples/preact-basic/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
+ゲーム制作者向けの current starter example は [`examples/preact-starter`](examples/preact-starter/) です。clean checkout から試すには、リポジトリルートで以下を実行します。
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm --filter @tsuzuru/example-preact-basic dev
+pnpm --filter @tsuzuru/example-preact-starter dev
 ```
 
 ビルド確認:
 
 ```sh
-pnpm --filter @tsuzuru/example-preact-basic build
+pnpm --filter @tsuzuru/example-preact-starter build
 ```
 
-`examples/preact-basic` は `parseTzr` / `compileTzr` で DSL v2 シナリオを compile し、core runtime と std visual/audio placeholder layers で実行します。
+`examples/preact-starter` はタイトル画面、16:9 のゲーム画面、メッセージウィンドウ、選択肢、背景、キャラクター、asset map を持つ最小ノベルゲーム雛形です。
+
+低レベル統合の確認には [`examples/preact-basic`](examples/preact-basic/) も利用できます。`examples/preact-basic` は core runtime と各 std plugin の統合、save/load、settings、backlog などを含む実装リファレンスです。
 
 `create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、またはホスト側の手動読み込みで文字列として渡します。
 
@@ -213,7 +217,8 @@ API surface:
 
 関連ドキュメント:
 
-- [Preact basic example](examples/preact-basic/)
+- [Preact starter example](examples/preact-starter/)
+- [Preact basic integration example](examples/preact-basic/)
 - [DSL v2 design notes](docs/design/dsl-v2.md)
 - [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
 

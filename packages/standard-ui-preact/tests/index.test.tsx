@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ChoiceLayer,
   type ChoiceLayerProps,
+  defineTsuzuruGameScenario,
   GameShell,
   GameViewport,
   type GameViewportProps,
@@ -16,7 +17,6 @@ import {
   type ScreenHostProps,
   StatusLayer,
   type StatusLayerProps,
-  defineTsuzuruGameScenario,
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;

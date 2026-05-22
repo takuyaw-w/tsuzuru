@@ -65,12 +65,14 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-starter
 ```
 
-Primary runnable example:
+Primary runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-starter
 ```
 
 Package responsibilities:

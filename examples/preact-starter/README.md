@@ -1,19 +1,59 @@
 # Tsuzuru Preact Starter
 
-A small creator-facing starter for a Tsuzuru game built with Vite and Preact.
+この example は、Tsuzuru でノベルゲームを作るための最小スターターです。
 
-Edit the story in `scenario/main.tzr`.
+起動するとタイトル画面が表示され、Start から 16:9 のゲーム画面へ進みます。
+`scenario/main.tzr` と `src/assets.ts` を編集すれば、自分の物語と素材に差し替えられます。
 
-Register backgrounds, character sprites, and optional audio in `src/assets.ts`.
+## 起動
 
-The app entry stays intentionally small:
-
-```tsx
-return <TsuzuruGame scenario={scenario} assets={assets} />;
+```bash
+pnpm install
+pnpm --filter @tsuzuru/example-preact-starter dev
 ```
+
+## まず編集するファイル
+
+- `scenario/main.tzr`
+  物語を書きます。背景、キャラクター、セリフ、選択肢、分岐をここで編集します。
+
+- `src/assets.ts`
+  背景・キャラクター画像・音声を登録します。シナリオで使う `bg classroom` や `show mio_smile` の id と対応します。
+
+- `src/screens/TitleScreen.tsx`
+  タイトル画面をカスタマイズします。作品タイトル、説明文、メニュー表示を変更できます。
+
+## 素材の置き場所
+
+- `public/assets/images/`
+- `public/assets/audio/`
+
+## 構成
+
+```txt
+examples/preact-starter/
+  scenario/main.tzr
+  src/assets.ts
+  src/screens/TitleScreen.tsx
+  src/ui/GameRoot.tsx
+  public/assets/images/
+  public/assets/audio/
+```
+
+`App.tsx` はタイトル画面とゲーム画面の切り替えだけを持ちます。runtime 統合の詳細は `src/ui/GameRoot.tsx` に閉じ込めています。
+
+## チェック
 
 ```sh
-pnpm --filter @tsuzuru/example-preact-starter dev
 pnpm --filter @tsuzuru/example-preact-starter check:scenario
+pnpm --filter @tsuzuru/example-preact-starter typecheck
 pnpm --filter @tsuzuru/example-preact-starter build
 ```
+
+## 次にやること
+
+- `scenario/main.tzr` のセリフを書き換える
+- `src/assets.ts` に自分の画像を登録する
+- `TitleScreen.tsx` のタイトルを変更する
+
+Load / Config は starter では未実装です。必要になったら save/load や設定画面を追加してください。

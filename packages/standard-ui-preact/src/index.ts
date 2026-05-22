@@ -12,6 +12,14 @@ export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
 export type {
+  ActiveScreen,
+  ScreenComponent,
+  ScreenComponentProps,
+  ScreenHostProps,
+  ScreenRegistry,
+} from "./screen-host.js";
+export { ScreenHost } from "./screen-host.js";
+export type {
   TsuzuruGameAssets,
   TsuzuruGameAudioAsset,
   TsuzuruGameDiagnostic,
@@ -22,15 +30,6 @@ export type {
   TsuzuruGameViewportOptions,
 } from "./tsuzuru-game.js";
 export { defineTsuzuruGameScenario, TsuzuruGame } from "./tsuzuru-game.js";
-
-export type {
-  ActiveScreen,
-  ScreenComponent,
-  ScreenComponentProps,
-  ScreenHostProps,
-  ScreenRegistry,
-} from "./screen-host.js";
-export { ScreenHost } from "./screen-host.js";
 export type { AutoModeState, UseAutoModeOptions } from "./useAutoMode.js";
 export { useAutoMode } from "./useAutoMode.js";
 export type {

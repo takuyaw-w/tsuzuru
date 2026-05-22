@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Quiet room background">
+  <defs>
+    <linearGradient id="wall" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#49516b" />
+      <stop offset="0.6" stop-color="#252a3a" />
+      <stop offset="1" stop-color="#18222a" />
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#wall)" />
+  <rect y="472" width="1280" height="248" fill="#2d2423" />
+  <circle cx="930" cy="146" r="92" fill="#fff1ad" opacity="0.18" />
+  <rect x="116" y="118" width="336" height="238" rx="10" fill="#d7e9ef" opacity="0.2" />
+  <path d="M284 118v238M116 236h336" stroke="#eef2e3" stroke-width="8" opacity="0.36" />
+  <rect x="696" y="250" width="310" height="212" rx="12" fill="#191d29" opacity="0.84" />
+  <rect x="730" y="286" width="242" height="132" rx="6" fill="#596b84" opacity="0.54" />
+  <rect x="116" y="440" width="360" height="42" rx="8" fill="#513d35" />
+  <rect x="172" y="482" width="20" height="126" fill="#261d1b" />
+  <rect x="394" y="482" width="20" height="126" fill="#261d1b" />
+  <path d="M0 532h1280M0 602h1280" stroke="#f1d7aa" stroke-width="3" opacity="0.09" />
+</svg>

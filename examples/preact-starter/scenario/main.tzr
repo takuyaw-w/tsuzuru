@@ -7,6 +7,10 @@ scene start:
   bg classroom with fade(duration=300)
   show mio_smile at center with fade(duration=200)
 
+  narration:
+    放課後の教室。
+    窓の外では、夕焼けがゆっくりと沈んでいく。
+
   mio:
     こんにちは。
     これはTsuzuruで作ったノベルゲームです。
@@ -48,5 +52,6 @@ scene ending:
 
   narration:
     次は scene を追加して、jump でつないでみてください。
+    あなたの物語は、ここから始まります。
 
   end

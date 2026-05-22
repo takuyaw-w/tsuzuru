@@ -84,6 +84,7 @@ packages/
 
 examples/
   preact-basic/
+  preact-starter/
 ```
 
 Current design / planning docs:
@@ -105,6 +106,7 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-starter
 ```
 
 Tsuzuru Core is framework-neutral, but the official v0.x UI stack, templates, and examples are focused on Preact-based JSX. Vue support is out of the initial scope and may be reconsidered later as an optional adapter. Future package candidates such as `@tsuzuru/vite` must not be documented as implemented until they exist and work.
@@ -406,6 +408,7 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-starter
 ```
 
 Example responsibilities:
