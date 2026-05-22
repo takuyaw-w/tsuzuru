@@ -262,6 +262,23 @@ describe("standard save slots", () => {
     ]);
   });
 
+  it("supports destructured store methods", () => {
+    const storage = createMemoryStorage();
+    const { deleteSlot, loadSlots, saveToSlot } = createTestStore(storage);
+    const data = createData("2026-01-01T00:00:00.000Z", "first");
+
+    expect(saveToSlot("slot-1", data)).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt: data.savedAt,
+        data,
+      },
+    ]);
+    expect(loadSlots()).toHaveLength(1);
+    expect(deleteSlot("slot-1")).toEqual([]);
+  });
+
   it("exposes pure ordering, dedupe, and latest helpers", () => {
     const older = createSlot("slot-1", "Slot 1", "2026-01-01T00:00:00.000Z", "older");
     const newer = createSlot("slot-1", "Slot 1", "2026-01-02T00:00:00.000Z", "newer");

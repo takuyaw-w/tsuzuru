@@ -44,55 +44,57 @@ export interface CreateLocalStorageSaveSlotStoreOptions<TData> {
 export function createLocalStorageSaveSlotStore<TData>(
   options: CreateLocalStorageSaveSlotStoreOptions<TData>,
 ): StandardSaveSlotStore<TData> {
+  const loadSlots = (): readonly StandardSaveSlot<TData>[] => {
+    const storage = resolveStorage(options.storage);
+    if (storage === null) {
+      return [];
+    }
+
+    let rawValue: string | null;
+    try {
+      rawValue = storage.getItem(options.storageKey);
+    } catch {
+      return [];
+    }
+
+    if (rawValue === null) {
+      return [];
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawValue);
+    } catch {
+      return [];
+    }
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const slots: StandardSaveSlot<TData>[] = [];
+    for (const item of parsed) {
+      const slot = parseSaveSlot(item, options);
+      if (slot !== null) {
+        slots.push(slot);
+      }
+    }
+
+    return sortSaveSlotsByDefinition(
+      dedupeSaveSlotsByNewest(slots, {
+        getSlotId: (slot) => slot.id,
+        getSavedAt: (slot) => slot.savedAt,
+      }),
+      options.slots,
+    );
+  };
+
   return {
-    loadSlots() {
-      const storage = resolveStorage(options.storage);
-      if (storage === null) {
-        return [];
-      }
-
-      let rawValue: string | null;
-      try {
-        rawValue = storage.getItem(options.storageKey);
-      } catch {
-        return [];
-      }
-
-      if (rawValue === null) {
-        return [];
-      }
-
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(rawValue);
-      } catch {
-        return [];
-      }
-
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      const slots: StandardSaveSlot<TData>[] = [];
-      for (const item of parsed) {
-        const slot = parseSaveSlot(item, options);
-        if (slot !== null) {
-          slots.push(slot);
-        }
-      }
-
-      return sortSaveSlotsByDefinition(
-        dedupeSaveSlotsByNewest(slots, {
-          getSlotId: (slot) => slot.id,
-          getSavedAt: (slot) => slot.savedAt,
-        }),
-        options.slots,
-      );
-    },
+    loadSlots,
     saveToSlot(slotId, data) {
       const definition = getSaveSlotDefinition(slotId, options.slots);
       if (definition === null) {
-        return this.loadSlots();
+        return loadSlots();
       }
 
       const nextSlot: StandardSaveSlot<TData> = {
@@ -102,14 +104,14 @@ export function createLocalStorageSaveSlotStore<TData>(
         data,
       };
       const nextSlots = sortSaveSlotsByDefinition(
-        [...this.loadSlots().filter((slot) => slot.id !== slotId), nextSlot],
+        [...loadSlots().filter((slot) => slot.id !== slotId), nextSlot],
         options.slots,
       );
       writeSaveSlots(nextSlots, options);
       return nextSlots;
     },
     deleteSlot(slotId) {
-      const nextSlots = this.loadSlots().filter((slot) => slot.id !== slotId);
+      const nextSlots = loadSlots().filter((slot) => slot.id !== slotId);
       writeSaveSlots(nextSlots, options);
       return nextSlots;
     },

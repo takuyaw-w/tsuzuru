@@ -56,28 +56,28 @@ import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
 import scenario from "../scenario/main.tzr";
-import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
-import {
-  createReadEntryKey,
-  createReadEntryKeyFromText,
-  isRead,
-  isReadTrackableEvent,
-  loadReadTrackingState,
-  markRead,
-  type ReadEntryKey,
-  type ReadTrackingState,
-  saveReadTrackingState,
-} from "./read-tracking.js";
 import {
   createExampleSaveData,
+  createReadEntryKey,
+  createReadEntryKeyFromText,
   deleteSaveSlot,
+  type ExamplePreferences,
   type ExampleSaveData,
   type ExampleSaveSlot,
   getLatestSaveSlot,
+  isRead,
+  isReadTrackableEvent,
+  loadPreferences,
+  loadReadTrackingState,
   loadSaveSlots,
+  markRead,
+  type ReadEntryKey,
+  type ReadTrackingState,
   type RetainedMessageEvent,
+  savePreferences,
+  saveReadTrackingState,
   saveToSlot,
-} from "./save-storage.js";
+} from "./game-storage.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";
