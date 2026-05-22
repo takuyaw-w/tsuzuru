@@ -34,6 +34,15 @@ export {
   STD_AUDIO_PLAYBACK_DIAGNOSTIC_CODE,
   StdAudioLayer,
 } from "./std-audio-layer.js";
+export type {
+  StdEffectLayerDiagnostic,
+  StdEffectLayerProps,
+  StdEffectLayerTargetSelectors,
+} from "./std-effect-layer.js";
+export {
+  STD_EFFECT_TARGET_NOT_FOUND_DIAGNOSTIC_CODE,
+  StdEffectLayer,
+} from "./std-effect-layer.js";
 export type { StdVisualLayerProps } from "./std-visual-layer.js";
 export { StdVisualLayer } from "./std-visual-layer.js";
 export type {

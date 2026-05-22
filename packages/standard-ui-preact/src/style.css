@@ -254,6 +254,7 @@
 .tzr-tsuzuru-game__interaction-surface,
 .tzr-tsuzuru-game__visual-layer,
 .tzr-tsuzuru-game__sprite-layer,
+.tzr-std-effect-layer,
 .tzr-tsuzuru-game__message-layer {
   position: absolute;
   inset: 0;
@@ -272,6 +273,19 @@
 
 .tzr-tsuzuru-game__message-layer {
   z-index: 2;
+}
+
+.tzr-std-effect-layer {
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tzr-std-effect-layer__flash {
+  position: absolute;
+  inset: 0;
+  background: var(--tzr-effect-flash-color, #fff);
+  animation: tzr-std-effect-flash var(--tzr-effect-duration, 120ms) ease-out both;
 }
 
 .tzr-tsuzuru-game__background {
@@ -357,4 +371,170 @@
   color: #fee2e2;
   font-size: 0.8125rem;
   list-style: none;
+}
+
+.tzr-std-effect--shake-light {
+  animation: tzr-std-effect-shake-light var(--tzr-effect-duration, 180ms) ease-in-out both;
+}
+
+.tzr-std-effect--shake-normal {
+  animation: tzr-std-effect-shake-normal var(--tzr-effect-duration, 220ms) ease-in-out both;
+}
+
+.tzr-std-effect--shake-strong {
+  animation: tzr-std-effect-shake-strong var(--tzr-effect-duration, 260ms) ease-in-out both;
+}
+
+.tzr-std-effect--pulse-light {
+  animation: tzr-std-effect-pulse-light var(--tzr-effect-duration, 180ms) ease-out both;
+}
+
+.tzr-std-effect--pulse-normal {
+  animation: tzr-std-effect-pulse-normal var(--tzr-effect-duration, 220ms) ease-out both;
+}
+
+.tzr-std-effect--pulse-strong {
+  animation: tzr-std-effect-pulse-strong var(--tzr-effect-duration, 260ms) ease-out both;
+}
+
+.tzr-std-effect--blur {
+  animation: tzr-std-effect-blur var(--tzr-effect-duration, 300ms) ease-in-out both;
+}
+
+@keyframes tzr-std-effect-flash {
+  from {
+    opacity: 0.82;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tzr-std-effect-shake-light {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+
+  50% {
+    transform: translate3d(2px, -1px, 0);
+  }
+
+  75% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+}
+
+@keyframes tzr-std-effect-shake-normal {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  20% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+
+  40% {
+    transform: translate3d(4px, -2px, 0);
+  }
+
+  60% {
+    transform: translate3d(-3px, 1px, 0);
+  }
+
+  80% {
+    transform: translate3d(3px, -1px, 0);
+  }
+}
+
+@keyframes tzr-std-effect-shake-strong {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  16% {
+    transform: translate3d(-8px, 4px, 0);
+  }
+
+  32% {
+    transform: translate3d(8px, -4px, 0);
+  }
+
+  48% {
+    transform: translate3d(-7px, 3px, 0);
+  }
+
+  64% {
+    transform: translate3d(7px, -3px, 0);
+  }
+
+  80% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+}
+
+@keyframes tzr-std-effect-pulse-light {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes tzr-std-effect-pulse-normal {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes tzr-std-effect-pulse-strong {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes tzr-std-effect-blur {
+  0%,
+  100% {
+    filter: blur(0);
+  }
+
+  45% {
+    filter: blur(var(--tzr-effect-blur-amount, 6px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tzr-std-effect-layer__flash,
+  .tzr-std-effect--shake-light,
+  .tzr-std-effect--shake-normal,
+  .tzr-std-effect--shake-strong,
+  .tzr-std-effect--pulse-light,
+  .tzr-std-effect--pulse-normal,
+  .tzr-std-effect--pulse-strong,
+  .tzr-std-effect--blur {
+    animation-duration: 12s;
+    transition-duration: 1ms;
+    opacity: 0.25;
+  }
 }

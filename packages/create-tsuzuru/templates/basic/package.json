@@ -13,6 +13,7 @@
     "@tsuzuru/config": "^1.0.0",
     "@tsuzuru/core": "^1.0.0",
     "@tsuzuru/plugin-std-audio": "^1.0.0",
+    "@tsuzuru/plugin-std-effect": "^1.0.0",
     "@tsuzuru/plugin-std-visual": "^1.0.0",
     "@tsuzuru/preact": "^1.0.0",
     "@tsuzuru/standard-ui-preact": "^1.0.0",

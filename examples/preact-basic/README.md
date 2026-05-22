@@ -78,6 +78,11 @@ The runtime hook is configured with `autoClearWait: true` and `autoStepTransient
 
 The visual layer reads std-visual transition metadata and renders `fade` and `dissolve` entrance/update transitions with example-side CSS. Transition execution is not part of the core runtime. Exit transitions for `hide`, `clear bg`, and `clear sprites` remain future scope because those operations remove the surviving visual state.
 
+Standard effect events are rendered with `StdEffectLayer` from
+`@tsuzuru/standard-ui-preact`. This example passes its own target selectors so
+shake, pulse, and blur can target the fullscreen surface, message layer, and
+example-specific sprite container.
+
 Controls:
 
 - The example opens on the TSX title screen. Click Start, then click, Enter, or Space to start and advance scenario messages.

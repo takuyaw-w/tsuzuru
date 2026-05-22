@@ -14,6 +14,7 @@ import { createStdCameraCommandHandlers, createStdCameraPlugin } from "@tsuzuru/
 import {
   createStdEffectCommandHandlers,
   createStdEffectPlugin,
+  getStdEffectState,
   prepareStdEffectStateForSnapshot,
 } from "@tsuzuru/plugin-std-effect";
 import { createStdParticleCommandHandlers, createStdParticlePlugin } from "@tsuzuru/plugin-std-particle";
@@ -37,6 +38,7 @@ import {
   type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
   RuntimeMessageLayer,
+  StdEffectLayer,
   type TextRevealCharacterEvent,
   useAutoMode,
   useMessageHistory,
@@ -47,7 +49,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { assets } from "../assets.js";
 import scenario from "../scenario/main.tzr";
 import { AudioLayer } from "./AudioLayer.js";
-import { EffectLayer } from "./EffectLayer.js";
 import { ParticleLayer } from "./ParticleLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import { RuntimeControlBar } from "./RuntimeControlBar.js";
@@ -265,6 +266,7 @@ function RuntimeApp({
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const effectState = getStdEffectState(runtime.state);
   const hasRestoredInitialSaveDataRef = useRef(false);
   const [backgroundAnimationSuppression, setBackgroundAnimationSuppression] = useState({
     key: 0,
@@ -532,7 +534,16 @@ function RuntimeApp({
             <VisualLayer runtimeState={runtime.state} backgroundAnimationSuppression={backgroundAnimationSuppression} />
             <ParticleLayer runtimeState={runtime.state} />
             <AudioLayer runtimeState={runtime.state} preferences={preferences} />
-            <EffectLayer runtimeState={runtime.state} />
+            <StdEffectLayer
+              className="effect-layer"
+              events={effectState.events}
+              nextSequence={effectState.nextSequence}
+              targetSelectors={{
+                screen: ".app__interaction-surface",
+                message: ".app__message-layer",
+                sprites: ".visual-layer__sprites",
+              }}
+            />
             <RuntimeControlBar
               readCount={readCount}
               autoModeEnabled={autoMode.enabled}

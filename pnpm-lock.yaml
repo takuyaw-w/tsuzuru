@@ -105,6 +105,9 @@ importers:
       '@tsuzuru/plugin-std-audio':
         specifier: workspace:*
         version: link:../../packages/plugin-std-audio
+      '@tsuzuru/plugin-std-effect':
+        specifier: workspace:*
+        version: link:../../packages/plugin-std-effect
       '@tsuzuru/plugin-std-visual':
         specifier: workspace:*
         version: link:../../packages/plugin-std-visual
@@ -301,6 +304,9 @@ importers:
       '@tsuzuru/plugin-std-audio':
         specifier: workspace:^
         version: link:../plugin-std-audio
+      '@tsuzuru/plugin-std-effect':
+        specifier: workspace:^
+        version: link:../plugin-std-effect
       '@tsuzuru/plugin-std-visual':
         specifier: workspace:^
         version: link:../plugin-std-visual

@@ -38,6 +38,7 @@ describe("createProject", () => {
 
     expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+    expect(packageJson.dependencies["@tsuzuru/plugin-std-effect"]).toBeDefined();
     expect(packageJson.devDependencies["@preact/preset-vite"]).toBeDefined();
     expect(packageJson.devDependencies["@tsuzuru/vite-plugin"]).toBeDefined();
     await expect(readFile(join(root, "my-game", "src", "main.tsx"), "utf8")).resolves.toContain("preact");
@@ -119,7 +120,8 @@ describe("createProject", () => {
     expect(readmeSource).not.toContain("compileTzr");
     expect(viteConfigSource).toContain("@preact/preset-vite");
     expect(viteConfigSource).toContain("@tsuzuru/vite-plugin");
-    expect(viteConfigSource).toContain("plugins: [preact(), tsuzuru()]");
+    expect(viteConfigSource).toContain("createStdEffectPlugin()");
+    expect(viteConfigSource).toContain("tsuzuru({");
   });
 
   it("includes starter README and placeholder assets", async () => {

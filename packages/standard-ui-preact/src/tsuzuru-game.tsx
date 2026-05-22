@@ -8,6 +8,7 @@ import {
   type TzrCompileProjectResult,
 } from "@tsuzuru/core";
 import { createStdAudioCommandHandlers, createStdAudioPlugin, getStdAudioState } from "@tsuzuru/plugin-std-audio";
+import { createStdEffectCommandHandlers, createStdEffectPlugin, getStdEffectState } from "@tsuzuru/plugin-std-effect";
 import { createStdVisualCommandHandlers, createStdVisualPlugin, getStdVisualState } from "@tsuzuru/plugin-std-visual";
 import { useRuntime } from "@tsuzuru/preact";
 import type { ComponentChildren, ComponentProps } from "preact";
@@ -19,6 +20,7 @@ import { GameViewport, type GameViewportAspectRatio } from "./game-viewport.js";
 import { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
 import { StatusLayer } from "./StatusLayer.js";
 import { StdAudioLayer, type StdAudioLayerDiagnostic } from "./std-audio-layer.js";
+import { StdEffectLayer, type StdEffectLayerDiagnostic } from "./std-effect-layer.js";
 import { StdVisualLayer } from "./std-visual-layer.js";
 import { useTextReveal } from "./useTextReveal.js";
 
@@ -43,6 +45,12 @@ export type TsuzuruGameDiagnostic =
     }
   | {
       readonly source: "asset";
+      readonly severity: "warning";
+      readonly code: string;
+      readonly message: string;
+    }
+  | {
+      readonly source: "presentation";
       readonly severity: "warning";
       readonly code: string;
       readonly message: string;
@@ -81,7 +89,11 @@ interface LineRange {
   readonly end: number;
 }
 
-const STARTER_PLUGINS: readonly RuntimePluginDefinition[] = [createStdVisualPlugin(), createStdAudioPlugin()];
+const STARTER_PLUGINS: readonly RuntimePluginDefinition[] = [
+  createStdVisualPlugin(),
+  createStdAudioPlugin(),
+  createStdEffectPlugin(),
+];
 
 export function defineTsuzuruGameScenario(input: TzrCompileProjectInput): TzrCompileProjectResult {
   return compileTzrProject(input, {
@@ -135,11 +147,13 @@ function TsuzuruGameRuntime({
     () => ({
       ...createStdVisualCommandHandlers(),
       ...createStdAudioCommandHandlers(),
+      ...createStdEffectCommandHandlers(),
     }),
     [],
   );
   const [diagnostics, setDiagnostics] = useState<readonly TsuzuruGameDiagnostic[]>([]);
   const assetDiagnosticKeysRef = useRef<Set<string>>(new Set());
+  const presentationDiagnosticKeysRef = useRef<Set<string>>(new Set());
   const recordDiagnostic = useCallback((diagnostic: TsuzuruGameDiagnostic) => {
     setDiagnostics((current) => [...current, diagnostic]);
   }, []);
@@ -170,6 +184,22 @@ function TsuzuruGameRuntime({
     },
     [recordDiagnostic],
   );
+  const recordPresentationDiagnostic = useCallback(
+    (diagnostic: StdEffectLayerDiagnostic) => {
+      const key = `${diagnostic.code}:${diagnostic.event.sequence}:${diagnostic.event.type}`;
+      if (presentationDiagnosticKeysRef.current.has(key)) {
+        return;
+      }
+      presentationDiagnosticKeysRef.current.add(key);
+      recordDiagnostic({
+        source: "presentation",
+        severity: "warning",
+        code: diagnostic.code,
+        message: diagnostic.message,
+      });
+    },
+    [recordDiagnostic],
+  );
   const runtime = useRuntime(document, {
     plugins,
     commandHandlers,
@@ -180,6 +210,7 @@ function TsuzuruGameRuntime({
   });
   const visualState = getStdVisualState(runtime.state);
   const audioState = getStdAudioState(runtime.state);
+  const effectState = getStdEffectState(runtime.state);
   const visibleEvent = runtime.visibleEvent;
   const presentationKey = useVisibleEventPresentationKey(visibleEvent);
   const messageLines = useMemo(() => getMessageLines(visibleEvent), [visibleEvent]);
@@ -275,6 +306,11 @@ function TsuzuruGameRuntime({
         {...(assets?.audio?.se === undefined ? {} : { seAssets: assets.audio.se })}
         {...(assets?.audio?.voice === undefined ? {} : { voiceAssets: assets.audio.voice })}
         onDiagnostic={recordAssetDiagnostic}
+      />
+      <StdEffectLayer
+        events={effectState.events}
+        nextSequence={effectState.nextSequence}
+        onDiagnostic={recordPresentationDiagnostic}
       />
       <div className="tzr-tsuzuru-game__message-layer">
         {visibleEvent === null ? null : (

@@ -29,6 +29,7 @@ import {
   GameViewport,
   RuntimeMessageLayer,
   StdAudioLayer,
+  StdEffectLayer,
   StdVisualLayer,
 } from "@tsuzuru/standard-ui-preact";
 import "@tsuzuru/standard-ui-preact/style.css";
@@ -36,12 +37,18 @@ import "@tsuzuru/standard-ui-preact/style.css";
 
 The package provides UI components such as `GameViewport`, `GameShell`,
 `MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`,
-`StdVisualLayer`, `StdAudioLayer`, and `ScreenHost`, plus the high-level
-`TsuzuruGame` starter component.
+`StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and `ScreenHost`, plus the
+high-level `TsuzuruGame` starter component.
 
-`TsuzuruGame` handles the standard starter runtime wiring for visual/audio
-plugins, message display, choices, click/keyboard advance, text reveal, and
-basic asset playback. It does not own save/load, backlog, gallery, settings,
-custom screens, or project-specific asset bundling policy. Use `@tsuzuru/preact`
-directly with `StdVisualLayer` / `StdAudioLayer` when an app needs full runtime
-control but still wants the standard visual and audio presentation layers.
+`StdEffectLayer` renders standard effect events from
+`@tsuzuru/plugin-std-effect`, such as flash, shake, pulse, and blur. Applications
+can pass custom target selectors when their DOM structure differs from the
+standard game shell.
+
+`TsuzuruGame` handles the standard starter runtime wiring for visual/audio/effect
+plugins, message display, choices, click/keyboard advance, text reveal, basic
+asset playback, and simple standard effects. It does not own save/load, backlog,
+gallery, settings, custom screens, or project-specific asset bundling policy.
+Use `@tsuzuru/preact` directly with `StdVisualLayer` / `StdAudioLayer` /
+`StdEffectLayer` when an app needs full runtime control but still wants the
+standard presentation layers.
