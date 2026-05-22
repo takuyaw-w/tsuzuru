@@ -1,7 +1,37 @@
-title "Tsuzuru Preact Basic"
+title "はじめてのTsuzuru"
 
 character mio name="美緒"
 
-include "./chapters/01-opening.tzr"
-include "./chapters/02-common.tzr"
-include "./chapters/03-ending.tzr"
+scene start:
+  bg classroom with fade(duration=300)
+  show mio_smile at center with fade(duration=200)
+
+  narration:
+    放課後の教室。
+    ここから、あなたの物語が始まります。
+
+  mio:
+    こんにちは。
+    これは Tsuzuru のスターターです。
+
+  choice "どうしますか？":
+    "物語を続ける" id=continueStory:
+      jump continue
+
+    "今日はここまで" id=endToday:
+      jump ending
+
+scene continue:
+  mio:
+    scenario/main.tzr を編集すると、セリフや分岐を変更できます。
+
+  narration:
+    画像を差し替える場合は public/assets/images/ にファイルを置いてください。
+
+  end
+
+scene ending:
+  mio:
+    また遊びに来てくださいね。
+
+  end

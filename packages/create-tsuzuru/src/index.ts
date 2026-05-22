@@ -17,11 +17,7 @@ interface ParsedCliArgs {
   readonly templateName?: string;
 }
 
-interface NextStepCommands {
-  readonly install: string;
-  readonly checkScenario: string;
-  readonly dev: string;
-}
+type NextStepCommands = readonly string[];
 
 function detectPackageManager(userAgent = process.env.npm_config_user_agent): PackageManager {
   if (userAgent?.startsWith("pnpm/")) return "pnpm";
@@ -33,23 +29,11 @@ function detectPackageManager(userAgent = process.env.npm_config_user_agent): Pa
 function getNextStepCommands(packageManager = detectPackageManager()): NextStepCommands {
   switch (packageManager) {
     case "npm":
-      return {
-        install: "npm install",
-        checkScenario: "npm run check:scenario",
-        dev: "npm run dev",
-      };
+      return ["npm install", "npm run check:scenario", "npm run dev"];
     case "pnpm":
-      return {
-        install: "pnpm install",
-        checkScenario: "pnpm check:scenario",
-        dev: "pnpm dev",
-      };
+      return ["pnpm dev"];
     case "yarn":
-      return {
-        install: "yarn install",
-        checkScenario: "yarn check:scenario",
-        dev: "yarn dev",
-      };
+      return ["yarn install", "yarn check:scenario", "yarn dev"];
   }
 }
 
@@ -76,9 +60,9 @@ export async function runCli(args: readonly string[]): Promise<number> {
     console.log("");
     console.log("Next steps:");
     console.log(`  cd ${result.relativeTargetDir}`);
-    console.log(`  ${nextSteps.install}`);
-    console.log(`  ${nextSteps.checkScenario}`);
-    console.log(`  ${nextSteps.dev}`);
+    for (const command of nextSteps) {
+      console.log(`  ${command}`);
+    }
     return 0;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

@@ -7,13 +7,11 @@ After publish, the intended usage is:
 ```sh
 pnpm create tsuzuru my-game
 cd my-game
-pnpm install
-pnpm check:scenario
 pnpm dev
 ```
 
-The default template is the existing Vite + Preact `basic` template. The same
-template is also available as `preact`:
+The default template is a Vite + Preact novel game starter. The same template
+is also available as `preact`:
 
 ```sh
 pnpm create tsuzuru my-game --template basic
@@ -44,11 +42,19 @@ The generator supports:
 - copying files into a new directory
 - replacing the `package.json` name placeholder
 - Vite projects with `tsuzuru.config.ts`
-- scenario files that use top-level `include "./path.tzr"` and `jump sceneName`
+- queryless `.tzr` imports through `@tsuzuru/vite-plugin`
+- a title screen that starts the compiled scenario
 
-The `basic` and `preact` template names both generate the existing Vite +
-Preact project. It includes host TSX screens for title, load, settings, backlog,
-and gallery.
+The `basic` and `preact` template names both generate the same starter. It
+opens on a title screen, then Start enters a 16:9 game view powered by
+`@tsuzuru/standard-ui-preact`. Load and Config are visible placeholders, not
+implemented screens.
+
+Generated projects are intended to start from:
+
+- `scenario/main.tzr`
+- `public/assets/images/`
+- `public/assets/audio/`
 
 The removed `html` template is no longer available. Passing `--template html`
 returns an unknown template error. Passing `--template vue` also returns an
@@ -59,11 +65,13 @@ The generated project keeps these scripts:
 
 ```json
 {
-  "dev": "vite",
+  "dev": "pnpm install --prefer-offline && vite",
   "build": "tsuzuru check && vite build",
   "check:scenario": "tsuzuru check",
   "preview": "vite preview"
 }
 ```
 
-It does not install dependencies, initialize git, or prompt for options.
+The generated `dev` script runs `pnpm install --prefer-offline` first so the
+published pnpm create flow can go straight to `pnpm dev`. The generator itself
+does not initialize git or prompt for options.

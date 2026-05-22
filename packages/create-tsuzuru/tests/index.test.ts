@@ -44,7 +44,7 @@ describe("runCli", () => {
     {
       name: "pnpm",
       userAgent: "pnpm/11.0.0 npm/? node/v25.0.0 linux x64",
-      expectedNextSteps: ["pnpm install", "pnpm check:scenario", "pnpm dev"],
+      expectedNextSteps: ["pnpm dev"],
     },
     {
       name: "yarn",
@@ -54,7 +54,7 @@ describe("runCli", () => {
     {
       name: "unknown",
       userAgent: "bun/1.3.0 npm/? node/v25.0.0 linux x64",
-      expectedNextSteps: ["pnpm install", "pnpm check:scenario", "pnpm dev"],
+      expectedNextSteps: ["pnpm dev"],
     },
   ])("prints $name next steps", async ({ userAgent, expectedNextSteps }) => {
     const root = await createTempRoot();
@@ -138,7 +138,7 @@ describe("runCli", () => {
     }
   });
 
-  it("keeps --template basic as the default Preact template alias", async () => {
+  it("keeps --template basic as the default starter template alias", async () => {
     const root = await createTempRoot();
     const previousCwd = process.cwd();
 
@@ -152,12 +152,13 @@ describe("runCli", () => {
 
       expect(exitCode).toBe(0);
       expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+      expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
     } finally {
       process.chdir(previousCwd);
     }
   });
 
-  it("accepts --template preact as the existing Preact template", async () => {
+  it("accepts --template preact as the starter template", async () => {
     const root = await createTempRoot();
     const previousCwd = process.cwd();
 
@@ -171,6 +172,7 @@ describe("runCli", () => {
 
       expect(exitCode).toBe(0);
       expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+      expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
     } finally {
       process.chdir(previousCwd);
     }

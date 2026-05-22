@@ -165,7 +165,7 @@ pnpm --filter @tsuzuru/example-preact-starter build
 
 低レベル統合の確認には [`examples/preact-basic`](examples/preact-basic/) も利用できます。`examples/preact-basic` は core runtime と各 std plugin の統合、save/load、settings、backlog などを含む実装リファレンスです。
 
-`create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。`@tsuzuru/vite` はまだありません。`.tzr` は Vite の `?raw` import、またはホスト側の手動読み込みで文字列として渡します。
+`create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。生成物は `@tsuzuru/vite-plugin` を使い、`.tzr` を query なしで直接 import します。pnpm 利用時は `pnpm create tsuzuru my-game` の後、`cd my-game` と `pnpm dev` で starter を起動できます。
 
 Release smoke test:
 

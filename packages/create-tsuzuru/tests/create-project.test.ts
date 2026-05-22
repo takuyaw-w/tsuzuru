@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,15 +27,19 @@ describe("createProject", () => {
     await expect(readFile(join(root, "my-game", "package.json"), "utf8")).resolves.toContain('"name": "my-game"');
   });
 
-  it("uses the bundled basic template by default", async () => {
+  it("uses the bundled creator starter template by default", async () => {
     const root = await createTempRoot();
 
     await createProject({ cwd: root, projectName: "my-game" });
     const packageJson = JSON.parse(await readFile(join(root, "my-game", "package.json"), "utf8")) as {
       readonly dependencies: Record<string, string>;
+      readonly devDependencies: Record<string, string>;
     };
 
+    expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
     expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
+    expect(packageJson.devDependencies["@preact/preset-vite"]).toBeDefined();
+    expect(packageJson.devDependencies["@tsuzuru/vite-plugin"]).toBeDefined();
     await expect(readFile(join(root, "my-game", "src", "main.tsx"), "utf8")).resolves.toContain("preact");
   });
 
@@ -85,8 +89,51 @@ describe("createProject", () => {
       "defineTsuzuruConfig",
     );
     await expect(readFile(join(root, "my-game", "scenario", "main.tzr"), "utf8")).resolves.toContain(
-      'title "Tsuzuru Preact Basic"',
+      'title "はじめてのTsuzuru"',
     );
+  });
+
+  it("generates a creator-facing app shell", async () => {
+    const root = await createTempRoot();
+
+    await createProject({ cwd: root, projectName: "my-game" });
+    const appSource = await readFile(join(root, "my-game", "src", "App.tsx"), "utf8");
+    const gameRootSource = await readFile(join(root, "my-game", "src", "ui", "GameRoot.tsx"), "utf8");
+    const assetsSource = await readFile(join(root, "my-game", "src", "assets.ts"), "utf8");
+    const readmeSource = await readFile(join(root, "my-game", "README.md"), "utf8");
+    const viteConfigSource = await readFile(join(root, "my-game", "vite.config.ts"), "utf8");
+
+    await expect(access(join(root, "my-game", "src", "scenario.ts"))).rejects.toThrow();
+    expect(appSource).toContain('import scenario from "../scenario/main.tzr"');
+    expect(appSource).toContain("<TitleScreen");
+    expect(appSource).toContain("<GameRoot scenario={scenario} />");
+    expect(appSource).not.toContain("./assets");
+    expect(appSource).not.toContain("useRuntime");
+    expect(appSource).not.toContain("parseTzr");
+    expect(appSource).not.toContain("compileTzrProject");
+    expect(gameRootSource).toContain("TsuzuruGame");
+    expect(assetsSource).toContain("classroom");
+    expect(assetsSource).toContain("mio_smile");
+    expect(readmeSource).not.toContain("scenario.ts");
+    expect(readmeSource).not.toContain("parseTzr");
+    expect(readmeSource).not.toContain("compileTzr");
+    expect(viteConfigSource).toContain("@preact/preset-vite");
+    expect(viteConfigSource).toContain("@tsuzuru/vite-plugin");
+    expect(viteConfigSource).toContain("plugins: [preact(), tsuzuru()]");
+  });
+
+  it("includes starter README and placeholder assets", async () => {
+    const root = await createTempRoot();
+
+    await createProject({ cwd: root, projectName: "my-game" });
+
+    await expect(readFile(join(root, "my-game", "README.md"), "utf8")).resolves.toContain("scenario/main.tzr");
+    await expect(
+      readFile(join(root, "my-game", "public", "assets", "images", "classroom.svg"), "utf8"),
+    ).resolves.toContain("Sunset classroom background");
+    await expect(
+      readFile(join(root, "my-game", "public", "assets", "images", "mio_smile.svg"), "utf8"),
+    ).resolves.toContain("Mio smiling character placeholder");
   });
 
   it("includes a check:scenario script", async () => {
@@ -102,12 +149,7 @@ describe("createProject", () => {
 
   it("does not include removed legacy DSL syntax in scenario template files", async () => {
     const templateDir = await getBasicTemplateDir();
-    const files = [
-      "scenario/main.tzr",
-      "scenario/chapters/01-opening.tzr",
-      "scenario/chapters/02-common.tzr",
-      "scenario/chapters/03-ending.tzr",
-    ];
+    const files = ["scenario/main.tzr"];
     const sources = await Promise.all(files.map((file) => readFile(join(templateDir, file), "utf8")));
     const source = sources.join("\n");
 
