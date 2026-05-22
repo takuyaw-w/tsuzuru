@@ -4,11 +4,9 @@ import { validateRuntimeSaveSlot } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
 import {
   createInitialReadTrackingState,
-  createLocalStoragePreferencesStore,
-  createLocalStorageReadTrackingStore,
-  createLocalStorageSaveSlotStore,
   createReadEntryKey,
   createReadEntryKeyFromText,
+  createStandardGameStorage,
   DEFAULT_STANDARD_GAME_PREFERENCES,
   isRead,
   isReadTrackableEvent,
@@ -22,11 +20,14 @@ import {
   type StandardReadTrackingStorageData,
   type StandardSaveSlot,
   type StandardSaveSlotDefinition,
+  type StandardSaveSlotStore,
   serializeReadTrackingState as serializeStandardReadTrackingState,
 } from "@tsuzuru/standard-game-storage";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 export { projectIdentity };
+
+const STORAGE_PREFIX = "tsuzuru:example-preact-basic";
 
 export const TEXT_SPEED_OPTIONS = STANDARD_GAME_TEXT_SPEED_OPTIONS;
 
@@ -40,13 +41,6 @@ export const DEFAULT_EXAMPLE_PREFERENCES: ExamplePreferences = {
   ...DEFAULT_STANDARD_GAME_PREFERENCES,
   textSpeedCharactersPerSecond: 60,
 };
-
-export const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
-
-export const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
-
-// The storage key stays v1; slot payloads accept both legacy RuntimeSaveData and ExampleSaveData.
-export const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 
 export const SAVE_SLOT_DEFINITIONS = [
   { id: "slot-1", label: "Slot 1" },
@@ -82,24 +76,37 @@ export const runtimeSaveSlotContext = {
   scenarioVersion: projectIdentity.version,
 } satisfies RuntimeSaveSlotContext;
 
-export const preferencesStore = createLocalStoragePreferencesStore({
-  storageKey: PREFERENCES_STORAGE_KEY,
-  defaults: DEFAULT_EXAMPLE_PREFERENCES,
-  textSpeedOptions: TEXT_SPEED_OPTIONS,
-});
-
-export const readTrackingStore = createLocalStorageReadTrackingStore({
-  storageKey: READ_TRACKING_STORAGE_KEY,
-  project: projectIdentity,
-});
-
-export const saveSlotStore = createLocalStorageSaveSlotStore<ExampleSaveData>({
-  storageKey: SAVE_STORAGE_KEY,
+const createdGameStorage = createStandardGameStorage<ExampleSaveData>({
   project: projectIdentity,
   slots: SAVE_SLOT_DEFINITIONS,
-  parseData: (value, context) => parseExampleSaveData(value, context.savedAt),
-  getSavedAt: getExampleSaveDataSavedAt,
+  storagePrefix: STORAGE_PREFIX,
+  preferences: {
+    defaults: DEFAULT_EXAMPLE_PREFERENCES,
+    textSpeedOptions: TEXT_SPEED_OPTIONS,
+  },
+  saves: {
+    parseData: (value, context) => parseExampleSaveData(value, context.savedAt),
+    getSavedAt: getExampleSaveDataSavedAt,
+  },
 });
+
+export const gameStorage = {
+  ...createdGameStorage,
+  saves: requireSaveSlotStore(createdGameStorage.saves),
+};
+
+export const PREFERENCES_STORAGE_KEY = gameStorage.keys.preferences;
+
+export const READ_TRACKING_STORAGE_KEY = gameStorage.keys.readTracking;
+
+// The storage key stays v1; slot payloads accept both legacy RuntimeSaveData and ExampleSaveData.
+export const SAVE_STORAGE_KEY = gameStorage.keys.saves;
+
+export const preferencesStore = gameStorage.preferences;
+
+export const readTrackingStore = gameStorage.readTracking;
+
+export const saveSlotStore = gameStorage.saves;
 
 export {
   createInitialReadTrackingState,
@@ -305,4 +312,13 @@ function isTextLineLike(value: unknown): value is { readonly text: string } {
 
 function areRuntimeSnapshotsEqual(left: RuntimeSnapshot, right: RuntimeSnapshot): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function requireSaveSlotStore(
+  store: StandardSaveSlotStore<ExampleSaveData> | null,
+): StandardSaveSlotStore<ExampleSaveData> {
+  if (store === null) {
+    throw new Error("Example save slot store must be configured.");
+  }
+  return store;
 }

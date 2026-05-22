@@ -13,6 +13,7 @@
   },
   "files": [
     "dist/src/index.*",
+    "dist/src/preset.*",
     "dist/src/preferences.*",
     "dist/src/read-tracking.*",
     "dist/src/save-slots.*"

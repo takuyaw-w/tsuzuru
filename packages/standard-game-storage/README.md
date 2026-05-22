@@ -8,6 +8,9 @@ helpers out of `examples/preact-basic` in small steps.
 
 Available APIs:
 
+- `createStandardGameStorage`
+- `StandardGameStoragePreset`
+- `CreateStandardGameStorageOptions`
 - `StandardGamePreferences`
 - `DEFAULT_STANDARD_GAME_PREFERENCES`
 - `STANDARD_GAME_TEXT_SPEED_OPTIONS`
@@ -32,13 +35,16 @@ Available APIs:
 - `getLatestSaveSlot`
 - `createLocalStorageSaveSlotStore`
 
-Planned areas:
-
-- example-specific save data migration helpers
+The creator-facing `createStandardGameStorage` API generates conventional
+storage keys from a `storagePrefix`, creates preferences and read tracking
+stores, generates default save slot definitions, and creates a save slot store
+when caller-owned save parsing hooks are provided. Example-specific save data
+migration and runtime snapshot policy stay in the application.
 
 Current non-goals:
 
 - changing storage keys or save data versions
+- standardizing application-specific save data migration
 - adding Preact hooks or UI components
 - adding IndexedDB, cloud save, or file save
 
