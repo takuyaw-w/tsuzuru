@@ -80,7 +80,14 @@ want existing local saves to remain loadable.
 
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 
-The visual layer reads std-visual transition metadata and renders `fade` and `dissolve` entrance/update transitions with example-side CSS. Transition execution is not part of the core runtime. Exit transitions for `hide`, `clear bg`, and `clear sprites` remain future scope because those operations remove the surviving visual state.
+The visual layer reads std-visual transition metadata and renders
+entrance/update transitions with example-side CSS.
+`@tsuzuru/standard-ui-preact` now provides the same basic std-visual transition
+rendering in `StdVisualLayer`, but this example keeps its local visual wrapper
+until camera composition is split into a standard camera layer. Transition
+execution is not part of the core runtime. Exit transitions for `hide`,
+`clear bg`, and `clear sprites` remain future scope because those operations
+remove the surviving visual state.
 
 Standard effect events are rendered with `StdEffectLayer` from
 `@tsuzuru/standard-ui-preact`. This example passes its own target selectors so

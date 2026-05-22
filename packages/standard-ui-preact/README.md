@@ -67,7 +67,11 @@ snow, sakura, and dust. `StdParticleRuntimeLayer` is a thin bridge that reads
 `StdVisualRuntimeLayer` is a thin bridge that reads `stdVisual` state from a
 runtime state and delegates rendering to `StdVisualLayer`. It does not handle
 camera state, save/load transition suppression, or example-specific
-placeholders.
+placeholders. `StdVisualLayer` renders basic std-visual background update
+transitions and sprite show transitions without blocking runtime progression.
+Initial mount uses the current visual state without replaying durable transition
+metadata; `hide` / `clearBg` / `clearSprites` exit transitions are not handled
+yet.
 
 `StdAudioRuntimeLayer` connects a `StdAudioState` to standard browser playback,
 audio notices, and an optional status panel. `StdAudioLayer` handles the

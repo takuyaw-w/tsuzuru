@@ -476,6 +476,74 @@
   object-fit: cover;
 }
 
+.tzr-tsuzuru-game__background--current {
+  z-index: 0;
+}
+
+.tzr-tsuzuru-game__background--previous {
+  z-index: 1;
+}
+
+.tzr-tsuzuru-game__background--transition-incoming,
+.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-duration: var(--tzr-visual-transition-duration, 420ms);
+  animation-fill-mode: both;
+  animation-timing-function: ease;
+  will-change: clip-path, filter, opacity, transform;
+}
+
+.tzr-tsuzuru-game__background--transition-fade.tzr-tsuzuru-game__background--transition-incoming,
+.tzr-tsuzuru-game__background--transition-dissolve.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-fade-in;
+}
+
+.tzr-tsuzuru-game__background--transition-fade.tzr-tsuzuru-game__background--transition-outgoing,
+.tzr-tsuzuru-game__background--transition-dissolve.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-fade-out;
+}
+
+.tzr-tsuzuru-game__background--transition-blurFade.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-blur-in;
+}
+
+.tzr-tsuzuru-game__background--transition-blurFade.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-blur-out;
+}
+
+.tzr-tsuzuru-game__background--transition-slide.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-slide-in;
+}
+
+.tzr-tsuzuru-game__background--transition-slide.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-slide-out;
+}
+
+.tzr-tsuzuru-game__background--transition-wipeLeft.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-wipe-left-in;
+}
+
+.tzr-tsuzuru-game__background--transition-wipeLeft.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-fade-out;
+}
+
+.tzr-tsuzuru-game__background--transition-wipeRight.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-wipe-right-in;
+}
+
+.tzr-tsuzuru-game__background--transition-wipeRight.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-fade-out;
+}
+
+.tzr-tsuzuru-game__background--transition-pageTurn.tzr-tsuzuru-game__background--transition-incoming {
+  animation-name: tzr-std-visual-background-page-turn-in;
+  transform-origin: var(--tzr-visual-transition-turn-origin, left center);
+}
+
+.tzr-tsuzuru-game__background--transition-pageTurn.tzr-tsuzuru-game__background--transition-outgoing {
+  animation-name: tzr-std-visual-background-page-turn-out;
+  transform-origin: var(--tzr-visual-transition-turn-origin, left center);
+}
+
 .tzr-tsuzuru-game__background--empty,
 .tzr-tsuzuru-game__background-placeholder {
   display: grid;
@@ -500,6 +568,14 @@
   max-width: min(34vw, 34%);
   max-height: 82%;
   object-fit: contain;
+}
+
+.tzr-tsuzuru-game__sprite--transition-fade {
+  animation: tzr-std-visual-sprite-fade-in var(--tzr-visual-transition-duration, 260ms) ease-out both;
+}
+
+.tzr-tsuzuru-game__sprite--transition-dissolve {
+  animation: tzr-std-visual-sprite-dissolve-in var(--tzr-visual-transition-duration, 320ms) ease-out both;
 }
 
 .tzr-tsuzuru-game__sprite--left {
@@ -579,6 +655,149 @@
 
 .tzr-std-effect--blur {
   animation: tzr-std-effect-blur var(--tzr-effect-duration, 300ms) ease-in-out both;
+}
+
+@keyframes tzr-std-visual-background-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tzr-std-visual-background-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tzr-std-visual-background-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes tzr-std-visual-background-blur-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+@keyframes tzr-std-visual-background-slide-in {
+  from {
+    transform: translate3d(var(--tzr-visual-transition-slide-x, 100%), var(--tzr-visual-transition-slide-y, 0), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tzr-std-visual-background-slide-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(
+      calc(var(--tzr-visual-transition-slide-x, 100%) * -0.18),
+      calc(var(--tzr-visual-transition-slide-y, 0) * -0.18),
+      0
+    );
+  }
+}
+
+@keyframes tzr-std-visual-background-wipe-left-in {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes tzr-std-visual-background-wipe-right-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes tzr-std-visual-background-page-turn-in {
+  from {
+    opacity: 0.76;
+    filter: brightness(1.08);
+    transform: perspective(900px) rotateY(-12deg);
+  }
+
+  to {
+    opacity: 1;
+    filter: brightness(1);
+    transform: perspective(900px) rotateY(0);
+  }
+}
+
+@keyframes tzr-std-visual-background-page-turn-out {
+  from {
+    opacity: 1;
+    transform: perspective(900px) rotateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: perspective(900px) rotateY(8deg);
+  }
+}
+
+@keyframes tzr-std-visual-sprite-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tzr-std-visual-sprite-dissolve-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+  }
+
+  60% {
+    opacity: 0.9;
+    filter: blur(1px);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
 }
 
 @keyframes tzr-std-effect-flash {
@@ -772,9 +991,17 @@
   .tzr-std-effect--pulse-normal,
   .tzr-std-effect--pulse-strong,
   .tzr-std-effect--blur,
+  .tzr-tsuzuru-game__background--transition-incoming,
+  .tzr-tsuzuru-game__background--transition-outgoing,
+  .tzr-tsuzuru-game__sprite--transition-fade,
+  .tzr-tsuzuru-game__sprite--transition-dissolve,
   .tzr-std-particle-layer__particle {
-    animation-duration: 12s;
+    animation-duration: 1ms;
     transition-duration: 1ms;
+  }
+
+  .tzr-std-effect-layer__flash,
+  .tzr-std-particle-layer__particle {
     opacity: 0.25;
   }
 }

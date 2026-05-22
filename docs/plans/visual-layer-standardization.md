@@ -2,7 +2,8 @@
 
 ## Status
 
-Planning.
+Step 1 and Step 2 are complete. Step 3 is implemented in
+`StdVisualLayer`; Step 4 remains blocked on camera composition.
 
 This document records the responsibility split for
 `examples/preact-basic/src/VisualLayer.tsx` before moving any more visual
@@ -284,6 +285,13 @@ Add package unit tests for:
 - sprite transition keys/classes
 - reduced-motion CSS behavior
 
+Implemented in `StdVisualLayer` with transitions enabled by default and
+`animateOnInitialMount` disabled by default. The implementation skips durable
+transition replay on initial mount, skips same-background updates, and treats
+`cut` / non-positive durations as non-animated. It does not add a host
+suppression API yet because initial-mount and asset-change detection cover the
+standard layer's restore risk without widening the public surface.
+
 ### Step 4: Rewire `examples/preact-basic` Around Package Primitives
 
 Keep the example `VisualLayer` temporarily, but make it thinner:
@@ -295,6 +303,10 @@ Keep the example `VisualLayer` temporarily, but make it thinner:
 
 This step should preserve selectors intentionally or update tests in the same
 change.
+
+Not implemented yet. The example `VisualLayer` still owns std-camera
+composition, focus offsets, and example selectors used by `StdEffectLayer` and
+Playwright tests. Deleting it before Step 5 would drop camera behavior.
 
 ### Step 5: Design Camera Separately
 

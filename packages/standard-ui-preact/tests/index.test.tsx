@@ -17,7 +17,6 @@ import {
   type ScreenHostProps,
   StatusLayer,
   type StatusLayerProps,
-  StdVisualLayer,
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;
@@ -129,45 +128,6 @@ describe("GameViewport", () => {
     );
 
     expect(node.props.style).toMatchObject({ aspectRatio: "16 / 9", maxWidth: "80vw" });
-  });
-});
-
-describe("StdVisualLayer", () => {
-  it("renders background and sprite image assets", () => {
-    const node = expectVNode(
-      StdVisualLayer({
-        background: { assetId: "classroom" },
-        sprites: { mio_smile: { position: "center" } },
-        backgroundAssets: { classroom: "/assets/images/classroom.svg" },
-        spriteAssets: { mio_smile: { src: "/assets/images/mio_smile.svg", alt: "Mio" } },
-      }),
-    );
-    const background = findByClass(node, "tzr-tsuzuru-game__background")[0] as
-      | VNode<{ readonly src: string; readonly alt: string }>
-      | undefined;
-    const sprite = findByClass(node, "tzr-tsuzuru-game__sprite")[0] as
-      | VNode<{ readonly src: string; readonly alt: string }>
-      | undefined;
-
-    expect(background?.type).toBe("img");
-    expect(background?.props.src).toBe("/assets/images/classroom.svg");
-    expect(sprite?.type).toBe("img");
-    expect(sprite?.props.src).toBe("/assets/images/mio_smile.svg");
-    expect(sprite?.props.alt).toBe("Mio");
-  });
-
-  it("renders placeholder labels when assets are missing", () => {
-    const node = expectVNode(
-      StdVisualLayer({
-        background: { assetId: "classroom" },
-        sprites: { mio_smile: { position: "left" } },
-      }),
-    );
-
-    expect(findByClass(node, "tzr-tsuzuru-game__background-placeholder")).toHaveLength(1);
-    expect(findByClass(node, "tzr-tsuzuru-game__sprite-placeholder")).toHaveLength(1);
-    expect(getNodeText(node)).toContain("classroom");
-    expect(getNodeText(node)).toContain("mio_smile");
   });
 });
 

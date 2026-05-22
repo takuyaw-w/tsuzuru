@@ -59,7 +59,7 @@ export type { StdParticleLayerProps } from "./std-particle-layer.js";
 export { StdParticleLayer } from "./std-particle-layer.js";
 export type { StdParticleRuntimeLayerProps } from "./std-particle-runtime-layer.js";
 export { StdParticleRuntimeLayer } from "./std-particle-runtime-layer.js";
-export type { StdVisualLayerProps } from "./std-visual-layer.js";
+export type { StdVisualLayerProps, StdVisualTransitionOptions } from "./std-visual-layer.js";
 export { StdVisualLayer } from "./std-visual-layer.js";
 export type { StdVisualRuntimeLayerProps } from "./std-visual-runtime-layer.js";
 export { StdVisualRuntimeLayer } from "./std-visual-runtime-layer.js";
