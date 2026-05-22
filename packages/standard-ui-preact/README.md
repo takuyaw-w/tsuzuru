@@ -34,6 +34,8 @@ import {
   StdAudioRuntimeLayer,
   StdAudioStatusPanel,
   StdEffectLayer,
+  StdParticleLayer,
+  StdParticleRuntimeLayer,
   StdVisualLayer,
   useStdAudioNotices,
 } from "@tsuzuru/standard-ui-preact";
@@ -43,7 +45,8 @@ import "@tsuzuru/standard-ui-preact/style.css";
 The package provides UI components such as `GameViewport`, `GameShell`,
 `MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`,
 `RuntimeControlBar`, `StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and
-`ScreenHost`, plus the high-level `TsuzuruGame` starter component.
+`StdParticleLayer`, `ScreenHost`, plus the high-level `TsuzuruGame` starter
+component.
 
 `RuntimeControlBar` provides a reusable in-game control bar for actions such as
 Auto, Skip, Save, Load, Backlog, Settings, and Title. It is presentational only;
@@ -54,6 +57,11 @@ logic.
 `@tsuzuru/plugin-std-effect`, such as flash, shake, pulse, and blur. Applications
 can pass custom target selectors when their DOM structure differs from the
 standard game shell.
+
+`StdParticleLayer` renders the current state from
+`@tsuzuru/plugin-std-particle` using standard particle presets such as rain,
+snow, sakura, and dust. `StdParticleRuntimeLayer` is a thin bridge that reads
+`stdParticle` state from the runtime and passes it to `StdParticleLayer`.
 
 `StdAudioRuntimeLayer` connects a `StdAudioState` to standard browser playback,
 audio notices, and an optional status panel. `StdAudioLayer` handles the
@@ -68,5 +76,6 @@ plugins, message display, choices, click/keyboard advance, text reveal, basic
 asset playback, and simple standard effects. It does not own save/load, backlog,
 gallery, settings, custom screens, or project-specific asset bundling policy.
 Use `@tsuzuru/preact` directly with `StdVisualLayer` /
-`StdAudioRuntimeLayer` / `StdEffectLayer` / `RuntimeControlBar` when an app
-needs full runtime control but still wants the standard presentation layers.
+`StdAudioRuntimeLayer` / `StdEffectLayer` / `StdParticleRuntimeLayer` /
+`RuntimeControlBar` when an app needs full runtime control but still wants the
+standard presentation layers.

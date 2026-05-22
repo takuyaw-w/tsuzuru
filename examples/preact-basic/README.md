@@ -87,6 +87,11 @@ Standard effect events are rendered with `StdEffectLayer` from
 shake, pulse, and blur can target the fullscreen surface, message layer, and
 example-specific sprite container.
 
+Standard particle state is rendered with `StdParticleRuntimeLayer` from
+`@tsuzuru/standard-ui-preact`. The example still owns the scenario commands that
+turn rain and dust on/off, but it no longer carries local particle rendering
+components.
+
 The runtime menu uses `RuntimeControlBar` from
 `@tsuzuru/standard-ui-preact`. The component only renders controls and calls the
 handlers supplied by this example; the Save, Load, Backlog, Settings, and Title

@@ -243,10 +243,10 @@ test("particle demo renders bounded non-interactive overlay particles", async ({
   await choiceLayer.getByRole("button", { name: "雨を降らせる" }).click();
   await expect(messageWindow).toContainText("雨は、画面全体の空気を冷たくする。", { timeout: 3000 });
 
-  const particleLayer = page.locator(".particle-layer--rain.particle-layer--normal");
+  const particleLayer = page.locator(".tzr-std-particle-layer--rain.tzr-std-particle-layer--normal");
   await expect(particleLayer).toBeAttached();
   await expect(particleLayer).toHaveCSS("pointer-events", "none");
-  await expect(particleLayer.locator(".particle-layer__particle")).toHaveCount(38);
+  await expect(particleLayer.locator(".tzr-std-particle-layer__particle")).toHaveCount(38);
 
   await messageWindow.click();
   await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
@@ -255,15 +255,15 @@ test("particle demo renders bounded non-interactive overlay particles", async ({
   await choiceLayer.getByRole("button", { name: "埃を漂わせる" }).click();
   await expect(messageWindow).toContainText("埃が光の中をゆっくり漂っている。", { timeout: 3000 });
 
-  const dustLayer = page.locator(".particle-layer--dust.particle-layer--light");
+  const dustLayer = page.locator(".tzr-std-particle-layer--dust.tzr-std-particle-layer--light");
   await expect(dustLayer).toBeAttached();
   await expect(dustLayer).toHaveCSS("pointer-events", "none");
-  await expect(dustLayer.locator(".particle-layer__particle")).toHaveCount(22);
+  await expect(dustLayer.locator(".tzr-std-particle-layer__particle")).toHaveCount(22);
 
   await messageWindow.click();
   await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
   await choiceLayer.getByRole("button", { name: "止める" }).click();
-  await expect(page.locator(".particle-layer")).toHaveCount(0);
+  await expect(page.locator(".tzr-std-particle-layer")).toHaveCount(0);
   await expect(messageWindow).toContainText("メトロノームが一度だけ止まり", { timeout: 3000 });
 });
 

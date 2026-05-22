@@ -109,9 +109,13 @@ helper.
 
 ## Presentation Policy
 
-Actual rendering is renderer / app responsibility. The Preact example consumes
-`stdParticle.current` and implements lightweight CSS overlays for rain, snow,
-sakura, and dust with `pointer-events: none` and reduced-motion handling.
+The plugin remains renderer-neutral. It stores only `stdParticle.current` and
+does not render DOM or run animation.
+
+`@tsuzuru/standard-ui-preact` provides optional Preact/CSS presentation through
+`StdParticleLayer` and `StdParticleRuntimeLayer`. Those layers render
+lightweight overlays for rain, snow, sakura, and dust with
+`pointer-events: none` and reduced-motion handling.
 
 The MVP intentionally does not include multiple simultaneous particle layers,
 wind, direction, speed, size, color, density, smoke, fog, embers, leaves, or

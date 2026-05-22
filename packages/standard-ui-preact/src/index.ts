@@ -55,6 +55,10 @@ export {
   STD_EFFECT_TARGET_NOT_FOUND_DIAGNOSTIC_CODE,
   StdEffectLayer,
 } from "./std-effect-layer.js";
+export type { StdParticleLayerProps } from "./std-particle-layer.js";
+export { StdParticleLayer } from "./std-particle-layer.js";
+export type { StdParticleRuntimeLayerProps } from "./std-particle-runtime-layer.js";
+export { StdParticleRuntimeLayer } from "./std-particle-runtime-layer.js";
 export type { StdVisualLayerProps } from "./std-visual-layer.js";
 export { StdVisualLayer } from "./std-visual-layer.js";
 export type {

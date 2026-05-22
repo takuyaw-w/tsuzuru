@@ -43,6 +43,7 @@ import {
   RuntimeMessageLayer,
   StdAudioRuntimeLayer,
   StdEffectLayer,
+  StdParticleRuntimeLayer,
   type TextRevealCharacterEvent,
   useAutoMode,
   useMessageHistory,
@@ -52,7 +53,6 @@ import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
 import scenario from "../scenario/main.tzr";
-import { ParticleLayer } from "./ParticleLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
 import {
   createReadEntryKey,
@@ -547,7 +547,7 @@ function RuntimeApp({
         <GameShell className="app__shell">
           <div className="app__interaction-surface" onClick={handleViewportClick}>
             <VisualLayer runtimeState={runtime.state} backgroundAnimationSuppression={backgroundAnimationSuppression} />
-            <ParticleLayer runtimeState={runtime.state} />
+            <StdParticleRuntimeLayer runtimeState={runtime.state} />
             <StdAudioRuntimeLayer
               audioState={audioState}
               bgmAssets={bgmAssets}

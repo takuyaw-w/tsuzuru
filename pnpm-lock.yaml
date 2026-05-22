@@ -307,6 +307,9 @@ importers:
       '@tsuzuru/plugin-std-effect':
         specifier: workspace:^
         version: link:../plugin-std-effect
+      '@tsuzuru/plugin-std-particle':
+        specifier: workspace:^
+        version: link:../plugin-std-particle
       '@tsuzuru/plugin-std-visual':
         specifier: workspace:^
         version: link:../plugin-std-visual

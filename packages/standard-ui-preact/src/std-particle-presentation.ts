@@ -1,6 +1,6 @@
 import type { StdParticleCurrent, StdParticleIntensity, StdParticleType } from "@tsuzuru/plugin-std-particle";
 
-export interface ParticleSpec {
+export interface StdParticleSpec {
   readonly id: string;
   readonly x: number;
   readonly y: number;
@@ -15,7 +15,7 @@ export interface ParticleSpec {
   readonly halfSpin: number;
 }
 
-export type ParticleStyleProperties = Readonly<Record<string, string | number>>;
+export type StdParticleStyleProperties = Readonly<Record<string, string | number>>;
 
 const PARTICLE_COUNTS = {
   light: 22,
@@ -29,13 +29,16 @@ const INTENSITY_INDEX = {
   strong: 2,
 } as const satisfies Record<StdParticleIntensity, number>;
 
-const particleSpecCache = new Map<string, readonly ParticleSpec[]>();
+const particleSpecCache = new Map<string, readonly StdParticleSpec[]>();
 
-export function particleLayerClassName(current: StdParticleCurrent): string {
-  return `particle-layer particle-layer--${current.type} particle-layer--${current.intensity}`;
+export function stdParticleLayerClassName(current: StdParticleCurrent): string {
+  return `tzr-std-particle-layer tzr-std-particle-layer--${current.type} tzr-std-particle-layer--${current.intensity}`;
 }
 
-export function getParticleSpecs(type: StdParticleType, intensity: StdParticleIntensity): readonly ParticleSpec[] {
+export function getStdParticleSpecs(
+  type: StdParticleType,
+  intensity: StdParticleIntensity,
+): readonly StdParticleSpec[] {
   const cacheKey = `${type}:${intensity}`;
   const cached = particleSpecCache.get(cacheKey);
   if (cached !== undefined) {
@@ -49,7 +52,7 @@ export function getParticleSpecs(type: StdParticleType, intensity: StdParticleIn
   return specs;
 }
 
-export function particleStyleProperties(spec: ParticleSpec): ParticleStyleProperties {
+export function stdParticleStyleProperties(spec: StdParticleSpec): StdParticleStyleProperties {
   return {
     "--x": `${spec.x}%`,
     "--y": `${spec.y}%`,
@@ -74,7 +77,7 @@ function createParticleSpec(
   intensity: StdParticleIntensity,
   index: number,
   random: () => number,
-): ParticleSpec {
+): StdParticleSpec {
   const intensityIndex = INTENSITY_INDEX[intensity];
   const depth = random();
   const size = sizeFor(type, depth, random);

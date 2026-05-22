@@ -922,83 +922,6 @@ button {
   transform: translateX(-50%);
 }
 
-.particle-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  contain: layout paint;
-  pointer-events: none;
-}
-
-.particle-layer__particle {
-  position: absolute;
-  display: block;
-  top: var(--y, -20%);
-  left: var(--x, 50%);
-  opacity: var(--opacity, 0.5);
-  filter: blur(var(--blur, 0));
-  animation-delay: var(--delay, 0s);
-  animation-duration: var(--duration, 8s);
-  animation-fill-mode: both;
-  animation-iteration-count: infinite;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.particle-layer--rain .particle-layer__particle {
-  width: max(1.5px, calc(1.45px * var(--size, 1)));
-  height: calc(32px * var(--size, 1));
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(232, 246, 255, 0.82) 40%,
-    rgba(156, 209, 255, 0.5) 74%,
-    transparent 100%
-  );
-  box-shadow:
-    0 0 7px rgba(182, 224, 255, 0.34),
-    0 0 12px rgba(112, 176, 255, 0.12);
-  transform-origin: center top;
-  animation-name: particle-rain-fall;
-  animation-timing-function: linear;
-}
-
-.particle-layer--snow .particle-layer__particle {
-  width: calc(3.2px * var(--size, 1));
-  height: calc(3.2px * var(--size, 1));
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 0 calc(7px * var(--size, 1)) rgba(240, 248, 255, 0.28);
-  animation-name: particle-snow-fall;
-  animation-timing-function: ease-in-out;
-}
-
-.particle-layer--sakura .particle-layer__particle {
-  width: calc(8px * var(--size, 1));
-  height: calc(5px * var(--size, 1));
-  border-radius: 80% 20% 70% 30%;
-  background:
-    radial-gradient(circle at 72% 28%, rgba(255, 244, 248, 0.92), transparent 34%),
-    linear-gradient(135deg, rgba(255, 212, 226, 0.94), rgba(255, 145, 188, 0.72));
-  box-shadow: 0 0 6px rgba(255, 175, 205, 0.18);
-  animation-name: particle-sakura-fall;
-  animation-timing-function: ease-in-out;
-}
-
-.particle-layer--dust .particle-layer__particle {
-  width: calc(3.2px * var(--size, 1));
-  height: calc(3.2px * var(--size, 1));
-  border-radius: 50%;
-  background: rgba(255, 226, 154, 0.66);
-  box-shadow:
-    0 0 calc(10px * var(--size, 1)) rgba(255, 220, 150, 0.46),
-    0 0 calc(18px * var(--size, 1)) rgba(255, 190, 110, 0.2);
-  animation-name: particle-dust-float;
-  animation-timing-function: ease-in-out;
-}
-
 .audio-layer {
   position: absolute;
   top: clamp(12px, 2vw, 18px);
@@ -1302,65 +1225,6 @@ button {
   }
 }
 
-@keyframes particle-rain-fall {
-  from {
-    transform: translate3d(0, -24vh, 0) rotate(12deg);
-  }
-
-  to {
-    transform: translate3d(var(--drift, 80px), 124vh, 0) rotate(12deg);
-  }
-}
-
-@keyframes particle-snow-fall {
-  0% {
-    transform: translate3d(0, -12vh, 0);
-  }
-
-  35% {
-    transform: translate3d(var(--sway, 28px), 35vh, 0);
-  }
-
-  70% {
-    transform: translate3d(var(--sway-back, -18px), 78vh, 0);
-  }
-
-  100% {
-    transform: translate3d(var(--drift, 0px), 114vh, 0);
-  }
-}
-
-@keyframes particle-sakura-fall {
-  0% {
-    transform: translate3d(0, -14vh, 0) rotate(0deg) scale(0.92);
-  }
-
-  38% {
-    transform: translate3d(var(--sway, 48px), 36vh, 0) rotate(var(--half-spin, 180deg)) scale(1.06);
-  }
-
-  72% {
-    transform: translate3d(var(--sway-cross, -24px), 78vh, 0) rotate(var(--spin, 420deg)) scale(0.96);
-  }
-
-  100% {
-    transform: translate3d(var(--drift, 60px), 116vh, 0) rotate(var(--spin, 420deg)) scale(0.9);
-  }
-}
-
-@keyframes particle-dust-float {
-  0%,
-  100% {
-    opacity: 0.24;
-    transform: translate3d(var(--sway-soft, -4px), var(--drift-soft, -2px), 0) scale(0.9);
-  }
-
-  50% {
-    opacity: var(--opacity, 0.48);
-    transform: translate3d(var(--sway, 18px), var(--drift, 16px), 0) scale(1.2);
-  }
-}
-
 @keyframes std-effect-flash {
   from {
     opacity: 0.86;
@@ -1501,8 +1365,7 @@ button {
   .std-effect--pulse-light,
   .std-effect--pulse-normal,
   .std-effect--pulse-strong,
-  .std-effect--blur,
-  .particle-layer__particle {
+  .std-effect--blur {
     animation-duration: 12s;
     transition-duration: 1ms;
     opacity: 0.25;
