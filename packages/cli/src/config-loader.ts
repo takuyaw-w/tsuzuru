@@ -57,6 +57,20 @@ function validateTsuzuruConfig(value: unknown): TsuzuruConfig {
     throw invalidConfig(["default export must be an object."]);
   }
 
+  if (value.project !== undefined) {
+    if (!isRecord(value.project)) {
+      errors.push("project must be an object when provided.");
+    } else {
+      if (!isNonEmptyString(value.project.id)) {
+        errors.push("project.id must be a non-empty string.");
+      }
+
+      if (!isNonEmptyString(value.project.version)) {
+        errors.push("project.version must be a non-empty string.");
+      }
+    }
+  }
+
   if (!isRecord(value.scenario)) {
     errors.push("scenario must be an object.");
   } else {

@@ -3,6 +3,8 @@ import { expect, type Page, test } from "@playwright/test";
 const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
 const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
+const PROJECT_ID = "tsuzuru.example.preact-basic";
+const PROJECT_VERSION = "1";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
@@ -110,8 +112,8 @@ function getSaveDataRecord(slot: unknown): Readonly<Record<string, unknown>> {
 function expectRuntimeSaveSlotEnvelope(data: Readonly<Record<string, unknown>>): void {
   const saveSlot = getObjectRecord(data.saveSlot, "RuntimeSaveSlot");
   expect(saveSlot.version).toBe(1);
-  expect(typeof saveSlot.scenarioId).toBe("string");
-  expect(saveSlot.scenarioId).not.toBe("");
+  expect(saveSlot.scenarioId).toBe(PROJECT_ID);
+  expect(saveSlot.scenarioVersion).toBe(PROJECT_VERSION);
 
   const snapshot = getObjectRecord(saveSlot.snapshot, "RuntimeSaveSlot.snapshot");
   expect(snapshot.version).toBe(2);

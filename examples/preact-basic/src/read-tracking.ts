@@ -1,5 +1,6 @@
+import type { TsuzuruProjectConfig } from "@tsuzuru/config";
 import type { RuntimeEvent } from "@tsuzuru/core";
-import { scenarioIdentity } from "./scenario-identity.js";
+import { projectIdentity } from "../tsuzuru.config.js";
 
 export type ReadTrackableEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 
@@ -7,10 +8,7 @@ export type ReadEntryKey = string;
 
 export interface ReadTrackingStorageData {
   readonly version: 1;
-  readonly scenario: {
-    readonly id: string;
-    readonly version: string;
-  };
+  readonly scenario: TsuzuruProjectConfig;
   readonly readEntryKeys: readonly ReadEntryKey[];
 }
 
@@ -76,7 +74,7 @@ export function saveReadTrackingState(state: ReadTrackingState): ReadTrackingSta
 export function serializeReadTrackingState(state: ReadTrackingState): ReadTrackingStorageData {
   return {
     version: 1,
-    scenario: scenarioIdentity,
+    scenario: projectIdentity,
     readEntryKeys: [...state.readEntryKeys],
   };
 }
@@ -125,7 +123,7 @@ function getLocalStorage(): Storage | null {
 }
 
 function isCompatibleScenarioIdentity(value: unknown): boolean {
-  return isObjectRecord(value) && value.id === scenarioIdentity.id && value.version === scenarioIdentity.version;
+  return isObjectRecord(value) && value.id === projectIdentity.id && value.version === projectIdentity.version;
 }
 
 function isReadEntryKey(value: unknown): value is ReadEntryKey {

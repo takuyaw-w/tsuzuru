@@ -75,6 +75,9 @@ audio URLs. Title, load, settings, backlog, and gallery UI belong in
 The command reads `scenario.entry`, expands `scenario.files`, loads the matched
 `.tzr` files, and validates the scenario project. Vite dev/build use the same
 creator-facing entry file through `@tsuzuru/vite-plugin`.
+The same config exports `projectIdentity`, which this example uses for save and
+read-tracking compatibility checks. Keep its `id` and `version` stable if you
+want existing local saves to remain loadable.
 
 The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
 

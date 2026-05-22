@@ -7,7 +7,13 @@ import { createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
 import { createStdTextSoundPlugin } from "@tsuzuru/plugin-std-text-sound";
 import { createStdVisualPlugin } from "@tsuzuru/plugin-std-visual";
 
+export const projectIdentity = {
+  id: "tsuzuru.example.preact-basic",
+  version: "1",
+} as const;
+
 export default defineTsuzuruConfig({
+  project: projectIdentity,
   scenario: {
     entry: "scenario/main.tzr",
     files: ["scenario/**/*.tzr"],

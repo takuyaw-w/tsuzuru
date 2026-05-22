@@ -12,7 +12,10 @@ import {
   saveReadTrackingState,
   serializeReadTrackingState,
 } from "../src/read-tracking.js";
-import { scenarioIdentity } from "../src/scenario-identity.js";
+import { projectIdentity } from "../tsuzuru.config.js";
+
+const PROJECT_ID = "tsuzuru.example.preact-basic";
+const PROJECT_VERSION = "1";
 
 const narrationEvent: ReadTrackableEvent = {
   type: "narration",
@@ -55,7 +58,7 @@ describe("read-tracking", () => {
 
     expect(data).toEqual({
       version: 1,
-      scenario: scenarioIdentity,
+      scenario: projectIdentity,
       readEntryKeys: [key],
     });
   });
@@ -64,7 +67,10 @@ describe("read-tracking", () => {
     const key = createReadEntryKey(narrationEvent);
     const restored = parseReadTrackingStorageData({
       version: 1,
-      scenario: scenarioIdentity,
+      scenario: {
+        id: PROJECT_ID,
+        version: PROJECT_VERSION,
+      },
       readEntryKeys: [key],
     });
 
@@ -78,7 +84,7 @@ describe("read-tracking", () => {
         version: 1,
         scenario: {
           id: "tsuzuru.example.other",
-          version: scenarioIdentity.version,
+          version: PROJECT_VERSION,
         },
         readEntryKeys: [createReadEntryKey(narrationEvent)],
       }),
@@ -90,7 +96,7 @@ describe("read-tracking", () => {
       parseReadTrackingStorageData({
         version: 1,
         scenario: {
-          id: scenarioIdentity.id,
+          id: PROJECT_ID,
           version: "2",
         },
         readEntryKeys: [createReadEntryKey(narrationEvent)],
@@ -102,7 +108,7 @@ describe("read-tracking", () => {
     stubReadTrackingStorage("not-json");
     expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
 
-    stubReadTrackingStorage(JSON.stringify({ version: 1, scenario: scenarioIdentity, readEntryKeys: [123] }));
+    stubReadTrackingStorage(JSON.stringify({ version: 1, scenario: projectIdentity, readEntryKeys: [123] }));
     expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
   });
 
@@ -119,7 +125,7 @@ describe("read-tracking", () => {
     const key = createReadEntryKey(narrationEvent);
     const restored = parseReadTrackingStorageData({
       version: 1,
-      scenario: scenarioIdentity,
+      scenario: projectIdentity,
       readEntryKeys: [key, key],
     });
 

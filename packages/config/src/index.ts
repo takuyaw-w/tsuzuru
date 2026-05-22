@@ -1,6 +1,12 @@
 export interface TsuzuruConfig {
+  readonly project?: TsuzuruProjectConfig;
   readonly scenario: TsuzuruScenarioConfig;
   readonly plugins?: readonly TsuzuruConfigPlugin[];
+}
+
+export interface TsuzuruProjectConfig {
+  readonly id: string;
+  readonly version: string;
 }
 
 export interface TsuzuruScenarioConfig {

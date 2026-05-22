@@ -1,14 +1,12 @@
+import type { TsuzuruProjectConfig } from "@tsuzuru/config";
 import type { RuntimeEvent, RuntimeSaveSlot, RuntimeSaveSlotContext, RuntimeSnapshot } from "@tsuzuru/core";
 import { validateRuntimeSaveSlot } from "@tsuzuru/core";
 import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
-import { scenarioIdentity } from "./scenario-identity.js";
+import { projectIdentity } from "../tsuzuru.config.js";
 
 export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 
-export interface ExampleScenarioIdentity {
-  readonly id: string;
-  readonly version: string;
-}
+export type ExampleScenarioIdentity = TsuzuruProjectConfig;
 
 export interface ExampleSaveData {
   readonly version: 3;
@@ -39,8 +37,8 @@ export const SAVE_SLOT_DEFINITIONS = [
 ] as const satisfies readonly ExampleSaveSlotDefinition[];
 
 const runtimeSaveSlotContext = {
-  scenarioId: scenarioIdentity.id,
-  scenarioVersion: scenarioIdentity.version,
+  scenarioId: projectIdentity.id,
+  scenarioVersion: projectIdentity.version,
 } satisfies RuntimeSaveSlotContext;
 
 export function loadSaveSlots(): readonly ExampleSaveSlot[] {
@@ -80,8 +78,8 @@ export function createExampleSaveData(
     version: 3,
     saveSlot: {
       version: 1,
-      scenarioId: scenarioIdentity.id,
-      scenarioVersion: scenarioIdentity.version,
+      scenarioId: projectIdentity.id,
+      scenarioVersion: projectIdentity.version,
       createdAt,
       snapshot: runtime.snapshot,
     },
@@ -267,7 +265,7 @@ function isExampleSaveDataV2(value: unknown): value is ExampleSaveDataV2 {
 }
 
 function isCompatibleScenarioIdentity(value: ExampleScenarioIdentity): boolean {
-  return value.id === scenarioIdentity.id && value.version === scenarioIdentity.version;
+  return value.id === projectIdentity.id && value.version === projectIdentity.version;
 }
 
 function isScenarioIdentity(value: unknown): value is ExampleScenarioIdentity {

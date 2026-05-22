@@ -10,7 +10,10 @@ import {
   type RetainedMessageEvent,
   SAVE_STORAGE_KEY,
 } from "../src/save-storage.js";
-import { scenarioIdentity } from "../src/scenario-identity.js";
+import { projectIdentity } from "../tsuzuru.config.js";
+
+const PROJECT_ID = "tsuzuru.example.preact-basic";
+const PROJECT_VERSION = "1";
 
 const runtimeSaveData: RuntimeSaveData = {
   version: 2,
@@ -42,6 +45,13 @@ describe("save-storage", () => {
     vi.unstubAllGlobals();
   });
 
+  it("uses the stable project identity for save compatibility", () => {
+    expect(projectIdentity).toEqual({
+      id: PROJECT_ID,
+      version: PROJECT_VERSION,
+    });
+  });
+
   it("creates v3 save data with a RuntimeSaveSlot for the current scenario identity", () => {
     const saveData = createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt);
 
@@ -49,8 +59,8 @@ describe("save-storage", () => {
       version: 3,
       saveSlot: {
         version: 1,
-        scenarioId: scenarioIdentity.id,
-        scenarioVersion: scenarioIdentity.version,
+        scenarioId: projectIdentity.id,
+        scenarioVersion: projectIdentity.version,
         createdAt: savedAt,
         snapshot: runtimeSaveData.snapshot,
       },
@@ -64,6 +74,23 @@ describe("save-storage", () => {
     const saveData = createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt);
 
     expect(parseExampleSaveData(saveData)).toEqual(saveData);
+  });
+
+  it("parses v3 save data with the released project identity values", () => {
+    expect(
+      parseExampleSaveData({
+        version: 3,
+        saveSlot: {
+          version: 1,
+          scenarioId: PROJECT_ID,
+          scenarioVersion: PROJECT_VERSION,
+          createdAt: savedAt,
+          snapshot: runtimeSaveData.snapshot,
+        },
+        runtime: runtimeSaveData,
+        retainedMessageEvent,
+      }),
+    ).toEqual(createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt));
   });
 
   it("migrates v1 example save data to v3 with the current scenario identity", () => {
@@ -89,7 +116,10 @@ describe("save-storage", () => {
     const migrated = parseExampleSaveData(
       {
         version: 2,
-        scenario: scenarioIdentity,
+        scenario: {
+          id: PROJECT_ID,
+          version: PROJECT_VERSION,
+        },
         runtime: runtimeSaveData,
         retainedMessageEvent,
       },
@@ -105,7 +135,7 @@ describe("save-storage", () => {
         version: 2,
         scenario: {
           id: "tsuzuru.example.other",
-          version: scenarioIdentity.version,
+          version: projectIdentity.version,
         },
         runtime: runtimeSaveData,
         retainedMessageEvent: null,
@@ -118,7 +148,7 @@ describe("save-storage", () => {
       parseExampleSaveData({
         version: 2,
         scenario: {
-          id: scenarioIdentity.id,
+          id: projectIdentity.id,
           version: "2",
         },
         runtime: runtimeSaveData,
