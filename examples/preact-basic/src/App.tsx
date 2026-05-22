@@ -37,6 +37,7 @@ import {
   GameViewport,
   type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
+  RuntimeControlBar,
   RuntimeMessageLayer,
   StdEffectLayer,
   type TextRevealCharacterEvent,
@@ -51,7 +52,6 @@ import scenario from "../scenario/main.tzr";
 import { AudioLayer } from "./AudioLayer.js";
 import { ParticleLayer } from "./ParticleLayer.js";
 import { type ExamplePreferences, loadPreferences, savePreferences } from "./preferences.js";
-import { RuntimeControlBar } from "./RuntimeControlBar.js";
 import {
   createReadEntryKey,
   isRead,
@@ -545,15 +545,17 @@ function RuntimeApp({
               }}
             />
             <RuntimeControlBar
+              className="app__runtime-menu"
+              ariaLabel="Runtime menu"
               readCount={readCount}
               autoModeEnabled={autoMode.enabled}
               skipModeEnabled={skipModeEnabled}
               onToggleAutoMode={autoMode.toggle}
               onToggleSkipMode={() => setSkipModeEnabled((current) => !current)}
-              onOpenSave={() => setOverlay("save")}
-              onOpenLoad={() => setOverlay("load")}
-              onOpenBacklog={() => setOverlay("backlog")}
-              onOpenSettings={() => setOverlay("settings")}
+              onSave={() => setOverlay("save")}
+              onLoad={() => setOverlay("load")}
+              onBacklog={() => setOverlay("backlog")}
+              onSettings={() => setOverlay("settings")}
               onTitle={onTitle}
             />
             <div className="app__message-layer">

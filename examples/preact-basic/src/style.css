@@ -96,20 +96,12 @@ button {
   background: rgba(120, 76, 48, 0.72);
 }
 
-.read-status,
 .backlog__read-badge {
   border: 1px solid rgba(238, 202, 120, 0.44);
   border-radius: 999px;
   background: rgba(8, 10, 13, 0.68);
   color: #ffe2a2;
   font-size: 0.78rem;
-}
-
-.read-status {
-  min-height: 36px;
-  box-sizing: border-box;
-  padding: 7px 10px;
-  white-space: nowrap;
 }
 
 .app__overlay {

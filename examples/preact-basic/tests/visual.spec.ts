@@ -277,7 +277,7 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   const autoButton = runtimeMenu.getByRole("button", { name: "Auto", exact: true });
-  const readStatus = page.locator(".read-status");
+  const readStatus = runtimeMenu.getByLabel("Read count");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
   await expect(readStatus).toHaveText("Read: 1");
@@ -305,7 +305,7 @@ test("skip mode does not skip unread messages", async ({ page }) => {
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
-  const readStatus = page.locator(".read-status");
+  const readStatus = runtimeMenu.getByLabel("Read count");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
   await expect(readStatus).toHaveText("Read: 1");
@@ -381,7 +381,7 @@ test("read tracking records current-session messages in runtime and backlog", as
 
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
-  const readStatus = page.locator(".read-status");
+  const readStatus = runtimeMenu.getByLabel("Read count");
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
   await expect(readStatus).toHaveText("Read: 1");

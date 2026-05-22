@@ -83,6 +83,11 @@ Standard effect events are rendered with `StdEffectLayer` from
 shake, pulse, and blur can target the fullscreen surface, message layer, and
 example-specific sprite container.
 
+The runtime menu uses `RuntimeControlBar` from
+`@tsuzuru/standard-ui-preact`. The component only renders controls and calls the
+handlers supplied by this example; the Save, Load, Backlog, Settings, and Title
+screens remain example-side TSX.
+
 Controls:
 
 - The example opens on the TSX title screen. Click Start, then click, Enter, or Space to start and advance scenario messages.

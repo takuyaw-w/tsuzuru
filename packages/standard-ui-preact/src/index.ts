@@ -14,6 +14,13 @@ export type { MessageWindowProps, MessageWindowRenderLine, MessageWindowRenderLi
 export { MessageWindow } from "./MessageWindow.js";
 export type { RuntimeMessageLayerProps } from "./RuntimeMessageLayer.js";
 export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
+export type {
+  RuntimeControlBarDisabledState,
+  RuntimeControlBarHiddenState,
+  RuntimeControlBarLabels,
+  RuntimeControlBarProps,
+} from "./runtime-control-bar.js";
+export { RuntimeControlBar } from "./runtime-control-bar.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
 export type {

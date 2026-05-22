@@ -180,6 +180,71 @@
   margin-bottom: 0;
 }
 
+.tzr-runtime-control-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100%;
+  color: var(--tzr-standard-ui-text-color);
+  font-family: inherit;
+}
+
+.tzr-runtime-control-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tzr-runtime-control-bar__status {
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(248, 250, 252, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--tzr-standard-ui-accent-color);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tzr-runtime-control-bar__button {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid rgba(248, 250, 252, 0.24);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--tzr-standard-ui-text-color);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.tzr-runtime-control-bar__button:hover,
+.tzr-runtime-control-bar__button:focus-visible {
+  border-color: var(--tzr-standard-ui-accent-color);
+  background: rgba(68, 64, 60, 0.78);
+}
+
+.tzr-runtime-control-bar__button--active,
+.tzr-runtime-control-bar__button[aria-pressed="true"] {
+  border-color: var(--tzr-standard-ui-accent-color);
+  background: rgba(120, 76, 48, 0.72);
+  color: #fff7ed;
+}
+
+.tzr-runtime-control-bar__button:disabled {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.44);
+  color: rgba(226, 232, 240, 0.54);
+  cursor: not-allowed;
+}
+
 .tzr-screen-host {
   position: absolute;
   inset: 0;

@@ -26,6 +26,7 @@
     "dist/layouts/**",
     "dist/molecules/**",
     "dist/organisms/**",
+    "dist/runtime-control-bar.*",
     "dist/screen-host.*",
     "dist/std-audio-layer.*",
     "dist/std-effect-layer.*",
