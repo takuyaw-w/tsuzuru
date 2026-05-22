@@ -61,6 +61,8 @@ export type { StdParticleRuntimeLayerProps } from "./std-particle-runtime-layer.
 export { StdParticleRuntimeLayer } from "./std-particle-runtime-layer.js";
 export type { StdVisualLayerProps } from "./std-visual-layer.js";
 export { StdVisualLayer } from "./std-visual-layer.js";
+export type { StdVisualRuntimeLayerProps } from "./std-visual-runtime-layer.js";
+export { StdVisualRuntimeLayer } from "./std-visual-runtime-layer.js";
 export type {
   TsuzuruGameDiagnostic,
   TsuzuruGameProps,

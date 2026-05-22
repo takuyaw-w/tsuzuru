@@ -36,6 +36,7 @@
     "dist/std-particle-presentation.*",
     "dist/std-particle-runtime-layer.*",
     "dist/std-visual-layer.*",
+    "dist/std-visual-runtime-layer.*",
     "dist/style.css",
     "dist/tsuzuru-game.*",
     "dist/useAutoMode.*",

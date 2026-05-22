@@ -37,6 +37,7 @@ import {
   StdParticleLayer,
   StdParticleRuntimeLayer,
   StdVisualLayer,
+  StdVisualRuntimeLayer,
   useStdAudioNotices,
 } from "@tsuzuru/standard-ui-preact";
 import "@tsuzuru/standard-ui-preact/style.css";
@@ -63,6 +64,11 @@ standard game shell.
 snow, sakura, and dust. `StdParticleRuntimeLayer` is a thin bridge that reads
 `stdParticle` state from the runtime and passes it to `StdParticleLayer`.
 
+`StdVisualRuntimeLayer` is a thin bridge that reads `stdVisual` state from a
+runtime state and delegates rendering to `StdVisualLayer`. It does not handle
+camera state, save/load transition suppression, or example-specific
+placeholders.
+
 `StdAudioRuntimeLayer` connects a `StdAudioState` to standard browser playback,
 audio notices, and an optional status panel. `StdAudioLayer` handles the
 playback side effects, while `StdAudioStatusPanel` can display the current BGM,
@@ -76,6 +82,6 @@ plugins, message display, choices, click/keyboard advance, text reveal, basic
 asset playback, and simple standard effects. It does not own save/load, backlog,
 gallery, settings, custom screens, or project-specific asset bundling policy.
 Use `@tsuzuru/preact` directly with `StdVisualLayer` /
-`StdAudioRuntimeLayer` / `StdEffectLayer` / `StdParticleRuntimeLayer` /
-`RuntimeControlBar` when an app needs full runtime control but still wants the
-standard presentation layers.
+`StdVisualRuntimeLayer` / `StdAudioRuntimeLayer` / `StdEffectLayer` /
+`StdParticleRuntimeLayer` / `RuntimeControlBar` when an app needs full runtime
+control but still wants the standard presentation layers.

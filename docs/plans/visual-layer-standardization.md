@@ -265,6 +265,8 @@ Add a thin runtime bridge in `standard-ui-preact`:
 
 No camera. No save/load suppression. No example placeholder art.
 
+Implemented as `StdVisualRuntimeLayer`.
+
 ### Step 3: Add Minimal Transition Rendering To `StdVisualLayer`
 
 Extend `StdVisualLayer` to render:
