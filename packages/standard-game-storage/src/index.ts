@@ -7,4 +7,5 @@ export type StandardGameStoragePlannedArea = (typeof STANDARD_GAME_STORAGE_PLANN
 export * from "./preferences.js";
 export * from "./preset.js";
 export * from "./read-tracking.js";
+export * from "./runtime-save.js";
 export * from "./save-slots.js";

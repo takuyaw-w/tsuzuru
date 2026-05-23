@@ -16,6 +16,7 @@
     "dist/src/preset.*",
     "dist/src/preferences.*",
     "dist/src/read-tracking.*",
+    "dist/src/runtime-save.*",
     "dist/src/save-slots.*"
   ],
   "repository": {
@@ -36,11 +37,14 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm run build:self",
+    "build": "pnpm --filter @tsuzuru/core build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json",
-    "test": "vitest run --dir tests",
-    "typecheck": "pnpm run typecheck:self",
+    "test": "pnpm --filter @tsuzuru/core build && vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:^"
   },
   "devDependencies": {
     "typescript": "catalog:",

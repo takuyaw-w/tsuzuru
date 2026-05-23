@@ -12,7 +12,7 @@ import {
   SAVE_SLOT_DEFINITIONS,
   SAVE_STORAGE_KEY,
   saveToSlot,
-} from "../src/game-storage.js";
+} from "../src/game-storage-api.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
@@ -39,7 +39,7 @@ const runtimeSaveData: RuntimeSaveData = {
 
 const retainedMessageEvent: RetainedMessageEvent = {
   type: "narration",
-  lines: [{ text: "Saved line." }],
+  lines: [{ text: "Saved line.", loc: createLoc() }],
 };
 const savedAt = "2026-01-01T00:00:00.000Z";
 
@@ -550,4 +550,19 @@ function stubSaveStorage(value: string | null): void {
   };
 
   vi.stubGlobal("window", { localStorage });
+}
+
+function createLoc() {
+  return {
+    start: {
+      filePath: "scenario/main.tzr",
+      line: 1,
+      column: 1,
+    },
+    end: {
+      filePath: "scenario/main.tzr",
+      line: 1,
+      column: 12,
+    },
+  };
 }

@@ -116,7 +116,8 @@ describe("createProject", () => {
     expect(appSource).not.toContain("parseTzr");
     expect(appSource).not.toContain("compileTzrProject");
     expect(gameStorageSource).toContain('import { createStandardGameStorage } from "@tsuzuru/standard-game-storage"');
-    expect(gameStorageSource).toContain('storagePrefix: "tsuzuru:my-game"');
+    expect(gameStorageSource).toContain("storagePrefix: `tsuzuru:");
+    expect(gameStorageSource).toContain("projectIdentity.id}`");
     expect(gameStorageSource).toContain("slots: 3");
     expect(gameStorageSource).not.toContain("{{projectName}}");
     expect(gameStorageSource).not.toContain("@tsuzuru/standard-game-storage/src");

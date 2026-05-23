@@ -11,7 +11,7 @@ import {
   type ReadTrackingState,
   saveReadTrackingState,
   serializeReadTrackingState,
-} from "../src/game-storage.js";
+} from "../src/game-storage-api.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";

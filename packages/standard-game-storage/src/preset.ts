@@ -52,6 +52,11 @@ export interface CreateStandardGameStorageOptions<TSaveData = never> {
   readonly storage?: StandardGameStorageLike | null;
 }
 
+export interface CreateStandardGameStorageOptionsWithSaves<TSaveData>
+  extends Omit<CreateStandardGameStorageOptions<TSaveData>, "saves"> {
+  readonly saves: CreateStandardGameStorageSavesOptions<TSaveData>;
+}
+
 export interface StandardGameStoragePreset<TSaveData = never> {
   readonly keys: StandardGameStorageKeys;
   readonly slotDefinitions: readonly StandardSaveSlotDefinition[];
@@ -60,6 +65,16 @@ export interface StandardGameStoragePreset<TSaveData = never> {
   readonly saves: StandardSaveSlotStore<TSaveData> | null;
 }
 
+export interface StandardGameStoragePresetWithSaves<TSaveData> extends StandardGameStoragePreset<TSaveData> {
+  readonly saves: StandardSaveSlotStore<TSaveData>;
+}
+
+export function createStandardGameStorage<TSaveData>(
+  options: CreateStandardGameStorageOptionsWithSaves<TSaveData>,
+): StandardGameStoragePresetWithSaves<TSaveData>;
+export function createStandardGameStorage<TSaveData = never>(
+  options: CreateStandardGameStorageOptions<TSaveData>,
+): StandardGameStoragePreset<TSaveData>;
 export function createStandardGameStorage<TSaveData = never>(
   options: CreateStandardGameStorageOptions<TSaveData>,
 ): StandardGameStoragePreset<TSaveData> {

@@ -3,8 +3,9 @@
 Standard game storage helpers for Tsuzuru.
 
 This package currently provides preferences, read tracking, and save slot
-storage helpers. Future work can move additional reusable browser game storage
-helpers out of `examples/preact-basic` in small steps.
+storage helpers. It also provides a standard runtime save adapter for hosts that
+want the current `RuntimeSaveSlot` envelope while keeping runtime payload
+validation caller-owned.
 
 Available APIs:
 
@@ -27,6 +28,11 @@ Available APIs:
 - `serializeReadTrackingState`
 - `parseReadTrackingStorageData`
 - `createLocalStorageReadTrackingStore`
+- `createStandardRuntimeSaveAdapter`
+- `StandardRuntimeSaveAdapter`
+- `StandardRuntimeSaveData`
+- `StandardRetainedMessageEvent`
+- `isStandardRetainedMessageEvent`
 - `StandardSaveSlot`
 - `StandardSaveSlotDefinition`
 - `StandardSaveSlotStore`
@@ -38,13 +44,15 @@ Available APIs:
 The creator-facing `createStandardGameStorage` API generates conventional
 storage keys from a `storagePrefix`, creates preferences and read tracking
 stores, generates default save slot definitions, and creates a save slot store
-when caller-owned save parsing hooks are provided. Example-specific save data
-migration and runtime snapshot policy stay in the application.
+when caller-owned save parsing hooks or a standard runtime save adapter are
+provided. Example-specific legacy save migration and runtime restore policy stay
+in the application.
 
 Current non-goals:
 
 - changing storage keys or save data versions
 - standardizing application-specific save data migration
+- depending on `@tsuzuru/preact` for runtime payload validation
 - adding Preact hooks or UI components
 - adding IndexedDB, cloud save, or file save
 

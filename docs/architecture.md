@@ -217,10 +217,13 @@ Standard UI components should be replaceable by userland components.
 
 Responsibilities:
 
-- storage helper entry points for future preferences, read tracking, and save
-  slot extraction
+- storage helper entry points for preferences, read tracking, save slots, and
+  standard runtime save envelopes
 - storage adapter boundaries
 - recoverable storage failure handling
+- `RuntimeSaveSlot` envelope creation and validation when a host opts into the
+  standard runtime save adapter
+- caller-owned runtime payload validation and legacy migration hooks
 
 It must not own:
 
@@ -231,8 +234,10 @@ It must not own:
 - Preact hooks or UI components
 - storage key selection
 - host migration policy
+- runtime stepping or restore orchestration
 
-The initial package skeleton does not move any example storage behavior.
+The package accepts runtime payload validators from callers instead of depending
+on `@tsuzuru/preact`.
 
 ---
 

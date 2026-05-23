@@ -7,7 +7,7 @@ import {
   PREFERENCES_STORAGE_KEY,
   savePreferences,
   TEXT_SPEED_OPTIONS,
-} from "../src/game-storage.js";
+} from "../src/game-storage-api.js";
 
 const validPreferences = {
   textRevealEnabled: false,
