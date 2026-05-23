@@ -169,6 +169,10 @@ pnpm --filter @tsuzuru/example-preact-starter build
 
 `create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。生成物は `@tsuzuru/vite-plugin` を使い、`.tzr` を query なしで直接 import します。pnpm 利用時は `pnpm create tsuzuru my-game` の後、`cd my-game` と `pnpm dev` で starter を起動できます。
 
+Generated starters include declarative storage settings in `tsuzuru.config.ts`.
+Full Save / Load / Settings wiring remains application code and is demonstrated
+by `examples/preact-basic`.
+
 Release smoke test:
 
 ```sh

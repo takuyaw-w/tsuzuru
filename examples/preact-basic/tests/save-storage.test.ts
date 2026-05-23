@@ -1,15 +1,15 @@
 import type { RuntimeSaveData } from "@tsuzuru/preact";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  type ExampleSaveData,
-  type RetainedMessageEvent,
   createExampleSaveData,
   deleteSaveSlot,
+  type ExampleSaveData,
   gameStorage,
   getLatestSaveSlot,
   isExampleSaveData,
   loadSaveSlots,
   parseExampleSaveData,
+  type RetainedMessageEvent,
   SAVE_SLOT_DEFINITIONS,
   saveToSlot,
 } from "../src/App.js";

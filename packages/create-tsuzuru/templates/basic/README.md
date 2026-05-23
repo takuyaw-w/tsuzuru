@@ -64,8 +64,11 @@ show mio_smile at center
 タイトル画面の見た目は `src/screens/TitleScreen.tsx` と `src/styles.css` にあります。
 
 Load / Config は starter では未実装です。ボタンだけ置いてあります。
-save/load や設定画面が必要になったら、`tsuzuru.config.ts` の `storage` 設定から storage を生成できます。
-実際の save/load には、アプリ側で保存データの作成と画面の接続を追加してください。
+`tsuzuru.config.ts` には最初から宣言的な `storage` 設定がありますが、
+save/load や設定画面を表示する処理は starter には含めていません。
+必要になったら `@tsuzuru/standard-game-storage` の
+`createStandardGameStorageFromConfig` で config から storage を生成し、
+アプリ側で保存データの作成、復元、画面との接続を追加してください。
 
 ## 慣れてきたら
 

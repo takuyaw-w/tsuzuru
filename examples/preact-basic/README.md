@@ -10,7 +10,10 @@ The example also includes a Save / Load MVP. It uses three localStorage-backed
 save slots, enables Title Continue when a latest save exists, and shows Save /
 Load as runtime overlays so the runtime is not unmounted while those screens are
 open. This localStorage storage is example-side host behavior, not Tsuzuru's
-engine-wide storage policy.
+engine-wide storage policy. Storage options are declared in `tsuzuru.config.ts`
+and wired through `createStandardGameStorageFromConfig`, so keys, slots,
+preferences, read tracking, and the standard runtime save adapter share one
+config-driven setup path.
 
 If the player saves and loads while choices are visible, the choice and the
 retained previous message window behind the choices are restored. The retained

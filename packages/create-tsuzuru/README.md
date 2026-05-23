@@ -48,7 +48,10 @@ The generator supports:
 The `basic` and `preact` template names both generate the same starter. It
 opens on a title screen, then Start enters a 16:9 game view powered by
 `@tsuzuru/standard-ui-preact`. Load and Config are visible placeholders, not
-implemented screens.
+implemented screens. The generated `tsuzuru.config.ts` already includes a
+declarative `storage` block and the template depends on
+`@tsuzuru/standard-game-storage`, but actual Save / Load / Settings screens and
+runtime save timing remain application code.
 
 Generated projects are intended to start from:
 

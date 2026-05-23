@@ -123,9 +123,11 @@ describe("createProject", () => {
     expect(appSource).not.toContain("useRuntime");
     expect(appSource).not.toContain("parseTzr");
     expect(appSource).not.toContain("compileTzrProject");
+    expect(appSource).not.toContain("@tsuzuru/standard-game-storage");
     expect(gameRootSource).toContain("TsuzuruGame");
     expect(gameRootSource).toContain("scenario={scenario}");
     expect(gameRootSource).toContain("assets={assets}");
+    expect(gameRootSource).not.toContain("@tsuzuru/standard-game-storage");
     expect(assetsSource).toContain("classroom");
     expect(assetsSource).toContain("mio_smile");
     expect(readmeSource).not.toContain("scenario.ts");

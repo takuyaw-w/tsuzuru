@@ -7,7 +7,7 @@ storage helpers. It also provides a standard runtime save adapter for hosts that
 want the current `RuntimeSaveSlot` envelope while keeping runtime payload
 validation caller-owned.
 
-Available APIs:
+Primary APIs:
 
 - `createStandardGameStorage`
 - `createStandardGameStorageFromConfig`
@@ -17,6 +17,9 @@ Available APIs:
 - `DEFAULT_STANDARD_GAME_PREFERENCES`
 - `STANDARD_GAME_TEXT_SPEED_OPTIONS`
 - `normalizeStandardGamePreferences`
+
+Advanced host APIs:
+
 - `createLocalStoragePreferencesStore`
 - `StandardReadTrackingState`
 - `StandardReadTrackingProject`
@@ -44,18 +47,54 @@ Available APIs:
 - `getLatestSaveSlot`
 - `createLocalStorageSaveSlotStore`
 
-The creator-facing `createStandardGameStorage` API generates conventional
+## Config-driven setup
+
+For projects that use `tsuzuru.config.ts`, prefer
+`createStandardGameStorageFromConfig`:
+
+```ts
+import { createStandardGameStorageFromConfig } from "@tsuzuru/standard-game-storage";
+import tsuzuruConfig from "../tsuzuru.config.js";
+
+const gameStorage = createStandardGameStorageFromConfig(tsuzuruConfig);
+```
+
+The config shape is declarative:
+
+```ts
+storage: {
+  enabled: true,
+  slots: 3,
+  saves: "standard-runtime",
+}
+```
+
+`createStandardGameStorageFromConfig` reads the `project` and `storage` fields,
+then creates preferences, read tracking, and optional save slot stores. It
+returns `null` when storage is disabled with `storage: false` or
+`storage.enabled: false`. Config-driven storage requires stable `project.id`
+and `project.version` so save/read-tracking data can be checked against the
+current game identity.
+
+The config file stays data-only. Do not put `localStorage`, parser functions,
+runtime objects, or UI policy into `tsuzuru.config.ts`. Tests, SSR hosts, or
+custom environments can inject a storage-like object through the helper
+options. Applications with a custom runtime save payload can also pass
+`runtimeSave` parser hooks while keeping those functions out of config.
+
+`storage.saves: "standard-runtime"` opts into the standard runtime save adapter.
+It does not create Save / Load screens or decide when runtime state should be
+saved or restored.
+
+## Explicit setup
+
+The lower-level `createStandardGameStorage` API generates conventional
 storage keys from the project id by default, creates preferences and read
 tracking stores, generates default save slot definitions, and creates a save
 slot store when caller-owned save parsing hooks or a standard runtime save
 adapter are provided. Applications can still pass `storagePrefix` when they
 need an explicit namespace. Example-specific legacy save migration and runtime
 restore policy stay in the application.
-
-`createStandardGameStorageFromConfig` reads the declarative `storage` block from
-`tsuzuru.config.ts` and delegates to the same low-level storage factories. It
-does not put `localStorage`, parser functions, or runtime objects into the
-config file.
 
 Current non-goals:
 

@@ -439,7 +439,11 @@ API decisions:
 - Keep `retainedMessageEvent` as presentation payload policy rather than a
   required part of every save envelope.
 
-## Migration Plan
+## Historical Migration Plan
+
+The following steps describe the original staged extraction plan. They are kept
+for context, but later work already introduced the package, config-driven
+storage setup, and create-tsuzuru starter storage config.
 
 Step 0: create this plan.
 
@@ -558,7 +562,10 @@ Test coupling:
 - Any later implementation should move tests deliberately with the code they
   validate rather than loosening compatibility assertions prematurely.
 
-## Non-goals
+## Historical Non-goals
+
+These were non-goals for the initial extraction task, not current package
+status.
 
 - Create `packages/standard-game-storage` in this task.
 - Remove the former example facade files in the initial package extraction
@@ -629,7 +636,7 @@ Decision: keep the current plan centered on
 tracking, and save slots behind one game-storage policy module while preserving
 the UI/storage boundary.
 
-## Next Implementation Task
+## Historical Next Implementation Task
 
 Add @tsuzuru/standard-game-storage package skeleton.
 

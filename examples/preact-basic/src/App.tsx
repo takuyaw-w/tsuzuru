@@ -33,6 +33,29 @@ import { createStdTextSoundPlayer, type StdTextSoundPlayer } from "@tsuzuru/plug
 import { createStdVisualCommandHandlers, createStdVisualPlugin, getStdVisualState } from "@tsuzuru/plugin-std-visual";
 import { createRuntimeSaveDataFromState, getRenderableRuntimeEvent, useRuntime } from "@tsuzuru/preact";
 import {
+  createInitialReadTrackingState,
+  createReadEntryKey,
+  createReadEntryKeyFromText,
+  createStandardGameStorageFromConfig,
+  DEFAULT_STANDARD_GAME_PREFERENCES,
+  isRead,
+  isReadTrackableEvent,
+  markRead,
+  parseReadTrackingStorageData as parseStandardReadTrackingStorageData,
+  STANDARD_GAME_TEXT_SPEED_OPTIONS,
+  type StandardGamePreferences,
+  type StandardReadEntryKey,
+  type StandardReadTrackableEvent,
+  type StandardReadTrackingState,
+  type StandardReadTrackingStorageData,
+  type StandardRuntimeGameStoragePreset,
+  type StandardRuntimeSaveData,
+  type StandardRuntimeSavePayload,
+  type StandardSaveSlot,
+  type StandardSaveSlotDefinition,
+  serializeReadTrackingState as serializeStandardReadTrackingState,
+} from "@tsuzuru/standard-game-storage";
+import {
   ChoiceLayer,
   createAudioAssetsWithVolume,
   GameShell,
@@ -52,29 +75,6 @@ import {
   useMessageHistory,
   useTextReveal,
 } from "@tsuzuru/standard-ui-preact";
-import {
-  createInitialReadTrackingState,
-  createReadEntryKey,
-  createReadEntryKeyFromText,
-  createStandardGameStorageFromConfig,
-  DEFAULT_STANDARD_GAME_PREFERENCES,
-  isRead,
-  isReadTrackableEvent,
-  markRead,
-  parseReadTrackingStorageData as parseStandardReadTrackingStorageData,
-  STANDARD_GAME_TEXT_SPEED_OPTIONS,
-  serializeReadTrackingState as serializeStandardReadTrackingState,
-  type StandardGamePreferences,
-  type StandardReadEntryKey,
-  type StandardReadTrackableEvent,
-  type StandardReadTrackingState,
-  type StandardReadTrackingStorageData,
-  type StandardRuntimeGameStoragePreset,
-  type StandardRuntimeSaveData,
-  type StandardRuntimeSavePayload,
-  type StandardSaveSlot,
-  type StandardSaveSlotDefinition,
-} from "@tsuzuru/standard-game-storage";
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { assets } from "../assets.js";
