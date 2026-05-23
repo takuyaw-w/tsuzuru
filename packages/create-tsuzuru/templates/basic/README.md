@@ -36,8 +36,8 @@ pnpm build
   BGM、効果音、ボイスを置きます。
 
 - `src/game-storage.ts`
-  settings/read tracking と将来の save/load で使う storage 設定をまとめています。
-  storage namespace は `projectIdentity.id` から作られます。slot 数や label を変える場合は `slots` を変更してください。
+  settings や将来の save/load で使う storage 設定をまとめています。
+  storage namespace は `projectIdentity.id` から作られます。slot 数を変える場合は `slots` を変更してください。
 
 ## シナリオを書く
 
@@ -65,7 +65,7 @@ show mio_smile at center
 
 Load / Config は starter では未実装です。ボタンだけ置いてあります。
 save/load や設定画面が必要になったら、storage 設定は `src/game-storage.ts` から使えます。
-実際の save/load には、アプリ側で保存する runtime payload と UI wiring を追加してください。
+実際の save/load には、アプリ側で保存データの作成と画面の接続を追加してください。
 
 ## 慣れてきたら
 

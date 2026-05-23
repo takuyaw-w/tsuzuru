@@ -8,6 +8,8 @@ import {
 } from "@tsuzuru/standard-game-storage";
 import { projectIdentity } from "../tsuzuru.config.js";
 
+// Legacy save compatibility for examples/preact-basic only. New starters should
+// not copy these migrations.
 export type RetainedMessageEvent = Extract<RuntimeEvent, { readonly type: "narration" | "dialogue" }>;
 
 export type ExampleSaveData = StandardRuntimeSaveData<RuntimeSaveData, RetainedMessageEvent>;

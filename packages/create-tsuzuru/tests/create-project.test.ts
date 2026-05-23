@@ -108,6 +108,11 @@ describe("createProject", () => {
     const viteConfigSource = await readFile(join(root, "my-game", "vite.config.ts"), "utf8");
 
     await expect(access(join(root, "my-game", "src", "scenario.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "game-storage-api.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "save-compatibility.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "preferences.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "read-tracking.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "save-storage.ts"))).rejects.toThrow();
     expect(appSource).toContain('import scenario from "../scenario/main.tzr"');
     expect(appSource).toContain("<TitleScreen");
     expect(appSource).toContain("<GameRoot scenario={scenario} />");
@@ -123,6 +128,9 @@ describe("createProject", () => {
     expect(gameStorageSource).not.toContain("@tsuzuru/standard-game-storage/src");
     expect(gameStorageSource).not.toContain("localStorage");
     expect(gameStorageSource).not.toContain("RuntimeSave");
+    expect(gameStorageSource).not.toContain("retainedMessageEvent");
+    expect(gameStorageSource).not.toContain("migration");
+    expect(gameStorageSource).not.toContain("snapshot");
     expect(gameStorageSource).not.toContain("readEntry");
     expect(gameRootSource).toContain("TsuzuruGame");
     expect(assetsSource).toContain("classroom");

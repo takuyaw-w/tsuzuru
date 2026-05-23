@@ -7,6 +7,8 @@ import {
 import { projectIdentity } from "../tsuzuru.config.js";
 import { runtimeSaveAdapter } from "./save-compatibility.js";
 
+// Creator-facing storage setup for this example. App/UI helpers live in
+// game-storage-api.ts, and legacy save compatibility stays in save-compatibility.ts.
 export { projectIdentity };
 
 const STORAGE_PREFIX = "tsuzuru:example-preact-basic";

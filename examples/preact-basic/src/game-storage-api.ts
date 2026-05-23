@@ -22,6 +22,8 @@ import {
   runtimeSaveAdapter,
 } from "./save-compatibility.js";
 
+// App/UI facade for the example. Screens import this file instead of depending
+// on storage key, slot-store, or legacy compatibility details directly.
 export { DEFAULT_EXAMPLE_PREFERENCES, gameStorage, projectIdentity, TEXT_SPEED_OPTIONS } from "./game-storage.js";
 export type { ExamplePreferences, ExampleSaveData, RetainedMessageEvent };
 export {
