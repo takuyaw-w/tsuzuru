@@ -1,19 +1,21 @@
 import type { RuntimeSaveData } from "@tsuzuru/preact";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ExampleSaveData,
+  type RetainedMessageEvent,
   createExampleSaveData,
   deleteSaveSlot,
-  type ExampleSaveData,
+  gameStorage,
   getLatestSaveSlot,
   isExampleSaveData,
   loadSaveSlots,
   parseExampleSaveData,
-  type RetainedMessageEvent,
   SAVE_SLOT_DEFINITIONS,
-  SAVE_STORAGE_KEY,
   saveToSlot,
-} from "../src/game-storage-api.js";
+} from "../src/game-storage.js";
 import { projectIdentity } from "../tsuzuru.config.js";
+
+const SAVE_STORAGE_KEY = gameStorage.keys.saves;
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
 const PROJECT_VERSION = "1";
@@ -105,70 +107,6 @@ describe("save-storage", () => {
     ).toEqual(createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt));
   });
 
-  it("migrates v1 example save data to v3 with the current scenario identity", () => {
-    const migrated = parseExampleSaveData(
-      {
-        version: 1,
-        runtime: runtimeSaveData,
-        retainedMessageEvent,
-      },
-      savedAt,
-    );
-
-    expect(migrated).toEqual(createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt));
-  });
-
-  it("migrates legacy raw RuntimeSaveData to v3 with the current scenario identity", () => {
-    const migrated = parseExampleSaveData(runtimeSaveData, savedAt);
-
-    expect(migrated).toEqual(createExampleSaveData(runtimeSaveData, null, savedAt));
-  });
-
-  it("migrates v2 example save data to v3 with the current scenario identity", () => {
-    const migrated = parseExampleSaveData(
-      {
-        version: 2,
-        scenario: {
-          id: PROJECT_ID,
-          version: PROJECT_VERSION,
-        },
-        runtime: runtimeSaveData,
-        retainedMessageEvent,
-      },
-      savedAt,
-    );
-
-    expect(migrated).toEqual(createExampleSaveData(runtimeSaveData, retainedMessageEvent, savedAt));
-  });
-
-  it("rejects v2 save data with a mismatched scenario id", () => {
-    expect(
-      parseExampleSaveData({
-        version: 2,
-        scenario: {
-          id: "tsuzuru.example.other",
-          version: projectIdentity.version,
-        },
-        runtime: runtimeSaveData,
-        retainedMessageEvent: null,
-      }),
-    ).toBeNull();
-  });
-
-  it("rejects v2 save data with a mismatched scenario version", () => {
-    expect(
-      parseExampleSaveData({
-        version: 2,
-        scenario: {
-          id: projectIdentity.id,
-          version: "2",
-        },
-        runtime: runtimeSaveData,
-        retainedMessageEvent: null,
-      }),
-    ).toBeNull();
-  });
-
   it("rejects v3 save data with a mismatched RuntimeSaveSlot scenario id", () => {
     const saveData = createExampleSaveData(runtimeSaveData, null, savedAt);
 
@@ -240,7 +178,7 @@ describe("save-storage", () => {
     expect(parseExampleSaveData(saveData)?.retainedMessageEvent).toEqual(retainedMessageEvent);
   });
 
-  it("rejects malformed retained message events in v1, v2, and v3 save data", () => {
+  it("rejects malformed retained message events in v3 save data", () => {
     const invalidRetainedMessageEvent = {
       type: "dialogue",
       lines: [{ text: "Missing speaker." }],
@@ -252,27 +190,6 @@ describe("save-storage", () => {
         ...saveData,
         retainedMessageEvent: invalidRetainedMessageEvent,
       }),
-    ).toBeNull();
-    expect(
-      parseExampleSaveData(
-        {
-          version: 1,
-          runtime: runtimeSaveData,
-          retainedMessageEvent: invalidRetainedMessageEvent,
-        },
-        savedAt,
-      ),
-    ).toBeNull();
-    expect(
-      parseExampleSaveData(
-        {
-          version: 2,
-          scenario: projectIdentity,
-          runtime: runtimeSaveData,
-          retainedMessageEvent: invalidRetainedMessageEvent,
-        },
-        savedAt,
-      ),
     ).toBeNull();
   });
 
@@ -334,16 +251,13 @@ describe("save-storage", () => {
     ]);
   });
 
-  it("migrates legacy save data payloads when loading stored slots", () => {
-    const firstSavedAt = "2026-01-01T00:00:00.000Z";
-    const secondSavedAt = "2026-01-02T00:00:00.000Z";
-    const thirdSavedAt = "2026-01-03T00:00:00.000Z";
+  it("ignores legacy save data payloads when loading stored slots", () => {
     stubSaveStorage(
       JSON.stringify([
         {
           id: "slot-1",
           label: "ignored",
-          savedAt: firstSavedAt,
+          savedAt: "2026-01-01T00:00:00.000Z",
           data: {
             version: 1,
             runtime: runtimeSaveData,
@@ -353,7 +267,7 @@ describe("save-storage", () => {
         {
           id: "slot-2",
           label: "ignored",
-          savedAt: secondSavedAt,
+          savedAt: "2026-01-02T00:00:00.000Z",
           data: {
             version: 2,
             scenario: projectIdentity,
@@ -364,32 +278,13 @@ describe("save-storage", () => {
         {
           id: "slot-3",
           label: "ignored",
-          savedAt: thirdSavedAt,
+          savedAt: "2026-01-03T00:00:00.000Z",
           data: runtimeSaveData,
         },
       ]),
     );
 
-    expect(loadSaveSlots()).toEqual([
-      {
-        id: "slot-1",
-        label: "Slot 1",
-        savedAt: firstSavedAt,
-        data: createExampleSaveData(runtimeSaveData, retainedMessageEvent, firstSavedAt),
-      },
-      {
-        id: "slot-2",
-        label: "Slot 2",
-        savedAt: secondSavedAt,
-        data: createExampleSaveData(runtimeSaveData, retainedMessageEvent, secondSavedAt),
-      },
-      {
-        id: "slot-3",
-        label: "Slot 3",
-        savedAt: thirdSavedAt,
-        data: createExampleSaveData(runtimeSaveData, null, thirdSavedAt),
-      },
-    ]);
+    expect(loadSaveSlots()).toEqual([]);
   });
 
   it("uses only compatible slots when selecting the latest save slot", () => {

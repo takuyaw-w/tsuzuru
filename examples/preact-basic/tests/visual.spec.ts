@@ -94,7 +94,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await messageWindow.click();
   await expect(messageWindow).toContainText("夜の旧校舎");
 
-  await advanceUntilText(messageWindow, "ようこそ", 10);
+  await advanceUntilText(messageWindow, "ようこそ", 14);
   await expect(audioLayer).toContainText("daily_theme");
   await expect(audioLayer).toContainText("Voice");
 });

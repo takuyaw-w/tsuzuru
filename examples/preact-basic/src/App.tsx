@@ -77,7 +77,7 @@ import {
   savePreferences,
   saveReadTrackingState,
   saveToSlot,
-} from "./game-storage-api.js";
+} from "./game-storage.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";

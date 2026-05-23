@@ -61,6 +61,16 @@ describe("standard runtime save adapter", () => {
     expect(adapter.parseData(saveData, { project })?.retainedMessageEvent).toBeNull();
   });
 
+  it("uses the standard retained message parser by default", () => {
+    const adapter = createStandardRuntimeSaveAdapter<TestRuntimeSaveData>({
+      project,
+      isRuntimeData,
+    });
+    const saveData = adapter.createData(runtime, retainedMessageEvent, savedAt);
+
+    expect(adapter.parseData(saveData, { project })?.retainedMessageEvent).toEqual(retainedMessageEvent);
+  });
+
   it("rejects invalid runtime save data", () => {
     const adapter = createTestAdapter();
 

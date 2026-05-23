@@ -3,26 +3,26 @@ import {
   createInitialReadTrackingState,
   createReadEntryKey,
   isRead,
-  loadReadTrackingState,
   markRead,
   parseReadTrackingStorageData,
-  READ_TRACKING_STORAGE_KEY,
-  type ReadTrackableEvent,
-  type ReadTrackingState,
-  saveReadTrackingState,
   serializeReadTrackingState,
-} from "../src/game-storage-api.js";
+  type StandardReadTrackableEvent,
+  type StandardReadTrackingState,
+} from "@tsuzuru/standard-game-storage";
+import { gameStorage } from "../src/game-storage.js";
 import { projectIdentity } from "../tsuzuru.config.js";
+
+const READ_TRACKING_STORAGE_KEY = gameStorage.keys.readTracking;
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
 const PROJECT_VERSION = "1";
 
-const narrationEvent: ReadTrackableEvent = {
+const narrationEvent: StandardReadTrackableEvent = {
   type: "narration",
   lines: [{ text: "The station clock chimed." }],
 };
 
-const dialogueEvent: ReadTrackableEvent = {
+const dialogueEvent: StandardReadTrackableEvent = {
   type: "dialogue",
   speaker: "mio",
   lines: [{ text: "遅いよ。" }],
@@ -72,7 +72,9 @@ describe("read-tracking", () => {
 
   it("serializes version and scenario identity", () => {
     const key = createReadEntryKey(dialogueEvent);
-    const data = serializeReadTrackingState(markRead(createInitialReadTrackingState(), key));
+    const data = serializeReadTrackingState(markRead(createInitialReadTrackingState(), key), {
+      project: projectIdentity,
+    });
 
     expect(data).toEqual({
       version: 1,
@@ -83,14 +85,17 @@ describe("read-tracking", () => {
 
   it("restores valid storage payloads", () => {
     const key = createReadEntryKey(narrationEvent);
-    const restored = parseReadTrackingStorageData({
-      version: 1,
-      scenario: {
-        id: PROJECT_ID,
-        version: PROJECT_VERSION,
+    const restored = parseReadTrackingStorageData(
+      {
+        version: 1,
+        scenario: {
+          id: PROJECT_ID,
+          version: PROJECT_VERSION,
+        },
+        readEntryKeys: [key],
       },
-      readEntryKeys: [key],
-    });
+      { project: projectIdentity },
+    );
 
     expect(restored).not.toBeNull();
     expect(restored === null ? [] : [...restored.readEntryKeys]).toEqual([key]);
@@ -98,44 +103,50 @@ describe("read-tracking", () => {
 
   it("rejects storage payloads with a mismatched scenario id", () => {
     expect(
-      parseReadTrackingStorageData({
-        version: 1,
-        scenario: {
-          id: "tsuzuru.example.other",
-          version: PROJECT_VERSION,
+      parseReadTrackingStorageData(
+        {
+          version: 1,
+          scenario: {
+            id: "tsuzuru.example.other",
+            version: PROJECT_VERSION,
+          },
+          readEntryKeys: [createReadEntryKey(narrationEvent)],
         },
-        readEntryKeys: [createReadEntryKey(narrationEvent)],
-      }),
+        { project: projectIdentity },
+      ),
     ).toBeNull();
   });
 
   it("rejects storage payloads with a mismatched scenario version", () => {
     expect(
-      parseReadTrackingStorageData({
-        version: 1,
-        scenario: {
-          id: PROJECT_ID,
-          version: "2",
+      parseReadTrackingStorageData(
+        {
+          version: 1,
+          scenario: {
+            id: PROJECT_ID,
+            version: "2",
+          },
+          readEntryKeys: [createReadEntryKey(narrationEvent)],
         },
-        readEntryKeys: [createReadEntryKey(narrationEvent)],
-      }),
+        { project: projectIdentity },
+      ),
     ).toBeNull();
   });
 
   it("falls back to empty state for invalid JSON and malformed payloads", () => {
     stubReadTrackingStorage("not-json");
-    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
 
     stubReadTrackingStorage(JSON.stringify({ version: 1, scenario: projectIdentity, readEntryKeys: [123] }));
-    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
   });
 
   it("falls back to empty state when localStorage is unavailable", () => {
     vi.stubGlobal("window", {});
     const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
 
-    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
-    expect(saveReadTrackingState(state)).toBe(state);
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.save(state)).toBe(state);
   });
 
   it("falls back without throwing when localStorage access fails", () => {
@@ -150,26 +161,29 @@ describe("read-tracking", () => {
     vi.stubGlobal("window", { localStorage });
     const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
 
-    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
-    expect(saveReadTrackingState(state)).toBe(state);
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.save(state)).toBe(state);
   });
 
   it("round trips saved read tracking state through localStorage", () => {
     stubReadTrackingStorage(null);
     const key = createReadEntryKey(dialogueEvent);
-    const state: ReadTrackingState = markRead(createInitialReadTrackingState(), key);
+    const state: StandardReadTrackingState = markRead(createInitialReadTrackingState(), key);
 
-    expect(saveReadTrackingState(state)).toBe(state);
-    expect([...loadReadTrackingState().readEntryKeys]).toEqual([key]);
+    expect(gameStorage.readTracking.save(state)).toBe(state);
+    expect([...gameStorage.readTracking.load().readEntryKeys]).toEqual([key]);
   });
 
   it("deduplicates storage payload keys when restoring", () => {
     const key = createReadEntryKey(narrationEvent);
-    const restored = parseReadTrackingStorageData({
-      version: 1,
-      scenario: projectIdentity,
-      readEntryKeys: [key, key],
-    });
+    const restored = parseReadTrackingStorageData(
+      {
+        version: 1,
+        scenario: projectIdentity,
+        readEntryKeys: [key, key],
+      },
+      { project: projectIdentity },
+    );
 
     expect(restored === null ? [] : [...restored.readEntryKeys]).toEqual([key]);
   });
