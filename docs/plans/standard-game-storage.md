@@ -5,15 +5,17 @@
 Implemented; historical plan.
 
 `@tsuzuru/standard-game-storage` now exists, and `examples/preact-basic`
-centralizes example setup, including storage policy, in `src/game.ts`. The former
-preferences, read-tracking, and save-storage facade files were later removed
-after they became re-export-only shims.
+declares storage settings in `tsuzuru.config.ts`. Runtime store creation is
+driven from that config in `src/App.tsx`. The former preferences,
+read-tracking, save-storage, and game storage facade files were later removed
+after they became re-export-only shims or storage-only setup files.
 
 ## Motivation
 
 `examples/preact-basic` previously contained storage and compatibility logic in
 separate facade files that was heavier than an example should own long term.
-Current example-specific policy now lives in `examples/preact-basic/src/game.ts`.
+Current example storage settings live in `examples/preact-basic/tsuzuru.config.ts`,
+with app-facing storage operations wired from `examples/preact-basic/src/App.tsx`.
 
 The desired direction is to keep game-specific policy in the example while
 moving reusable persistence, normalization, validation, and migration helpers

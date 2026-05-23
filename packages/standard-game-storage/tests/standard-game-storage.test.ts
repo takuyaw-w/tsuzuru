@@ -423,6 +423,36 @@ describe("standard game storage preset", () => {
         { runtimeSave: { isRuntimeData } },
       ),
     ).toThrow("options.runtimeSave requires storage.saves");
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { kind: "custom" as "standard" },
+      }),
+    ).toThrow('storage.kind must be "standard"');
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { saves: "legacy" as "standard-runtime" },
+      }),
+    ).toThrow('storage.saves must be false, "standard-runtime"');
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { preferences: { key: "" } },
+      }),
+    ).toThrow("preferences.storageKey must be a non-empty string");
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { readTracking: { key: "" } },
+      }),
+    ).toThrow("readTracking.storageKey must be a non-empty string");
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { saves: { kind: "standard-runtime", key: "" } },
+      }),
+    ).toThrow("saves.storageKey must be a non-empty string");
   });
 });
 

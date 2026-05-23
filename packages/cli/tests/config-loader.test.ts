@@ -130,4 +130,34 @@ export default config;
       'storage.saves must be false, "standard-runtime", or an object',
     );
   });
+
+  it("fails when storage preference defaults would be normalized away", async () => {
+    const root = await createTempProject();
+    await writeFile(
+      join(root, "tsuzuru.config.ts"),
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  storage: {
+    preferences: {
+      textSpeedOptions: [30, 60, 120],
+      defaults: {
+        textSpeedCharactersPerSecond: 90,
+        bgmVolume: 100,
+      },
+    },
+  },
+};
+`,
+    );
+
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow(
+      "storage.preferences.defaults.textSpeedCharactersPerSecond must be one of textSpeedOptions",
+    );
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow(
+      "storage.preferences.defaults.bgmVolume must be a number between 0 and 1",
+    );
+  });
 });

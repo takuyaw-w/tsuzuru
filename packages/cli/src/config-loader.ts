@@ -4,6 +4,7 @@ import type { TsuzuruConfig } from "@tsuzuru/config";
 import { createJiti } from "jiti";
 
 const CONFIG_FILE_NAME = "tsuzuru.config.ts";
+const STANDARD_STORAGE_TEXT_SPEED_OPTIONS = [30, 60, 120] as const;
 
 export class TsuzuruCliError extends Error {
   public override readonly name = "TsuzuruCliError";
@@ -184,23 +185,37 @@ function validateStoragePreferences(value: unknown, errors: string[]): void {
   if (value.key !== undefined && !isNonEmptyString(value.key)) {
     errors.push("storage.preferences.key must be a non-empty string when provided.");
   }
-  if (value.textSpeedOptions !== undefined) {
-    if (!Array.isArray(value.textSpeedOptions) || value.textSpeedOptions.length === 0) {
-      errors.push("storage.preferences.textSpeedOptions must be a non-empty number array when provided.");
-    } else {
-      for (const [index, option] of value.textSpeedOptions.entries()) {
-        if (typeof option !== "number" || !Number.isFinite(option) || option <= 0) {
-          errors.push(`storage.preferences.textSpeedOptions[${index}] must be a positive finite number.`);
-        }
-      }
-    }
-  }
+  const textSpeedOptions = validateStorageTextSpeedOptions(value.textSpeedOptions, errors);
   if (value.defaults !== undefined) {
-    validateStoragePreferenceDefaults(value.defaults, errors);
+    validateStoragePreferenceDefaults(value.defaults, textSpeedOptions, errors);
   }
 }
 
-function validateStoragePreferenceDefaults(value: unknown, errors: string[]): void {
+function validateStorageTextSpeedOptions(value: unknown, errors: string[]): readonly number[] {
+  if (value === undefined) {
+    return STANDARD_STORAGE_TEXT_SPEED_OPTIONS;
+  }
+  if (!Array.isArray(value) || value.length === 0) {
+    errors.push("storage.preferences.textSpeedOptions must be a non-empty number array when provided.");
+    return STANDARD_STORAGE_TEXT_SPEED_OPTIONS;
+  }
+
+  const options: number[] = [];
+  for (const [index, option] of value.entries()) {
+    if (typeof option !== "number" || !Number.isFinite(option) || option <= 0) {
+      errors.push(`storage.preferences.textSpeedOptions[${index}] must be a positive finite number.`);
+    } else {
+      options.push(option);
+    }
+  }
+  return options.length === 0 ? STANDARD_STORAGE_TEXT_SPEED_OPTIONS : options;
+}
+
+function validateStoragePreferenceDefaults(
+  value: unknown,
+  textSpeedOptions: readonly number[],
+  errors: string[],
+): void {
   if (!isRecord(value)) {
     errors.push("storage.preferences.defaults must be an object when provided.");
     return;
@@ -212,9 +227,21 @@ function validateStoragePreferenceDefaults(value: unknown, errors: string[]): vo
     }
   }
 
-  for (const key of ["textSpeedCharactersPerSecond", "textSoundVolume", "bgmVolume", "seVolume", "voiceVolume"]) {
-    if (value[key] !== undefined && (typeof value[key] !== "number" || !Number.isFinite(value[key]))) {
-      errors.push(`storage.preferences.defaults.${key} must be a finite number when provided.`);
+  if (value.textSpeedCharactersPerSecond !== undefined) {
+    if (
+      typeof value.textSpeedCharactersPerSecond !== "number" ||
+      !textSpeedOptions.includes(value.textSpeedCharactersPerSecond)
+    ) {
+      errors.push("storage.preferences.defaults.textSpeedCharactersPerSecond must be one of textSpeedOptions.");
+    }
+  }
+
+  for (const key of ["textSoundVolume", "bgmVolume", "seVolume", "voiceVolume"]) {
+    const volume = value[key];
+    if (volume !== undefined) {
+      if (typeof volume !== "number" || !Number.isFinite(volume) || volume < 0 || volume > 1) {
+        errors.push(`storage.preferences.defaults.${key} must be a number between 0 and 1 when provided.`);
+      }
     }
   }
 }

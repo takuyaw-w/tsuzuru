@@ -68,6 +68,7 @@ The generated project keeps these scripts:
   "dev": "pnpm install --prefer-offline && vite",
   "build": "tsuzuru check && vite build",
   "check:scenario": "tsuzuru check",
+  "typecheck": "tsc -p tsconfig.json --noEmit",
   "preview": "vite preview"
 }
 ```
