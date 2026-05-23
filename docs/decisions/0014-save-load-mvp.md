@@ -109,7 +109,7 @@ For the current example, the selected storage backend is localStorage.
 
 The MVP lives in `examples/preact-basic`.
 
-`src/game-storage.ts` stores save slots under the example-specific key
+`src/game.ts` stores save slots under the example-specific key
 `tsuzuru:example-preact-basic:saves:v1`. It reads localStorage defensively:
 invalid JSON, old data, unknown slot IDs, and values that fail
 `isRuntimeSaveData()` are ignored instead of crashing the app.
@@ -211,4 +211,4 @@ storage policy for Tsuzuru as a whole.
 - `docs/architecture.md`
 - `docs/runtime.md`
 - `examples/preact-basic/README.md`
-- `examples/preact-basic/src/game-storage.ts`
+- `examples/preact-basic/src/game.ts`

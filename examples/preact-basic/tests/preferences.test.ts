@@ -1,12 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  DEFAULT_EXAMPLE_PREFERENCES,
-  type ExamplePreferences,
-  gameStorage,
-  TEXT_SPEED_OPTIONS,
-} from "../src/game-storage.js";
+import { DEFAULT_EXAMPLE_PREFERENCES, type ExamplePreferences, game, TEXT_SPEED_OPTIONS } from "../src/game.js";
 
-const PREFERENCES_STORAGE_KEY = gameStorage.keys.preferences;
+const PREFERENCES_STORAGE_KEY = game.storage.keys.preferences;
 
 const validPreferences = {
   textRevealEnabled: false,
@@ -39,7 +34,7 @@ describe("preferences", () => {
 
   it("normalizes preferences with example defaults and text speed options", () => {
     expect(
-      gameStorage.preferences.normalize({
+      game.storage.preferences.normalize({
         ...validPreferences,
         textSpeedCharactersPerSecond: 90,
         bgmVolume: "loud",
@@ -54,17 +49,17 @@ describe("preferences", () => {
   it("loads and saves through the example preferences storage key", () => {
     const storage = stubPreferencesStorage();
 
-    expect(gameStorage.preferences.save(validPreferences)).toEqual(validPreferences);
+    expect(game.storage.preferences.save(validPreferences)).toEqual(validPreferences);
     expect(storage.getItem(PREFERENCES_STORAGE_KEY)).toBe(JSON.stringify(validPreferences));
-    expect(gameStorage.preferences.load()).toEqual(validPreferences);
+    expect(game.storage.preferences.load()).toEqual(validPreferences);
   });
 
   it("falls back to defaults when localStorage is unavailable", () => {
     vi.stubGlobal("localStorage", undefined);
     vi.stubGlobal("window", {});
 
-    expect(gameStorage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
-    expect(gameStorage.preferences.save(validPreferences)).toEqual(validPreferences);
+    expect(game.storage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
+    expect(game.storage.preferences.save(validPreferences)).toEqual(validPreferences);
   });
 
   it("falls back without throwing when localStorage access fails", () => {
@@ -82,8 +77,8 @@ describe("preferences", () => {
     vi.stubGlobal("localStorage", localStorage);
     vi.stubGlobal("window", { localStorage });
 
-    expect(gameStorage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
-    expect(gameStorage.preferences.save(validPreferences)).toEqual(validPreferences);
+    expect(game.storage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
+    expect(game.storage.preferences.save(validPreferences)).toEqual(validPreferences);
   });
 });
 

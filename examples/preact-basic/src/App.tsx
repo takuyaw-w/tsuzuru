@@ -54,8 +54,6 @@ import {
 } from "@tsuzuru/standard-ui-preact";
 import type { ComponentChildren, ComponentProps } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { assets } from "../assets.js";
-import scenario from "../scenario/main.tzr";
 import {
   createExampleSaveData,
   createReadEntryKey,
@@ -74,10 +72,11 @@ import {
   type ReadEntryKey,
   type ReadTrackingState,
   type RetainedMessageEvent,
+  game,
   savePreferences,
   saveReadTrackingState,
   saveToSlot,
-} from "./game-storage.js";
+} from "./game.js";
 import { BacklogScreen, type BacklogViewEntry } from "./screens/BacklogScreen.js";
 import { GalleryScreen } from "./screens/GalleryScreen.js";
 import { LoadScreen } from "./screens/LoadScreen.js";
@@ -131,7 +130,7 @@ export function App() {
   if (screen === "runtime") {
     return (
       <RuntimeApp
-        document={scenario}
+        document={game.scenario}
         initialSaveData={initialSaveData}
         saveSlots={saveSlots}
         preferences={preferences}
@@ -301,15 +300,15 @@ function RuntimeApp({
     textSoundPlayer,
   );
   const bgmAssets = useMemo(
-    () => createAudioAssetsWithVolume(assets.audio.bgm, preferences.bgmVolume),
+    () => createAudioAssetsWithVolume(game.assets.audio.bgm, preferences.bgmVolume),
     [preferences.bgmVolume],
   );
   const seAssets = useMemo(
-    () => createAudioAssetsWithVolume(assets.audio.se, preferences.seVolume),
+    () => createAudioAssetsWithVolume(game.assets.audio.se, preferences.seVolume),
     [preferences.seVolume],
   );
   const voiceAssets = useMemo(
-    () => createAudioAssetsWithVolume(assets.audio.voice, preferences.voiceVolume),
+    () => createAudioAssetsWithVolume(game.assets.audio.voice, preferences.voiceVolume),
     [preferences.voiceVolume],
   );
   const resolveCameraFocusOffset = useCallback<StdCameraFocusOffsetResolver>((focusTarget, context) => {
@@ -575,8 +574,8 @@ function RuntimeApp({
             >
               <StdVisualRuntimeLayer
                 runtimeState={runtime.state}
-                backgroundAssets={assets.visual.backgrounds}
-                spriteAssets={assets.visual.sprites}
+                backgroundAssets={game.assets.visual.backgrounds}
+                spriteAssets={game.assets.visual.sprites}
                 transitions={{ enabled: visualTransitionsEnabled }}
               />
             </StdCameraRuntimeLayer>
@@ -788,7 +787,9 @@ function useTextSoundPlayback(
   const textSoundState = getExampleTextSoundState(runtimeState);
   const textSoundContext = getExampleTextSoundContext(visibleEvent);
   const profile =
-    textSoundContext === null ? null : resolveStdTextSoundProfile(assets.textSound, textSoundState, textSoundContext);
+    textSoundContext === null
+      ? null
+      : resolveStdTextSoundProfile(game.assets.textSound, textSoundState, textSoundContext);
 
   return useCallback(
     (event: TextRevealCharacterEvent) => {

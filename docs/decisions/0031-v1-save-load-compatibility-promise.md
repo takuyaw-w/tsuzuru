@@ -158,4 +158,4 @@ Revisit this decision when:
 - `packages/core/src/runtime-snapshot.ts`
 - `packages/core/src/runtime-save-slot.ts`
 - `packages/preact/src/runtime-save.ts`
-- `examples/preact-basic/src/game-storage.ts`
+- `examples/preact-basic/src/game.ts`

@@ -1,3 +1,5 @@
+import type { RuntimeEvent } from "@tsuzuru/core";
+import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
 import {
   createInitialReadTrackingState,
   createReadEntryKey,
@@ -20,12 +22,9 @@ import {
   type StandardSaveSlot,
   type StandardSaveSlotDefinition,
 } from "@tsuzuru/standard-game-storage";
-import type { RuntimeEvent } from "@tsuzuru/core";
-import { isRuntimeSaveData, type RuntimeSaveData } from "@tsuzuru/preact";
+import { assets } from "../assets.js";
+import scenario from "../scenario/main.tzr";
 import { projectIdentity } from "../tsuzuru.config.js";
-
-// Creator-facing storage setup for this example.
-export { projectIdentity };
 
 const STORAGE_PREFIX = "tsuzuru:example-preact-basic";
 
@@ -50,12 +49,12 @@ export type ReadEntryKey = StandardReadEntryKey;
 export type ReadTrackingStorageData = StandardReadTrackingStorageData;
 export type ReadTrackingState = StandardReadTrackingState;
 
-export const runtimeSaveAdapter = createStandardRuntimeSaveAdapter<RuntimeSaveData, RetainedMessageEvent>({
+const runtimeSaveAdapter = createStandardRuntimeSaveAdapter<RuntimeSaveData, RetainedMessageEvent>({
   project: projectIdentity,
   isRuntimeData: isRuntimeSaveData,
 });
 
-export const gameStorage = createStandardGameStorage({
+const storage = createStandardGameStorage({
   project: projectIdentity,
   storagePrefix: STORAGE_PREFIX,
   slots: 3,
@@ -66,7 +65,14 @@ export const gameStorage = createStandardGameStorage({
   saves: runtimeSaveAdapter,
 });
 
-export const SAVE_SLOT_DEFINITIONS = gameStorage.slotDefinitions;
+export const game = {
+  project: projectIdentity,
+  scenario,
+  assets,
+  storage,
+} as const;
+
+export const SAVE_SLOT_DEFINITIONS = game.storage.slotDefinitions;
 
 export {
   createInitialReadTrackingState,
@@ -82,52 +88,52 @@ export const getExampleSaveDataSavedAt = runtimeSaveAdapter.getSavedAt;
 export const isExampleSaveData = runtimeSaveAdapter.isData;
 
 export function loadPreferences(): ExamplePreferences {
-  return gameStorage.preferences.load() as ExamplePreferences;
+  return game.storage.preferences.load() as ExamplePreferences;
 }
 
 export function savePreferences(preferences: ExamplePreferences): ExamplePreferences {
-  return gameStorage.preferences.save(preferences) as ExamplePreferences;
+  return game.storage.preferences.save(preferences) as ExamplePreferences;
 }
 
 export function normalizePreferences(value: unknown): ExamplePreferences {
-  return gameStorage.preferences.normalize(value) as ExamplePreferences;
+  return game.storage.preferences.normalize(value) as ExamplePreferences;
 }
 
 export function loadReadTrackingState(): ReadTrackingState {
-  return gameStorage.readTracking.load();
+  return game.storage.readTracking.load();
 }
 
 export function saveReadTrackingState(state: ReadTrackingState): ReadTrackingState {
-  return gameStorage.readTracking.save(state);
+  return game.storage.readTracking.save(state);
 }
 
 export function serializeReadTrackingState(state: ReadTrackingState): ReadTrackingStorageData {
-  return serializeStandardReadTrackingState(state, { project: projectIdentity });
+  return serializeStandardReadTrackingState(state, { project: game.project });
 }
 
 export function parseReadTrackingStorageData(value: unknown): ReadTrackingState | null {
-  return parseStandardReadTrackingStorageData(value, { project: projectIdentity });
+  return parseStandardReadTrackingStorageData(value, { project: game.project });
 }
 
 export function loadSaveSlots(): readonly ExampleSaveSlot[] {
-  return gameStorage.saves.loadSlots();
+  return game.storage.saves.loadSlots();
 }
 
 export function saveToSlot(slotId: string, data: ExampleSaveData): readonly ExampleSaveSlot[] {
-  return gameStorage.saves.saveToSlot(slotId, data);
+  return game.storage.saves.saveToSlot(slotId, data);
 }
 
 export function deleteSaveSlot(slotId: string): readonly ExampleSaveSlot[] {
-  return gameStorage.saves.deleteSlot(slotId);
+  return game.storage.saves.deleteSlot(slotId);
 }
 
 export function getLatestSaveSlot(slots: readonly ExampleSaveSlot[]): ExampleSaveSlot | null {
-  return gameStorage.saves.getLatestSlot(slots);
+  return game.storage.saves.getLatestSlot(slots);
 }
 
 export function parseExampleSaveData(value: unknown, createdAt?: string): ExampleSaveData | null {
   return runtimeSaveAdapter.parseData(value, {
-    project: projectIdentity,
+    project: game.project,
     ...(createdAt === undefined ? {} : { savedAt: createdAt }),
   });
 }

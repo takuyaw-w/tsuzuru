@@ -1,5 +1,5 @@
-import type { ExamplePreferences, TextSpeedCharactersPerSecond } from "../game-storage.js";
-import { TEXT_SPEED_OPTIONS } from "../game-storage.js";
+import type { ExamplePreferences, TextSpeedCharactersPerSecond } from "../game.js";
+import { TEXT_SPEED_OPTIONS } from "../game.js";
 
 interface SettingsScreenProps {
   readonly preferences: ExamplePreferences;

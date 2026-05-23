@@ -5,17 +5,17 @@ import {
   type RetainedMessageEvent,
   createExampleSaveData,
   deleteSaveSlot,
-  gameStorage,
+  game,
   getLatestSaveSlot,
   isExampleSaveData,
   loadSaveSlots,
   parseExampleSaveData,
   SAVE_SLOT_DEFINITIONS,
   saveToSlot,
-} from "../src/game-storage.js";
+} from "../src/game.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
-const SAVE_STORAGE_KEY = gameStorage.keys.saves;
+const SAVE_STORAGE_KEY = game.storage.keys.saves;
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
 const PROJECT_VERSION = "1";

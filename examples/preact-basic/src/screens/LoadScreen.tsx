@@ -1,4 +1,4 @@
-import { type ExampleSaveSlot, SAVE_SLOT_DEFINITIONS } from "../game-storage.js";
+import { type ExampleSaveSlot, SAVE_SLOT_DEFINITIONS } from "../game.js";
 
 interface LoadScreenProps {
   readonly slots: readonly ExampleSaveSlot[];

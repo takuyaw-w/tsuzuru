@@ -5,7 +5,7 @@
 Implemented; historical plan.
 
 `@tsuzuru/standard-game-storage` now exists, and `examples/preact-basic`
-centralizes example storage policy in `src/game-storage.ts`. The former
+centralizes example setup, including storage policy, in `src/game.ts`. The former
 preferences, read-tracking, and save-storage facade files were later removed
 after they became re-export-only shims.
 
@@ -13,8 +13,7 @@ after they became re-export-only shims.
 
 `examples/preact-basic` previously contained storage and compatibility logic in
 separate facade files that was heavier than an example should own long term.
-Current example-specific policy now lives in
-`examples/preact-basic/src/game-storage.ts`.
+Current example-specific policy now lives in `examples/preact-basic/src/game.ts`.
 
 The desired direction is to keep game-specific policy in the example while
 moving reusable persistence, normalization, validation, and migration helpers
@@ -307,7 +306,7 @@ Non-responsibilities:
 ## API Sketch
 
 The preferred API shape is store-object factories. The example should be able to
-centralize policy in a future `examples/preact-basic/src/game-storage.ts`:
+centralize policy in an example-owned setup module:
 
 ```ts
 import {
@@ -460,7 +459,7 @@ Step 2: move preferences storage logic.
 
 - Add preference types, defaults, normalization, and localStorage store helpers.
 - Keep the example preferences facade as a thin wrapper at first. It was later
-  removed once `src/game-storage.ts` became the only example storage entrypoint.
+  removed once a single example storage entrypoint replaced them.
 - Preserve `PREFERENCES_STORAGE_KEY`.
 - Preserve current defaults unless the example explicitly overrides package
   defaults.
@@ -495,7 +494,7 @@ Step 4: move save-storage logic last.
 
 Step 5: reduce `examples/preact-basic` to policy wiring.
 
-- Introduce `examples/preact-basic/src/game-storage.ts`.
+- Introduce an example-owned storage setup module.
 - Bind storage keys, project identity, defaults, and slot definitions there.
 - Remove heavy generic parsing/normalization/migration code from example files
   only after equivalent package tests exist.

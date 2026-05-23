@@ -44,7 +44,7 @@ from message content and all key generation is isolated in
 Backlog and Read Tracking remain separate:
 
 - `message-history.ts` stores display history for the Backlog UI.
-- `game-storage.ts` provides read key helpers and read checks.
+- `game.ts` provides read key helpers and read checks.
 
 They may be unified later if save data, source identity, or Skip Mode needs a
 shared model.

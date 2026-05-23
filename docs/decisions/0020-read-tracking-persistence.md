@@ -82,4 +82,4 @@ project storage policy, or a package-level Read Tracking hook.
 - `docs/decisions/0016-read-tracking-mvp.md`
 - `docs/decisions/0017-skip-mode-mvp.md`
 - `docs/plans/v0.11-read-tracking-persistence.md`
-- `examples/preact-basic/src/game-storage.ts`
+- `examples/preact-basic/src/game.ts`
