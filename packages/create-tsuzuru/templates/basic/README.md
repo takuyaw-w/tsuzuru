@@ -37,7 +37,7 @@ pnpm build
 
 - `src/game-storage.ts`
   settings や将来の save/load で使う storage 設定をまとめています。
-  storage namespace は `projectIdentity.id` から作られます。slot 数を変える場合は `slots` を変更してください。
+  slot 数を変える場合は `slots` を変更してください。
 
 ## シナリオを書く
 

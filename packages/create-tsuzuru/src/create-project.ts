@@ -4,7 +4,7 @@ import { getTemplateDir } from "./template.js";
 
 const PROJECT_NAME_PLACEHOLDER = "{{projectName}}";
 
-const PROJECT_NAME_TEMPLATE_FILES = ["package.json", "tsuzuru.config.ts"] as const;
+const PROJECT_NAME_TEMPLATE_FILES = ["package.json", "README.md", "tsuzuru.config.ts"] as const;
 
 export interface CreateProjectOptions {
   readonly projectName: string;

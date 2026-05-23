@@ -49,6 +49,19 @@ describe("standard game storage preset", () => {
     });
   });
 
+  it("uses the project id as the default storage prefix", () => {
+    const preset = createStandardGameStorage({
+      project,
+      storage: createMemoryStorage(),
+    });
+
+    expect(preset.keys).toEqual({
+      preferences: "tsuzuru:tsuzuru.example.preact-basic:preferences:v1",
+      readTracking: "tsuzuru:tsuzuru.example.preact-basic:read-tracking:v1",
+      saves: "tsuzuru:tsuzuru.example.preact-basic:saves:v1",
+    });
+  });
+
   it("prefers explicit storage key overrides", () => {
     const preset = createStandardGameStorage({
       project,

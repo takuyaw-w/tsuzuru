@@ -44,7 +44,7 @@ export interface CreateStandardGameStorageSavesOptions<TSaveData> {
 
 export interface CreateStandardGameStorageOptions<TSaveData = never> {
   readonly project: StandardGameStorageProject;
-  readonly storagePrefix: string;
+  readonly storagePrefix?: string;
   readonly slots?: number | readonly StandardSaveSlotDefinition[];
   readonly preferences?: CreateStandardGameStoragePreferencesOptions;
   readonly readTracking?: CreateStandardGameStorageReadTrackingOptions;
@@ -116,7 +116,10 @@ export function createStandardGameStorage<TSaveData = never>(
 }
 
 function createStorageKeys<TSaveData>(options: CreateStandardGameStorageOptions<TSaveData>): StandardGameStorageKeys {
-  const storagePrefix = validateNonEmptyString(options.storagePrefix, "storagePrefix");
+  const storagePrefix =
+    options.storagePrefix === undefined
+      ? `tsuzuru:${options.project.id}`
+      : validateNonEmptyString(options.storagePrefix, "storagePrefix");
   return {
     preferences:
       options.preferences?.storageKey === undefined

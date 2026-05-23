@@ -42,11 +42,12 @@ Available APIs:
 - `createLocalStorageSaveSlotStore`
 
 The creator-facing `createStandardGameStorage` API generates conventional
-storage keys from a `storagePrefix`, creates preferences and read tracking
-stores, generates default save slot definitions, and creates a save slot store
-when caller-owned save parsing hooks or a standard runtime save adapter are
-provided. Example-specific legacy save migration and runtime restore policy stay
-in the application.
+storage keys from the project id by default, creates preferences and read
+tracking stores, generates default save slot definitions, and creates a save
+slot store when caller-owned save parsing hooks or a standard runtime save
+adapter are provided. Applications can still pass `storagePrefix` when they
+need an explicit namespace. Example-specific legacy save migration and runtime
+restore policy stay in the application.
 
 Current non-goals:
 

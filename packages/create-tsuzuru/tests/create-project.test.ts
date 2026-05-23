@@ -113,6 +113,8 @@ describe("createProject", () => {
     await expect(access(join(root, "my-game", "src", "preferences.ts"))).rejects.toThrow();
     await expect(access(join(root, "my-game", "src", "read-tracking.ts"))).rejects.toThrow();
     await expect(access(join(root, "my-game", "src", "save-storage.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "save-migrations.ts"))).rejects.toThrow();
+    await expect(access(join(root, "my-game", "src", "storage-keys.ts"))).rejects.toThrow();
     expect(appSource).toContain('import scenario from "../scenario/main.tzr"');
     expect(appSource).toContain("<TitleScreen");
     expect(appSource).toContain("<GameRoot scenario={scenario} />");
@@ -121,10 +123,10 @@ describe("createProject", () => {
     expect(appSource).not.toContain("parseTzr");
     expect(appSource).not.toContain("compileTzrProject");
     expect(gameStorageSource).toContain('import { createStandardGameStorage } from "@tsuzuru/standard-game-storage"');
-    expect(gameStorageSource).toContain("storagePrefix: `tsuzuru:");
-    expect(gameStorageSource).toContain("projectIdentity.id}`");
+    expect(gameStorageSource).toContain("project: projectIdentity");
     expect(gameStorageSource).toContain("slots: 3");
     expect(gameStorageSource).not.toContain("{{projectName}}");
+    expect(gameStorageSource).not.toContain("storagePrefix");
     expect(gameStorageSource).not.toContain("@tsuzuru/standard-game-storage/src");
     expect(gameStorageSource).not.toContain("localStorage");
     expect(gameStorageSource).not.toContain("RuntimeSave");
@@ -138,6 +140,8 @@ describe("createProject", () => {
     expect(readmeSource).not.toContain("scenario.ts");
     expect(readmeSource).not.toContain("parseTzr");
     expect(readmeSource).not.toContain("compileTzr");
+    expect(readmeSource).not.toContain("{{projectName}}");
+    expect(readmeSource).toContain("# my-game");
     expect(readmeSource).toContain("src/game-storage.ts");
     expect(tsuzuruConfigSource).toContain('id: "my-game"');
     expect(tsuzuruConfigSource).toContain("project: projectIdentity");
