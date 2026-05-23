@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
-import { game } from "./game.js";
+import scenario from "../scenario/main.tzr";
+import { assets } from "./assets.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
 import { GameRoot } from "./ui/GameRoot.js";
 
@@ -18,5 +19,5 @@ export function App() {
     );
   }
 
-  return <GameRoot game={game} />;
+  return <GameRoot scenario={scenario} assets={assets} />;
 }

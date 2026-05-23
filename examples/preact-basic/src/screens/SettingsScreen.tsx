@@ -1,13 +1,23 @@
-import type { ExamplePreferences, TextSpeedCharactersPerSecond } from "../game.js";
-import { TEXT_SPEED_OPTIONS } from "../game.js";
-
 interface SettingsScreenProps {
-  readonly preferences: ExamplePreferences;
-  readonly onChangePreferences: (preferences: ExamplePreferences) => void;
+  readonly preferences: SettingsPreferences;
+  readonly textSpeedOptions: readonly TextSpeedCharactersPerSecond[];
+  readonly onChangePreferences: (preferences: SettingsPreferences) => void;
   readonly onBack: () => void;
 }
 
-export function SettingsScreen({ preferences, onChangePreferences, onBack }: SettingsScreenProps) {
+interface SettingsPreferences {
+  readonly textRevealEnabled: boolean;
+  readonly textSpeedCharactersPerSecond: TextSpeedCharactersPerSecond;
+  readonly textSoundEnabled: boolean;
+  readonly textSoundVolume: number;
+  readonly bgmVolume: number;
+  readonly seVolume: number;
+  readonly voiceVolume: number;
+}
+
+type TextSpeedCharactersPerSecond = 30 | 60 | 120;
+
+export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferences, onBack }: SettingsScreenProps) {
   return (
     <section className="screen" aria-label="Settings">
       <div className="screen__content screen__content--panel">
@@ -38,11 +48,14 @@ export function SettingsScreen({ preferences, onChangePreferences, onBack }: Set
               onChange={(event) => {
                 onChangePreferences({
                   ...preferences,
-                  textSpeedCharactersPerSecond: parseTextSpeedCharactersPerSecond(event.currentTarget.value),
+                  textSpeedCharactersPerSecond: parseTextSpeedCharactersPerSecond(
+                    event.currentTarget.value,
+                    textSpeedOptions,
+                  ),
                 });
               }}
             >
-              {TEXT_SPEED_OPTIONS.map((value) => (
+              {textSpeedOptions.map((value) => (
                 <option key={value} value={value}>
                   {formatTextSpeedLabel(value)}
                 </option>
@@ -141,9 +154,12 @@ function VolumePreferenceField({ label, value, onChange }: VolumePreferenceField
   );
 }
 
-function parseTextSpeedCharactersPerSecond(value: string): TextSpeedCharactersPerSecond {
+function parseTextSpeedCharactersPerSecond(
+  value: string,
+  textSpeedOptions: readonly TextSpeedCharactersPerSecond[],
+): TextSpeedCharactersPerSecond {
   const parsedValue = Number(value);
-  return TEXT_SPEED_OPTIONS.includes(parsedValue as TextSpeedCharactersPerSecond)
+  return textSpeedOptions.includes(parsedValue as TextSpeedCharactersPerSecond)
     ? (parsedValue as TextSpeedCharactersPerSecond)
     : 60;
 }

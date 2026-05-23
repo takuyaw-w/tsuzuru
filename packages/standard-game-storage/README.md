@@ -10,6 +10,7 @@ validation caller-owned.
 Available APIs:
 
 - `createStandardGameStorage`
+- `createStandardGameStorageFromConfig`
 - `StandardGameStoragePreset`
 - `CreateStandardGameStorageOptions`
 - `StandardGamePreferences`
@@ -29,6 +30,8 @@ Available APIs:
 - `parseReadTrackingStorageData`
 - `createLocalStorageReadTrackingStore`
 - `createStandardRuntimeSaveAdapter`
+- `StandardRuntimeSavePayload`
+- `isStandardRuntimeSavePayload`
 - `StandardRuntimeSaveAdapter`
 - `StandardRuntimeSaveData`
 - `StandardRetainedMessageEvent`
@@ -48,6 +51,11 @@ slot store when caller-owned save parsing hooks or a standard runtime save
 adapter are provided. Applications can still pass `storagePrefix` when they
 need an explicit namespace. Example-specific legacy save migration and runtime
 restore policy stay in the application.
+
+`createStandardGameStorageFromConfig` reads the declarative `storage` block from
+`tsuzuru.config.ts` and delegates to the same low-level storage factories. It
+does not put `localStorage`, parser functions, or runtime objects into the
+config file.
 
 Current non-goals:
 

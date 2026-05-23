@@ -4,6 +4,7 @@ export const STANDARD_GAME_STORAGE_PLANNED_AREAS = ["preferences", "read-trackin
 
 export type StandardGameStoragePlannedArea = (typeof STANDARD_GAME_STORAGE_PLANNED_AREAS)[number];
 
+export * from "./from-config.js";
 export * from "./preferences.js";
 export * from "./preset.js";
 export * from "./read-tracking.js";

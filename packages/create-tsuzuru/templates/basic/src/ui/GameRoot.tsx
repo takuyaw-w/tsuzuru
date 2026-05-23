@@ -1,16 +1,17 @@
-import { TsuzuruGame } from "@tsuzuru/standard-ui-preact";
-import type { game as starterGame } from "../game.js";
+import type { CompiledTzrDocument } from "@tsuzuru/core";
+import { TsuzuruGame, type TsuzuruGameAssets } from "@tsuzuru/standard-ui-preact";
 
 interface GameRootProps {
-  readonly game: typeof starterGame;
+  readonly scenario: CompiledTzrDocument;
+  readonly assets: TsuzuruGameAssets;
 }
 
-export function GameRoot({ game }: GameRootProps) {
+export function GameRoot({ scenario, assets }: GameRootProps) {
   return (
     <main className="starter-app starter-game-root">
       <TsuzuruGame
-        scenario={game.scenario}
-        assets={game.assets}
+        scenario={scenario}
+        assets={assets}
         className="starter-game"
         viewport={{ aspectRatio: "16:9", maxWidth: "min(100vw, calc(100dvh * 16 / 9))" }}
         advanceHint="クリックで進む"

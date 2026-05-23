@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defineTsuzuruConfig, type TsuzuruConfigPlugin } from "../src/index.js";
+import { defineTsuzuruConfig, type TsuzuruConfigPlugin, type TsuzuruStorageConfig } from "../src/index.js";
 
 describe("defineTsuzuruConfig", () => {
   it("returns the provided config object", () => {
@@ -14,7 +14,21 @@ describe("defineTsuzuruConfig", () => {
         files: ["scenario/**/*.tzr"],
       },
       plugins: [plugin],
-    };
+      storage: {
+        kind: "standard",
+        enabled: true,
+        prefix: "tsuzuru:config-test",
+        slots: 3,
+        preferences: {
+          defaults: {
+            textRevealEnabled: true,
+            textSpeedCharactersPerSecond: 60,
+          },
+          textSpeedOptions: [30, 60, 120],
+        },
+        saves: "standard-runtime",
+      },
+    } as const;
 
     expect(defineTsuzuruConfig(config)).toBe(config);
   });
@@ -30,6 +44,16 @@ describe("defineTsuzuruConfig", () => {
         files: ["scenario/**/*.tzr"] as const,
       },
       plugins: [{ name: "std-audio", createInitialState: () => ({}) }],
+      storage: {
+        slots: [
+          { id: "slot-1", label: "Slot 1" },
+          { id: "slot-2", label: "Slot 2" },
+        ],
+        saves: {
+          kind: "standard-runtime",
+          key: "custom:saves",
+        },
+      },
     });
 
     const projectId: string = config.project.id;
@@ -37,11 +61,22 @@ describe("defineTsuzuruConfig", () => {
     const entry: string = config.scenario.entry;
     const files: readonly string[] = config.scenario.files;
     const plugins: readonly TsuzuruConfigPlugin[] = config.plugins;
+    const storage: TsuzuruStorageConfig | false | undefined = config.storage;
 
     expect(projectId).toBe("tsuzuru.example.config-test");
     expect(projectVersion).toBe("1");
     expect(entry).toBe("scenario/main.tzr");
     expect(files).toEqual(["scenario/**/*.tzr"]);
     expect(plugins[0]?.name).toBe("std-audio");
+    expect(storage).toEqual({
+      slots: [
+        { id: "slot-1", label: "Slot 1" },
+        { id: "slot-2", label: "Slot 2" },
+      ],
+      saves: {
+        kind: "standard-runtime",
+        key: "custom:saves",
+      },
+    });
   });
 });

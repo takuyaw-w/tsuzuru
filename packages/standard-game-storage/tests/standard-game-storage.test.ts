@@ -1,11 +1,16 @@
+import type { RuntimeSnapshot } from "@tsuzuru/core";
 import { describe, expect, it } from "vitest";
 import {
   createInitialReadTrackingState,
   createStandardGameStorage,
+  createStandardGameStorageFromConfig,
   DEFAULT_STANDARD_GAME_PREFERENCES,
+  type StandardGameStorageFromConfigResult,
   type StandardGamePreferences,
   type StandardGameStorageLike,
   type StandardReadTrackingProject,
+  type StandardRuntimeGameStoragePreset,
+  type StandardRuntimeSavePayload,
   type StandardSaveProject,
   type StandardSaveSlotDefinition,
   type StandardSaveSlotParseContext,
@@ -298,6 +303,127 @@ describe("standard game storage preset", () => {
       }),
     ).toThrow("slot label must be a non-empty string.");
   });
+
+  it("creates standard storage from declarative config", () => {
+    const storage = createMemoryStorage();
+    const preset = requireRuntimeStorage(
+      createStandardGameStorageFromConfig(
+        {
+          project,
+          storage: {
+            enabled: true,
+            prefix: "tsuzuru:from-config",
+            slots: 2,
+            preferences: {
+              defaults: {
+                textSpeedCharactersPerSecond: 30,
+              },
+              textSpeedOptions: [30, 60],
+            },
+            saves: "standard-runtime",
+          },
+        },
+        { storage },
+      ),
+    );
+    const runtime = createRuntimePayload(1);
+    const saveData = preset.runtimeSaveAdapter.createData(runtime, null, "2026-01-01T00:00:00.000Z");
+
+    expect(preset.keys).toEqual({
+      preferences: "tsuzuru:from-config:preferences:v1",
+      readTracking: "tsuzuru:from-config:read-tracking:v1",
+      saves: "tsuzuru:from-config:saves:v1",
+    });
+    expect(preset.slotDefinitions).toEqual([
+      { id: "slot-1", label: "Slot 1" },
+      { id: "slot-2", label: "Slot 2" },
+    ]);
+    expect(preset.preferences.load().textSpeedCharactersPerSecond).toBe(30);
+    expect(preset.saves.saveToSlot("slot-1", saveData)).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt: "2026-01-01T00:00:00.000Z",
+        data: saveData,
+      },
+    ]);
+  });
+
+  it("uses config defaults and supports storage opt-out", () => {
+    const preset = createStandardGameStorageFromConfig({
+      project,
+      storage: {},
+    });
+
+    expect(preset?.keys).toEqual({
+      preferences: "tsuzuru:tsuzuru.example.preact-basic:preferences:v1",
+      readTracking: "tsuzuru:tsuzuru.example.preact-basic:read-tracking:v1",
+      saves: "tsuzuru:tsuzuru.example.preact-basic:saves:v1",
+    });
+    expect(preset?.slotDefinitions).toEqual([
+      { id: "slot-1", label: "Slot 1" },
+      { id: "slot-2", label: "Slot 2" },
+      { id: "slot-3", label: "Slot 3" },
+    ]);
+    expect(preset?.saves).toBeNull();
+
+    expect(createStandardGameStorageFromConfig({ project, storage: false })).toBeNull();
+    expect(createStandardGameStorageFromConfig({ project, storage: { enabled: false } })).toBeNull();
+  });
+
+  it("accepts explicit key overrides from config", () => {
+    const preset = requireRuntimeStorage(
+      createStandardGameStorageFromConfig(
+        {
+          project,
+          storage: {
+            preferences: { key: "custom:preferences" },
+            readTracking: { key: "custom:read" },
+            saves: { kind: "standard-runtime", key: "custom:saves" },
+          },
+        },
+        { storage: createMemoryStorage() },
+      ),
+    );
+
+    expect(preset.keys).toEqual({
+      preferences: "custom:preferences",
+      readTracking: "custom:read",
+      saves: "custom:saves",
+    });
+  });
+
+  it("rejects invalid config-driven storage options", () => {
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        storage: {},
+      }),
+    ).toThrow("project must be provided");
+    expect(() =>
+      createStandardGameStorageFromConfig({
+        project,
+        storage: { prefix: "" },
+      }),
+    ).toThrow("storage.prefix must be a non-empty string");
+    expect(() =>
+      createStandardGameStorageFromConfig(
+        {
+          project,
+          storage: { saves: "standard-runtime" },
+        },
+        { runtimeSave: { isRuntimeData } },
+      ),
+    ).not.toThrow();
+    expect(() =>
+      createStandardGameStorageFromConfig(
+        {
+          project,
+          storage: {},
+        },
+        { runtimeSave: { isRuntimeData } },
+      ),
+    ).toThrow("options.runtimeSave requires storage.saves");
+  });
 });
 
 function parseData(value: unknown, context: StandardSaveSlotParseContext): TestSaveData | null {
@@ -334,6 +460,15 @@ function requireSaves<TSaveData>(saves: StandardSaveSlotStore<TSaveData> | null)
   return saves;
 }
 
+function requireRuntimeStorage(
+  preset: StandardGameStorageFromConfigResult,
+): StandardRuntimeGameStoragePreset<StandardRuntimeSavePayload> {
+  if (preset === null || !("runtimeSaveAdapter" in preset)) {
+    throw new Error("Expected runtime save storage preset.");
+  }
+  return preset;
+}
+
 function createData(savedAt: string, value: string, dataProject: StandardSaveProject = project): TestSaveData {
   return {
     version: 1,
@@ -352,6 +487,41 @@ function createMemoryStorage(initialValues: readonly (readonly [string, string])
     setItem(key, value) {
       values.set(key, value);
     },
+  };
+}
+
+function isRuntimeData(value: unknown): value is StandardRuntimeSavePayload {
+  return (
+    isObjectRecord(value) &&
+    value.version === 2 &&
+    isObjectRecord(value.snapshot) &&
+    value.snapshot.version === 2 &&
+    isObjectRecord(value.snapshot.pointer)
+  );
+}
+
+function createRuntimePayload(instructionIndex: number): StandardRuntimeSavePayload {
+  return {
+    version: 2,
+    snapshot: createSnapshot(instructionIndex),
+    event: null,
+  };
+}
+
+function createSnapshot(instructionIndex: number): RuntimeSnapshot {
+  return {
+    version: 2,
+    pointer: {
+      filePath: "scenario/main.tzr",
+      instructionIndex,
+    },
+    variables: {},
+    plugins: {},
+    branchFrames: [],
+    pendingChoice: null,
+    pendingWait: null,
+    isStopped: false,
+    isWaitingForClick: false,
   };
 }
 

@@ -101,11 +101,148 @@ function validateTsuzuruConfig(value: unknown): TsuzuruConfig {
     }
   }
 
+  if (value.storage !== undefined) {
+    validateStorageConfig(value.storage, errors);
+  }
+
   if (errors.length > 0) {
     throw invalidConfig(errors);
   }
 
   return value as unknown as TsuzuruConfig;
+}
+
+function validateStorageConfig(value: unknown, errors: string[]): void {
+  if (value === false) {
+    return;
+  }
+  if (!isRecord(value)) {
+    errors.push("storage must be an object or false when provided.");
+    return;
+  }
+
+  if (value.kind !== undefined && value.kind !== "standard") {
+    errors.push('storage.kind must be "standard" when provided.');
+  }
+  if (value.enabled !== undefined && typeof value.enabled !== "boolean") {
+    errors.push("storage.enabled must be a boolean when provided.");
+  }
+  if (value.prefix !== undefined && !isNonEmptyString(value.prefix)) {
+    errors.push("storage.prefix must be a non-empty string when provided.");
+  }
+  if (value.slots !== undefined) {
+    validateStorageSlots(value.slots, errors);
+  }
+  if (value.preferences !== undefined) {
+    validateStoragePreferences(value.preferences, errors);
+  }
+  if (value.readTracking !== undefined) {
+    validateStorageReadTracking(value.readTracking, errors);
+  }
+  if (value.saves !== undefined) {
+    validateStorageSaves(value.saves, errors);
+  }
+}
+
+function validateStorageSlots(value: unknown, errors: string[]): void {
+  if (typeof value === "number") {
+    if (!Number.isInteger(value) || value <= 0) {
+      errors.push("storage.slots must be a positive integer when it is a number.");
+    }
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    errors.push("storage.slots must be a positive integer or an array.");
+    return;
+  }
+
+  const seenIds = new Set<string>();
+  for (const [index, slot] of value.entries()) {
+    if (!isRecord(slot)) {
+      errors.push(`storage.slots[${index}] must be an object.`);
+      continue;
+    }
+    if (!isNonEmptyString(slot.id)) {
+      errors.push(`storage.slots[${index}].id must be a non-empty string.`);
+    } else if (seenIds.has(slot.id)) {
+      errors.push(`storage.slots[${index}].id must be unique.`);
+    } else {
+      seenIds.add(slot.id);
+    }
+    if (!isNonEmptyString(slot.label)) {
+      errors.push(`storage.slots[${index}].label must be a non-empty string.`);
+    }
+  }
+}
+
+function validateStoragePreferences(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("storage.preferences must be an object when provided.");
+    return;
+  }
+  if (value.key !== undefined && !isNonEmptyString(value.key)) {
+    errors.push("storage.preferences.key must be a non-empty string when provided.");
+  }
+  if (value.textSpeedOptions !== undefined) {
+    if (!Array.isArray(value.textSpeedOptions) || value.textSpeedOptions.length === 0) {
+      errors.push("storage.preferences.textSpeedOptions must be a non-empty number array when provided.");
+    } else {
+      for (const [index, option] of value.textSpeedOptions.entries()) {
+        if (typeof option !== "number" || !Number.isFinite(option) || option <= 0) {
+          errors.push(`storage.preferences.textSpeedOptions[${index}] must be a positive finite number.`);
+        }
+      }
+    }
+  }
+  if (value.defaults !== undefined) {
+    validateStoragePreferenceDefaults(value.defaults, errors);
+  }
+}
+
+function validateStoragePreferenceDefaults(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("storage.preferences.defaults must be an object when provided.");
+    return;
+  }
+
+  for (const key of ["textRevealEnabled", "textSoundEnabled"]) {
+    if (value[key] !== undefined && typeof value[key] !== "boolean") {
+      errors.push(`storage.preferences.defaults.${key} must be a boolean when provided.`);
+    }
+  }
+
+  for (const key of ["textSpeedCharactersPerSecond", "textSoundVolume", "bgmVolume", "seVolume", "voiceVolume"]) {
+    if (value[key] !== undefined && (typeof value[key] !== "number" || !Number.isFinite(value[key]))) {
+      errors.push(`storage.preferences.defaults.${key} must be a finite number when provided.`);
+    }
+  }
+}
+
+function validateStorageReadTracking(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("storage.readTracking must be an object when provided.");
+    return;
+  }
+  if (value.key !== undefined && !isNonEmptyString(value.key)) {
+    errors.push("storage.readTracking.key must be a non-empty string when provided.");
+  }
+}
+
+function validateStorageSaves(value: unknown, errors: string[]): void {
+  if (value === false || value === "standard-runtime") {
+    return;
+  }
+  if (!isRecord(value)) {
+    errors.push('storage.saves must be false, "standard-runtime", or an object when provided.');
+    return;
+  }
+  if (value.kind !== "standard-runtime") {
+    errors.push('storage.saves.kind must be "standard-runtime".');
+  }
+  if (value.key !== undefined && !isNonEmptyString(value.key)) {
+    errors.push("storage.saves.key must be a non-empty string when provided.");
+  }
 }
 
 function invalidConfig(errors: readonly string[]): TsuzuruCliError {

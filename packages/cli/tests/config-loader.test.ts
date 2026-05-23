@@ -31,6 +31,12 @@ describe("loadTsuzuruConfig", () => {
     version: "1",
   },
   plugins: [{ name: "testPlugin" }],
+  storage: {
+    enabled: true,
+    prefix: "tsuzuru:config-loader",
+    slots: 3,
+    saves: "standard-runtime",
+  },
 } as const;
 
 export default config;
@@ -47,6 +53,12 @@ export default config;
     expect(loaded.config.scenario.entry).toBe("scenario/main.tzr");
     expect(loaded.config.scenario.files).toEqual(["scenario/**/*.tzr"]);
     expect(loaded.config.plugins).toEqual([{ name: "testPlugin" }]);
+    expect(loaded.config.storage).toEqual({
+      enabled: true,
+      prefix: "tsuzuru:config-loader",
+      slots: 3,
+      saves: "standard-runtime",
+    });
   });
 
   it("fails when tsuzuru.config.ts is missing", async () => {
@@ -90,5 +102,32 @@ export default config;
     );
 
     await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("project.id must be a non-empty string");
+  });
+
+  it("fails when storage config is invalid", async () => {
+    const root = await createTempProject();
+    await writeFile(
+      join(root, "tsuzuru.config.ts"),
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  storage: {
+    prefix: "",
+    slots: 0,
+    saves: "legacy",
+  },
+};
+`,
+    );
+
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("storage.prefix must be a non-empty string");
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow(
+      "storage.slots must be a positive integer when it is a number",
+    );
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow(
+      'storage.saves must be false, "standard-runtime", or an object',
+    );
   });
 });

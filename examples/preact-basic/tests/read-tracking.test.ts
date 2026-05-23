@@ -9,10 +9,10 @@ import {
   type StandardReadTrackableEvent,
   type StandardReadTrackingState,
 } from "@tsuzuru/standard-game-storage";
-import { game } from "../src/game.js";
+import { gameStorage } from "../src/App.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
-const READ_TRACKING_STORAGE_KEY = game.storage.keys.readTracking;
+const READ_TRACKING_STORAGE_KEY = gameStorage.keys.readTracking;
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
 const PROJECT_VERSION = "1";
@@ -135,18 +135,18 @@ describe("read-tracking", () => {
 
   it("falls back to empty state for invalid JSON and malformed payloads", () => {
     stubReadTrackingStorage("not-json");
-    expect(game.storage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
 
     stubReadTrackingStorage(JSON.stringify({ version: 1, scenario: projectIdentity, readEntryKeys: [123] }));
-    expect(game.storage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
   });
 
   it("falls back to empty state when localStorage is unavailable", () => {
     vi.stubGlobal("window", {});
     const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
 
-    expect(game.storage.readTracking.load()).toEqual(createInitialReadTrackingState());
-    expect(game.storage.readTracking.save(state)).toBe(state);
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.save(state)).toBe(state);
   });
 
   it("falls back without throwing when localStorage access fails", () => {
@@ -161,8 +161,8 @@ describe("read-tracking", () => {
     vi.stubGlobal("window", { localStorage });
     const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
 
-    expect(game.storage.readTracking.load()).toEqual(createInitialReadTrackingState());
-    expect(game.storage.readTracking.save(state)).toBe(state);
+    expect(gameStorage.readTracking.load()).toEqual(createInitialReadTrackingState());
+    expect(gameStorage.readTracking.save(state)).toBe(state);
   });
 
   it("round trips saved read tracking state through localStorage", () => {
@@ -170,8 +170,8 @@ describe("read-tracking", () => {
     const key = createReadEntryKey(dialogueEvent);
     const state: StandardReadTrackingState = markRead(createInitialReadTrackingState(), key);
 
-    expect(game.storage.readTracking.save(state)).toBe(state);
-    expect([...game.storage.readTracking.load().readEntryKeys]).toEqual([key]);
+    expect(gameStorage.readTracking.save(state)).toBe(state);
+    expect([...gameStorage.readTracking.load().readEntryKeys]).toEqual([key]);
   });
 
   it("deduplicates storage payload keys when restoring", () => {

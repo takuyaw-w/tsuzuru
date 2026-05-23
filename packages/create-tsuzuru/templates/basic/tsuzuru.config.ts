@@ -14,5 +14,10 @@ export default defineTsuzuruConfig({
     entry: "scenario/main.tzr",
     files: ["scenario/main.tzr"],
   },
+  storage: {
+    enabled: true,
+    slots: 3,
+    saves: "standard-runtime",
+  },
   plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdEffectPlugin()],
 });

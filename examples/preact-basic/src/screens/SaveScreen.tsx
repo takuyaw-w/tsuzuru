@@ -1,19 +1,28 @@
-import { type ExampleSaveSlot, SAVE_SLOT_DEFINITIONS } from "../game.js";
-
 interface SaveScreenProps {
-  readonly slots: readonly ExampleSaveSlot[];
+  readonly slots: readonly SaveScreenSlot[];
+  readonly slotDefinitions: readonly SaveSlotDefinition[];
   readonly onSave: (slotId: string) => void;
   readonly onDelete: (slotId: string) => void;
   readonly onBack: () => void;
 }
 
-export function SaveScreen({ slots, onSave, onDelete, onBack }: SaveScreenProps) {
+interface SaveScreenSlot {
+  readonly id: string;
+  readonly savedAt: string;
+}
+
+interface SaveSlotDefinition {
+  readonly id: string;
+  readonly label: string;
+}
+
+export function SaveScreen({ slots, slotDefinitions, onSave, onDelete, onBack }: SaveScreenProps) {
   return (
     <section className="screen" aria-label="Save">
       <div className="screen__content screen__content--panel">
         <h1 className="screen__heading">Save</h1>
         <div className="save-slots">
-          {SAVE_SLOT_DEFINITIONS.map((definition) => {
+          {slotDefinitions.map((definition) => {
             const slot = slots.find((candidate) => candidate.id === definition.id) ?? null;
             return (
               <section key={definition.id} className="save-slot" aria-label={definition.label}>

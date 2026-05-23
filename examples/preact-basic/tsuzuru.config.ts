@@ -18,6 +18,24 @@ export default defineTsuzuruConfig({
     entry: "scenario/main.tzr",
     files: ["scenario/**/*.tzr"],
   },
+  storage: {
+    enabled: true,
+    prefix: "tsuzuru:example-preact-basic",
+    slots: 3,
+    preferences: {
+      defaults: {
+        textRevealEnabled: true,
+        textSpeedCharactersPerSecond: 60,
+        textSoundEnabled: true,
+        textSoundVolume: 0.55,
+        bgmVolume: 0.6,
+        seVolume: 0.8,
+        voiceVolume: 0.9,
+      },
+      textSpeedOptions: [30, 60, 120],
+    },
+    saves: "standard-runtime",
+  },
   plugins: [
     createStdVisualPlugin(),
     createStdAudioPlugin(),

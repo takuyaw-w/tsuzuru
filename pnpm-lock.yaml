@@ -301,6 +301,9 @@ importers:
 
   packages/standard-game-storage:
     dependencies:
+      '@tsuzuru/config':
+        specifier: workspace:^
+        version: link:../config
       '@tsuzuru/core':
         specifier: workspace:^
         version: link:../core
