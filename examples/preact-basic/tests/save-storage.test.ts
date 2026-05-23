@@ -12,7 +12,7 @@ import {
   SAVE_SLOT_DEFINITIONS,
   SAVE_STORAGE_KEY,
   saveToSlot,
-} from "../src/save-storage.js";
+} from "../src/game-storage.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
@@ -294,6 +294,44 @@ describe("save-storage", () => {
       ]),
     );
     expect(loadSaveSlots()).toEqual([]);
+  });
+
+  it("falls back to in-memory save slot results when localStorage is unavailable", () => {
+    vi.stubGlobal("window", {});
+    const saveData = createExampleSaveData(runtimeSaveData, null, savedAt);
+
+    expect(loadSaveSlots()).toEqual([]);
+    expect(saveToSlot("slot-1", saveData)).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt,
+        data: saveData,
+      },
+    ]);
+  });
+
+  it("falls back without throwing when localStorage access fails", () => {
+    const localStorage: Pick<Storage, "getItem" | "setItem"> = {
+      getItem() {
+        throw new Error("localStorage unavailable");
+      },
+      setItem() {
+        throw new Error("localStorage unavailable");
+      },
+    };
+    vi.stubGlobal("window", { localStorage });
+    const saveData = createExampleSaveData(runtimeSaveData, null, savedAt);
+
+    expect(loadSaveSlots()).toEqual([]);
+    expect(saveToSlot("slot-1", saveData)).toEqual([
+      {
+        id: "slot-1",
+        label: "Slot 1",
+        savedAt,
+        data: saveData,
+      },
+    ]);
   });
 
   it("migrates legacy save data payloads when loading stored slots", () => {

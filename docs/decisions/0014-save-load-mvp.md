@@ -109,13 +109,13 @@ For the current example, the selected storage backend is localStorage.
 
 The MVP lives in `examples/preact-basic`.
 
-`src/save-storage.ts` stores save slots under the example-specific key
+`src/game-storage.ts` stores save slots under the example-specific key
 `tsuzuru:example-preact-basic:saves:v1`. It reads localStorage defensively:
 invalid JSON, old data, unknown slot IDs, and values that fail
 `isRuntimeSaveData()` are ignored instead of crashing the app.
 
-The current example save wrapper is `ExampleSaveData.version: 2`. New saves
-include this scenario identity:
+The current example save wrapper is `ExampleSaveData.version: 3`. New saves
+include a `RuntimeSaveSlot` envelope with this scenario identity:
 
 ```ts
 {
@@ -127,7 +127,8 @@ include this scenario identity:
 When loading slots, `version: 2` payloads must match both the current scenario id
 and scenario version. Mismatched slots are treated as unavailable load slots and
 are not considered by Continue, so `runtime.restoreSaveData()` is not called for
-data from another scenario or scenario version.
+data from another scenario or scenario version. Compatible `version: 2` payloads
+are migrated into the current v3 wrapper.
 
 Older `ExampleSaveData.version: 1` payloads and legacy raw `RuntimeSaveData`
 payloads do not carry scenario identity. The browser localStorage example
@@ -210,4 +211,4 @@ storage policy for Tsuzuru as a whole.
 - `docs/architecture.md`
 - `docs/runtime.md`
 - `examples/preact-basic/README.md`
-- `examples/preact-basic/src/save-storage.ts`
+- `examples/preact-basic/src/game-storage.ts`

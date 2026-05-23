@@ -11,7 +11,7 @@ import {
   type ReadTrackingState,
   saveReadTrackingState,
   serializeReadTrackingState,
-} from "../src/read-tracking.js";
+} from "../src/game-storage.js";
 import { projectIdentity } from "../tsuzuru.config.js";
 
 const PROJECT_ID = "tsuzuru.example.preact-basic";
@@ -128,6 +128,30 @@ describe("read-tracking", () => {
 
     stubReadTrackingStorage(JSON.stringify({ version: 1, scenario: projectIdentity, readEntryKeys: [123] }));
     expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
+  });
+
+  it("falls back to empty state when localStorage is unavailable", () => {
+    vi.stubGlobal("window", {});
+    const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
+
+    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
+    expect(saveReadTrackingState(state)).toBe(state);
+  });
+
+  it("falls back without throwing when localStorage access fails", () => {
+    const localStorage: Pick<Storage, "getItem" | "setItem"> = {
+      getItem() {
+        throw new Error("localStorage unavailable");
+      },
+      setItem() {
+        throw new Error("localStorage unavailable");
+      },
+    };
+    vi.stubGlobal("window", { localStorage });
+    const state = markRead(createInitialReadTrackingState(), createReadEntryKey(dialogueEvent));
+
+    expect(loadReadTrackingState()).toEqual(createInitialReadTrackingState());
+    expect(saveReadTrackingState(state)).toBe(state);
   });
 
   it("round trips saved read tracking state through localStorage", () => {

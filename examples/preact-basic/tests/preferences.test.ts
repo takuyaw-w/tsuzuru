@@ -7,7 +7,7 @@ import {
   PREFERENCES_STORAGE_KEY,
   savePreferences,
   TEXT_SPEED_OPTIONS,
-} from "../src/preferences.js";
+} from "../src/game-storage.js";
 
 const validPreferences = {
   textRevealEnabled: false,
@@ -58,6 +58,33 @@ describe("preferences", () => {
     expect(savePreferences(validPreferences)).toEqual(validPreferences);
     expect(storage.getItem(PREFERENCES_STORAGE_KEY)).toBe(JSON.stringify(validPreferences));
     expect(loadPreferences()).toEqual(validPreferences);
+  });
+
+  it("falls back to defaults when localStorage is unavailable", () => {
+    vi.stubGlobal("localStorage", undefined);
+    vi.stubGlobal("window", {});
+
+    expect(loadPreferences()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
+    expect(savePreferences(validPreferences)).toEqual(validPreferences);
+  });
+
+  it("falls back without throwing when localStorage access fails", () => {
+    const localStorage: Pick<Storage, "getItem" | "setItem" | "removeItem"> = {
+      getItem() {
+        throw new Error("localStorage unavailable");
+      },
+      setItem() {
+        throw new Error("localStorage unavailable");
+      },
+      removeItem() {
+        throw new Error("localStorage unavailable");
+      },
+    };
+    vi.stubGlobal("localStorage", localStorage);
+    vi.stubGlobal("window", { localStorage });
+
+    expect(loadPreferences()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
+    expect(savePreferences(validPreferences)).toEqual(validPreferences);
   });
 });
 

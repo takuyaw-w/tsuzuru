@@ -2,20 +2,19 @@
 
 ## Status
 
-Planning.
+Implemented; historical plan.
 
-This document is a design plan only. It does not add
-`packages/standard-game-storage`, move example code, change storage keys, change
-save data versions, or propagate anything to `create-tsuzuru`.
+`@tsuzuru/standard-game-storage` now exists, and `examples/preact-basic`
+centralizes example storage policy in `src/game-storage.ts`. The former
+preferences, read-tracking, and save-storage facade files were later removed
+after they became re-export-only shims.
 
 ## Motivation
 
-`examples/preact-basic` currently contains storage and compatibility logic that
-is heavier than an example should own long term:
-
-- `examples/preact-basic/src/preferences.ts`
-- `examples/preact-basic/src/read-tracking.ts`
-- `examples/preact-basic/src/save-storage.ts`
+`examples/preact-basic` previously contained storage and compatibility logic in
+separate facade files that was heavier than an example should own long term.
+Current example-specific policy now lives in
+`examples/preact-basic/src/game-storage.ts`.
 
 The desired direction is to keep game-specific policy in the example while
 moving reusable persistence, normalization, validation, and migration helpers
@@ -32,7 +31,7 @@ policy into `@tsuzuru/standard-ui-preact`.
 
 ## Current Responsibilities
 
-### preferences.ts
+### Preferences Facade Before Extraction
 
 Current responsibilities:
 
@@ -86,7 +85,7 @@ Design notes:
 - localStorage must be recoverable: load failures return normalized defaults,
   and save failures return normalized values without crashing.
 
-### read-tracking.ts
+### Read Tracking Facade Before Extraction
 
 Current responsibilities:
 
@@ -159,7 +158,7 @@ Known text-based key limits:
 - A future compiler/runtime message id would be a better long-term identity,
   but that is not part of this package extraction.
 
-### save-storage.ts
+### Save Storage Facade Before Extraction
 
 Current responsibilities:
 
@@ -460,7 +459,8 @@ Step 1: add package skeleton.
 Step 2: move preferences storage logic.
 
 - Add preference types, defaults, normalization, and localStorage store helpers.
-- Keep `examples/preact-basic/src/preferences.ts` as a thin wrapper at first.
+- Keep the example preferences facade as a thin wrapper at first. It was later
+  removed once `src/game-storage.ts` became the only example storage entrypoint.
 - Preserve `PREFERENCES_STORAGE_KEY`.
 - Preserve current defaults unless the example explicitly overrides package
   defaults.
@@ -560,7 +560,8 @@ Test coupling:
 ## Non-goals
 
 - Create `packages/standard-game-storage` in this task.
-- Move `preferences.ts`, `read-tracking.ts`, or `save-storage.ts` in this task.
+- Remove the former example facade files in the initial package extraction
+  task.
 - Change save data version.
 - Change storage keys.
 - Change `projectIdentity`.
