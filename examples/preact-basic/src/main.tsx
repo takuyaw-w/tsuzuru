@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { App } from "./App.js";
 import "@tsuzuru/standard-ui-preact/style.css";
-import "./style.css";
+import "./example.css";
 
 const root = document.querySelector("#app");
 if (root === null) {
