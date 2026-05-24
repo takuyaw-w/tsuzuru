@@ -148,6 +148,7 @@ test("runtime overlay behaves as a modal dialog for keyboard advance", async ({ 
 
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
   const settingsDialog = page.getByRole("dialog", { name: "Settings screen" });
+  const settingsButton = runtimeMenu.getByRole("button", { name: "Settings" });
   await expect(settingsDialog).toBeVisible();
   await settingsDialog.focus();
 
@@ -156,11 +157,19 @@ test("runtime overlay behaves as a modal dialog for keyboard advance", async ({ 
   await expect(messageWindow).toContainText("夜の旧校舎");
   await expect(messageWindow).not.toContainText("その隣で");
 
+  await settingsDialog.click({ position: { x: 4, y: 4 } });
+  await expect(messageWindow).toContainText("夜の旧校舎");
+  await expect(messageWindow).not.toContainText("その隣で");
+
+  await page.keyboard.press("Shift+Tab");
+  await expect(settingsDialog.getByRole("button", { name: "Back", exact: true })).toBeFocused();
+
   await page.keyboard.press("Tab");
   await expect(runtimeMenu.getByRole("button", { name: "Save" })).not.toBeFocused();
 
-  await settingsDialog.getByRole("button", { name: "Back", exact: true }).click();
+  await page.keyboard.press("Escape");
   await expect(settingsDialog).toHaveCount(0);
+  await expect(settingsButton).toBeFocused();
   await expect(messageWindow).toContainText("夜の旧校舎");
 });
 

@@ -386,6 +386,10 @@ function RuntimeApp({
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const overlayPreviousFocusRef = useRef<Element | null>(null);
+  const openOverlay = useCallback((nextOverlay: Exclude<RuntimeOverlay, null>) => {
+    overlayPreviousFocusRef.current = globalThis.document.activeElement;
+    setOverlay(nextOverlay);
+  }, []);
   const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => loadReadTrackingState());
@@ -682,7 +686,7 @@ function RuntimeApp({
       return;
     }
 
-    overlayPreviousFocusRef.current = globalThis.document.activeElement;
+    overlayPreviousFocusRef.current ??= globalThis.document.activeElement;
     const animationFrame = window.requestAnimationFrame(() => {
       const focusTarget = getFirstFocusableElement(overlayRef.current) ?? overlayRef.current;
       focusTarget?.focus();
@@ -735,10 +739,10 @@ function RuntimeApp({
               skipModeEnabled={skipModeEnabled}
               onToggleAutoMode={autoMode.toggle}
               onToggleSkipMode={() => setSkipModeEnabled((current) => !current)}
-              onSave={() => setOverlay("save")}
-              onLoad={() => setOverlay("load")}
-              onBacklog={() => setOverlay("backlog")}
-              onSettings={() => setOverlay("settings")}
+              onSave={() => openOverlay("save")}
+              onLoad={() => openOverlay("load")}
+              onBacklog={() => openOverlay("backlog")}
+              onSettings={() => openOverlay("settings")}
               onTitle={onTitle}
             />
             <div className="tzr-tsuzuru-game__message-layer">
@@ -903,14 +907,21 @@ function trapFocusInOverlay(root: HTMLElement, event: Pick<KeyboardEvent, "preve
 
   const firstElement = focusableElements[0];
   const lastElement = focusableElements[focusableElements.length - 1];
+  const activeElement = globalThis.document.activeElement;
 
-  if (event.shiftKey && globalThis.document.activeElement === firstElement) {
+  if (activeElement === root || !(activeElement instanceof Node) || !root.contains(activeElement)) {
+    event.preventDefault();
+    (event.shiftKey ? lastElement : firstElement)?.focus();
+    return;
+  }
+
+  if (event.shiftKey && activeElement === firstElement) {
     event.preventDefault();
     lastElement?.focus();
     return;
   }
 
-  if (!event.shiftKey && globalThis.document.activeElement === lastElement) {
+  if (!event.shiftKey && activeElement === lastElement) {
     event.preventDefault();
     firstElement?.focus();
   }
