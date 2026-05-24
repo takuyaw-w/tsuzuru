@@ -30,6 +30,9 @@ export default defineConfig({
 By default, `tsuzuru()` looks for `tsuzuru.config.ts` from the Vite root and
 uses `config.plugins` as compile-time plugins. This keeps Vite builds and
 `tsuzuru check` on the same plugin source of truth.
+See
+[`ADR 0034`](../decisions/0034-tsuzuru-config-compile-plugin-source.md)
+for the source-of-truth decision.
 
 Use an explicit `plugins` option only when Vite needs to override the project
 config. Explicit plugins take priority over `tsuzuru.config.ts`, including an

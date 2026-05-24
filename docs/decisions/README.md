@@ -47,6 +47,7 @@ reintroduced.
 | 0018 | [Retained Message Save / Load](0018-retained-message-save-load.md) | Accepted |
 | 0019 | [Audio Playback MVP](0019-audio-playback-mvp.md) | Accepted |
 | 0020 | [Read Tracking Persistence](0020-read-tracking-persistence.md) | Accepted |
+| 0021 | [HTML Package](0021-html-package.md) | Superseded |
 | 0022 | [Standard Text Sound Plugin](0022-std-text-sound-plugin.md) | Accepted |
 | 0023 | [Standard Effect Plugin](0023-std-effect-plugin.md) | Accepted |
 | 0024 | [Standard Camera Plugin](0024-std-camera-plugin.md) | Accepted |
@@ -58,6 +59,8 @@ reintroduced.
 | 0030 | [Runtime Save Slot Envelope](0030-runtime-save-slot-envelope.md) | Accepted |
 | 0031 | [v1.0 Save / Load Compatibility Promise](0031-v1-save-load-compatibility-promise.md) | Accepted |
 | 0032 | [Preact-Based Official UI Stack](0032-preact-based-official-ui-stack.md) | Accepted |
+| 0033 | [Treat background transitions as std-visual metadata](0033-std-visual-background-transitions.md) | Accepted |
+| 0034 | [Use tsuzuru.config.ts as the compile-time plugin source of truth](0034-tsuzuru-config-compile-plugin-source.md) | Accepted |
 
 ## Reading Order
 
