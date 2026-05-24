@@ -72,10 +72,11 @@ directives during Vite dev/build. Asset IDs and their example-side presentation
 mapping live in `assets.ts`, including visual asset URLs and audio URLs. Title,
 load, settings, backlog, and gallery UI belong in `src/screens`.
 
-`tsuzuru.config.ts` is consumed by the first CLI command, `tsuzuru check`.
-The command reads `scenario.entry`, expands `scenario.files`, loads the matched
-`.tzr` files, and validates the scenario project. Vite dev/build use the same
-creator-facing entry file through `@tsuzuru/vite-plugin`.
+`tsuzuru.config.ts` is consumed by both `tsuzuru check` and
+`@tsuzuru/vite-plugin`. The CLI reads `scenario.entry`, expands
+`scenario.files`, loads the matched `.tzr` files, and validates the scenario
+project. Vite dev/build use `config.plugins` for compile-time command
+validation while importing the same creator-facing entry file.
 The same config exports `projectIdentity`, which this example uses for save and
 read-tracking compatibility checks. Keep its `id` and `version` stable if you
 want existing local saves to remain loadable.

@@ -1,8 +1,14 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { loadOptionalTsuzuruConfig, loadTsuzuruConfig, resolveTsuzuruConfigPath } from "../src/node.js";
+import {
+  loadOptionalTsuzuruConfig,
+  loadTsuzuruConfig,
+  resolveTsuzuruConfigPath,
+  TsuzuruConfigLoadError,
+  validateTsuzuruConfig,
+} from "../src/node.js";
 
 const tempRoots: string[] = [];
 
@@ -81,15 +87,44 @@ export default config;
     expect(loaded.config.scenario.entry).toBe("scenario/main.tzr");
   });
 
+  it("loads an absolute config file", async () => {
+    const root = await createTempProject();
+    const configPath = join(root, "config", "custom.config.ts");
+    await mkdir(join(root, "config"), { recursive: true });
+    await writeFile(
+      configPath,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+};
+`,
+    );
+
+    const loaded = await loadTsuzuruConfig({ cwd: root, configFile: configPath });
+
+    expect(loaded.configPath).toBe(configPath);
+    expect(loaded.configRoot).toBe(root);
+  });
+
   it("resolves the default config path", async () => {
     const root = await createTempProject();
 
     expect(resolveTsuzuruConfigPath({ cwd: root })).toBe(join(root, "tsuzuru.config.ts"));
   });
 
+  it("resolves absolute config paths without joining them to cwd", async () => {
+    const root = await createTempProject();
+    const configPath = resolve(root, "config", "custom.config.ts");
+
+    expect(resolveTsuzuruConfigPath({ cwd: root, configFile: configPath })).toBe(configPath);
+  });
+
   it("fails when tsuzuru.config.ts is missing", async () => {
     const root = await createTempProject();
 
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toBeInstanceOf(TsuzuruConfigLoadError);
     await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("Could not find tsuzuru.config.ts");
   });
 
@@ -97,6 +132,40 @@ export default config;
     const root = await createTempProject();
 
     await expect(loadOptionalTsuzuruConfig({ cwd: root })).resolves.toBeNull();
+  });
+
+  it("does not treat invalid config as optional missing config", async () => {
+    const root = await createTempProject();
+    await writeFile(
+      join(root, "tsuzuru.config.ts"),
+      `export default {
+  scenario: {
+    entry: "",
+    files: ["scenario/**/*.tzr"],
+  },
+};
+`,
+    );
+
+    await expect(loadOptionalTsuzuruConfig({ cwd: root })).rejects.toThrow("scenario.entry must be a non-empty string");
+  });
+
+  it("does not treat inaccessible config paths as missing", async () => {
+    const root = await createTempProject();
+    const configDir = join(root, "private");
+    await mkdir(configDir);
+    await chmod(configDir, 0o000);
+
+    try {
+      await expect(
+        loadOptionalTsuzuruConfig({ cwd: root, configFile: "private/tsuzuru.config.ts" }),
+      ).rejects.toBeInstanceOf(TsuzuruConfigLoadError);
+      await expect(loadTsuzuruConfig({ cwd: root, configFile: "private/tsuzuru.config.ts" })).rejects.toThrow(
+        "Failed to access",
+      );
+    } finally {
+      await chmod(configDir, 0o700);
+    }
   });
 
   it("fails when scenario.entry is invalid", async () => {
@@ -191,5 +260,17 @@ export default config;
     await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow(
       "storage.preferences.defaults.bgmVolume must be a number between 0 and 1",
     );
+  });
+
+  it("validates plugin definitions", () => {
+    expect(() =>
+      validateTsuzuruConfig({
+        scenario: {
+          entry: "scenario/main.tzr",
+          files: ["scenario/**/*.tzr"],
+        },
+        plugins: [{ name: "" }],
+      }),
+    ).toThrow("plugins[0] must be an object with a non-empty name string");
   });
 });

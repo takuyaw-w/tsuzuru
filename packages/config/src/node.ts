@@ -32,7 +32,12 @@ export async function loadTsuzuruConfig(options: LoadTsuzuruConfigOptions = {}):
 
   try {
     await access(configPath);
-  } catch {
+  } catch (error) {
+    if (!isMissingFileError(error)) {
+      throw new TsuzuruConfigLoadError(`Failed to access ${configPath}: ${formatErrorMessage(error)}`, {
+        cause: error,
+      });
+    }
     throw new TsuzuruConfigLoadError(`Could not find ${configFileLabel(options.configFile)} in ${configRoot}.`);
   }
 
@@ -47,7 +52,12 @@ export async function loadOptionalTsuzuruConfig(
 
   try {
     await access(configPath);
-  } catch {
+  } catch (error) {
+    if (!isMissingFileError(error)) {
+      throw new TsuzuruConfigLoadError(`Failed to access ${configPath}: ${formatErrorMessage(error)}`, {
+        cause: error,
+      });
+    }
     return null;
   }
 
@@ -137,6 +147,18 @@ function resolveConfigPath(configRoot: string, configFile = CONFIG_FILE_NAME): s
 
 function configFileLabel(configFile: string | undefined): string {
   return configFile ?? CONFIG_FILE_NAME;
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return isNodeError(error) && (error.code === "ENOENT" || error.code === "ENOTDIR");
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error;
+}
+
+function formatErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function getDefaultExport(loaded: unknown): unknown {

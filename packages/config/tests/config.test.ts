@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { defineTsuzuruConfig, type TsuzuruConfigPlugin, type TsuzuruStorageConfig } from "../src/index.js";
 
 describe("defineTsuzuruConfig", () => {
+  it("keeps the root export separate from Node config loading helpers", async () => {
+    const rootExports = await import("../src/index.js");
+
+    expect("loadTsuzuruConfig" in rootExports).toBe(false);
+    expect("loadOptionalTsuzuruConfig" in rootExports).toBe(false);
+    expect("resolveTsuzuruConfigPath" in rootExports).toBe(false);
+  });
+
   it("returns the provided config object", () => {
     const plugin = { name: "std-visual", createInitialState: () => ({}) };
     const config = {

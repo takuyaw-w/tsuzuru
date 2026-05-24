@@ -141,10 +141,18 @@ describe("createProject", () => {
     expect(tsuzuruConfigSource).toContain("storage: {");
     expect(tsuzuruConfigSource).toContain("slots: 3");
     expect(tsuzuruConfigSource).toContain('saves: "standard-runtime"');
+    expect(tsuzuruConfigSource).toContain("createStdVisualPlugin()");
+    expect(tsuzuruConfigSource).toContain("createStdAudioPlugin()");
+    expect(tsuzuruConfigSource).toContain("createStdEffectPlugin()");
     expect(tsuzuruConfigSource).not.toContain("{{projectName}}");
     expect(viteConfigSource).toContain("@preact/preset-vite");
     expect(viteConfigSource).toContain("@tsuzuru/vite-plugin");
     expect(viteConfigSource).toContain("tsuzuru()");
+    expect(viteConfigSource).not.toContain("@tsuzuru/plugin-std-visual");
+    expect(viteConfigSource).not.toContain("@tsuzuru/plugin-std-audio");
+    expect(viteConfigSource).not.toContain("@tsuzuru/plugin-std-effect");
+    expect(viteConfigSource).not.toContain("createStdVisualPlugin()");
+    expect(viteConfigSource).not.toContain("createStdAudioPlugin()");
     expect(viteConfigSource).not.toContain("createStdEffectPlugin()");
     expect(viteConfigSource).not.toContain("tsuzuru({");
   });

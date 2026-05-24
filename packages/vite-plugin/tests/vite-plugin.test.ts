@@ -67,6 +67,30 @@ describe("tsuzuru", () => {
     });
   });
 
+  it("watches included files and config files together", async () => {
+    const root = await createTempRoot();
+    const mainPath = await writeScenario(
+      root,
+      "scenario/main.tzr",
+      'include "./chapters/opening.tzr"\nscene start:\n  jump opening\n',
+    );
+    const includedPath = await writeScenario(root, "scenario/chapters/opening.tzr", "scene opening:\n  end\n");
+    const configPath = await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+};
+`,
+    );
+
+    const result = await loadScenarioModule(tsuzuru(), root, mainPath);
+
+    expect(result.watchFiles).toEqual(expect.arrayContaining([mainPath, includedPath, configPath]));
+  });
+
   it("passes compile plugin definitions to project compilation", async () => {
     const root = await createTempRoot();
     const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
@@ -151,6 +175,17 @@ describe("tsuzuru", () => {
     });
   });
 
+  it("does not load config files when explicit compile plugin definitions are provided", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  end\n");
+    await writeConfig(root, "export default {\n");
+
+    const result = await loadScenarioModule(tsuzuru({ plugins: [] }), root, scenarioPath);
+
+    expect(result.document.type).toBe("CompiledTzrDocument");
+    expect(result.watchFiles).not.toContain(join(root, "tsuzuru.config.ts"));
+  });
+
   it("can disable config file loading", async () => {
     const root = await createTempRoot();
     const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
@@ -221,7 +256,25 @@ describe("tsuzuru", () => {
 `,
     );
 
-    await expect(loadScenarioModule(tsuzuru(), root, scenarioPath)).rejects.toThrow("Failed to load tsuzuru config");
+    const result = await loadScenarioModuleError(tsuzuru(), root, scenarioPath);
+
+    expect(result.error).toEqual(
+      expect.objectContaining({ message: expect.stringContaining("Failed to load tsuzuru config") }),
+    );
+    expect(result.watchFiles).toContain(join(root, "tsuzuru.config.ts"));
+  });
+
+  it("reports config syntax errors as Vite errors", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  end\n");
+    await writeConfig(root, "export default {\n");
+
+    const result = await loadScenarioModuleError(tsuzuru(), root, scenarioPath);
+
+    expect(result.error).toEqual(
+      expect.objectContaining({ message: expect.stringContaining("Failed to load tsuzuru config") }),
+    );
+    expect(result.watchFiles).toContain(join(root, "tsuzuru.config.ts"));
   });
 
   it("reports unsupported plugin calls when no compile plugin is provided", async () => {
@@ -299,6 +352,20 @@ async function loadScenarioModule(plugin: Plugin, root: string, id: string) {
     document: imported.default,
     watchFiles: context.watchFiles,
   };
+}
+
+async function loadScenarioModuleError(plugin: Plugin, root: string, id: string) {
+  callConfigResolved(plugin, root);
+  const context = createPluginContext();
+  try {
+    await getLoadHook(plugin).call(context as never, id);
+  } catch (error) {
+    return {
+      error,
+      watchFiles: context.watchFiles,
+    };
+  }
+  throw new Error("Expected plugin to report an error.");
 }
 
 function getLoadHook(plugin: Plugin) {

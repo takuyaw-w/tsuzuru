@@ -33,7 +33,8 @@ uses `config.plugins` as compile-time plugins. This keeps Vite builds and
 
 Use an explicit `plugins` option only when Vite needs to override the project
 config. Explicit plugins take priority over `tsuzuru.config.ts`, including an
-empty array.
+empty array. When explicit plugins are provided, the Vite plugin does not load
+or watch `tsuzuru.config.ts`.
 
 ```ts
 import { createStdSystemPlugin } from "@tsuzuru/plugin-std-system";

@@ -35,8 +35,8 @@ import { loadTsuzuruConfig } from "@tsuzuru/config/node";
 ```
 
 The Node loader reads `tsuzuru.config.ts` from a project directory. It does not
-expand scenario globs or validate that scenario files exist; the CLI owns that
-project orchestration.
+expand scenario globs or validate that scenario files exist; callers such as
+the CLI and Vite plugin own that project orchestration.
 
 `project.id` and `project.version` are optional project identity metadata.
 Applications can use them for save compatibility checks. Treat them as stable

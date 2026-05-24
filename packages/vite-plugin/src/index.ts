@@ -41,7 +41,6 @@ interface ViteDiagnosticError extends Error {
 
 interface ResolvedCompileConfig {
   readonly options: TzrCompileOptions;
-  readonly watchFile?: string;
 }
 
 export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
@@ -66,14 +65,16 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
         this.addWatchFile(file);
       }
 
+      const configWatchFile = resolveCompileConfigWatchFile(options, root);
+      if (configWatchFile !== undefined) {
+        this.addWatchFile(configWatchFile);
+      }
+
       let compileConfig: ResolvedCompileConfig;
       try {
         compileConfig = await resolveCompileConfig(options, root);
       } catch (error) {
         this.error(createViteConfigError(error));
-      }
-      if (compileConfig.watchFile !== undefined) {
-        this.addWatchFile(compileConfig.watchFile);
       }
 
       const result = compileTzrProject(
@@ -112,14 +113,21 @@ async function resolveCompileConfig(options: TsuzuruVitePluginOptions, root: str
   if (loaded === null) {
     return {
       options: { plugins: [] },
-      watchFile: resolveTsuzuruConfigPath(loadOptions),
     };
   }
 
   return {
     options: { plugins: loaded.config.plugins ?? [] },
-    watchFile: loaded.configPath,
   };
+}
+
+function resolveCompileConfigWatchFile(options: TsuzuruVitePluginOptions, root: string): string | undefined {
+  if (options.plugins !== undefined || options.configFile === false) {
+    return undefined;
+  }
+  return resolveTsuzuruConfigPath(
+    options.configFile === undefined ? { cwd: root } : { cwd: root, configFile: options.configFile },
+  );
 }
 
 function parseTzrRequest(id: string): TzrRequest | null {
