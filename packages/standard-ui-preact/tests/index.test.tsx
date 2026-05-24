@@ -14,9 +14,13 @@ import {
   RuntimeMessageLayer,
   Screen,
   ScreenActions,
+  ScreenBadge,
   ScreenButton,
   ScreenField,
   ScreenHeading,
+  ScreenList,
+  ScreenListItem,
+  ScreenText,
   type ScreenComponentProps,
   ScreenHost,
   type ScreenHostProps,
@@ -26,12 +30,23 @@ import {
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;
+type ButtonProps = ComponentProps<"button">;
 type DivClickHandler = NonNullable<DivProps["onClick"]>;
 type DivKeyDownHandler = NonNullable<DivProps["onKeyDown"]>;
 type TestNodeProps = Pick<
   DivProps,
-  "aria-label" | "children" | "className" | "onClick" | "onKeyDown" | "role" | "style" | "tabIndex"
->;
+  | "aria-describedby"
+  | "aria-label"
+  | "children"
+  | "className"
+  | "id"
+  | "onClick"
+  | "onKeyDown"
+  | "role"
+  | "style"
+  | "tabIndex"
+> &
+  Pick<ButtonProps, "disabled" | "title" | "type">;
 
 const loc = {
   start: { filePath: "scenario/main.tzr", line: 1, column: 1 },
@@ -275,25 +290,37 @@ describe("ScreenHost", () => {
 });
 
 describe("Screen primitives", () => {
-  it("renders Screen children with the default variant", () => {
-    const node = expectVNode(Screen({ children: "menu", className: "custom-screen" }));
+  it("renders Screen as a section with the default variant", () => {
+    const node = expectVNode(Screen({ "aria-label": "Settings", children: "menu", className: "custom-screen" }));
 
+    expect(node.type).toBe("section");
+    expect(node.props["aria-label"]).toBe("Settings");
     expect(node.props.className).toBe("tzr-screen tzr-screen--default custom-screen");
     expect(getNodeText(node)).toBe("menu");
+  });
+
+  it("applies the Screen variant modifier", () => {
+    const node = expectVNode(Screen({ variant: "overlay", children: "overlay" }));
+
+    expect(node.type).toBe("section");
+    expect(node.props.className).toBe("tzr-screen tzr-screen--overlay");
   });
 
   it("renders ScreenPanel children", () => {
     const node = expectVNode(ScreenPanel({ children: "panel", className: "custom-panel" }));
 
+    expect(node.type).toBe("div");
     expect(node.props.className).toBe("tzr-screen__panel custom-panel");
     expect(getNodeText(node)).toBe("panel");
   });
 
   it("renders ScreenHeading eyebrow and heading", () => {
     const node = expectVNode(ScreenHeading({ eyebrow: "System", children: "Settings" }));
+    const heading = findByClass(node, "tzr-screen__heading")[0];
 
     expect(findByClass(node, "tzr-screen__eyebrow")).toHaveLength(1);
     expect(findByClass(node, "tzr-screen__heading")).toHaveLength(1);
+    expect(heading.type).toBe("h1");
     expect(getNodeText(node)).toContain("System");
     expect(getNodeText(node)).toContain("Settings");
   });
@@ -304,24 +331,90 @@ describe("Screen primitives", () => {
     expect(node.props.className).toBe("tzr-screen__actions tzr-screen__actions--columns-2");
   });
 
-  it("renders ScreenButton as a disabled button", () => {
-    const onClick = vi.fn();
-    const node = expectVNode(ScreenButton({ disabled: true, onClick, variant: "primary", children: "Start" }));
+  it("renders ScreenText as a paragraph with native props", () => {
+    const node = expectVNode(ScreenText({ "aria-label": "Description", children: "Body", className: "custom-text" }));
 
+    expect(node.type).toBe("p");
+    expect(node.props["aria-label"]).toBe("Description");
+    expect(node.props.className).toBe("tzr-screen__text custom-text");
+    expect(getNodeText(node)).toBe("Body");
+  });
+
+  it("renders ScreenButton as a disabled button with native props", () => {
+    const onClick = vi.fn();
+    const node = expectVNode(
+      ScreenButton({
+        disabled: true,
+        onClick,
+        title: "Start the game",
+        variant: "primary",
+        children: "Start",
+      }),
+    );
+
+    expect(node.type).toBe("button");
     expect(node.props.className).toBe("tzr-screen__button tzr-screen__button--primary");
     expect(node.props.type).toBe("button");
     expect(node.props.disabled).toBe(true);
+    expect(node.props.title).toBe("Start the game");
     expect(node.props.onClick).toBe(onClick);
   });
 
   it("renders ScreenField label, control, and hint", () => {
-    const node = expectVNode(ScreenField({ label: "Text speed", hint: "Normal", children: <select /> }));
+    const node = expectVNode(
+      ScreenField({
+        label: "Text speed",
+        hint: "Normal",
+        hintId: "text-speed-hint",
+        children: <select aria-describedby="text-speed-hint" />,
+      }),
+    );
+    const hint = findByClass(node, "tzr-screen__field-hint")[0];
+    const control = findByClass(node, "tzr-screen__field-control")[0];
+    const select = getChildNodes(control)[0];
 
+    expect(node.type).toBe("label");
     expect(findByClass(node, "tzr-screen__field-label")).toHaveLength(1);
     expect(findByClass(node, "tzr-screen__field-control")).toHaveLength(1);
     expect(findByClass(node, "tzr-screen__field-hint")).toHaveLength(1);
+    expect(hint.props.id).toBe("text-speed-hint");
+    expect(select.props["aria-describedby"]).toBe("text-speed-hint");
     expect(getNodeText(node)).toContain("Text speed");
     expect(getNodeText(node)).toContain("Normal");
+  });
+
+  it("renders ScreenList as ul by default", () => {
+    const node = expectVNode(ScreenList({ children: <ScreenListItem>Slot 1</ScreenListItem> }));
+
+    expect(node.type).toBe("ul");
+    expect(node.props.role).toBe("list");
+    expect(node.props.className).toBe("tzr-screen__list");
+    expect(getNodeText(node)).toBe("Slot 1");
+  });
+
+  it("renders ScreenList as ol when ordered", () => {
+    const node = expectVNode(ScreenList({ ordered: true, children: <ScreenListItem>Log 1</ScreenListItem> }));
+
+    expect(node.type).toBe("ol");
+    expect(node.props.role).toBe("list");
+    expect(node.props.className).toBe("tzr-screen__list");
+    expect(getNodeText(node)).toBe("Log 1");
+  });
+
+  it("renders ScreenListItem as li", () => {
+    const node = expectVNode(ScreenListItem({ children: "Entry", className: "custom-entry" }));
+
+    expect(node.type).toBe("li");
+    expect(node.props.className).toBe("tzr-screen__list-item custom-entry");
+    expect(getNodeText(node)).toBe("Entry");
+  });
+
+  it("renders ScreenBadge as span", () => {
+    const node = expectVNode(ScreenBadge({ children: "Read", className: "custom-badge" }));
+
+    expect(node.type).toBe("span");
+    expect(node.props.className).toBe("tzr-screen__badge custom-badge");
+    expect(getNodeText(node)).toBe("Read");
   });
 });
 

@@ -75,8 +75,9 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
 
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
-  await expect(page.locator(".backlog")).toContainText("夜の旧校舎");
-  await expect(page.locator(".tzr-screen__badge")).toContainText("Read");
+  const backlogScreen = page.getByRole("region", { name: "Backlog" });
+  await expect(backlogScreen).toContainText("夜の旧校舎");
+  await expect(backlogScreen.getByText("Read", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
   await expect(messageWindow).toContainText("夜の旧校舎");
@@ -133,6 +134,34 @@ test("save and load restore retained message behind choices", async ({ page }) =
   await page.getByRole("button", { name: "Load Slot 1" }).click();
   await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
   await expect(retainedMessage).toContainText("物語の常用音");
+});
+
+test("runtime overlay behaves as a modal dialog for keyboard advance", async ({ page }) => {
+  await page.goto("/");
+  await disableTextReveal(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
+
+  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+
+  await runtimeMenu.getByRole("button", { name: "Settings" }).click();
+  const settingsDialog = page.getByRole("dialog", { name: "Settings screen" });
+  await expect(settingsDialog).toBeVisible();
+  await settingsDialog.focus();
+
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Space");
+  await expect(messageWindow).toContainText("夜の旧校舎");
+  await expect(messageWindow).not.toContainText("その隣で");
+
+  await page.keyboard.press("Tab");
+  await expect(runtimeMenu.getByRole("button", { name: "Save" })).not.toBeFocused();
+
+  await settingsDialog.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(settingsDialog).toHaveCount(0);
+  await expect(messageWindow).toContainText("夜の旧校舎");
 });
 
 test("effect demo choice exposes individual effect paths", async ({ page }) => {
@@ -388,8 +417,9 @@ test("read tracking records current-session messages in runtime and backlog", as
 
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
-  await expect(page.locator(".backlog")).toContainText("夜の旧校舎");
-  await expect(page.locator(".tzr-screen__badge")).toContainText("Read");
+  const backlogScreen = page.getByRole("region", { name: "Backlog" });
+  await expect(backlogScreen).toContainText("夜の旧校舎");
+  await expect(backlogScreen.getByText("Read", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);

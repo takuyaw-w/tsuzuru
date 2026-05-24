@@ -67,12 +67,17 @@
   --tzr-standard-ui-screen-control-bg: rgba(8, 10, 13, 0.86);
   --tzr-standard-ui-screen-control-border: rgba(247, 242, 226, 0.34);
   --tzr-standard-ui-screen-button-bg: rgba(12, 16, 19, 0.76);
+  --tzr-standard-ui-screen-button-border: rgba(248, 244, 229, 0.34);
   --tzr-standard-ui-screen-button-hover-bg: rgba(120, 76, 48, 0.62);
+  --tzr-standard-ui-screen-button-min-height: 40px;
+  --tzr-standard-ui-screen-button-padding: 10px 14px;
+  --tzr-standard-ui-screen-button-primary-border: rgba(255, 220, 143, 0.72);
   --tzr-standard-ui-screen-button-primary-bg: linear-gradient(
     180deg,
     rgba(176, 113, 68, 0.9),
     rgba(119, 65, 54, 0.84)
   );
+  --tzr-standard-ui-screen-button-danger-border: rgba(255, 190, 190, 0.54);
   --tzr-standard-ui-screen-button-danger-bg: linear-gradient(
     180deg,
     rgba(166, 70, 70, 0.9),
@@ -455,10 +460,10 @@
 
 .tzr-screen__button {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--tzr-standard-ui-screen-button-min-height);
   box-sizing: border-box;
-  padding: 10px 14px;
-  border: 1px solid rgba(248, 244, 229, 0.34);
+  padding: var(--tzr-standard-ui-screen-button-padding);
+  border: 1px solid var(--tzr-standard-ui-screen-button-border);
   border-radius: 6px;
   background: var(--tzr-standard-ui-screen-button-bg);
   color: var(--tzr-standard-ui-text-color);
@@ -469,12 +474,12 @@
 }
 
 .tzr-screen__button--primary {
-  border-color: rgba(255, 220, 143, 0.72);
+  border-color: var(--tzr-standard-ui-screen-button-primary-border);
   background: var(--tzr-standard-ui-screen-button-primary-bg);
 }
 
 .tzr-screen__button--danger {
-  border-color: rgba(255, 190, 190, 0.54);
+  border-color: var(--tzr-standard-ui-screen-button-danger-border);
   background: var(--tzr-standard-ui-screen-button-danger-bg);
 }
 
@@ -548,6 +553,9 @@
 .tzr-screen__list {
   display: grid;
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .tzr-screen__list-item {

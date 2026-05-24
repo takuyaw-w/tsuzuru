@@ -20,20 +20,20 @@ export function TitleScreen({
   canContinue,
 }: TitleScreenProps) {
   return (
-    <Screen className="screen--title" aria-label="Title">
-      <div className="screen__title-art" aria-hidden="true">
-        <span className="screen__title-art-sun" />
-        <span className="screen__title-art-platform" />
-        <span className="screen__title-art-rail screen__title-art-rail--front" />
-        <span className="screen__title-art-rail screen__title-art-rail--back" />
+    <Screen className="preact-basic-title-screen" aria-label="Title">
+      <div className="preact-basic-title-screen__art" aria-hidden="true">
+        <span className="preact-basic-title-screen__art-sun" />
+        <span className="preact-basic-title-screen__art-platform" />
+        <span className="preact-basic-title-screen__art-rail preact-basic-title-screen__art-rail--front" />
+        <span className="preact-basic-title-screen__art-rail preact-basic-title-screen__art-rail--back" />
       </div>
-      <div className="screen__title-content">
-        <div className="screen__title-copy">
-          <p className="screen__eyebrow">Tsuzuru</p>
-          <h1 className="screen__title">Preact Basic</h1>
-          <p className="screen__subtitle">夕暮れの駅から始まる、小さな分岐のサンプル。</p>
+      <div className="preact-basic-title-screen__content">
+        <div className="preact-basic-title-screen__copy">
+          <p className="preact-basic-title-screen__eyebrow">Tsuzuru</p>
+          <h1 className="preact-basic-title-screen__title">Preact Basic</h1>
+          <p className="preact-basic-title-screen__subtitle">夕暮れの駅から始まる、小さな分岐のサンプル。</p>
         </div>
-        <div className="screen__title-menu">
+        <div className="preact-basic-title-screen__menu">
           <ScreenActions>
             <ScreenButton variant="primary" onClick={onStart}>
               Start

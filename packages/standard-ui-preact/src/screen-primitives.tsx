@@ -1,7 +1,11 @@
 import type { ComponentChildren, ComponentProps } from "preact";
 import { joinClassNames } from "./class-name.js";
 
-export interface ScreenProps extends Omit<ComponentProps<"div">, "children" | "className"> {
+type ButtonProps = ComponentProps<"button">;
+type OrderedListProps = Omit<ComponentProps<"ol">, "children" | "className">;
+type UnorderedListProps = Omit<ComponentProps<"ul">, "children" | "className">;
+
+export interface ScreenProps extends Omit<ComponentProps<"section">, "children" | "className"> {
   readonly children: ComponentChildren;
   readonly className?: string | undefined;
   readonly variant?: "default" | "overlay" | undefined;
@@ -9,9 +13,9 @@ export interface ScreenProps extends Omit<ComponentProps<"div">, "children" | "c
 
 export function Screen({ children, className, variant = "default", ...props }: ScreenProps): ComponentChildren {
   return (
-    <div {...props} className={joinClassNames("tzr-screen", `tzr-screen--${variant}`, className)}>
+    <section {...props} className={joinClassNames("tzr-screen", `tzr-screen--${variant}`, className)}>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -73,19 +77,14 @@ export function ScreenActions({ children, className, columns = 1, ...props }: Sc
   );
 }
 
-export interface ScreenButtonProps
-  extends Omit<ComponentProps<"button">, "children" | "className" | "disabled" | "onClick" | "type"> {
+export interface ScreenButtonProps extends Omit<ButtonProps, "children" | "className" | "type"> {
   readonly children: ComponentChildren;
-  readonly onClick?: (() => void) | undefined;
-  readonly disabled?: boolean | undefined;
   readonly className?: string | undefined;
   readonly variant?: "default" | "primary" | "danger" | undefined;
 }
 
 export function ScreenButton({
   children,
-  onClick,
-  disabled,
   className,
   variant = "default",
   ...props
@@ -95,8 +94,6 @@ export function ScreenButton({
       {...props}
       className={joinClassNames("tzr-screen__button", `tzr-screen__button--${variant}`, className)}
       type="button"
-      disabled={disabled}
-      onClick={onClick}
     >
       {children}
     </button>
@@ -107,42 +104,71 @@ export interface ScreenFieldProps extends Omit<ComponentProps<"label">, "childre
   readonly label: ComponentChildren;
   readonly children: ComponentChildren;
   readonly hint?: ComponentChildren | undefined;
+  readonly hintId?: string | undefined;
   readonly className?: string | undefined;
 }
 
-export function ScreenField({ label, children, hint, className, ...props }: ScreenFieldProps): ComponentChildren {
+export function ScreenField({
+  label,
+  children,
+  hint,
+  hintId,
+  className,
+  ...props
+}: ScreenFieldProps): ComponentChildren {
   return (
     <label {...props} className={joinClassNames("tzr-screen__field", className)}>
       <span className="tzr-screen__field-label">{label}</span>
       <span className="tzr-screen__field-control">{children}</span>
-      {hint === undefined ? null : <span className="tzr-screen__field-hint">{hint}</span>}
+      {hint === undefined ? null : (
+        <span id={hintId} className="tzr-screen__field-hint">
+          {hint}
+        </span>
+      )}
     </label>
   );
 }
 
-export interface ScreenListProps extends Omit<ComponentProps<"div">, "children" | "className"> {
-  readonly children: ComponentChildren;
-  readonly className?: string | undefined;
-}
+export type ScreenListProps =
+  | ({
+      readonly children: ComponentChildren;
+      readonly className?: string | undefined;
+      readonly ordered?: false | undefined;
+    } & UnorderedListProps)
+  | ({
+      readonly children: ComponentChildren;
+      readonly className?: string | undefined;
+      readonly ordered: true;
+    } & OrderedListProps);
 
-export function ScreenList({ children, className, ...props }: ScreenListProps): ComponentChildren {
+export function ScreenList(props: ScreenListProps): ComponentChildren {
+  if (props.ordered === true) {
+    const { children, className, ordered: _ordered, role, ...listProps } = props;
+    return (
+      <ol {...listProps} role={role ?? "list"} className={joinClassNames("tzr-screen__list", className)}>
+        {children}
+      </ol>
+    );
+  }
+
+  const { children, className, ordered: _ordered, role, ...listProps } = props;
   return (
-    <div {...props} className={joinClassNames("tzr-screen__list", className)}>
+    <ul {...listProps} role={role ?? "list"} className={joinClassNames("tzr-screen__list", className)}>
       {children}
-    </div>
+    </ul>
   );
 }
 
-export interface ScreenListItemProps extends Omit<ComponentProps<"div">, "children" | "className"> {
+export interface ScreenListItemProps extends Omit<ComponentProps<"li">, "children" | "className"> {
   readonly children: ComponentChildren;
   readonly className?: string | undefined;
 }
 
 export function ScreenListItem({ children, className, ...props }: ScreenListItemProps): ComponentChildren {
   return (
-    <div {...props} className={joinClassNames("tzr-screen__list-item", className)}>
+    <li {...props} className={joinClassNames("tzr-screen__list-item", className)}>
       {children}
-    </div>
+    </li>
   );
 }
 

@@ -25,10 +25,11 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
       <ScreenPanel>
         <ScreenHeading>Settings</ScreenHeading>
         <div className="settings">
-          <ScreenField label="Text reveal" hint="Reveal message text over time.">
+          <ScreenField label="Text reveal" hint="Reveal message text over time." hintId="settings-text-reveal-hint">
             <input
               type="checkbox"
               aria-label="Text reveal"
+              aria-describedby="settings-text-reveal-hint"
               checked={preferences.textRevealEnabled}
               onChange={(event) => {
                 onChangePreferences({
@@ -62,6 +63,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
           <VolumePreferenceField
             label="Text sound volume"
             value={preferences.textSoundVolume}
+            hintId="settings-text-sound-volume-hint"
             onChange={(textSoundVolume) => {
               onChangePreferences({
                 ...preferences,
@@ -69,10 +71,11 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
               });
             }}
           />
-          <ScreenField label="Text sound" hint="Play short blips during text reveal.">
+          <ScreenField label="Text sound" hint="Play short blips during text reveal." hintId="settings-text-sound-hint">
             <input
               type="checkbox"
               aria-label="Text sound"
+              aria-describedby="settings-text-sound-hint"
               checked={preferences.textSoundEnabled}
               onChange={(event) => {
                 onChangePreferences({
@@ -85,6 +88,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
           <VolumePreferenceField
             label="BGM volume"
             value={preferences.bgmVolume}
+            hintId="settings-bgm-volume-hint"
             onChange={(bgmVolume) => {
               onChangePreferences({
                 ...preferences,
@@ -95,6 +99,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
           <VolumePreferenceField
             label="SE volume"
             value={preferences.seVolume}
+            hintId="settings-se-volume-hint"
             onChange={(seVolume) => {
               onChangePreferences({
                 ...preferences,
@@ -105,6 +110,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
           <VolumePreferenceField
             label="Voice volume"
             value={preferences.voiceVolume}
+            hintId="settings-voice-volume-hint"
             onChange={(voiceVolume) => {
               onChangePreferences({
                 ...preferences,
@@ -122,15 +128,19 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
 interface VolumePreferenceFieldProps {
   readonly label: string;
   readonly value: number;
+  readonly hintId: string;
   readonly onChange: (value: number) => void;
 }
 
-function VolumePreferenceField({ label, value, onChange }: VolumePreferenceFieldProps) {
+function VolumePreferenceField({ label, value, hintId, onChange }: VolumePreferenceFieldProps) {
+  const percentage = `${Math.round(value * 100)}%`;
   return (
-    <ScreenField label={label} hint={`${Math.round(value * 100)}%`}>
+    <ScreenField label={label} hint={percentage} hintId={hintId}>
       <input
         type="range"
         aria-label={label}
+        aria-describedby={hintId}
+        aria-valuetext={percentage}
         min="0"
         max="1"
         step="0.05"

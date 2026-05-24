@@ -30,7 +30,7 @@ export function BacklogScreen({ entries, onBack }: BacklogScreenProps) {
           {entries.length === 0 ? (
             <p className="backlog__empty">No backlog yet.</p>
           ) : (
-            <ScreenList className="backlog__list">
+            <ScreenList ordered className="backlog__list">
               {entries.map((entry) => (
                 <ScreenListItem key={entry.id} className="backlog__entry">
                   <div className="backlog__entry-header">

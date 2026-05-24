@@ -384,6 +384,8 @@ function RuntimeApp({
   const restoreVisualTransitionTimerRef = useRef<number | undefined>(undefined);
   const [visualTransitionsEnabled, setVisualTransitionsEnabled] = useState(true);
   const [overlay, setOverlay] = useState<RuntimeOverlay>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const overlayPreviousFocusRef = useRef<Element | null>(null);
   const [skipModeEnabled, setSkipModeEnabled] = useState(false);
   const [lastMessageEvent, setLastMessageEvent] = useState<RuntimeEvent | null>(null);
   const [readTracking, setReadTracking] = useState<ReadTrackingState>(() => loadReadTrackingState());
@@ -652,6 +654,9 @@ function RuntimeApp({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (overlay !== null) {
+        return;
+      }
       if (event.defaultPrevented || isKeyboardHandledTarget(event.target)) {
         return;
       }
@@ -666,7 +671,27 @@ function RuntimeApp({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleAdvanceRequest]);
+  }, [handleAdvanceRequest, overlay]);
+
+  useEffect(() => {
+    if (overlay === null) {
+      if (overlayPreviousFocusRef.current instanceof HTMLElement) {
+        overlayPreviousFocusRef.current.focus();
+      }
+      overlayPreviousFocusRef.current = null;
+      return;
+    }
+
+    overlayPreviousFocusRef.current = globalThis.document.activeElement;
+    const animationFrame = window.requestAnimationFrame(() => {
+      const focusTarget = getFirstFocusableElement(overlayRef.current) ?? overlayRef.current;
+      focusTarget?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [overlay]);
 
   return (
     <main className="app">
@@ -752,7 +777,27 @@ function RuntimeApp({
               )}
             </div>
             {overlay === null ? null : (
-              <div className="app__overlay">
+              <div
+                ref={overlayRef}
+                className="app__overlay"
+                role="dialog"
+                aria-label={`${formatRuntimeOverlayLabel(overlay)} screen`}
+                aria-modal="true"
+                tabIndex={-1}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if ((event.key === "Enter" || event.key === " ") && event.target === event.currentTarget) {
+                    event.preventDefault();
+                    return;
+                  }
+                  if (event.key === "Tab") {
+                    trapFocusInOverlay(event.currentTarget, event);
+                  }
+                  if (event.key === "Escape") {
+                    setOverlay(null);
+                  }
+                }}
+              >
                 {overlay === "save" ? (
                   <SaveScreen
                     slots={saveSlots}
@@ -831,6 +876,57 @@ function isKeyboardHandledTarget(target: EventTarget | null): boolean {
     target instanceof Element &&
     target.closest(".tzr-screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
+}
+
+function getFirstFocusableElement(root: HTMLElement | null): HTMLElement | null {
+  return getFocusableElements(root)[0] ?? null;
+}
+
+function getFocusableElements(root: HTMLElement | null): readonly HTMLElement[] {
+  if (root === null) {
+    return [];
+  }
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute("disabled") && element.tabIndex >= 0);
+}
+
+function trapFocusInOverlay(root: HTMLElement, event: Pick<KeyboardEvent, "preventDefault" | "shiftKey">): void {
+  const focusableElements = getFocusableElements(root);
+  if (focusableElements.length === 0) {
+    event.preventDefault();
+    root.focus();
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && globalThis.document.activeElement === firstElement) {
+    event.preventDefault();
+    lastElement?.focus();
+    return;
+  }
+
+  if (!event.shiftKey && globalThis.document.activeElement === lastElement) {
+    event.preventDefault();
+    firstElement?.focus();
+  }
+}
+
+function formatRuntimeOverlayLabel(overlay: Exclude<RuntimeOverlay, null>): string {
+  switch (overlay) {
+    case "save":
+      return "Save";
+    case "load":
+      return "Load";
+    case "settings":
+      return "Settings";
+    case "backlog":
+      return "Backlog";
+  }
 }
 
 function toExamplePresentationEvent(event: RuntimeEvent | null): RuntimeEvent | null {

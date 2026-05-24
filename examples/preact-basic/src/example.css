@@ -91,7 +91,7 @@ button {
   background: rgba(120, 76, 48, 0.62);
 }
 
-.screen--title {
+.preact-basic-title-screen {
   place-items: stretch;
   isolation: isolate;
   background:
@@ -99,7 +99,7 @@ button {
     linear-gradient(118deg, #173343 0%, #536f67 53%, #8d6974 100%);
 }
 
-.screen__title-content {
+.preact-basic-title-screen__content {
   position: relative;
   z-index: 1;
   display: grid;
@@ -111,12 +111,12 @@ button {
   min-height: 100%;
 }
 
-.screen__title-copy {
+.preact-basic-title-screen__copy {
   align-self: end;
   padding-bottom: clamp(12px, 3vw, 28px);
 }
 
-.screen__title-menu {
+.preact-basic-title-screen__menu {
   align-self: end;
   display: grid;
   gap: 12px;
@@ -129,7 +129,7 @@ button {
   backdrop-filter: blur(12px);
 }
 
-.screen__title-art {
+.preact-basic-title-screen__art {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -137,7 +137,7 @@ button {
   pointer-events: none;
 }
 
-.screen__title-art-sun {
+.preact-basic-title-screen__art-sun {
   position: absolute;
   top: 9%;
   right: 17%;
@@ -148,15 +148,15 @@ button {
   box-shadow: 0 0 60px rgba(239, 185, 112, 0.34);
 }
 
-.screen__title-art-platform,
-.screen__title-art-rail {
+.preact-basic-title-screen__art-platform,
+.preact-basic-title-screen__art-rail {
   position: absolute;
   right: -10%;
   left: -10%;
   transform: skewY(-5deg);
 }
 
-.screen__title-art-platform {
+.preact-basic-title-screen__art-platform {
   bottom: 15%;
   height: 24%;
   background:
@@ -164,19 +164,19 @@ button {
     linear-gradient(180deg, rgba(255, 250, 232, 0.18), rgba(19, 24, 25, 0.72));
 }
 
-.screen__title-art-rail {
+.preact-basic-title-screen__art-rail {
   bottom: 12%;
   height: 3px;
   background: rgba(255, 250, 232, 0.58);
   box-shadow: 0 18px 0 rgba(255, 250, 232, 0.34);
 }
 
-.screen__title-art-rail--back {
+.preact-basic-title-screen__art-rail--back {
   bottom: 21%;
   opacity: 0.48;
 }
 
-.screen__eyebrow {
+.preact-basic-title-screen__eyebrow {
   margin: 0 0 14px;
   color: rgba(255, 250, 240, 0.72);
   font-size: 0.92rem;
@@ -184,7 +184,7 @@ button {
   text-transform: uppercase;
 }
 
-.screen__title {
+.preact-basic-title-screen__title {
   max-width: 720px;
   margin: 0 0 16px;
   color: #fff8e8;
@@ -193,7 +193,7 @@ button {
   text-shadow: 0 3px 18px rgba(0, 0, 0, 0.45);
 }
 
-.screen__subtitle {
+.preact-basic-title-screen__subtitle {
   max-width: 480px;
   margin: 0;
   color: rgba(255, 250, 240, 0.82);
@@ -246,9 +246,8 @@ button {
   font-size: 0.86rem;
 }
 
-.save-slot__actions .tzr-screen__button {
-  padding: 9px 12px;
-  text-align: center;
+.save-slot__actions {
+  --tzr-standard-ui-screen-button-padding: 9px 12px;
 }
 
 .backlog {
@@ -317,12 +316,12 @@ button {
     width: min(100vw, calc(100dvh * 16 / 9));
   }
 
-  .screen__title-content {
+  .preact-basic-title-screen__content {
     grid-template-columns: 1fr;
     align-content: end;
   }
 
-  .screen__title-menu {
+  .preact-basic-title-screen__menu {
     max-width: 360px;
   }
 }
