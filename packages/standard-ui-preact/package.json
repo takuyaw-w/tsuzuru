@@ -28,6 +28,7 @@
     "dist/organisms/**",
     "dist/runtime-control-bar.*",
     "dist/screen-host.*",
+    "dist/screen-primitives.*",
     "dist/std-audio-layer.*",
     "dist/std-audio-runtime-layer.*",
     "dist/std-audio-status-panel.*",

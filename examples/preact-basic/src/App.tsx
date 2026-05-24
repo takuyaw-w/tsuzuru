@@ -821,7 +821,7 @@ function isInteractiveClickTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
     target.closest(
-      ".screen, .app__runtime-menu, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea",
+      ".tzr-screen, .app__runtime-menu, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea",
     ) !== null
   );
 }
@@ -829,7 +829,7 @@ function isInteractiveClickTarget(target: EventTarget | null): boolean {
 function isKeyboardHandledTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+    target.closest(".tzr-screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
 }
 

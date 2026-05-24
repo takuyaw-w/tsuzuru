@@ -1,3 +1,5 @@
+import { Screen, ScreenButton, ScreenField, ScreenHeading, ScreenPanel } from "@tsuzuru/standard-ui-preact";
+
 interface SettingsScreenProps {
   readonly preferences: SettingsPreferences;
   readonly textSpeedOptions: readonly TextSpeedCharactersPerSecond[];
@@ -19,15 +21,13 @@ type TextSpeedCharactersPerSecond = 30 | 60 | 120;
 
 export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferences, onBack }: SettingsScreenProps) {
   return (
-    <section className="screen" aria-label="Settings">
-      <div className="screen__content screen__content--panel">
-        <h1 className="screen__heading">Settings</h1>
+    <Screen aria-label="Settings">
+      <ScreenPanel>
+        <ScreenHeading>Settings</ScreenHeading>
         <div className="settings">
-          <label className="settings__field">
-            <span className="settings__label">Text reveal</span>
+          <ScreenField label="Text reveal" hint="Reveal message text over time.">
             <input
               type="checkbox"
-              className="settings__control"
               aria-label="Text reveal"
               checked={preferences.textRevealEnabled}
               onChange={(event) => {
@@ -37,12 +37,9 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
                 });
               }}
             />
-            <span className="settings__hint">Reveal message text over time.</span>
-          </label>
-          <label className="settings__field">
-            <span className="settings__label">Text speed</span>
+          </ScreenField>
+          <ScreenField label="Text speed">
             <select
-              className="settings__control"
               aria-label="Text speed"
               value={preferences.textSpeedCharactersPerSecond}
               onChange={(event) => {
@@ -61,7 +58,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
                 </option>
               ))}
             </select>
-          </label>
+          </ScreenField>
           <VolumePreferenceField
             label="Text sound volume"
             value={preferences.textSoundVolume}
@@ -72,11 +69,9 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
               });
             }}
           />
-          <label className="settings__field">
-            <span className="settings__label">Text sound</span>
+          <ScreenField label="Text sound" hint="Play short blips during text reveal.">
             <input
               type="checkbox"
-              className="settings__control"
               aria-label="Text sound"
               checked={preferences.textSoundEnabled}
               onChange={(event) => {
@@ -86,8 +81,7 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
                 });
               }}
             />
-            <span className="settings__hint">Play short blips during text reveal.</span>
-          </label>
+          </ScreenField>
           <VolumePreferenceField
             label="BGM volume"
             value={preferences.bgmVolume}
@@ -119,11 +113,9 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
             }}
           />
         </div>
-        <button type="button" className="screen__button" onClick={onBack}>
-          Back
-        </button>
-      </div>
-    </section>
+        <ScreenButton onClick={onBack}>Back</ScreenButton>
+      </ScreenPanel>
+    </Screen>
   );
 }
 
@@ -135,11 +127,9 @@ interface VolumePreferenceFieldProps {
 
 function VolumePreferenceField({ label, value, onChange }: VolumePreferenceFieldProps) {
   return (
-    <label className="settings__field">
-      <span className="settings__label">{label}</span>
+    <ScreenField label={label} hint={`${Math.round(value * 100)}%`}>
       <input
         type="range"
-        className="settings__control"
         aria-label={label}
         min="0"
         max="1"
@@ -149,8 +139,7 @@ function VolumePreferenceField({ label, value, onChange }: VolumePreferenceField
           onChange(event.currentTarget.valueAsNumber);
         }}
       />
-      <span className="settings__hint">{Math.round(value * 100)}%</span>
-    </label>
+    </ScreenField>
   );
 }
 

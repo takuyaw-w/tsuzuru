@@ -12,9 +12,15 @@ import {
   type MessageWindowProps,
   type MessageWindowRenderLineContext,
   RuntimeMessageLayer,
+  Screen,
+  ScreenActions,
+  ScreenButton,
+  ScreenField,
+  ScreenHeading,
   type ScreenComponentProps,
   ScreenHost,
   type ScreenHostProps,
+  ScreenPanel,
   StatusLayer,
   type StatusLayerProps,
 } from "../src/index.js";
@@ -265,6 +271,57 @@ describe("ScreenHost", () => {
     );
 
     expect(node.props.className).toBe("tzr-screen-host custom-screen-host");
+  });
+});
+
+describe("Screen primitives", () => {
+  it("renders Screen children with the default variant", () => {
+    const node = expectVNode(Screen({ children: "menu", className: "custom-screen" }));
+
+    expect(node.props.className).toBe("tzr-screen tzr-screen--default custom-screen");
+    expect(getNodeText(node)).toBe("menu");
+  });
+
+  it("renders ScreenPanel children", () => {
+    const node = expectVNode(ScreenPanel({ children: "panel", className: "custom-panel" }));
+
+    expect(node.props.className).toBe("tzr-screen__panel custom-panel");
+    expect(getNodeText(node)).toBe("panel");
+  });
+
+  it("renders ScreenHeading eyebrow and heading", () => {
+    const node = expectVNode(ScreenHeading({ eyebrow: "System", children: "Settings" }));
+
+    expect(findByClass(node, "tzr-screen__eyebrow")).toHaveLength(1);
+    expect(findByClass(node, "tzr-screen__heading")).toHaveLength(1);
+    expect(getNodeText(node)).toContain("System");
+    expect(getNodeText(node)).toContain("Settings");
+  });
+
+  it("applies the ScreenActions columns modifier", () => {
+    const node = expectVNode(ScreenActions({ columns: 2, children: "actions" }));
+
+    expect(node.props.className).toBe("tzr-screen__actions tzr-screen__actions--columns-2");
+  });
+
+  it("renders ScreenButton as a disabled button", () => {
+    const onClick = vi.fn();
+    const node = expectVNode(ScreenButton({ disabled: true, onClick, variant: "primary", children: "Start" }));
+
+    expect(node.props.className).toBe("tzr-screen__button tzr-screen__button--primary");
+    expect(node.props.type).toBe("button");
+    expect(node.props.disabled).toBe(true);
+    expect(node.props.onClick).toBe(onClick);
+  });
+
+  it("renders ScreenField label, control, and hint", () => {
+    const node = expectVNode(ScreenField({ label: "Text speed", hint: "Normal", children: <select /> }));
+
+    expect(findByClass(node, "tzr-screen__field-label")).toHaveLength(1);
+    expect(findByClass(node, "tzr-screen__field-control")).toHaveLength(1);
+    expect(findByClass(node, "tzr-screen__field-hint")).toHaveLength(1);
+    expect(getNodeText(node)).toContain("Text speed");
+    expect(getNodeText(node)).toContain("Normal");
   });
 });
 

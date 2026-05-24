@@ -54,6 +54,30 @@
   --tzr-standard-ui-choice-button-padding: 11px 16px;
   --tzr-standard-ui-choice-layer-above-message-inline-inset: clamp(28px, 18vw, 260px);
   --tzr-standard-ui-choice-layer-retained-message-gap: clamp(20px, 3vw, 32px);
+  --tzr-standard-ui-screen-padding: clamp(20px, 5vw, 56px);
+  --tzr-standard-ui-screen-bg: linear-gradient(180deg, rgba(25, 33, 40, 0.5), rgba(6, 8, 10, 0.9)),
+    linear-gradient(115deg, rgba(29, 64, 78, 0.86), rgba(72, 94, 81, 0.78) 52%, rgba(112, 72, 86, 0.72));
+  --tzr-standard-ui-screen-panel-width: min(420px, 100%);
+  --tzr-standard-ui-screen-panel-padding: clamp(18px, 3vw, 30px);
+  --tzr-standard-ui-screen-panel-bg: rgba(8, 10, 13, 0.76);
+  --tzr-standard-ui-screen-panel-border: rgba(247, 242, 226, 0.38);
+  --tzr-standard-ui-screen-panel-shadow: 0 22px 52px rgba(0, 0, 0, 0.42);
+  --tzr-standard-ui-screen-heading-color: #fff8e8;
+  --tzr-standard-ui-screen-text-color: rgba(255, 250, 240, 0.72);
+  --tzr-standard-ui-screen-control-bg: rgba(8, 10, 13, 0.86);
+  --tzr-standard-ui-screen-control-border: rgba(247, 242, 226, 0.34);
+  --tzr-standard-ui-screen-button-bg: rgba(12, 16, 19, 0.76);
+  --tzr-standard-ui-screen-button-hover-bg: rgba(120, 76, 48, 0.62);
+  --tzr-standard-ui-screen-button-primary-bg: linear-gradient(
+    180deg,
+    rgba(176, 113, 68, 0.9),
+    rgba(119, 65, 54, 0.84)
+  );
+  --tzr-standard-ui-screen-button-danger-bg: linear-gradient(
+    180deg,
+    rgba(166, 70, 70, 0.9),
+    rgba(108, 42, 52, 0.84)
+  );
 }
 
 .tzr-game-shell {
@@ -370,6 +394,181 @@
   opacity: 0.64;
 }
 
+.tzr-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: var(--tzr-standard-ui-screen-padding);
+  overflow: hidden;
+  background: var(--tzr-standard-ui-screen-bg);
+  color: var(--tzr-standard-ui-text-color);
+  font-family: var(--tzr-standard-ui-font-family);
+}
+
+.tzr-screen--overlay {
+  background: var(--tzr-standard-ui-screen-bg);
+}
+
+.tzr-screen__panel {
+  position: relative;
+  z-index: 1;
+  width: var(--tzr-standard-ui-screen-panel-width);
+  box-sizing: border-box;
+  padding: var(--tzr-standard-ui-screen-panel-padding);
+  border: 1px solid var(--tzr-standard-ui-screen-panel-border);
+  border-radius: var(--tzr-standard-ui-window-radius);
+  background: var(--tzr-standard-ui-screen-panel-bg);
+  box-shadow: var(--tzr-standard-ui-screen-panel-shadow);
+}
+
+.tzr-screen__eyebrow {
+  margin: 0 0 14px;
+  color: var(--tzr-standard-ui-screen-text-color);
+  font-size: 0.92rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.tzr-screen__heading {
+  margin: 0 0 18px;
+  color: var(--tzr-standard-ui-screen-heading-color);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.15;
+}
+
+.tzr-screen__text {
+  margin: 0 0 14px;
+  color: var(--tzr-standard-ui-screen-text-color);
+  line-height: 1.6;
+}
+
+.tzr-screen__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.tzr-screen__actions--columns-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tzr-screen__button {
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid rgba(248, 244, 229, 0.34);
+  border-radius: 6px;
+  background: var(--tzr-standard-ui-screen-button-bg);
+  color: var(--tzr-standard-ui-text-color);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.tzr-screen__button--primary {
+  border-color: rgba(255, 220, 143, 0.72);
+  background: var(--tzr-standard-ui-screen-button-primary-bg);
+}
+
+.tzr-screen__button--danger {
+  border-color: rgba(255, 190, 190, 0.54);
+  background: var(--tzr-standard-ui-screen-button-danger-bg);
+}
+
+.tzr-screen__button:hover,
+.tzr-screen__button:focus-visible {
+  border-color: var(--tzr-standard-ui-accent-color);
+  background: var(--tzr-standard-ui-screen-button-hover-bg);
+}
+
+.tzr-screen__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tzr-screen__field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(247, 242, 226, 0.24);
+  border-radius: var(--tzr-standard-ui-window-radius);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tzr-screen__field-label {
+  color: var(--tzr-standard-ui-screen-heading-color);
+}
+
+.tzr-screen__field-control {
+  display: inline-grid;
+  justify-items: end;
+}
+
+.tzr-screen__field-control input,
+.tzr-screen__field-control select,
+.tzr-screen__field-control textarea {
+  min-height: 34px;
+  border: 1px solid var(--tzr-standard-ui-screen-control-border);
+  border-radius: 6px;
+  background: var(--tzr-standard-ui-screen-control-bg);
+  color: var(--tzr-standard-ui-text-color);
+  font: inherit;
+}
+
+.tzr-screen__field-control input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  accent-color: #d89b52;
+}
+
+.tzr-screen__field-control input[type="range"] {
+  accent-color: #d89b52;
+}
+
+.tzr-screen__field-control input:not([type="checkbox"]),
+.tzr-screen__field-control select,
+.tzr-screen__field-control textarea {
+  min-width: 120px;
+  padding: 7px 10px;
+}
+
+.tzr-screen__field-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--tzr-standard-ui-muted-text-color);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.tzr-screen__list {
+  display: grid;
+  gap: 10px;
+}
+
+.tzr-screen__list-item {
+  padding: 12px;
+  border: 1px solid rgba(247, 242, 226, 0.26);
+  border-radius: var(--tzr-standard-ui-window-radius);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tzr-screen__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid rgba(238, 202, 120, 0.44);
+  border-radius: 999px;
+  background: rgba(8, 10, 13, 0.68);
+  color: #ffe2a2;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
 .tzr-screen-host {
   position: absolute;
   inset: 0;
@@ -395,6 +594,12 @@
   border: 1px solid var(--tzr-standard-ui-window-border);
   background: var(--tzr-standard-ui-window-bg);
   color: var(--tzr-standard-ui-text-color);
+}
+
+.tzr-screen-host__surface > .tzr-screen {
+  position: relative;
+  inset: auto;
+  min-height: min(560px, calc(100dvh - 48px));
 }
 
 .tzr-screen-host__fallback {
@@ -423,6 +628,12 @@
 
 .tzr-screen-host__fallback-button:hover {
   border-color: var(--tzr-standard-ui-accent-color);
+}
+
+@media (max-width: 720px) {
+  .tzr-screen__actions--columns-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .tzr-tsuzuru-game {

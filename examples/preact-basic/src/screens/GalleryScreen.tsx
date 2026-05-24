@@ -1,27 +1,27 @@
+import { Screen, ScreenButton, ScreenHeading, ScreenPanel } from "@tsuzuru/standard-ui-preact";
+
 interface GalleryScreenProps {
   readonly onBack: () => void;
 }
 
 export function GalleryScreen({ onBack }: GalleryScreenProps) {
   return (
-    <section className="screen" aria-label="Gallery">
-      <div className="screen__content screen__content--panel">
-        <h1 className="screen__heading">Gallery</h1>
-        <div className="screen__gallery-grid">
-          <button type="button" className="screen__gallery-item" disabled>
+    <Screen aria-label="Gallery">
+      <ScreenPanel>
+        <ScreenHeading>Gallery</ScreenHeading>
+        <div className="gallery-grid">
+          <ScreenButton className="gallery-item" disabled>
             CG 1
-          </button>
-          <button type="button" className="screen__gallery-item" disabled>
+          </ScreenButton>
+          <ScreenButton className="gallery-item" disabled>
             CG 2
-          </button>
-          <button type="button" className="screen__gallery-item" disabled>
+          </ScreenButton>
+          <ScreenButton className="gallery-item" disabled>
             CG 3
-          </button>
+          </ScreenButton>
         </div>
-        <button type="button" className="screen__button" onClick={onBack}>
-          Back
-        </button>
-      </div>
-    </section>
+        <ScreenButton onClick={onBack}>Back</ScreenButton>
+      </ScreenPanel>
+    </Screen>
   );
 }

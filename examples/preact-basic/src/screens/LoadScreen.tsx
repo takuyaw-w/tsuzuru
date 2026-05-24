@@ -1,3 +1,13 @@
+import {
+  Screen,
+  ScreenActions,
+  ScreenButton,
+  ScreenHeading,
+  ScreenList,
+  ScreenListItem,
+  ScreenPanel,
+} from "@tsuzuru/standard-ui-preact";
+
 interface LoadScreenProps {
   readonly slots: readonly LoadScreenSlot[];
   readonly slotDefinitions: readonly SaveSlotDefinition[];
@@ -18,49 +28,43 @@ interface SaveSlotDefinition {
 
 export function LoadScreen({ slots, slotDefinitions, onLoad, onDelete, onBack }: LoadScreenProps) {
   return (
-    <section className="screen" aria-label="Load">
-      <div className="screen__content screen__content--panel">
-        <h1 className="screen__heading">Load</h1>
-        <div className="save-slots">
+    <Screen aria-label="Load">
+      <ScreenPanel>
+        <ScreenHeading>Load</ScreenHeading>
+        <ScreenList className="save-slots">
           {slotDefinitions.map((definition) => {
             const slot = slots.find((candidate) => candidate.id === definition.id) ?? null;
             return (
-              <section key={definition.id} className="save-slot" aria-label={definition.label}>
+              <ScreenListItem key={definition.id} className="save-slot" aria-label={definition.label}>
                 <div className="save-slot__meta">
                   <h2 className="save-slot__label">{definition.label}</h2>
                   <p className="save-slot__status">{slot === null ? "Empty" : formatSavedAt(slot.savedAt)}</p>
                 </div>
-                <div className="save-slot__actions">
-                  <button
-                    type="button"
-                    className="screen__button"
+                <ScreenActions columns={2} className="save-slot__actions">
+                  <ScreenButton
                     disabled={slot === null}
                     aria-label={`Load ${definition.label}`}
                     onClick={() => onLoad(definition.id)}
                   >
                     Load
-                  </button>
-                  <button
-                    type="button"
-                    className="screen__button"
+                  </ScreenButton>
+                  <ScreenButton
                     disabled={slot === null}
                     aria-label={`Delete ${definition.label}`}
                     onClick={() => onDelete(definition.id)}
                   >
                     Delete
-                  </button>
-                </div>
-              </section>
+                  </ScreenButton>
+                </ScreenActions>
+              </ScreenListItem>
             );
           })}
-        </div>
-        <div className="screen__actions">
-          <button type="button" className="screen__button" onClick={onBack}>
-            Back
-          </button>
-        </div>
-      </div>
-    </section>
+        </ScreenList>
+        <ScreenActions>
+          <ScreenButton onClick={onBack}>Back</ScreenButton>
+        </ScreenActions>
+      </ScreenPanel>
+    </Screen>
   );
 }
 

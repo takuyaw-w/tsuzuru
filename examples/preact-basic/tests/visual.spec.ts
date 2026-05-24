@@ -76,7 +76,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
   await expect(page.locator(".backlog")).toContainText("夜の旧校舎");
-  await expect(page.locator(".backlog__read-badge")).toContainText("Read");
+  await expect(page.locator(".tzr-screen__badge")).toContainText("Read");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
   await expect(messageWindow).toContainText("夜の旧校舎");
@@ -389,7 +389,7 @@ test("read tracking records current-session messages in runtime and backlog", as
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
   await expect(page.locator(".backlog")).toContainText("夜の旧校舎");
-  await expect(page.locator(".backlog__read-badge")).toContainText("Read");
+  await expect(page.locator(".tzr-screen__badge")).toContainText("Read");
 
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
