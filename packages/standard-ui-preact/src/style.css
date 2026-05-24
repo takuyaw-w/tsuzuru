@@ -37,6 +37,22 @@
   --tzr-standard-ui-message-advance-hint-right: clamp(16px, 3vw, 30px);
   --tzr-standard-ui-message-advance-hint-bottom: 4px;
   --tzr-standard-ui-message-advance-hint-font-size: 0.78rem;
+  --tzr-standard-ui-novel-text-window-inline-inset: clamp(22px, 7vw, 92px);
+  --tzr-standard-ui-novel-text-window-bottom: clamp(26px, 8vw, 72px);
+  --tzr-standard-ui-novel-text-window-min-height: clamp(230px, 42%, 360px);
+  --tzr-standard-ui-novel-text-window-max-height: calc(100% - clamp(72px, 16vw, 150px));
+  --tzr-standard-ui-novel-text-window-padding: clamp(22px, 4vw, 42px) clamp(22px, 5vw, 58px)
+    clamp(34px, 5vw, 52px);
+  --tzr-standard-ui-novel-text-window-bg: linear-gradient(180deg, rgba(8, 12, 15, 0.66), rgba(6, 7, 10, 0.78)),
+    rgba(0, 0, 0, 0.58);
+  --tzr-standard-ui-novel-text-window-border: rgba(255, 250, 240, 0.28);
+  --tzr-standard-ui-novel-text-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 48px rgba(0, 0, 0, 0.34);
+  --tzr-standard-ui-novel-text-font-size: clamp(1.05rem, 2.1vw, 1.34rem);
+  --tzr-standard-ui-novel-text-line-height: 1.9;
+  --tzr-standard-ui-novel-text-gap: 10px;
+  --tzr-standard-ui-novel-text-advance-right: clamp(20px, 4vw, 44px);
+  --tzr-standard-ui-novel-text-advance-bottom: clamp(10px, 2vw, 18px);
   --tzr-standard-ui-choice-layer-inline-inset: clamp(24px, 12vw, 168px);
   --tzr-standard-ui-choice-layer-bottom: clamp(24px, 8vw, 72px);
   --tzr-standard-ui-choice-layer-padding: clamp(18px, 3vw, 30px);
@@ -187,6 +203,60 @@
   right: var(--tzr-standard-ui-message-advance-hint-right);
   bottom: var(--tzr-standard-ui-message-advance-hint-bottom);
   margin: 0;
+  color: var(--tzr-standard-ui-muted-text-color);
+  font-size: var(--tzr-standard-ui-message-advance-hint-font-size);
+  text-align: right;
+}
+
+.tzr-novel-text-window {
+  position: absolute;
+  right: var(--tzr-standard-ui-novel-text-window-inline-inset);
+  bottom: var(--tzr-standard-ui-novel-text-window-bottom);
+  left: var(--tzr-standard-ui-novel-text-window-inline-inset);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: var(--tzr-standard-ui-novel-text-window-min-height);
+  max-height: var(--tzr-standard-ui-novel-text-window-max-height);
+  overflow: hidden;
+  padding: var(--tzr-standard-ui-novel-text-window-padding);
+  border: 1px solid var(--tzr-standard-ui-novel-text-window-border);
+  border-radius: var(--tzr-standard-ui-window-radius);
+  background: var(--tzr-standard-ui-novel-text-window-bg);
+  color: var(--tzr-standard-ui-text-color);
+  box-shadow: var(--tzr-standard-ui-novel-text-window-shadow);
+  backdrop-filter: blur(3px);
+}
+
+.tzr-novel-text-window--advanceable {
+  cursor: pointer;
+}
+
+.tzr-novel-text-window__body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--tzr-standard-ui-novel-text-gap);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  font-size: var(--tzr-standard-ui-novel-text-font-size);
+  line-height: var(--tzr-standard-ui-novel-text-line-height);
+}
+
+.tzr-novel-text-window__line {
+  margin: 0;
+  color: var(--tzr-standard-ui-text-color);
+  font-size: inherit;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+  text-shadow: var(--tzr-standard-ui-message-text-shadow);
+}
+
+.tzr-novel-text-window__advance {
+  position: absolute;
+  right: var(--tzr-standard-ui-novel-text-advance-right);
+  bottom: var(--tzr-standard-ui-novel-text-advance-bottom);
   color: var(--tzr-standard-ui-muted-text-color);
   font-size: var(--tzr-standard-ui-message-advance-hint-font-size);
   text-align: right;

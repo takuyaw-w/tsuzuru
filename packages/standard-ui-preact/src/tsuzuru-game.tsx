@@ -18,6 +18,11 @@ import { joinClassNames } from "./class-name.js";
 import { GameShell } from "./GameShell.js";
 import { GameViewport, type GameViewportAspectRatio } from "./game-viewport.js";
 import { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
+import {
+  getRuntimeNovelTextLines,
+  RuntimeNovelTextLayer,
+  type RuntimeNovelTextSpeakerMode,
+} from "./RuntimeNovelTextLayer.js";
 import { StatusLayer } from "./StatusLayer.js";
 import { StdAudioLayer, type StdAudioLayerDiagnostic } from "./std-audio-layer.js";
 import { StdEffectLayer, type StdEffectLayerDiagnostic } from "./std-effect-layer.js";
@@ -68,12 +73,20 @@ export interface TsuzuruGameTextOptions {
   readonly charactersPerSecond?: number | undefined;
 }
 
+export type TsuzuruGameMessagePresentationMode = "dialogue" | "novel";
+
+export interface TsuzuruGameMessagePresentationOptions {
+  readonly mode?: TsuzuruGameMessagePresentationMode;
+  readonly speakerMode?: RuntimeNovelTextSpeakerMode;
+}
+
 export interface TsuzuruGameProps {
   readonly scenario: TsuzuruGameScenario;
   readonly assets?: TsuzuruGameAssets | undefined;
   readonly className?: string | undefined;
   readonly viewport?: TsuzuruGameViewportOptions | undefined;
   readonly text?: TsuzuruGameTextOptions | undefined;
+  readonly messagePresentation?: TsuzuruGameMessagePresentationMode | TsuzuruGameMessagePresentationOptions | undefined;
   readonly autoStart?: boolean | undefined;
   readonly advanceHint?: string | undefined;
   readonly continueLabel?: string | undefined;
@@ -107,6 +120,7 @@ export function TsuzuruGame({
   className,
   viewport,
   text,
+  messagePresentation,
   autoStart,
   advanceHint,
   continueLabel,
@@ -126,7 +140,17 @@ export function TsuzuruGame({
   return (
     <TsuzuruGameRuntime
       document={document}
-      {...{ assets, className, viewport, text, autoStart, advanceHint, continueLabel, onDiagnostics }}
+      {...{
+        assets,
+        className,
+        viewport,
+        text,
+        messagePresentation,
+        autoStart,
+        advanceHint,
+        continueLabel,
+        onDiagnostics,
+      }}
     />
   );
 }
@@ -137,6 +161,7 @@ function TsuzuruGameRuntime({
   className,
   viewport,
   text,
+  messagePresentation,
   autoStart = true,
   advanceHint = "Click to continue",
   continueLabel,
@@ -208,12 +233,13 @@ function TsuzuruGameRuntime({
     autoClearWait: true,
     autoStepTransientEvents: true,
   });
+  const presentation = useMemo(() => resolveMessagePresentation(messagePresentation), [messagePresentation]);
   const visualState = getStdVisualState(runtime.state);
   const audioState = getStdAudioState(runtime.state);
   const effectState = getStdEffectState(runtime.state);
   const visibleEvent = runtime.visibleEvent;
   const presentationKey = useVisibleEventPresentationKey(visibleEvent);
-  const messageLines = useMemo(() => getMessageLines(visibleEvent), [visibleEvent]);
+  const messageLines = useMemo(() => getMessageLines(visibleEvent, presentation), [visibleEvent, presentation]);
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
   const textReveal = useTextReveal(revealText, {
@@ -313,7 +339,20 @@ function TsuzuruGameRuntime({
         onDiagnostic={recordPresentationDiagnostic}
       />
       <div className="tzr-tsuzuru-game__message-layer">
-        {visibleEvent === null ? null : (
+        {visibleEvent === null ? null : presentation.mode === "novel" ? (
+          <RuntimeNovelTextLayer
+            key={presentationKey}
+            event={visibleEvent}
+            onChoice={runtime.choose}
+            onAdvance={handleAdvanceRequest}
+            onContinue={handleAdvanceRequest}
+            canAdvance={messageLines === null ? runtime.blockReason === null : canAdvanceText}
+            advanceHint={advanceHint}
+            speakerMode={presentation.speakerMode}
+            {...(messageLines === null ? {} : { renderMessageLine })}
+            {...(continueLabel === undefined ? {} : { continueLabel })}
+          />
+        ) : (
           <RuntimeMessageLayer
             key={presentationKey}
             event={visibleEvent}
@@ -402,9 +441,36 @@ function useVisibleEventPresentationKey(event: Parameters<typeof getMessageLines
   return `${keyRef.current.sequence}:${event === null ? "none" : event.type}`;
 }
 
-function getMessageLines(event: RuntimeDocumentEvent | null): readonly string[] | null {
+interface ResolvedTsuzuruGameMessagePresentation {
+  readonly mode: TsuzuruGameMessagePresentationMode;
+  readonly speakerMode: RuntimeNovelTextSpeakerMode;
+}
+
+function resolveMessagePresentation(
+  messagePresentation: TsuzuruGameProps["messagePresentation"],
+): ResolvedTsuzuruGameMessagePresentation {
+  if (messagePresentation === undefined) {
+    return { mode: "dialogue", speakerMode: "inline" };
+  }
+  if (typeof messagePresentation === "string") {
+    return { mode: messagePresentation, speakerMode: "inline" };
+  }
+  const speakerMode = messagePresentation.speakerMode ?? "inline";
+  return {
+    mode: messagePresentation.mode ?? (messagePresentation.speakerMode === undefined ? "dialogue" : "novel"),
+    speakerMode,
+  };
+}
+
+function getMessageLines(
+  event: RuntimeDocumentEvent | null,
+  presentation: ResolvedTsuzuruGameMessagePresentation,
+): readonly string[] | null {
   if (event?.type !== "narration" && event?.type !== "dialogue") {
     return null;
+  }
+  if (presentation.mode === "novel") {
+    return getRuntimeNovelTextLines(event, presentation.speakerMode);
   }
   return event.lines.map((line) => line.text);
 }
@@ -425,8 +491,9 @@ function buildLineRanges(lines: readonly string[]): readonly LineRange[] {
 function isInteractiveTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".tzr-message-window, .tzr-choice-layer, .tzr-status-layer, button, a, input, select, textarea") !==
-      null
+    target.closest(
+      ".tzr-message-window, .tzr-novel-text-window, .tzr-choice-layer, .tzr-status-layer, button, a, input, select, textarea",
+    ) !== null
   );
 }
 

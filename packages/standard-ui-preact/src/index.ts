@@ -13,8 +13,19 @@ export type { GameViewportAspectRatio, GameViewportProps } from "./game-viewport
 export { GameViewport } from "./game-viewport.js";
 export type { MessageWindowProps, MessageWindowRenderLine, MessageWindowRenderLineContext } from "./MessageWindow.js";
 export { MessageWindow } from "./MessageWindow.js";
+export type {
+  NovelTextWindowProps,
+  NovelTextWindowRenderLine,
+  NovelTextWindowRenderLineContext,
+} from "./NovelTextWindow.js";
+export { NovelTextWindow } from "./NovelTextWindow.js";
 export type { RuntimeMessageLayerProps } from "./RuntimeMessageLayer.js";
 export { RuntimeMessageLayer } from "./RuntimeMessageLayer.js";
+export type {
+  RuntimeNovelTextLayerProps,
+  RuntimeNovelTextSpeakerMode,
+} from "./RuntimeNovelTextLayer.js";
+export { RuntimeNovelTextLayer } from "./RuntimeNovelTextLayer.js";
 export type {
   RuntimeControlBarDisabledState,
   RuntimeControlBarHiddenState,
@@ -96,6 +107,8 @@ export type { StdVisualRuntimeLayerProps } from "./std-visual-runtime-layer.js";
 export { StdVisualRuntimeLayer } from "./std-visual-runtime-layer.js";
 export type {
   TsuzuruGameDiagnostic,
+  TsuzuruGameMessagePresentationMode,
+  TsuzuruGameMessagePresentationOptions,
   TsuzuruGameProps,
   TsuzuruGameScenario,
   TsuzuruGameTextOptions,

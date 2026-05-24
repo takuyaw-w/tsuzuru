@@ -11,22 +11,28 @@ import {
   MessageWindow,
   type MessageWindowProps,
   type MessageWindowRenderLineContext,
+  NovelTextWindow,
+  type NovelTextWindowProps,
+  type NovelTextWindowRenderLineContext,
   RuntimeMessageLayer,
+  RuntimeNovelTextLayer,
   Screen,
   ScreenActions,
   ScreenBadge,
   ScreenButton,
+  type ScreenComponentProps,
   ScreenField,
   ScreenHeading,
-  ScreenList,
-  ScreenListItem,
-  ScreenText,
-  type ScreenComponentProps,
   ScreenHost,
   type ScreenHostProps,
+  ScreenList,
+  ScreenListItem,
   ScreenPanel,
+  ScreenText,
   StatusLayer,
   type StatusLayerProps,
+  TsuzuruGame,
+  type TsuzuruGameProps,
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;
@@ -52,6 +58,22 @@ const loc = {
   start: { filePath: "scenario/main.tzr", line: 1, column: 1 },
   end: { filePath: "scenario/main.tzr", line: 1, column: 1 },
 };
+
+function createCompiledScenario() {
+  const scenario = defineTsuzuruGameScenario({
+    entryId: "scenario/main.tzr",
+    documents: [
+      {
+        id: "scenario/main.tzr",
+        source: ['title "Standard Game"', "", "scene start:", "  narration:", "    Opening line.", "  end"].join("\n"),
+      },
+    ],
+  });
+  if (!scenario.ok) {
+    throw new Error("scenario did not compile");
+  }
+  return scenario.document;
+}
 
 function expectVNode<P = TestNodeProps>(value: ComponentChildren): VNode<P> {
   expect(isValidElement(value)).toBe(true);
@@ -193,6 +215,36 @@ describe("defineTsuzuruGameScenario", () => {
       throw new Error("scenario unexpectedly compiled");
     }
     expect(scenario.errors[0]?.filePath).toBe("scenario/broken.tzr");
+  });
+});
+
+describe("TsuzuruGame", () => {
+  it("keeps dialogue presentation as the default runtime prop", () => {
+    const scenario = createCompiledScenario();
+    const node = expectVNode<{ readonly messagePresentation?: TsuzuruGameProps["messagePresentation"] }>(
+      TsuzuruGame({ scenario, autoStart: false }),
+    );
+
+    expect(node.props.messagePresentation).toBeUndefined();
+  });
+
+  it("passes string novel presentation to the runtime layer", () => {
+    const scenario = createCompiledScenario();
+    const node = expectVNode<{ readonly messagePresentation?: TsuzuruGameProps["messagePresentation"] }>(
+      TsuzuruGame({ scenario, autoStart: false, messagePresentation: "novel" }),
+    );
+
+    expect(node.props.messagePresentation).toBe("novel");
+  });
+
+  it("passes object novel presentation options to the runtime layer", () => {
+    const scenario = createCompiledScenario();
+    const messagePresentation = { mode: "novel", speakerMode: "block" } as const;
+    const node = expectVNode<{ readonly messagePresentation?: TsuzuruGameProps["messagePresentation"] }>(
+      TsuzuruGame({ scenario, autoStart: false, messagePresentation }),
+    );
+
+    expect(node.props.messagePresentation).toBe(messagePresentation);
   });
 });
 
@@ -549,6 +601,81 @@ describe("MessageWindow", () => {
   });
 });
 
+describe("NovelTextWindow", () => {
+  it("renders lines in a novel text body", () => {
+    const node = expectVNode(NovelTextWindow({ lines: ["The snow would not stop.", "The lodge was silent."] }));
+    const body = findByClass(node, "tzr-novel-text-window__body");
+    const lines = findByClass(node, "tzr-novel-text-window__line");
+
+    expect(node.props.className).toBe("tzr-novel-text-window");
+    expect(body).toHaveLength(1);
+    expect(lines).toHaveLength(2);
+    expect(lines.map((line) => getNodeText(line))).toEqual(["The snow would not stop.", "The lodge was silent."]);
+  });
+
+  it("renders custom line content with renderLine", () => {
+    const receivedContexts: NovelTextWindowRenderLineContext[] = [];
+    const node = expectVNode(
+      NovelTextWindow({
+        lines: ["Line one.", "Line two."],
+        renderLine: (context) => {
+          receivedContexts.push(context);
+          return <span className="custom-novel-line">{`${context.lineIndex}:${context.line}`}</span>;
+        },
+      }),
+    );
+
+    expect(findByClass(node, "custom-novel-line").map((line) => getNodeText(line))).toEqual([
+      "0:Line one.",
+      "1:Line two.",
+    ]);
+    expect(receivedContexts).toEqual([
+      { line: "Line one.", lineIndex: 0 },
+      { line: "Line two.", lineIndex: 1 },
+    ]);
+  });
+
+  it("calls onAdvance when clicked in an advanceable state", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(NovelTextWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
+
+    node.props.onClick?.(createDivClickEvent());
+
+    expect(onAdvance).toHaveBeenCalledTimes(1);
+    expect(node.props.className).toContain("tzr-novel-text-window--advanceable");
+    expect(getNodeText(node)).toContain("Click to continue");
+  });
+
+  it("calls onAdvance with Enter and Space in an advanceable state", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(NovelTextWindow({ lines: ["Next."], onAdvance, canAdvance: true }));
+    const enter = createDivKeyDownEvent("Enter");
+    const space = createDivKeyDownEvent(" ");
+
+    node.props.onKeyDown?.(enter.event);
+    node.props.onKeyDown?.(space.event);
+
+    expect(onAdvance).toHaveBeenCalledTimes(2);
+    expect(enter.preventDefault).not.toHaveBeenCalled();
+    expect(space.preventDefault).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not become advanceable when canAdvance=false", () => {
+    const onAdvance = vi.fn();
+    const node = expectVNode(NovelTextWindow({ lines: ["Wait."], onAdvance, canAdvance: false }));
+
+    node.props.onClick?.(createDivClickEvent());
+
+    expect(onAdvance).not.toHaveBeenCalled();
+    expect(node.props.className).not.toContain("tzr-novel-text-window--advanceable");
+    expect(node.props.onClick).toBeUndefined();
+    expect(node.props.onKeyDown).toBeUndefined();
+    expect(node.props.role).toBeUndefined();
+    expect(node.props.tabIndex).toBeUndefined();
+    expect(getNodeText(node)).not.toContain("Click to continue");
+  });
+});
+
 describe("ChoiceLayer", () => {
   it("renders question and choices", () => {
     const node = expectVNode(
@@ -791,5 +918,125 @@ describe("RuntimeMessageLayer", () => {
       expect(node.type).toBe(StatusLayer);
       expect(node.props.label).toBe(label);
     }
+  });
+});
+
+describe("RuntimeNovelTextLayer", () => {
+  it("maps narration to NovelTextWindow", () => {
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: { type: "narration", lines: [{ text: "The room was quiet.", loc }] },
+        onAdvance: vi.fn(),
+        canAdvance: true,
+      }),
+    );
+
+    expect(node.type).toBe(NovelTextWindow);
+    expect(node.props.lines).toEqual(["The room was quiet."]);
+  });
+
+  it("maps dialogue with speakerMode=inline by default", () => {
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: { type: "dialogue", speaker: "Mio", lines: [{ text: "Listen closely.", loc }] },
+      }),
+    );
+
+    expect(node.type).toBe(NovelTextWindow);
+    expect(node.props.lines).toEqual(["Mio「Listen closely.」"]);
+  });
+
+  it("maps multi-line dialogue with speakerMode=inline", () => {
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: {
+          type: "dialogue",
+          speaker: "Mio",
+          lines: [
+            { text: "Listen closely.", loc },
+            { text: "Something is outside.", loc },
+          ],
+        },
+      }),
+    );
+
+    expect(node.props.lines).toEqual(["Mio「Listen closely.", "Something is outside.」"]);
+  });
+
+  it("maps dialogue with speakerMode=block", () => {
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: { type: "dialogue", speaker: "Mio", lines: [{ text: "Listen closely.", loc }] },
+        speakerMode: "block",
+      }),
+    );
+
+    expect(node.type).toBe(NovelTextWindow);
+    expect(node.props.lines).toEqual(["【Mio】", "Listen closely."]);
+  });
+
+  it("maps dialogue with speakerMode=hidden", () => {
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: { type: "dialogue", speaker: "Mio", lines: [{ text: "Listen closely.", loc }] },
+        speakerMode: "hidden",
+      }),
+    );
+
+    expect(node.type).toBe(NovelTextWindow);
+    expect(node.props.lines).toEqual(["Listen closely."]);
+  });
+
+  it("passes renderMessageLine to NovelTextWindow", () => {
+    const renderMessageLine = vi.fn(({ line }: NovelTextWindowRenderLineContext) => <span>{line}</span>);
+    const node = expectVNode<NovelTextWindowProps>(
+      RuntimeNovelTextLayer({
+        event: { type: "narration", lines: [{ text: "The room was quiet.", loc }] },
+        renderMessageLine,
+      }),
+    );
+
+    expect(node.type).toBe(NovelTextWindow);
+    expect(node.props.renderLine).toBe(renderMessageLine);
+  });
+
+  it("maps choice to ChoiceLayer and selects by index", () => {
+    const onChoice = vi.fn();
+    const node = expectVNode<ChoiceLayerProps>(
+      RuntimeNovelTextLayer({
+        event: {
+          type: "choice",
+          question: "What do you do?",
+          items: [
+            { id: "stay", text: "Stay" },
+            { id: "go", text: "Go" },
+          ],
+        },
+        onChoice,
+      }),
+    );
+
+    expect(node.type).toBe(ChoiceLayer);
+    expect(node.props.question).toBe("What do you do?");
+    expect(node.props.choices).toEqual([{ text: "Stay" }, { text: "Go" }]);
+    const renderedChoice = expectVNode((node.type as (props: ChoiceLayerProps) => ComponentChildren)(node.props));
+
+    findByClass(renderedChoice, "tzr-choice-layer__button")[1]?.props.onClick?.();
+    expect(onChoice).toHaveBeenCalledWith(1);
+  });
+
+  it("maps waitClick and page like RuntimeMessageLayer", () => {
+    const onContinue = vi.fn();
+    const waitClick = expectVNode<StatusLayerProps>(
+      RuntimeNovelTextLayer({ event: { type: "waitClick" }, onContinue, continueLabel: "Next" }),
+    );
+    const page = expectVNode<StatusLayerProps>(RuntimeNovelTextLayer({ event: { type: "page" }, onContinue }));
+
+    expect(waitClick.type).toBe(StatusLayer);
+    expect(waitClick.props.label).toBe("Waiting for click");
+    expect(waitClick.props.buttonLabel).toBe("Next");
+    expect(waitClick.props.onButtonClick).toBe(onContinue);
+    expect(page.props.label).toBe("Page break");
+    expect(page.props.buttonLabel).toBe("Continue");
   });
 });

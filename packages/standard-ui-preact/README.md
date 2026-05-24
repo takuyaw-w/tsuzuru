@@ -20,6 +20,33 @@ export function App() {
 `assets` maps DSL asset IDs to image or audio resources. Image entries can also
 omit `src` and provide a `label` / `className` for CSS placeholders.
 
+## Message presentation
+
+`TsuzuruGame` uses the default dialogue presentation unless
+`messagePresentation` is set. The default style renders narration and dialogue
+through the standard message window, with dialogue showing the speaker label as
+part of the window.
+
+```tsx
+<TsuzuruGame scenario={scenario} assets={assets} messagePresentation="novel" />
+```
+
+`messagePresentation="novel"` renders narration and dialogue through the novel
+presentation path (`RuntimeNovelTextLayer` and `NovelTextWindow`) for a
+prose-forward text layout. This only changes how message events are displayed;
+it does not change `.tzr` syntax, compiled scenario output, branching, choices,
+state updates, or other scenario semantics.
+
+Novel presentation can be tuned with `speakerMode`:
+
+- `inline`: render dialogue with the speaker inline with the message text.
+- `block`: render the speaker as a separate first line.
+- `hidden`: hide speaker names and render the message body only.
+
+```tsx
+<TsuzuruGame scenario={scenario} assets={assets} messagePresentation={{ mode: "novel", speakerMode: "block" }} />
+```
+
 Lower-level components remain available when an app wants to own runtime wiring
 directly.
 
@@ -27,8 +54,10 @@ directly.
 import {
   GameShell,
   GameViewport,
+  NovelTextWindow,
   RuntimeControlBar,
   RuntimeMessageLayer,
+  RuntimeNovelTextLayer,
   createAudioAssetsWithVolume,
   StdAudioLayer,
   StdAudioRuntimeLayer,
@@ -46,10 +75,11 @@ import "@tsuzuru/standard-ui-preact/style.css";
 ```
 
 The package provides UI components such as `GameViewport`, `GameShell`,
-`MessageWindow`, `ChoiceLayer`, `StatusLayer`, `RuntimeMessageLayer`,
-`RuntimeControlBar`, `StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and
-`StdCameraLayer`, `StdParticleLayer`, `ScreenHost`, Screen primitives, plus the
-high-level `TsuzuruGame` starter component.
+`MessageWindow`, `NovelTextWindow`, `ChoiceLayer`, `StatusLayer`,
+`RuntimeMessageLayer`, `RuntimeNovelTextLayer`, `RuntimeControlBar`,
+`StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and `StdCameraLayer`,
+`StdParticleLayer`, `ScreenHost`, Screen primitives, plus the high-level
+`TsuzuruGame` starter component.
 
 Screen primitives such as `Screen`, `ScreenPanel`, `ScreenHeading`,
 `ScreenButton`, `ScreenField`, `ScreenList`, `ScreenListItem`, and `ScreenBadge`
