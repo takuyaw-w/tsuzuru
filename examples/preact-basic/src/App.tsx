@@ -60,10 +60,13 @@ import {
   createAudioAssetsWithVolume,
   GameShell,
   GameViewport,
+  getRuntimeNovelTextLines,
   type MessageHistoryEntry,
   type MessageWindowRenderLineContext,
   RuntimeControlBar,
   RuntimeMessageLayer,
+  RuntimeNovelTextLayer,
+  type RuntimeNovelTextSpeakerMode,
   StdAudioRuntimeLayer,
   type StdCameraFocusOffsetResolver,
   StdCameraRuntimeLayer,
@@ -90,16 +93,23 @@ import { TitleScreen } from "./screens/TitleScreen.js";
 type DivClickHandler = NonNullable<ComponentProps<"div">["onClick"]>;
 type AppScreen = "title" | "runtime" | "load" | "settings" | "backlog" | "gallery";
 type RuntimeOverlay = "save" | "load" | "settings" | "backlog" | null;
+export type ExampleMessagePresentationMode = "dialogue" | "novel";
+export type ExampleMessagePresentationSpeakerMode = RuntimeNovelTextSpeakerMode;
 
 const AUTO_MODE_ADVANCE_DELAY_MS = 1200;
 const SKIP_MODE_ADVANCE_DELAY_MS = 120;
 const TEXT_SOUND_MIN_INTERVAL_MS = 45;
+export const DEFAULT_MESSAGE_PRESENTATION_MODE: ExampleMessagePresentationMode = "dialogue";
+export const DEFAULT_MESSAGE_PRESENTATION_SPEAKER_MODE: ExampleMessagePresentationSpeakerMode = "inline";
 
 export const gameStorage = requireStandardRuntimeStorage(
   createStandardGameStorageFromConfig<StandardRuntimeSavePayload, RetainedMessageEvent>(tsuzuruConfig),
 );
 
 const storageConfig = tsuzuruConfig.storage;
+const exampleStoragePrefix = storageConfig?.prefix ?? "tsuzuru:example-preact-basic";
+export const MESSAGE_PRESENTATION_MODE_STORAGE_KEY = `${exampleStoragePrefix}:messagePresentationMode`;
+export const MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY = `${exampleStoragePrefix}:messagePresentationSpeakerMode`;
 
 export const TEXT_SPEED_OPTIONS = storageConfig?.preferences?.textSpeedOptions ?? STANDARD_GAME_TEXT_SPEED_OPTIONS;
 export type TextSpeedCharactersPerSecond = (typeof TEXT_SPEED_OPTIONS)[number];
@@ -165,6 +175,26 @@ export function parseReadTrackingStorageData(value: unknown): ReadTrackingState 
   return parseStandardReadTrackingStorageData(value, { project: projectIdentity });
 }
 
+export function loadMessagePresentationMode(): ExampleMessagePresentationMode {
+  return parseMessagePresentationMode(readExampleLocalStorage(MESSAGE_PRESENTATION_MODE_STORAGE_KEY));
+}
+
+export function saveMessagePresentationMode(mode: ExampleMessagePresentationMode): ExampleMessagePresentationMode {
+  writeExampleLocalStorage(MESSAGE_PRESENTATION_MODE_STORAGE_KEY, mode);
+  return mode;
+}
+
+export function loadMessagePresentationSpeakerMode(): ExampleMessagePresentationSpeakerMode {
+  return parseMessagePresentationSpeakerMode(readExampleLocalStorage(MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY));
+}
+
+export function saveMessagePresentationSpeakerMode(
+  mode: ExampleMessagePresentationSpeakerMode,
+): ExampleMessagePresentationSpeakerMode {
+  writeExampleLocalStorage(MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY, mode);
+  return mode;
+}
+
 export function loadSaveSlots(): readonly ExampleSaveSlot[] {
   return gameStorage.saves.loadSlots();
 }
@@ -197,14 +227,51 @@ function requireStandardRuntimeStorage(
   return storage as StandardRuntimeGameStoragePreset<StandardRuntimeSavePayload, RetainedMessageEvent>;
 }
 
+function parseMessagePresentationMode(value: unknown): ExampleMessagePresentationMode {
+  return value === "dialogue" || value === "novel" ? value : DEFAULT_MESSAGE_PRESENTATION_MODE;
+}
+
+function parseMessagePresentationSpeakerMode(value: unknown): ExampleMessagePresentationSpeakerMode {
+  return value === "hidden" || value === "inline" || value === "block"
+    ? value
+    : DEFAULT_MESSAGE_PRESENTATION_SPEAKER_MODE;
+}
+
+function readExampleLocalStorage(key: string): string | null {
+  try {
+    return globalThis.window?.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeExampleLocalStorage(key: string, value: string): void {
+  try {
+    globalThis.window?.localStorage?.setItem(key, value);
+  } catch {
+    return;
+  }
+}
+
 export function App() {
   const [screen, setScreen] = useState<AppScreen>("title");
   const [saveSlots, setSaveSlots] = useState<readonly ExampleSaveSlot[]>(() => loadSaveSlots());
   const [initialSaveData, setInitialSaveData] = useState<ExampleSaveData | null>(null);
   const [preferences, setPreferences] = useState<ExamplePreferences>(() => loadPreferences());
+  const [messagePresentationMode, setMessagePresentationMode] = useState<ExampleMessagePresentationMode>(() =>
+    loadMessagePresentationMode(),
+  );
+  const [messagePresentationSpeakerMode, setMessagePresentationSpeakerMode] =
+    useState<ExampleMessagePresentationSpeakerMode>(() => loadMessagePresentationSpeakerMode());
   const latestSaveSlot = useMemo(() => getLatestSaveSlot(saveSlots), [saveSlots]);
   const handleChangePreferences = useCallback((next: ExamplePreferences) => {
     setPreferences(savePreferences(next));
+  }, []);
+  const handleChangeMessagePresentationMode = useCallback((mode: ExampleMessagePresentationMode) => {
+    setMessagePresentationMode(saveMessagePresentationMode(mode));
+  }, []);
+  const handleChangeMessagePresentationSpeakerMode = useCallback((mode: ExampleMessagePresentationSpeakerMode) => {
+    setMessagePresentationSpeakerMode(saveMessagePresentationSpeakerMode(mode));
   }, []);
   const handleStart = useCallback(() => {
     setInitialSaveData(null);
@@ -239,8 +306,12 @@ export function App() {
         initialSaveData={initialSaveData}
         saveSlots={saveSlots}
         preferences={preferences}
+        messagePresentationMode={messagePresentationMode}
+        messagePresentationSpeakerMode={messagePresentationSpeakerMode}
         onSaveSlotsChange={setSaveSlots}
         onChangePreferences={handleChangePreferences}
+        onChangeMessagePresentationMode={handleChangeMessagePresentationMode}
+        onChangeMessagePresentationSpeakerMode={handleChangeMessagePresentationSpeakerMode}
         onTitle={() => setScreen("title")}
       />
     );
@@ -270,7 +341,11 @@ export function App() {
         <SettingsScreen
           preferences={preferences}
           textSpeedOptions={TEXT_SPEED_OPTIONS}
+          messagePresentationMode={messagePresentationMode}
+          messagePresentationSpeakerMode={messagePresentationSpeakerMode}
           onChangePreferences={handleChangePreferences}
+          onChangeMessagePresentationMode={handleChangeMessagePresentationMode}
+          onChangeMessagePresentationSpeakerMode={handleChangeMessagePresentationSpeakerMode}
           onBack={() => setScreen("title")}
         />
       ) : screen === "backlog" ? (
@@ -287,8 +362,12 @@ interface RuntimeAppProps {
   readonly initialSaveData: ExampleSaveData | null;
   readonly saveSlots: readonly ExampleSaveSlot[];
   readonly preferences: ExamplePreferences;
+  readonly messagePresentationMode: ExampleMessagePresentationMode;
+  readonly messagePresentationSpeakerMode: ExampleMessagePresentationSpeakerMode;
   readonly onSaveSlotsChange: (slots: readonly ExampleSaveSlot[]) => void;
   readonly onChangePreferences: (preferences: ExamplePreferences) => void;
+  readonly onChangeMessagePresentationMode: (mode: ExampleMessagePresentationMode) => void;
+  readonly onChangeMessagePresentationSpeakerMode: (mode: ExampleMessagePresentationSpeakerMode) => void;
   readonly onTitle: () => void;
 }
 
@@ -307,8 +386,12 @@ function RuntimeApp({
   initialSaveData,
   saveSlots,
   preferences,
+  messagePresentationMode,
+  messagePresentationSpeakerMode,
   onSaveSlotsChange,
   onChangePreferences,
+  onChangeMessagePresentationMode,
+  onChangeMessagePresentationSpeakerMode,
   onTitle,
 }: RuntimeAppProps) {
   const plugins = useMemo<readonly RuntimePluginDefinition[]>(
@@ -401,8 +484,11 @@ function RuntimeApp({
   const presentationKey = useVisibleEventPresentationKey(runtime.visibleEvent);
   const currentRenderableEvent = runtime.event === null ? null : getRenderableRuntimeEvent(runtime.event);
   const messageLines = useMemo(
-    () => (visiblePresentationEvent === null ? null : getMessageLines(visiblePresentationEvent)),
-    [visiblePresentationEvent],
+    () =>
+      visiblePresentationEvent === null
+        ? null
+        : getMessageLines(visiblePresentationEvent, messagePresentationMode, messagePresentationSpeakerMode),
+    [messagePresentationMode, messagePresentationSpeakerMode, visiblePresentationEvent],
   );
   const revealText = messageLines?.join("\n") ?? "";
   const lineRanges = useMemo(() => (messageLines === null ? [] : buildLineRanges(messageLines)), [messageLines]);
@@ -755,8 +841,10 @@ function RuntimeApp({
                     onChoice={runtime.choose}
                   />
                   {lastMessageEvent === null ? null : (
-                    <RuntimeMessageLayer
+                    <RuntimeTextLayer
                       key={getRuntimeEventTextKey(lastMessageEvent)}
+                      mode={messagePresentationMode}
+                      speakerMode={messagePresentationSpeakerMode}
                       className="app__retained-message"
                       event={lastMessageEvent}
                       canAdvance={false}
@@ -764,15 +852,19 @@ function RuntimeApp({
                   )}
                 </>
               ) : retainedMessageEvent !== null ? (
-                <RuntimeMessageLayer
+                <RuntimeTextLayer
                   key={getRuntimeEventTextKey(retainedMessageEvent)}
+                  mode={messagePresentationMode}
+                  speakerMode={messagePresentationSpeakerMode}
                   className="app__retained-message"
                   event={retainedMessageEvent}
                   canAdvance={false}
                 />
               ) : visiblePresentationEvent === null ? null : (
-                <RuntimeMessageLayer
+                <RuntimeTextLayer
                   key={presentationKey}
+                  mode={messagePresentationMode}
+                  speakerMode={messagePresentationSpeakerMode}
                   event={visiblePresentationEvent}
                   onAdvance={handleAdvanceRequest}
                   {...(messageLines === null ? {} : { renderMessageLine })}
@@ -824,7 +916,11 @@ function RuntimeApp({
                   <SettingsScreen
                     preferences={preferences}
                     textSpeedOptions={TEXT_SPEED_OPTIONS}
+                    messagePresentationMode={messagePresentationMode}
+                    messagePresentationSpeakerMode={messagePresentationSpeakerMode}
                     onChangePreferences={onChangePreferences}
+                    onChangeMessagePresentationMode={onChangeMessagePresentationMode}
+                    onChangeMessagePresentationSpeakerMode={onChangeMessagePresentationSpeakerMode}
                     onBack={() => setOverlay(null)}
                   />
                 )}
@@ -842,6 +938,49 @@ function RuntimeApp({
         </ul>
       )}
     </main>
+  );
+}
+
+interface RuntimeTextLayerProps {
+  readonly mode: ExampleMessagePresentationMode;
+  readonly speakerMode: ExampleMessagePresentationSpeakerMode;
+  readonly event: RuntimeEvent;
+  readonly onAdvance?: () => void;
+  readonly renderMessageLine?: (context: MessageWindowRenderLineContext) => ComponentChildren;
+  readonly canAdvance?: boolean;
+  readonly className?: string;
+}
+
+function RuntimeTextLayer({
+  mode,
+  speakerMode,
+  event,
+  onAdvance,
+  renderMessageLine,
+  canAdvance,
+  className,
+}: RuntimeTextLayerProps): ComponentChildren {
+  if (mode === "novel") {
+    return (
+      <RuntimeNovelTextLayer
+        event={event}
+        speakerMode={speakerMode}
+        {...(onAdvance === undefined ? {} : { onAdvance })}
+        {...(renderMessageLine === undefined ? {} : { renderMessageLine })}
+        {...(canAdvance === undefined ? {} : { canAdvance })}
+        {...(className === undefined ? {} : { className })}
+      />
+    );
+  }
+
+  return (
+    <RuntimeMessageLayer
+      event={event}
+      {...(onAdvance === undefined ? {} : { onAdvance })}
+      {...(renderMessageLine === undefined ? {} : { renderMessageLine })}
+      {...(canAdvance === undefined ? {} : { canAdvance })}
+      {...(className === undefined ? {} : { className })}
+    />
   );
 }
 
@@ -870,7 +1009,7 @@ function isInteractiveClickTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
     target.closest(
-      ".tzr-screen, .app__runtime-menu, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea",
+      ".tzr-screen, .app__runtime-menu, .tzr-message-window, .tzr-novel-text-window, .tzr-choice-layer, button, a, input, select, textarea",
     ) !== null
   );
 }
@@ -878,7 +1017,9 @@ function isInteractiveClickTarget(target: EventTarget | null): boolean {
 function isKeyboardHandledTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(".tzr-screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
+    target.closest(
+      ".tzr-screen, .tzr-message-window, .tzr-novel-text-window, .tzr-choice-layer, button, a, input, select, textarea",
+    ) !== null
   );
 }
 
@@ -960,9 +1101,16 @@ function getRetainedMessageForSave(event: RuntimeEvent | null): RetainedMessageE
   return event;
 }
 
-function getMessageLines(event: RuntimeEvent): readonly string[] | null {
+function getMessageLines(
+  event: RuntimeEvent,
+  mode: ExampleMessagePresentationMode,
+  speakerMode: ExampleMessagePresentationSpeakerMode,
+): readonly string[] | null {
   if (!isMessageEvent(event)) {
     return null;
+  }
+  if (mode === "novel") {
+    return getRuntimeNovelTextLines(event, speakerMode);
   }
   return event.lines.map((line) => line.text);
 }

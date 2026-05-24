@@ -8,6 +8,7 @@ import {
   GameShell,
   GameViewport,
   type GameViewportProps,
+  getRuntimeNovelTextLines,
   MessageWindow,
   type MessageWindowProps,
   type MessageWindowRenderLineContext,
@@ -999,6 +1000,15 @@ describe("RuntimeNovelTextLayer", () => {
 
     expect(node.type).toBe(NovelTextWindow);
     expect(node.props.lines).toEqual(["【Mio】", "Listen closely."]);
+  });
+
+  it("exports the novel text line formatter", () => {
+    expect(
+      getRuntimeNovelTextLines(
+        { type: "dialogue", speaker: "Mio", lines: [{ text: "Listen closely.", loc }] },
+        "block",
+      ),
+    ).toEqual(["【Mio】", "Listen closely."]);
   });
 
   it("maps dialogue with speakerMode=hidden", () => {

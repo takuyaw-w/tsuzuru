@@ -3,7 +3,11 @@ import { Screen, ScreenButton, ScreenField, ScreenHeading, ScreenPanel } from "@
 interface SettingsScreenProps {
   readonly preferences: SettingsPreferences;
   readonly textSpeedOptions: readonly TextSpeedCharactersPerSecond[];
+  readonly messagePresentationMode: MessagePresentationMode;
+  readonly messagePresentationSpeakerMode: MessagePresentationSpeakerMode;
   readonly onChangePreferences: (preferences: SettingsPreferences) => void;
+  readonly onChangeMessagePresentationMode: (mode: MessagePresentationMode) => void;
+  readonly onChangeMessagePresentationSpeakerMode: (mode: MessagePresentationSpeakerMode) => void;
   readonly onBack: () => void;
 }
 
@@ -18,8 +22,19 @@ interface SettingsPreferences {
 }
 
 type TextSpeedCharactersPerSecond = 30 | 60 | 120;
+type MessagePresentationMode = "dialogue" | "novel";
+type MessagePresentationSpeakerMode = "hidden" | "inline" | "block";
 
-export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferences, onBack }: SettingsScreenProps) {
+export function SettingsScreen({
+  preferences,
+  textSpeedOptions,
+  messagePresentationMode,
+  messagePresentationSpeakerMode,
+  onChangePreferences,
+  onChangeMessagePresentationMode,
+  onChangeMessagePresentationSpeakerMode,
+  onBack,
+}: SettingsScreenProps) {
   return (
     <Screen aria-label="Settings">
       <ScreenPanel>
@@ -63,6 +78,37 @@ export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferen
                   {formatTextSpeedLabel(value)}
                 </option>
               ))}
+            </select>
+          </ScreenField>
+          <ScreenField label="Message presentation" controlId="settings-message-presentation-control">
+            <select
+              id="settings-message-presentation-control"
+              value={messagePresentationMode}
+              onChange={(event) => {
+                onChangeMessagePresentationMode(parseMessagePresentationMode(event.currentTarget.value));
+              }}
+            >
+              <option value="dialogue">Dialogue window</option>
+              <option value="novel">Novel text</option>
+            </select>
+          </ScreenField>
+          <ScreenField
+            label="Novel speaker"
+            controlId="settings-novel-speaker-mode-control"
+            hint="Controls speaker display in novel text mode."
+            hintId="settings-novel-speaker-mode-hint"
+          >
+            <select
+              id="settings-novel-speaker-mode-control"
+              aria-describedby="settings-novel-speaker-mode-hint"
+              value={messagePresentationSpeakerMode}
+              onChange={(event) => {
+                onChangeMessagePresentationSpeakerMode(parseMessagePresentationSpeakerMode(event.currentTarget.value));
+              }}
+            >
+              <option value="inline">Inline</option>
+              <option value="block">Block</option>
+              <option value="hidden">Hidden</option>
             </select>
           </ScreenField>
           <VolumePreferenceField
@@ -176,6 +222,14 @@ function parseTextSpeedCharactersPerSecond(
   return textSpeedOptions.includes(parsedValue as TextSpeedCharactersPerSecond)
     ? (parsedValue as TextSpeedCharactersPerSecond)
     : 60;
+}
+
+function parseMessagePresentationMode(value: string): MessagePresentationMode {
+  return value === "novel" ? "novel" : "dialogue";
+}
+
+function parseMessagePresentationSpeakerMode(value: string): MessagePresentationSpeakerMode {
+  return value === "hidden" || value === "block" ? value : "inline";
 }
 
 function formatTextSpeedLabel(charactersPerSecond: TextSpeedCharactersPerSecond): string {

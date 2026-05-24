@@ -25,7 +25,7 @@ export type {
   RuntimeNovelTextLayerProps,
   RuntimeNovelTextSpeakerMode,
 } from "./RuntimeNovelTextLayer.js";
-export { RuntimeNovelTextLayer } from "./RuntimeNovelTextLayer.js";
+export { getRuntimeNovelTextLines, RuntimeNovelTextLayer } from "./RuntimeNovelTextLayer.js";
 export type {
   RuntimeControlBarDisabledState,
   RuntimeControlBarHiddenState,

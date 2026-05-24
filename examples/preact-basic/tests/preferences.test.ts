@@ -1,5 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_EXAMPLE_PREFERENCES, type ExamplePreferences, gameStorage, TEXT_SPEED_OPTIONS } from "../src/App.js";
+import {
+  DEFAULT_EXAMPLE_PREFERENCES,
+  DEFAULT_MESSAGE_PRESENTATION_MODE,
+  DEFAULT_MESSAGE_PRESENTATION_SPEAKER_MODE,
+  type ExamplePreferences,
+  gameStorage,
+  loadMessagePresentationMode,
+  loadMessagePresentationSpeakerMode,
+  MESSAGE_PRESENTATION_MODE_STORAGE_KEY,
+  MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY,
+  saveMessagePresentationMode,
+  saveMessagePresentationSpeakerMode,
+  TEXT_SPEED_OPTIONS,
+} from "../src/App.js";
 
 const PREFERENCES_STORAGE_KEY = gameStorage.keys.preferences;
 
@@ -20,7 +33,13 @@ describe("preferences", () => {
 
   it("keeps the example preferences policy stable", () => {
     expect(PREFERENCES_STORAGE_KEY).toBe("tsuzuru:example-preact-basic:preferences:v1");
+    expect(MESSAGE_PRESENTATION_MODE_STORAGE_KEY).toBe("tsuzuru:example-preact-basic:messagePresentationMode");
+    expect(MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY).toBe(
+      "tsuzuru:example-preact-basic:messagePresentationSpeakerMode",
+    );
     expect(TEXT_SPEED_OPTIONS).toEqual([30, 60, 120]);
+    expect(DEFAULT_MESSAGE_PRESENTATION_MODE).toBe("dialogue");
+    expect(DEFAULT_MESSAGE_PRESENTATION_SPEAKER_MODE).toBe("inline");
     expect(DEFAULT_EXAMPLE_PREFERENCES).toEqual({
       textRevealEnabled: true,
       textSpeedCharactersPerSecond: 60,
@@ -79,6 +98,29 @@ describe("preferences", () => {
 
     expect(gameStorage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
     expect(gameStorage.preferences.save(validPreferences)).toEqual(validPreferences);
+  });
+
+  it("loads and saves message presentation settings outside standard preferences", () => {
+    const storage = stubPreferencesStorage();
+
+    expect(loadMessagePresentationMode()).toBe("dialogue");
+    expect(loadMessagePresentationSpeakerMode()).toBe("inline");
+
+    expect(saveMessagePresentationMode("novel")).toBe("novel");
+    expect(saveMessagePresentationSpeakerMode("block")).toBe("block");
+    expect(storage.getItem(MESSAGE_PRESENTATION_MODE_STORAGE_KEY)).toBe("novel");
+    expect(storage.getItem(MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY)).toBe("block");
+    expect(loadMessagePresentationMode()).toBe("novel");
+    expect(loadMessagePresentationSpeakerMode()).toBe("block");
+  });
+
+  it("falls back for invalid message presentation settings", () => {
+    const storage = stubPreferencesStorage();
+    storage.setItem(MESSAGE_PRESENTATION_MODE_STORAGE_KEY, "unknown");
+    storage.setItem(MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY, "label");
+
+    expect(loadMessagePresentationMode()).toBe("dialogue");
+    expect(loadMessagePresentationSpeakerMode()).toBe("inline");
   });
 });
 

@@ -25,8 +25,11 @@ message history. This is also example-side presentation state, not core runtime
 state, and it is not persisted in save data yet.
 
 The Settings screen includes a Text Preferences MVP. It can turn text reveal on
-or off and choose slow, normal, or fast text speed. These preferences are
-example-side host state persisted with localStorage; `@tsuzuru/core`,
+or off and choose slow, normal, or fast text speed. It can also switch message
+presentation between the default dialogue window and novel text mode, using the
+same `.tzr` scenario while changing only the UI presentation. Novel text mode
+can show speakers inline, as a separate block line, or hidden. These preferences
+are example-side host state persisted with localStorage; `@tsuzuru/core`,
 `@tsuzuru/preact`, and `@tsuzuru/standard-ui-preact` do not own this preference
 policy.
 
@@ -115,7 +118,7 @@ Controls:
   dialogue advance automatically after full text display.
 - The runtime `Skip` button toggles Skip Mode. When enabled, narration and
   dialogue that were read earlier in the current session advance quickly.
-- Choices are shown above the message window while the previous message remains visible. Click a choice button to select it.
+- Choices are shown above the current message presentation while the previous message remains visible. Click a choice button to select it.
 
 ```sh
 pnpm --filter @tsuzuru/example-preact-basic dev

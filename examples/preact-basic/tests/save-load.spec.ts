@@ -3,17 +3,29 @@ import { expect, type Page, test } from "@playwright/test";
 const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
 const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
+const MESSAGE_PRESENTATION_MODE_STORAGE_KEY = "tsuzuru:example-preact-basic:messagePresentationMode";
+const MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY = "tsuzuru:example-preact-basic:messagePresentationSpeakerMode";
 const PROJECT_ID = "tsuzuru.example.preact-basic";
 const PROJECT_VERSION = "1";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
-    ({ preferencesStorageKey, readTrackingStorageKey, saveStorageKey }) => {
+    ({
+      messagePresentationModeStorageKey,
+      messagePresentationSpeakerModeStorageKey,
+      preferencesStorageKey,
+      readTrackingStorageKey,
+      saveStorageKey,
+    }) => {
       window.localStorage.removeItem(saveStorageKey);
       window.localStorage.removeItem(preferencesStorageKey);
       window.localStorage.removeItem(readTrackingStorageKey);
+      window.localStorage.removeItem(messagePresentationModeStorageKey);
+      window.localStorage.removeItem(messagePresentationSpeakerModeStorageKey);
     },
     {
+      messagePresentationModeStorageKey: MESSAGE_PRESENTATION_MODE_STORAGE_KEY,
+      messagePresentationSpeakerModeStorageKey: MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY,
       preferencesStorageKey: PREFERENCES_STORAGE_KEY,
       readTrackingStorageKey: READ_TRACKING_STORAGE_KEY,
       saveStorageKey: SAVE_STORAGE_KEY,
