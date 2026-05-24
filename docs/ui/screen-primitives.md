@@ -46,8 +46,13 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
       <ScreenPanel>
         <ScreenHeading eyebrow="System">Settings</ScreenHeading>
         <ScreenText>Adjust the project-specific settings for this game.</ScreenText>
-        <ScreenField label="Text reveal" hint="Reveal message text over time." hintId="text-reveal-hint">
-          <input type="checkbox" aria-describedby="text-reveal-hint" />
+        <ScreenField
+          label="Text reveal"
+          controlId="text-reveal-control"
+          hint="Reveal message text over time."
+          hintId="text-reveal-hint"
+        >
+          <input id="text-reveal-control" type="checkbox" aria-describedby="text-reveal-hint" />
         </ScreenField>
         <ScreenActions>
           <ScreenButton onClick={onBack}>Back</ScreenButton>
@@ -62,7 +67,7 @@ export function SettingsScreen({ onBack }: { readonly onBack: () => void }) {
 
 `ScreenButton` renders a native `button` and always sets `type="button"` so it does not accidentally submit a surrounding form. It forwards normal button props except `type`.
 
-`ScreenField` renders a wrapper `label`, so simple form controls can be placed directly inside it. When a hint explains the control, pass a stable `hintId` and connect the child control with `aria-describedby`.
+`ScreenField` renders a field wrapper with a visible label. Pass `controlId` and give the child control the same `id` to associate the visible label with the control. When a hint explains the control, pass a stable `hintId` and connect the child control with `aria-describedby`.
 
 ## Lists
 

@@ -86,6 +86,8 @@ Screen primitives such as `Screen`, `ScreenPanel`, `ScreenHeading`,
 are low-level building blocks for project-specific title, settings, save/load,
 backlog, and gallery screens. They are not complete screen implementations. See
 the repository docs: `docs/ui/screen-primitives.md`.
+For form rows, `ScreenField` accepts `controlId` so the visible label can be
+associated with the child control's `id`.
 
 `RuntimeControlBar` provides a reusable in-game control bar for actions such as
 Auto, Skip, Save, Load, Backlog, Settings, and Title. It is presentational only;

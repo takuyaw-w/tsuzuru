@@ -100,9 +100,10 @@ export function ScreenButton({
   );
 }
 
-export interface ScreenFieldProps extends Omit<ComponentProps<"label">, "children" | "className"> {
+export interface ScreenFieldProps extends Omit<ComponentProps<"div">, "children" | "className"> {
   readonly label: ComponentChildren;
   readonly children: ComponentChildren;
+  readonly controlId?: string | undefined;
   readonly hint?: ComponentChildren | undefined;
   readonly hintId?: string | undefined;
   readonly className?: string | undefined;
@@ -111,21 +112,31 @@ export interface ScreenFieldProps extends Omit<ComponentProps<"label">, "childre
 export function ScreenField({
   label,
   children,
+  controlId,
   hint,
   hintId,
   className,
   ...props
 }: ScreenFieldProps): ComponentChildren {
-  return (
-    <label {...props} className={joinClassNames("tzr-screen__field", className)}>
+  const labelNode =
+    controlId === undefined ? (
       <span className="tzr-screen__field-label">{label}</span>
+    ) : (
+      <label className="tzr-screen__field-label" htmlFor={controlId}>
+        {label}
+      </label>
+    );
+
+  return (
+    <div {...props} className={joinClassNames("tzr-screen__field", className)}>
+      {labelNode}
       <span className="tzr-screen__field-control">{children}</span>
       {hint === undefined ? null : (
         <span id={hintId} className="tzr-screen__field-hint">
           {hint}
         </span>
       )}
-    </label>
+    </div>
   );
 }
 

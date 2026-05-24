@@ -412,27 +412,53 @@ describe("Screen primitives", () => {
     expect(node.props.onClick).toBe(onClick);
   });
 
-  it("renders ScreenField label, control, and hint", () => {
+  it("renders ScreenField without controlId as a div with span label, content, and hint", () => {
     const node = expectVNode(
       ScreenField({
         label: "Text speed",
         hint: "Normal",
         hintId: "text-speed-hint",
-        children: <select aria-describedby="text-speed-hint" />,
+        className: "custom-field",
+        children: <span>Normal</span>,
       }),
     );
     const hint = findByClass(node, "tzr-screen__field-hint")[0];
+    const label = findByClass(node, "tzr-screen__field-label")[0];
     const control = findByClass(node, "tzr-screen__field-control")[0];
-    const select = getChildNodes(control)[0];
 
-    expect(node.type).toBe("label");
+    expect(node.type).toBe("div");
+    expect(node.props.className).toBe("tzr-screen__field custom-field");
+    expect(label.type).toBe("span");
     expect(findByClass(node, "tzr-screen__field-label")).toHaveLength(1);
     expect(findByClass(node, "tzr-screen__field-control")).toHaveLength(1);
     expect(findByClass(node, "tzr-screen__field-hint")).toHaveLength(1);
     expect(hint.props.id).toBe("text-speed-hint");
-    expect(select.props["aria-describedby"]).toBe("text-speed-hint");
+    expect(getNodeText(control)).toBe("Normal");
     expect(getNodeText(node)).toContain("Text speed");
     expect(getNodeText(node)).toContain("Normal");
+  });
+
+  it("renders ScreenField label as a label when controlId is provided", () => {
+    const node = expectVNode(
+      ScreenField({
+        label: "Text reveal",
+        controlId: "text-reveal-control",
+        hint: "Reveal message text over time.",
+        hintId: "text-reveal-hint",
+        children: <input id="text-reveal-control" type="checkbox" aria-describedby="text-reveal-hint" />,
+      }),
+    );
+    const label = findByClass(node, "tzr-screen__field-label")[0];
+    const hint = findByClass(node, "tzr-screen__field-hint")[0];
+    const control = findByClass(node, "tzr-screen__field-control")[0];
+    const input = getChildNodes(control)[0];
+
+    expect(node.type).toBe("div");
+    expect(label.type).toBe("label");
+    expect(label.props.htmlFor).toBe("text-reveal-control");
+    expect(hint.props.id).toBe("text-reveal-hint");
+    expect(input.props.id).toBe("text-reveal-control");
+    expect(input.props["aria-describedby"]).toBe("text-reveal-hint");
   });
 
   it("renders ScreenList as ul by default", () => {
