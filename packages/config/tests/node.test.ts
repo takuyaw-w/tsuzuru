@@ -2,12 +2,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { loadTsuzuruConfig } from "../src/config-loader.js";
+import { loadOptionalTsuzuruConfig, loadTsuzuruConfig, resolveTsuzuruConfigPath } from "../src/node.js";
 
 const tempRoots: string[] = [];
 
 async function createTempProject(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "tsuzuru-cli-"));
+  const root = await mkdtemp(join(tmpdir(), "tsuzuru-config-"));
   tempRoots.push(root);
   return root;
 }
@@ -46,6 +46,7 @@ export default config;
     const loaded = await loadTsuzuruConfig({ cwd: root });
 
     expect(loaded.configRoot).toBe(root);
+    expect(loaded.configPath).toBe(join(root, "tsuzuru.config.ts"));
     expect(loaded.config.project).toEqual({
       id: "tsuzuru.example.config-loader",
       version: "1",
@@ -61,10 +62,41 @@ export default config;
     });
   });
 
+  it("loads an explicit config file", async () => {
+    const root = await createTempProject();
+    await writeFile(
+      join(root, "custom.config.ts"),
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+};
+`,
+    );
+
+    const loaded = await loadTsuzuruConfig({ cwd: root, configFile: "custom.config.ts" });
+
+    expect(loaded.configPath).toBe(join(root, "custom.config.ts"));
+    expect(loaded.config.scenario.entry).toBe("scenario/main.tzr");
+  });
+
+  it("resolves the default config path", async () => {
+    const root = await createTempProject();
+
+    expect(resolveTsuzuruConfigPath({ cwd: root })).toBe(join(root, "tsuzuru.config.ts"));
+  });
+
   it("fails when tsuzuru.config.ts is missing", async () => {
     const root = await createTempProject();
 
     await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("Could not find tsuzuru.config.ts");
+  });
+
+  it("returns null from optional loading when tsuzuru.config.ts is missing", async () => {
+    const root = await createTempProject();
+
+    await expect(loadOptionalTsuzuruConfig({ cwd: root })).resolves.toBeNull();
   });
 
   it("fails when scenario.entry is invalid", async () => {

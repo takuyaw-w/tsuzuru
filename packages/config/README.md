@@ -24,8 +24,19 @@ export default defineTsuzuruConfig({
 });
 ```
 
-The package currently provides types and `defineTsuzuruConfig()`. It does not
-load files, expand globs, or validate projects by itself.
+The root export provides browser-safe types and `defineTsuzuruConfig()`. It
+does not import Node APIs.
+
+Node-based tools can load and validate config files through the explicit
+subpath export:
+
+```ts
+import { loadTsuzuruConfig } from "@tsuzuru/config/node";
+```
+
+The Node loader reads `tsuzuru.config.ts` from a project directory. It does not
+expand scenario globs or validate that scenario files exist; the CLI owns that
+project orchestration.
 
 `project.id` and `project.version` are optional project identity metadata.
 Applications can use them for save compatibility checks. Treat them as stable

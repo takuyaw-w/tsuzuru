@@ -1,5 +1,6 @@
+import { loadTsuzuruConfig, TsuzuruConfigLoadError } from "@tsuzuru/config/node";
 import { compileTzrProject, type Diagnostic } from "@tsuzuru/core";
-import { loadTsuzuruConfig, TsuzuruCliError } from "./config-loader.js";
+import { TsuzuruCliError } from "./errors.js";
 import { collectScenarioDocuments } from "./scenario-files.js";
 
 export interface CheckOutput {
@@ -56,7 +57,7 @@ export function formatDiagnostic(diagnostic: Diagnostic): string {
 }
 
 function formatError(error: unknown): string {
-  if (error instanceof TsuzuruCliError) {
+  if (error instanceof TsuzuruCliError || error instanceof TsuzuruConfigLoadError) {
     return `[error] ${error.message}`;
   }
   if (error instanceof Error) {

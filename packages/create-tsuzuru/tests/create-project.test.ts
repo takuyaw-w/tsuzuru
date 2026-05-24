@@ -144,8 +144,9 @@ describe("createProject", () => {
     expect(tsuzuruConfigSource).not.toContain("{{projectName}}");
     expect(viteConfigSource).toContain("@preact/preset-vite");
     expect(viteConfigSource).toContain("@tsuzuru/vite-plugin");
-    expect(viteConfigSource).toContain("createStdEffectPlugin()");
-    expect(viteConfigSource).toContain("tsuzuru({");
+    expect(viteConfigSource).toContain("tsuzuru()");
+    expect(viteConfigSource).not.toContain("createStdEffectPlugin()");
+    expect(viteConfigSource).not.toContain("tsuzuru({");
   });
 
   it("includes starter README and placeholder assets", async () => {

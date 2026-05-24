@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { TzrProjectDocumentInput } from "@tsuzuru/core";
 import { glob } from "tinyglobby";
-import { TsuzuruCliError } from "./config-loader.js";
+import { TsuzuruCliError } from "./errors.js";
 
 export interface CollectScenarioDocumentsInput {
   readonly configRoot: string;

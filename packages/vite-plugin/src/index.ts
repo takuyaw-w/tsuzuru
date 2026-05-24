@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { loadOptionalTsuzuruConfig, loadTsuzuruConfig, resolveTsuzuruConfigPath } from "@tsuzuru/config/node";
 import {
   compileTzrProject,
   type Diagnostic,
@@ -13,6 +14,7 @@ export interface TsuzuruVitePluginOptions {
   readonly include?: string | readonly string[];
   readonly exclude?: string | readonly string[];
   readonly plugins?: TzrCompileOptions["plugins"];
+  readonly configFile?: string | false;
 }
 
 interface TzrRequest {
@@ -37,6 +39,11 @@ interface ViteDiagnosticError extends Error {
   frame?: string;
 }
 
+interface ResolvedCompileConfig {
+  readonly options: TzrCompileOptions;
+  readonly watchFile?: string;
+}
+
 export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
   let root = process.cwd();
 
@@ -59,12 +66,22 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
         this.addWatchFile(file);
       }
 
+      let compileConfig: ResolvedCompileConfig;
+      try {
+        compileConfig = await resolveCompileConfig(options, root);
+      } catch (error) {
+        this.error(createViteConfigError(error));
+      }
+      if (compileConfig.watchFile !== undefined) {
+        this.addWatchFile(compileConfig.watchFile);
+      }
+
       const result = compileTzrProject(
         {
           entryId: project.entryId,
           documents: project.documents,
         },
-        createCompileOptions(options),
+        compileConfig.options,
       );
       if (!result.ok) {
         this.error(createViteDiagnosticError(result.errors, project.fileByDocumentId));
@@ -78,11 +95,31 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
   };
 }
 
-function createCompileOptions(options: TsuzuruVitePluginOptions): TzrCompileOptions {
-  if (options.plugins === undefined) {
-    return {};
+async function resolveCompileConfig(options: TsuzuruVitePluginOptions, root: string): Promise<ResolvedCompileConfig> {
+  if (options.plugins !== undefined) {
+    return { options: { plugins: options.plugins } };
   }
-  return { plugins: options.plugins };
+  if (options.configFile === false) {
+    return { options: { plugins: [] } };
+  }
+
+  const loadOptions = options.configFile === undefined ? { cwd: root } : { cwd: root, configFile: options.configFile };
+  const loaded =
+    options.configFile === undefined
+      ? await loadOptionalTsuzuruConfig(loadOptions)
+      : await loadTsuzuruConfig(loadOptions);
+
+  if (loaded === null) {
+    return {
+      options: { plugins: [] },
+      watchFile: resolveTsuzuruConfigPath(loadOptions),
+    };
+  }
+
+  return {
+    options: { plugins: loaded.config.plugins ?? [] },
+    watchFile: loaded.configPath,
+  };
 }
 
 function parseTzrRequest(id: string): TzrRequest | null {
@@ -193,6 +230,11 @@ function createViteDiagnosticError(
 
 function formatDiagnostic(diagnostic: Diagnostic): string {
   return `[error] ${diagnostic.filePath}:${diagnostic.line}:${diagnostic.column} ${diagnostic.message}`;
+}
+
+function createViteConfigError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  return new Error(`[tsuzuru] Failed to load tsuzuru config: ${message}`);
 }
 
 function documentIdForFile(filename: string, root: string): string {

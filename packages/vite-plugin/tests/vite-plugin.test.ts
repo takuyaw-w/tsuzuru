@@ -88,6 +88,142 @@ describe("tsuzuru", () => {
     expect(result.document.type).toBe("CompiledTzrDocument");
   });
 
+  it("uses compile plugin definitions from tsuzuru.config.ts by default", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+    const configPath = await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  plugins: [
+    {
+      name: "test",
+      commands: {
+        "test.unlock": { name: "test.unlock" },
+      },
+    },
+  ],
+};
+`,
+    );
+
+    const result = await loadScenarioModule(tsuzuru(), root, scenarioPath);
+
+    expect(result.document.type).toBe("CompiledTzrDocument");
+    expect(result.watchFiles).toContain(configPath);
+  });
+
+  it("watches the default config path when tsuzuru.config.ts is missing", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  end\n");
+    const result = await loadScenarioModule(tsuzuru(), root, scenarioPath);
+
+    expect(result.watchFiles).toContain(join(root, "tsuzuru.config.ts"));
+  });
+
+  it("lets explicit compile plugin definitions override tsuzuru.config.ts", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+    await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  plugins: [
+    {
+      name: "test",
+      commands: {
+        "test.unlock": { name: "test.unlock" },
+      },
+    },
+  ],
+};
+`,
+    );
+
+    await expect(loadScenarioModule(tsuzuru({ plugins: [] }), root, scenarioPath)).rejects.toMatchObject({
+      message: expect.stringContaining('CallStatement" is not compile-supported yet'),
+    });
+  });
+
+  it("can disable config file loading", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+    await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  plugins: [
+    {
+      name: "test",
+      commands: {
+        "test.unlock": { name: "test.unlock" },
+      },
+    },
+  ],
+};
+`,
+    );
+
+    await expect(loadScenarioModule(tsuzuru({ configFile: false }), root, scenarioPath)).rejects.toMatchObject({
+      message: expect.stringContaining('CallStatement" is not compile-supported yet'),
+    });
+  });
+
+  it("loads an explicit config file", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
+    const configPath = await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  plugins: [
+    {
+      name: "test",
+      commands: {
+        "test.unlock": { name: "test.unlock" },
+      },
+    },
+  ],
+};
+`,
+      "custom.tsuzuru.config.ts",
+    );
+
+    const result = await loadScenarioModule(tsuzuru({ configFile: "custom.tsuzuru.config.ts" }), root, scenarioPath);
+
+    expect(result.document.type).toBe("CompiledTzrDocument");
+    expect(result.watchFiles).toContain(configPath);
+  });
+
+  it("reports invalid config files as Vite errors", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  end\n");
+    await writeConfig(
+      root,
+      `export default {
+  scenario: {
+    entry: "",
+    files: ["scenario/**/*.tzr"],
+  },
+};
+`,
+    );
+
+    await expect(loadScenarioModule(tsuzuru(), root, scenarioPath)).rejects.toThrow("Failed to load tsuzuru config");
+  });
+
   it("reports unsupported plugin calls when no compile plugin is provided", async () => {
     const root = await createTempRoot();
     const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  call test.unlock()\n  end\n");
@@ -132,6 +268,13 @@ describe("tsuzuru", () => {
 });
 
 async function writeScenario(root: string, relativePath: string, source: string): Promise<string> {
+  const filename = resolve(root, relativePath);
+  await mkdir(dirname(filename), { recursive: true });
+  await writeFile(filename, source, "utf8");
+  return filename;
+}
+
+async function writeConfig(root: string, source: string, relativePath = "tsuzuru.config.ts"): Promise<string> {
   const filename = resolve(root, relativePath);
   await mkdir(dirname(filename), { recursive: true });
   await writeFile(filename, source, "utf8");

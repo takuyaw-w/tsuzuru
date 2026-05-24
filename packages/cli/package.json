@@ -17,6 +17,7 @@
   "files": [
     "dist/src/check.*",
     "dist/src/config-loader.*",
+    "dist/src/errors.*",
     "dist/src/index.*",
     "dist/src/scenario-files.*"
   ],
@@ -41,14 +42,13 @@
   "scripts": {
     "build": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json",
-    "test": "vitest run --dir tests",
+    "test": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && vitest run --dir tests",
     "typecheck": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@tsuzuru/config": "workspace:^",
     "@tsuzuru/core": "workspace:^",
-    "jiti": "^2.7.0",
     "tinyglobby": "^0.2.16"
   },
   "devDependencies": {
