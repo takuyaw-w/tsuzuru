@@ -672,12 +672,11 @@ function RuntimeApp({
     <main className="app">
       <GameViewport aspectRatio="16:9" className="app__viewport" maxWidth="100vw">
         <GameShell className="app__shell">
-          <div className="app__interaction-surface" onClick={handleViewportClick}>
+          <div className="tzr-tsuzuru-game__interaction-surface" onClick={handleViewportClick}>
             <StdCameraRuntimeLayer
               runtimeState={runtime.state}
               visualState={visualState}
               resolveFocusOffset={resolveCameraFocusOffset}
-              className="visual-layer"
             >
               <StdVisualRuntimeLayer
                 runtimeState={runtime.state}
@@ -692,15 +691,14 @@ function RuntimeApp({
               bgmAssets={bgmAssets}
               seAssets={seAssets}
               voiceAssets={voiceAssets}
-              statusPanelClassName="audio-layer"
+              statusPanelClassName="tzr-std-audio-status-panel--overlay"
             />
             <StdEffectLayer
-              className="effect-layer"
               events={effectState.events}
               nextSequence={effectState.nextSequence}
               targetSelectors={{
-                screen: ".app__interaction-surface",
-                message: ".app__message-layer",
+                screen: ".tzr-tsuzuru-game__interaction-surface",
+                message: ".tzr-tsuzuru-game__message-layer",
                 sprites: ".tzr-tsuzuru-game__sprite-layer",
               }}
             />
@@ -718,11 +716,11 @@ function RuntimeApp({
               onSettings={() => setOverlay("settings")}
               onTitle={onTitle}
             />
-            <div className="app__message-layer">
+            <div className="tzr-tsuzuru-game__message-layer">
               {canStart ? null : choiceEvent !== null ? (
                 <>
                   <ChoiceLayer
-                    className="app__choice-layer"
+                    className="tzr-choice-layer--above-message"
                     question={choiceEvent.question}
                     choices={choiceEvent.items.map((item) => ({ text: item.text }))}
                     onChoice={runtime.choose}

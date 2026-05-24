@@ -45,21 +45,6 @@ button {
   background: #0f1418;
 }
 
-.app__interaction-surface {
-  position: absolute;
-  inset: 0;
-  cursor: pointer;
-}
-
-.app__message-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  --tzr-standard-ui-message-window-bottom: clamp(16px, 4vw, 40px);
-  --tzr-standard-ui-message-window-height: 204px;
-  --tzr-standard-ui-choice-layer-retained-message-gap: clamp(20px, 3vw, 32px);
-}
-
 .app__runtime-menu {
   position: absolute;
   top: 14px;
@@ -462,17 +447,7 @@ button {
   margin-bottom: 16px;
 }
 
-.app__message-layer .app__choice-layer {
-  right: clamp(28px, 18vw, 260px);
-  bottom: calc(
-    var(--tzr-standard-ui-message-window-bottom) + var(--tzr-standard-ui-message-window-height) +
-      var(--tzr-standard-ui-choice-layer-retained-message-gap)
-  );
-  left: clamp(28px, 18vw, 260px);
-  z-index: 2;
-}
-
-.app__message-layer .app__retained-message {
+.app__retained-message {
   cursor: default;
 }
 
@@ -492,36 +467,9 @@ button {
   color: #ffb4a8;
 }
 
-.visual-layer {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.audio-layer {
-  position: absolute;
-  top: clamp(12px, 2vw, 18px);
-  left: clamp(12px, 2vw, 18px);
-  z-index: 2;
-  width: min(210px, calc(100% - 24px));
-  font-size: clamp(0.68rem, 1.2vw, 0.78rem);
-  opacity: 0.64;
-}
-
 @media (max-width: 720px) {
-  .app__message-layer {
-    --tzr-standard-ui-message-window-bottom: 12px;
-    --tzr-standard-ui-message-window-height: 184px;
-    --tzr-standard-ui-choice-layer-retained-message-gap: 16px;
-  }
-
   .app__viewport {
     width: min(100vw, calc(100dvh * 16 / 9));
-  }
-
-  .audio-layer {
-    display: none;
   }
 
   .screen__content--title {

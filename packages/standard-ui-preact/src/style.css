@@ -52,6 +52,7 @@
   --tzr-standard-ui-choice-button-border: rgba(247, 242, 226, 0.36);
   --tzr-standard-ui-choice-button-min-height: 46px;
   --tzr-standard-ui-choice-button-padding: 11px 16px;
+  --tzr-standard-ui-choice-layer-above-message-inline-inset: clamp(28px, 18vw, 260px);
   --tzr-standard-ui-choice-layer-retained-message-gap: clamp(20px, 3vw, 32px);
 }
 
@@ -211,6 +212,16 @@
   background: var(--tzr-standard-ui-choice-button-hover-bg);
 }
 
+.tzr-choice-layer--above-message {
+  right: var(--tzr-standard-ui-choice-layer-above-message-inline-inset);
+  bottom: calc(
+    var(--tzr-standard-ui-message-window-bottom) + var(--tzr-standard-ui-message-window-height) +
+      var(--tzr-standard-ui-choice-layer-retained-message-gap)
+  );
+  left: var(--tzr-standard-ui-choice-layer-above-message-inline-inset);
+  z-index: 2;
+}
+
 .tzr-status-layer__button {
   width: 100%;
   padding: 10px 12px;
@@ -347,6 +358,16 @@
   margin: 8px 0 0;
   padding-left: 16px;
   color: rgba(255, 220, 143, 0.9);
+}
+
+.tzr-std-audio-status-panel--overlay {
+  position: absolute;
+  top: clamp(12px, 2vw, 18px);
+  left: clamp(12px, 2vw, 18px);
+  z-index: 2;
+  width: min(210px, calc(100% - 24px));
+  font-size: clamp(0.68rem, 1.2vw, 0.78rem);
+  opacity: 0.64;
 }
 
 .tzr-screen-host {
@@ -1060,6 +1081,18 @@
   50% {
     opacity: var(--opacity, 0.48);
     transform: translate3d(var(--sway, 18px), var(--drift, 16px), 0) scale(1.2);
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --tzr-standard-ui-message-window-bottom: 12px;
+    --tzr-standard-ui-message-window-height: 184px;
+    --tzr-standard-ui-choice-layer-retained-message-gap: 16px;
+  }
+
+  .tzr-std-audio-status-panel--overlay {
+    display: none;
   }
 }
 

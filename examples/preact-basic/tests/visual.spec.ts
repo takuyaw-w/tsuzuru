@@ -51,7 +51,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
 
   const messageWindow = page.locator(".tzr-message-window");
   const audioLayer = page.locator('[aria-label="std-audio state"]');
-  await expect(page.locator(".effect-layer")).toBeAttached();
+  await expect(page.locator(".tzr-std-effect-layer")).toBeAttached();
   await expect(messageWindow).toContainText("夜の旧校舎");
   await expect(audioLayer).toContainText("BGM");
   await expect(audioLayer).toContainText("daily_theme");
@@ -178,7 +178,7 @@ test("transition demo renders 16:9 SVG backgrounds and restores interaction", as
 
   const messageWindow = page.locator(".tzr-message-window");
   const choiceLayer = page.locator(".tzr-choice-layer");
-  const visualLayer = page.locator(".visual-layer");
+  const visualLayer = page.locator(".tzr-tsuzuru-game__visual-layer");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
