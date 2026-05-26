@@ -1,0 +1,47 @@
+{
+  "name": "@tsuzuru/theme-standard",
+  "version": "1.0.0",
+  "description": "Standard CSS variable theme for Tsuzuru standard UI.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist/index.*",
+    "dist/style.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/theme-standard"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/theme-standard#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "theme",
+    "css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
+    "test": "pnpm run typecheck:self",
+    "typecheck": "pnpm run typecheck:self",
+    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

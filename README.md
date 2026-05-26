@@ -26,6 +26,10 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/core`
 - `@tsuzuru/preact`
 - `@tsuzuru/standard-ui-preact`
+- `@tsuzuru/theme-standard`
+- `@tsuzuru/theme-classic`
+- `@tsuzuru/theme-dark-novel`
+- `@tsuzuru/theme-minimal`
 - `@tsuzuru/standard-game-storage`
 - `@tsuzuru/plugin-std-visual`
 - `@tsuzuru/plugin-std-audio`
@@ -89,6 +93,10 @@ packages/
   create-tsuzuru/
   preact/
   standard-ui-preact/
+  theme-standard/
+  theme-classic/
+  theme-dark-novel/
+  theme-minimal/
   standard-game-storage/
   plugin-std-visual/
   plugin-std-audio/

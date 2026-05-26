@@ -53,6 +53,10 @@ packages/vite-plugin
 packages/create-tsuzuru
 packages/preact
 packages/standard-ui-preact
+packages/theme-standard
+packages/theme-classic
+packages/theme-dark-novel
+packages/theme-minimal
 packages/standard-game-storage
 packages/plugin-std-visual
 packages/plugin-std-audio
@@ -131,6 +135,15 @@ Package responsibilities:
   - provides reusable Preact UI components
   - may provide layout, message, choice, control, and helper UI components
   - must not own parser/compiler/runtime semantics
+
+- `@tsuzuru/theme-standard`
+- `@tsuzuru/theme-classic`
+- `@tsuzuru/theme-dark-novel`
+- `@tsuzuru/theme-minimal`
+  - provide CSS variable themes for `@tsuzuru/standard-ui-preact`
+  - must not own parser/compiler/runtime/plugin semantics
+  - must not be implemented as plugins
+  - must not re-import `@tsuzuru/standard-ui-preact/style.css`
 
 - `@tsuzuru/standard-game-storage`
   - provides reusable game storage helpers

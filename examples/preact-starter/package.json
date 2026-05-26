@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm run build:deps && pnpm run build:self",
-    "build:deps": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/cli build && pnpm --filter @tsuzuru/vite-plugin build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/standard-ui-preact build",
+    "build:deps": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/cli build && pnpm --filter @tsuzuru/vite-plugin build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/standard-ui-preact build && pnpm --filter @tsuzuru/theme-standard build",
     "build:self": "vite build",
     "check:scenario": "tsuzuru check",
     "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
@@ -22,6 +22,7 @@
     "@tsuzuru/plugin-std-effect": "workspace:*",
     "@tsuzuru/plugin-std-visual": "workspace:*",
     "@tsuzuru/standard-ui-preact": "workspace:*",
+    "@tsuzuru/theme-standard": "workspace:*",
     "preact": "^10.0.0"
   },
   "devDependencies": {

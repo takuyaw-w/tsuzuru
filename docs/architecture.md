@@ -75,6 +75,10 @@ packages/
   create-tsuzuru/
   preact/
   standard-ui-preact/
+  theme-standard/
+  theme-classic/
+  theme-dark-novel/
+  theme-minimal/
   standard-game-storage/
   plugin-std-visual/
   plugin-std-audio/
@@ -210,6 +214,31 @@ It must not own:
 - save/load, backlog, gallery, settings, or app-specific asset policy
 
 Standard UI components should be replaceable by userland components.
+
+---
+
+### Official Theme Packages
+
+`@tsuzuru/theme-standard`, `@tsuzuru/theme-classic`,
+`@tsuzuru/theme-dark-novel`, and `@tsuzuru/theme-minimal` provide scoped CSS
+variable overrides for `@tsuzuru/standard-ui-preact/style.css`.
+
+Responsibilities:
+
+- ship a `style.css` subpath with `.tzr-theme-*` scoped variable overrides
+- export lightweight class name and metadata constants
+- leave standard UI component structure and runtime behavior unchanged
+
+They must not own:
+
+- parser behavior
+- compiler behavior
+- core runtime stepping semantics
+- scenario semantics
+- plugin state semantics
+- Preact component replacement, skin, or layout preset systems
+
+Theme packages are presentation packages, not plugins.
 
 ---
 

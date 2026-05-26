@@ -1,0 +1,63 @@
+.tzr-theme-dark-novel {
+  --tzr-standard-ui-font-family: "Noto Serif JP", "Yu Mincho", Georgia, serif;
+  --tzr-standard-ui-text-color: #f4edf6;
+  --tzr-standard-ui-muted-text-color: rgba(244, 237, 246, 0.58);
+  --tzr-standard-ui-accent-color: #d57d9d;
+  --tzr-standard-ui-window-bg: linear-gradient(180deg, rgba(22, 12, 24, 0.9), rgba(6, 7, 13, 0.94)),
+    rgba(5, 5, 10, 0.88);
+  --tzr-standard-ui-window-border: rgba(213, 125, 157, 0.42);
+  --tzr-standard-ui-window-radius: 2px;
+  --tzr-standard-ui-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 58px rgba(0, 0, 0, 0.62);
+  --tzr-standard-ui-message-speaker-bg: linear-gradient(180deg, rgba(69, 25, 48, 0.92), rgba(28, 13, 26, 0.92));
+  --tzr-standard-ui-message-speaker-border: rgba(213, 125, 157, 0.32);
+  --tzr-standard-ui-message-speaker-color: #ffd1df;
+  --tzr-standard-ui-message-speaker-marker-color: #d57d9d;
+  --tzr-standard-ui-message-text-shadow: 0 2px 5px rgba(0, 0, 0, 0.72);
+  --tzr-standard-ui-message-advance-hint-font-size: 0.74rem;
+  --tzr-standard-ui-novel-text-layer-bg: radial-gradient(circle at 50% 18%, rgba(74, 18, 48, 0.34), transparent 40%),
+    linear-gradient(180deg, rgba(3, 4, 8, 0.26), rgba(3, 4, 8, 0.84));
+  --tzr-standard-ui-novel-text-font-size: clamp(1.12rem, 2.3vw, 1.46rem);
+  --tzr-standard-ui-novel-text-line-height: 2.08;
+  --tzr-standard-ui-choice-layer-bg: linear-gradient(180deg, rgba(23, 13, 28, 0.96), rgba(7, 8, 14, 0.96));
+  --tzr-standard-ui-choice-layer-border: rgba(213, 125, 157, 0.36);
+  --tzr-standard-ui-choice-layer-shadow: 0 24px 60px rgba(0, 0, 0, 0.62);
+  --tzr-standard-ui-choice-question-color: #ffd6e4;
+  --tzr-standard-ui-choice-button-bg: rgba(255, 255, 255, 0.06);
+  --tzr-standard-ui-choice-button-hover-bg: rgba(135, 49, 87, 0.44);
+  --tzr-standard-ui-choice-button-border: rgba(213, 125, 157, 0.28);
+  --tzr-standard-ui-screen-bg: radial-gradient(circle at 50% 12%, rgba(88, 25, 64, 0.52), transparent 32%),
+    linear-gradient(180deg, #080810, #17101d 52%, #07070c);
+  --tzr-standard-ui-screen-panel-bg: rgba(8, 8, 14, 0.82);
+  --tzr-standard-ui-screen-panel-border: rgba(213, 125, 157, 0.32);
+  --tzr-standard-ui-screen-heading-color: #ffeaf1;
+  --tzr-standard-ui-screen-text-color: rgba(244, 237, 246, 0.68);
+  --tzr-standard-ui-screen-control-bg: rgba(8, 8, 14, 0.9);
+  --tzr-standard-ui-screen-control-border: rgba(213, 125, 157, 0.28);
+  --tzr-standard-ui-screen-button-bg: rgba(18, 14, 24, 0.82);
+  --tzr-standard-ui-screen-button-border: rgba(213, 125, 157, 0.3);
+  --tzr-standard-ui-screen-button-hover-bg: rgba(135, 49, 87, 0.44);
+  --tzr-standard-ui-screen-button-primary-border: rgba(234, 151, 180, 0.68);
+  --tzr-standard-ui-screen-button-primary-bg: linear-gradient(180deg, rgba(136, 48, 88, 0.92), rgba(78, 29, 62, 0.9));
+  --tzr-standard-ui-screen-button-danger-border: rgba(248, 126, 126, 0.5);
+  --tzr-standard-ui-screen-button-danger-bg: linear-gradient(180deg, rgba(126, 40, 55, 0.92), rgba(73, 24, 36, 0.9));
+  --tzr-standard-ui-runtime-control-bg: rgba(18, 14, 24, 0.78);
+  --tzr-standard-ui-runtime-control-border: rgba(213, 125, 157, 0.22);
+  --tzr-standard-ui-runtime-control-hover-bg: rgba(135, 49, 87, 0.38);
+  --tzr-standard-ui-runtime-control-active-bg: rgba(136, 48, 88, 0.72);
+  --tzr-standard-ui-runtime-control-active-text-color: #fff0f6;
+  --tzr-standard-ui-runtime-control-disabled-bg: rgba(18, 14, 24, 0.4);
+  --tzr-standard-ui-runtime-control-disabled-border: rgba(213, 125, 157, 0.12);
+  --tzr-standard-ui-runtime-control-disabled-text-color: rgba(244, 237, 246, 0.36);
+  --tzr-standard-ui-audio-status-panel-bg: rgba(8, 8, 14, 0.46);
+  --tzr-standard-ui-audio-status-panel-border: rgba(213, 125, 157, 0.16);
+  --tzr-standard-ui-audio-status-panel-text-color: rgba(244, 237, 246, 0.82);
+  --tzr-standard-ui-audio-status-panel-muted-text-color: rgba(244, 237, 246, 0.5);
+  --tzr-standard-ui-audio-status-panel-notice-color: rgba(234, 151, 180, 0.86);
+  --tzr-standard-ui-screen-field-bg: rgba(255, 255, 255, 0.04);
+  --tzr-standard-ui-screen-field-border: rgba(213, 125, 157, 0.18);
+  --tzr-standard-ui-screen-list-item-bg: rgba(255, 255, 255, 0.04);
+  --tzr-standard-ui-screen-list-item-border: rgba(213, 125, 157, 0.2);
+  --tzr-standard-ui-screen-badge-bg: rgba(18, 14, 24, 0.74);
+  --tzr-standard-ui-screen-badge-border: rgba(234, 151, 180, 0.38);
+  --tzr-standard-ui-screen-badge-color: #ffd6e4;
+}

@@ -1,3 +1,4 @@
+import { standardThemeClassName } from "@tsuzuru/theme-standard";
 import { useState } from "preact/hooks";
 import scenario from "../scenario/main.tzr";
 import { assets } from "./assets.js";
@@ -9,15 +10,16 @@ type AppScreen = "title" | "game";
 export function App() {
   const [screen, setScreen] = useState<AppScreen>("title");
 
-  if (screen === "title") {
-    return (
+  const content =
+    screen === "title" ? (
       <TitleScreen
         title="はじめてのTsuzuru"
         subtitle="シナリオを書いて、素材を置くだけ。"
         onStart={() => setScreen("game")}
       />
+    ) : (
+      <GameRoot scenario={scenario} assets={assets} />
     );
-  }
 
-  return <GameRoot scenario={scenario} assets={assets} />;
+  return <div className={standardThemeClassName}>{content}</div>;
 }
