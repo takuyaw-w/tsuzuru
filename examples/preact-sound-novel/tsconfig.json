@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist-types",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "lib": ["ES2022", "DOM"],
+    "types": ["vite/client", "@tsuzuru/vite-plugin/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.test.ts", "tsuzuru.config.ts", "vite.config.ts"]
+}

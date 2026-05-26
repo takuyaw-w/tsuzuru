@@ -67,6 +67,7 @@ const files = [
   "packages/cli/package.json",
   "packages/create-tsuzuru/package.json",
   "examples/preact-basic/package.json",
+  "examples/preact-sound-novel/package.json",
   "examples/preact-starter/package.json",
 ];
 

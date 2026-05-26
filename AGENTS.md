@@ -67,6 +67,7 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-sound-novel
 examples/preact-starter
 ```
 
@@ -74,6 +75,7 @@ Primary runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-sound-novel
 examples/preact-starter
 ```
 

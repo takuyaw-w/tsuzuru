@@ -86,6 +86,7 @@ packages/
 
 examples/
   preact-basic/
+  preact-sound-novel/
   preact-starter/
 ```
 
@@ -108,6 +109,7 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-sound-novel
 examples/preact-starter
 ```
 
@@ -440,6 +442,7 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-sound-novel
 examples/preact-starter
 ```
 
@@ -1029,6 +1032,8 @@ in text reveal timing.
 ## Example App Flow
 
 `examples/preact-basic` demonstrates the current architecture in one runnable example.
+`examples/preact-sound-novel` focuses on long-form fullscreen sound-novel text
+presentation through the high-level `TsuzuruGame` API.
 
 It should show:
 

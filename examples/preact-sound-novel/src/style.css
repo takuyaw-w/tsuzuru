@@ -1,0 +1,274 @@
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: #06070b;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.sound-novel-app {
+  min-height: 100dvh;
+  color: #fff8e8;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.sound-novel-title {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  align-items: end;
+  overflow: hidden;
+  padding: clamp(24px, 6vw, 72px);
+  background:
+    linear-gradient(180deg, rgba(9, 13, 20, 0.1), rgba(7, 8, 12, 0.72) 58%, rgba(5, 6, 10, 0.96)),
+    linear-gradient(120deg, #162033 0%, #10141d 56%, #211923 100%);
+}
+
+.sound-novel-title__scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.sound-novel-title__window {
+  position: absolute;
+  top: clamp(46px, 10vh, 96px);
+  right: clamp(32px, 12vw, 180px);
+  width: clamp(190px, 32vw, 460px);
+  height: clamp(220px, 42vh, 420px);
+  border: 1px solid rgba(190, 218, 255, 0.24);
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(190, 218, 255, 0.22) 50%, transparent calc(50% + 1px)),
+    linear-gradient(180deg, transparent calc(50% - 1px), rgba(190, 218, 255, 0.18) 50%, transparent calc(50% + 1px)),
+    radial-gradient(circle at 40% 18%, rgba(183, 216, 255, 0.2), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 90px rgba(102, 142, 210, 0.15);
+}
+
+.sound-novel-title__book {
+  position: absolute;
+  right: clamp(54px, 16vw, 260px);
+  bottom: clamp(100px, 18vh, 180px);
+  width: clamp(150px, 26vw, 320px);
+  height: clamp(34px, 6vw, 58px);
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, rgba(255, 250, 232, 0.2), transparent 46%, rgba(255, 250, 232, 0.12) 50%, transparent 54%),
+    linear-gradient(180deg, #5e4b42, #211a1b);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  transform: rotate(-3deg);
+}
+
+.sound-novel-title__rain {
+  position: absolute;
+  inset: -20%;
+  background-image: linear-gradient(115deg, rgba(210, 230, 255, 0.18) 0 1px, transparent 1px 16px);
+  transform: rotate(8deg);
+}
+
+.sound-novel-title__rain--near {
+  background-size: 28px 58px;
+  opacity: 0.54;
+}
+
+.sound-novel-title__rain--far {
+  background-size: 46px 88px;
+  opacity: 0.25;
+}
+
+.sound-novel-title__copy {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+}
+
+.sound-novel-title__eyebrow {
+  margin: 0 0 12px;
+  color: rgba(198, 224, 255, 0.76);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.sound-novel-title h1 {
+  margin: 0;
+  color: #fff8e8;
+  font-size: clamp(3rem, 10vw, 6.4rem);
+  line-height: 1;
+  text-shadow: 0 5px 32px rgba(0, 0, 0, 0.48);
+}
+
+.sound-novel-title__subtitle {
+  margin: 18px 0 30px;
+  color: rgba(255, 250, 238, 0.78);
+  font-size: clamp(0.98rem, 1.8vw, 1.16rem);
+  line-height: 1.8;
+}
+
+.sound-novel-button {
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 13px;
+  border: 1px solid rgba(220, 236, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(8, 11, 18, 0.72);
+  color: #fff8e8;
+  cursor: pointer;
+}
+
+.sound-novel-button--primary {
+  min-width: 180px;
+  border-color: rgba(255, 220, 143, 0.72);
+  background: rgba(112, 83, 63, 0.78);
+}
+
+.sound-novel-button:hover,
+.sound-novel-button:focus-visible,
+.sound-novel-preview-controls select:hover,
+.sound-novel-preview-controls select:focus-visible {
+  border-color: rgba(255, 220, 143, 0.94);
+  background: rgba(92, 70, 58, 0.78);
+}
+
+.sound-novel-runtime {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #05060a;
+}
+
+.sound-novel-game {
+  width: 100%;
+  min-height: 100dvh;
+  --tzr-standard-ui-novel-text-layer-padding: clamp(40px, 7vw, 86px) clamp(26px, 8vw, 96px)
+    clamp(58px, 8vw, 96px);
+  --tzr-standard-ui-novel-text-layer-bg: linear-gradient(
+      180deg,
+      rgba(2, 4, 8, 0.54),
+      rgba(2, 4, 8, 0.14) 46%,
+      rgba(2, 4, 8, 0.62)
+    ),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08) 52%, rgba(0, 0, 0, 0.34));
+  --tzr-standard-ui-novel-text-font-size: clamp(1.06rem, 2vw, 1.36rem);
+  --tzr-standard-ui-novel-text-line-height: 1.95;
+}
+
+.sound-novel-game .tzr-tsuzuru-game__viewport {
+  width: min(100vw, calc(100dvh * 16 / 9));
+  filter: drop-shadow(0 18px 46px rgba(0, 0, 0, 0.52));
+}
+
+.sound-novel-game .tzr-tsuzuru-game__shell {
+  background: #0c1019;
+}
+
+.sound-novel-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.sound-novel-bg::before,
+.sound-novel-bg::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.sound-novel-bg--rain-room {
+  background:
+    radial-gradient(circle at 28% 20%, rgba(184, 216, 255, 0.18), transparent 34%),
+    linear-gradient(180deg, #151d2a 0%, #090b10 72%, #06070a 100%);
+}
+
+.sound-novel-bg--rain-room::before {
+  background-image: linear-gradient(112deg, rgba(206, 226, 255, 0.13) 0 1px, transparent 1px 18px);
+  background-size: 42px 84px;
+  opacity: 0.72;
+  transform: rotate(7deg) scale(1.18);
+}
+
+.sound-novel-bg--rain-room::after {
+  background:
+    linear-gradient(90deg, transparent 0 18%, rgba(230, 242, 255, 0.12) 18% 19%, transparent 19% 32%),
+    linear-gradient(180deg, transparent 0 32%, rgba(230, 242, 255, 0.1) 32% 33%, transparent 33%),
+    rgba(255, 255, 255, 0.02);
+  inset: clamp(42px, 8vw, 96px) clamp(34px, 12vw, 180px) auto auto;
+  width: clamp(220px, 30vw, 420px);
+  height: clamp(180px, 34vh, 330px);
+  border: 1px solid rgba(230, 242, 255, 0.16);
+}
+
+.sound-novel-bg--dawn-station {
+  background:
+    radial-gradient(circle at 70% 18%, rgba(255, 218, 145, 0.18), transparent 28%),
+    linear-gradient(180deg, #1d2530 0%, #101622 50%, #07090f 100%);
+}
+
+.sound-novel-bg--dawn-station::before {
+  top: auto;
+  height: 34%;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255, 235, 190, 0.16) 8% 9%, transparent 9% 18%),
+    linear-gradient(180deg, rgba(255, 236, 191, 0.08), rgba(255, 236, 191, 0.02));
+}
+
+.sound-novel-bg--dawn-station::after {
+  top: auto;
+  height: 42%;
+  background:
+    linear-gradient(180deg, transparent 0 48%, rgba(255, 242, 205, 0.18) 48% 50%, transparent 50%),
+    linear-gradient(180deg, transparent 0 70%, rgba(0, 0, 0, 0.38) 70%);
+}
+
+.sound-novel-preview-controls {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 6;
+  display: flex;
+  max-width: calc(100vw - 28px);
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid rgba(220, 236, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(4, 6, 10, 0.68);
+  color: rgba(255, 250, 238, 0.86);
+  font-size: 0.78rem;
+}
+
+.sound-novel-preview-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sound-novel-preview-controls select {
+  min-height: 32px;
+  border: 1px solid rgba(220, 236, 255, 0.28);
+  border-radius: 5px;
+  background: rgba(8, 11, 18, 0.78);
+  color: #fff8e8;
+}
+
+@media (max-width: 640px) {
+  .sound-novel-preview-controls {
+    right: 8px;
+    left: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}

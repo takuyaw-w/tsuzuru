@@ -8,7 +8,7 @@ Tsuzuru は、TypeScript / Vite / Preact を主軸とした、Web-first なノ�
 
 Tsuzuru は現在、`main` を source of truth として DSL v2 を中心に整備中です。
 
-DSL v2 は、現在新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable examples は [`examples/preact-starter`](examples/preact-starter/) と [`examples/preact-basic`](examples/preact-basic/) です。
+DSL v2 は、現在新しく作るシナリオの current supported DSL path です。`parseTzr` / `compileTzr` は current DSL APIs として公開されており、現在の runnable examples は [`examples/preact-starter`](examples/preact-starter/)、[`examples/preact-basic`](examples/preact-basic/)、[`examples/preact-sound-novel`](examples/preact-sound-novel/) です。
 
 旧 DSL parser/compiler、legacy AST、legacy compiler、macro API は削除済みです。現在の `parseTzr` / `compileTzr` は DSL v2 実装を指します。削除結果と残した shared runtime/IR は [`docs/plans/legacy-dsl-cleanup.md`](docs/plans/legacy-dsl-cleanup.md) で管理しています。
 
@@ -36,6 +36,7 @@ DSL v2 は、現在新しく作るシナリオの current supported DSL path で
 - `@tsuzuru/plugin-std-system`
 - Preact starter example
 - Preact basic integration example
+- Preact sound-novel long-text example
 - DSL v2 design notes
 - legacy cleanup plan
 
@@ -99,6 +100,7 @@ packages/
 
 examples/
   preact-basic/
+  preact-sound-novel/
   preact-starter/
 
 docs/
@@ -167,6 +169,8 @@ pnpm --filter @tsuzuru/example-preact-starter build
 
 低レベル統合の確認には [`examples/preact-basic`](examples/preact-basic/) も利用できます。`examples/preact-basic` は core runtime と各 std plugin の統合、save/load、settings、backlog などを含む実装リファレンスです。
 
+長文のサウンドノベル形式表示は [`examples/preact-sound-novel`](examples/preact-sound-novel/) で確認できます。`TsuzuruGame` の `messagePresentation="novel"` 経路、speaker mode、text reveal speed、長い narration / dialogue と choice の相性を確認するための専用 example です。
+
 `create-tsuzuru` は default の basic/Preact template と `--template preact` alias を生成できます。`--template html` / `--template vue` は対応していません。生成物は `@tsuzuru/vite-plugin` を使い、`.tzr` を query なしで直接 import します。pnpm 利用時は `pnpm create tsuzuru my-game` の後、`cd my-game` と `pnpm dev` で starter を起動できます。
 
 Generated starters include declarative storage settings in `tsuzuru.config.ts`.
@@ -226,6 +230,7 @@ API surface:
 
 - [Preact starter example](examples/preact-starter/)
 - [Preact basic integration example](examples/preact-basic/)
+- [Preact sound-novel long-text example](examples/preact-sound-novel/)
 - [DSL v2 design notes](docs/design/dsl-v2.md)
 - [Legacy DSL cleanup plan](docs/plans/legacy-dsl-cleanup.md)
 
