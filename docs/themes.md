@@ -32,6 +32,39 @@ export function App() {
 
 Each package exports its theme class name and a `style.css` subpath.
 
+## Switching Themes
+
+Import every official theme stylesheet you want to offer, keep the selected
+theme id in application state, and switch only the wrapper class name. This does
+not affect runtime state, save data, or `.tzr` scenario behavior.
+
+```tsx
+import "@tsuzuru/standard-ui-preact/style.css";
+import "@tsuzuru/theme-standard/style.css";
+import "@tsuzuru/theme-classic/style.css";
+import "@tsuzuru/theme-dark-novel/style.css";
+import "@tsuzuru/theme-minimal/style.css";
+import { standardTheme } from "@tsuzuru/theme-standard";
+import { classicTheme } from "@tsuzuru/theme-classic";
+import { darkNovelTheme } from "@tsuzuru/theme-dark-novel";
+import { minimalTheme } from "@tsuzuru/theme-minimal";
+import { useState } from "preact/hooks";
+
+const themes = {
+  standard: standardTheme,
+  classic: classicTheme,
+  "dark-novel": darkNovelTheme,
+  minimal: minimalTheme,
+} as const;
+
+export function App() {
+  const [themeId, setThemeId] = useState<keyof typeof themes>("standard");
+  const theme = themes[themeId];
+
+  return <div className={theme.className}>{/* app */}</div>;
+}
+```
+
 ## Local Theme
 
 Applications can define their own theme class by setting the same CSS variables
