@@ -33,6 +33,7 @@ export function NovelTextWindow({
   const isAdvanceable = canAdvance && onAdvance !== undefined;
   const windowClassName = joinClassNames(
     "tzr-novel-text-window",
+    "tzr-novel-text-window--fullscreen",
     isAdvanceable ? "tzr-novel-text-window--advanceable" : undefined,
     className,
   );

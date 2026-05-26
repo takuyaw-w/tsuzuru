@@ -26,12 +26,12 @@ state, and it is not persisted in save data yet.
 
 The Settings screen includes a Text Preferences MVP. It can turn text reveal on
 or off and choose slow, normal, or fast text speed. It can also switch message
-presentation between the default dialogue window and novel text mode, using the
-same `.tzr` scenario while changing only the UI presentation. Novel text mode
-can show speakers inline, as a separate block line, or hidden. These preferences
-are example-side host state persisted with localStorage; `@tsuzuru/core`,
-`@tsuzuru/preact`, and `@tsuzuru/standard-ui-preact` do not own this preference
-policy.
+presentation between the default dialogue window and a fullscreen sound-novel
+style text layer, using the same `.tzr` scenario while changing only the UI
+presentation. Novel text mode can show speakers inline, as a separate block
+line, or hidden. These preferences are example-side host state persisted with
+localStorage; `@tsuzuru/core`, `@tsuzuru/preact`, and
+`@tsuzuru/standard-ui-preact` do not own this preference policy.
 
 The example also includes an Audio Playback MVP. The std-audio plugin records
 BGM, SE, and Voice state/events, and the runtime view passes that state to

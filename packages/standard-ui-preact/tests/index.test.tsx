@@ -634,7 +634,8 @@ describe("NovelTextWindow", () => {
     const body = findByClass(node, "tzr-novel-text-window__body");
     const lines = findByClass(node, "tzr-novel-text-window__line");
 
-    expect(node.props.className).toBe("tzr-novel-text-window");
+    expect(node.props.className).toContain("tzr-novel-text-window");
+    expect(node.props.className).toContain("tzr-novel-text-window--fullscreen");
     expect(body).toHaveLength(1);
     expect(lines).toHaveLength(2);
     expect(lines.map((line) => getNodeText(line))).toEqual(["The snow would not stop.", "The lodge was silent."]);

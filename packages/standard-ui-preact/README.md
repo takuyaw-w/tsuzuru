@@ -31,11 +31,13 @@ part of the window.
 <TsuzuruGame scenario={scenario} assets={assets} messagePresentation="novel" />
 ```
 
-`messagePresentation="novel"` renders narration and dialogue through the novel
-presentation path (`RuntimeNovelTextLayer` and `NovelTextWindow`) for a
-prose-forward text layout. This only changes how message events are displayed;
-it does not change `.tzr` syntax, compiled scenario output, branching, choices,
-state updates, or other scenario semantics.
+`messagePresentation="novel"` renders narration and dialogue through a
+fullscreen sound-novel style text layer. It uses the same scenario as the
+default dialogue presentation, but routes message events through
+`RuntimeNovelTextLayer` and `NovelTextWindow` for a prose-forward fullscreen
+text layer. This only changes how message events are displayed; it does not
+change `.tzr` syntax, compiled scenario output, branching, choices, state
+updates, or other scenario semantics.
 
 Novel presentation can be tuned with `speakerMode`:
 
@@ -75,7 +77,7 @@ import "@tsuzuru/standard-ui-preact/style.css";
 ```
 
 The package provides UI components such as `GameViewport`, `GameShell`,
-`MessageWindow`, `NovelTextWindow`, `ChoiceLayer`, `StatusLayer`,
+`MessageWindow`, fullscreen `NovelTextWindow`, `ChoiceLayer`, `StatusLayer`,
 `RuntimeMessageLayer`, `RuntimeNovelTextLayer`, `RuntimeControlBar`,
 `StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and `StdCameraLayer`,
 `StdParticleLayer`, `ScreenHost`, Screen primitives, plus the high-level
