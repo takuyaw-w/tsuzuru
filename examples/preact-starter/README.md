@@ -24,6 +24,9 @@ pnpm --filter @tsuzuru/example-preact-starter dev
 - `src/screens/TitleScreen.tsx`
   タイトル画面をカスタマイズします。作品タイトル、説明文、メニュー表示を変更できます。
 
+- `src/themes/localTheme.ts`
+  ローカルテーマを登録します。`App.tsx` の theme registry に追加すると、既存のテーマ切り替え UI から選べます。
+
 ## 素材の置き場所
 
 - `public/assets/images/`
@@ -35,13 +38,15 @@ pnpm --filter @tsuzuru/example-preact-starter dev
 examples/preact-starter/
   scenario/main.tzr
   src/assets.ts
+  src/themes/localTheme.ts
   src/screens/TitleScreen.tsx
   src/ui/GameRoot.tsx
   public/assets/images/
   public/assets/audio/
 ```
 
-`App.tsx` はタイトル画面とゲーム画面の切り替えだけを持ちます。runtime 統合の詳細は `src/ui/GameRoot.tsx` に閉じ込めています。
+`App.tsx` はタイトル画面とゲーム画面の切り替え、テーマ registry だけを持ちます。runtime 統合の詳細は `src/ui/GameRoot.tsx` に閉じ込めています。
+設定画面を追加する場合は theme id だけを保存し、`.tzr` シナリオからテーマを切り替えないでください。
 
 ## チェック
 
@@ -56,5 +61,6 @@ pnpm --filter @tsuzuru/example-preact-starter build
 - `scenario/main.tzr` のセリフを書き換える
 - `src/assets.ts` に自分の画像を登録する
 - `TitleScreen.tsx` のタイトルを変更する
+- `src/themes/localTheme.ts` の theme tokens を編集する
 
 Load / Config は starter では未実装です。必要になったら save/load や設定画面を追加してください。

@@ -262,6 +262,29 @@ export default config;
     );
   });
 
+  it("fails when ui theme config is invalid", async () => {
+    const root = await createTempProject();
+    await writeFile(
+      join(root, "tsuzuru.config.ts"),
+      `export default {
+  scenario: {
+    entry: "scenario/main.tzr",
+    files: ["scenario/**/*.tzr"],
+  },
+  ui: {
+    theme: {
+      default: "",
+      available: ["standard", {}],
+    },
+  },
+};
+`,
+    );
+
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("ui.theme.default must be a non-empty string");
+    await expect(loadTsuzuruConfig({ cwd: root })).rejects.toThrow("ui.theme.available[1] must be a non-empty string");
+  });
+
   it("validates plugin definitions", () => {
     expect(() =>
       validateTsuzuruConfig({

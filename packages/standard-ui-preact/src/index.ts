@@ -36,6 +36,31 @@ export { RuntimeControlBar } from "./runtime-control-bar.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
 export type {
+  TsuzuruChoiceLayerThemeTokens,
+  TsuzuruMessageWindowThemeTokens,
+  TsuzuruResolvedTheme,
+  TsuzuruTheme,
+  TsuzuruThemeColorTokens,
+  TsuzuruThemeRadiusTokens,
+  TsuzuruThemeShadowTokens,
+  TsuzuruThemeTokens,
+  TsuzuruThemeTypographyTokens,
+} from "./theme.js";
+export {
+  classicTheme,
+  classicThemeClassName,
+  createTsuzuruThemeCssVariables,
+  darkNovelTheme,
+  darkNovelThemeClassName,
+  minimalTheme,
+  minimalThemeClassName,
+  resolveTsuzuruTheme,
+  standardTheme,
+  standardThemeClassName,
+} from "./theme.js";
+export type { TsuzuruThemeProviderProps } from "./theme-provider.js";
+export { TsuzuruThemeProvider } from "./theme-provider.js";
+export type {
   ActiveScreen,
   ScreenComponent,
   ScreenComponentProps,

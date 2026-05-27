@@ -35,13 +35,14 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm run build:self",
+    "build": "pnpm --filter @tsuzuru/standard-ui-preact build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
     "test": "pnpm run typecheck:self",
-    "typecheck": "pnpm run typecheck:self",
+    "typecheck": "pnpm --filter @tsuzuru/standard-ui-preact build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@tsuzuru/standard-ui-preact": "workspace:^",
     "typescript": "catalog:"
   }
 }

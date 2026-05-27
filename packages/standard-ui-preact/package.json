@@ -43,6 +43,8 @@
     "dist/std-visual-layer.*",
     "dist/std-visual-runtime-layer.*",
     "dist/style.css",
+    "dist/theme.*",
+    "dist/theme-provider.*",
     "dist/tsuzuru-game.*",
     "dist/useAutoMode.*",
     "dist/useMessageHistory.*",

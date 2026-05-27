@@ -22,6 +22,12 @@ describe("defineTsuzuruConfig", () => {
         files: ["scenario/**/*.tzr"],
       },
       plugins: [plugin],
+      ui: {
+        theme: {
+          default: "standard",
+          available: ["standard", "classic", "local"],
+        },
+      },
       storage: {
         kind: "standard",
         enabled: true,

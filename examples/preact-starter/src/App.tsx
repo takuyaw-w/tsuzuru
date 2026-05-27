@@ -4,14 +4,18 @@ import "@tsuzuru/theme-classic/style.css";
 import "@tsuzuru/theme-dark-novel/style.css";
 import "@tsuzuru/theme-minimal/style.css";
 import "./style.css";
-import { standardTheme } from "@tsuzuru/theme-standard";
-import { classicTheme } from "@tsuzuru/theme-classic";
-import { darkNovelTheme } from "@tsuzuru/theme-dark-novel";
-import { minimalTheme } from "@tsuzuru/theme-minimal";
+import {
+  classicTheme,
+  darkNovelTheme,
+  minimalTheme,
+  standardTheme,
+  TsuzuruThemeProvider,
+} from "@tsuzuru/standard-ui-preact";
 import { useState } from "preact/hooks";
 import scenario from "../scenario/main.tzr";
 import { assets } from "./assets.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
+import { localTheme } from "./themes/localTheme.js";
 import { GameRoot } from "./ui/GameRoot.js";
 
 type AppScreen = "title" | "game";
@@ -21,6 +25,7 @@ const themes = {
   classic: classicTheme,
   "dark-novel": darkNovelTheme,
   minimal: minimalTheme,
+  local: localTheme,
 } as const;
 
 type ThemeId = keyof typeof themes;
@@ -57,9 +62,9 @@ export function App() {
     );
 
   return (
-    <div className={selectedTheme.className}>
+    <TsuzuruThemeProvider theme={selectedTheme}>
       <ThemeSwitcher value={themeId} onChange={setThemeId} />
       {content}
-    </div>
+    </TsuzuruThemeProvider>
   );
 }

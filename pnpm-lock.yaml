@@ -407,24 +407,36 @@ importers:
 
   packages/theme-classic:
     devDependencies:
+      '@tsuzuru/standard-ui-preact':
+        specifier: workspace:^
+        version: link:../standard-ui-preact
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
 
   packages/theme-dark-novel:
     devDependencies:
+      '@tsuzuru/standard-ui-preact':
+        specifier: workspace:^
+        version: link:../standard-ui-preact
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
 
   packages/theme-minimal:
     devDependencies:
+      '@tsuzuru/standard-ui-preact':
+        specifier: workspace:^
+        version: link:../standard-ui-preact
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
 
   packages/theme-standard:
     devDependencies:
+      '@tsuzuru/standard-ui-preact':
+        specifier: workspace:^
+        version: link:../standard-ui-preact
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

@@ -6,37 +6,40 @@ plugin behavior.
 
 Theme CSS overrides the variables used by `@tsuzuru/standard-ui-preact/style.css`.
 Import the standard UI CSS first, import one theme stylesheet after it, then
-apply that theme package's class name to a wrapper around the standard UI.
+pass the theme object to `TsuzuruThemeProvider`. Existing theme package
+`className` exports and `style.css` imports remain compatible.
 
 ```tsx
 import "@tsuzuru/standard-ui-preact/style.css";
 import "@tsuzuru/theme-standard/style.css";
-import { standardThemeClassName } from "@tsuzuru/theme-standard";
-import { TsuzuruGame } from "@tsuzuru/standard-ui-preact";
+import { standardTheme, TsuzuruGame, TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
 
 export function App() {
   return (
-    <div className={standardThemeClassName}>
+    <TsuzuruThemeProvider theme={standardTheme}>
       <TsuzuruGame scenario={scenario} assets={assets} />
-    </div>
+    </TsuzuruThemeProvider>
   );
 }
 ```
 
 ## Official Themes
 
-- `@tsuzuru/theme-standard`
-- `@tsuzuru/theme-classic`
-- `@tsuzuru/theme-dark-novel`
-- `@tsuzuru/theme-minimal`
+- `standardTheme`
+- `classicTheme`
+- `darkNovelTheme`
+- `minimalTheme`
 
-Each package exports its theme class name and a `style.css` subpath.
+These theme objects are exported from `@tsuzuru/standard-ui-preact`. Each
+theme package still provides its `style.css` subpath and class name export for
+CSS compatibility.
 
 ## Switching Themes
 
 Import every official theme stylesheet you want to offer, keep the selected
-theme id in application state, and switch only the wrapper class name. This does
-not affect runtime state, save data, or `.tzr` scenario behavior.
+theme id in application state, and pass the selected theme object to
+`TsuzuruThemeProvider`. This does not affect runtime state, save data, or
+`.tzr` scenario behavior.
 
 ```tsx
 import "@tsuzuru/standard-ui-preact/style.css";
@@ -44,10 +47,13 @@ import "@tsuzuru/theme-standard/style.css";
 import "@tsuzuru/theme-classic/style.css";
 import "@tsuzuru/theme-dark-novel/style.css";
 import "@tsuzuru/theme-minimal/style.css";
-import { standardTheme } from "@tsuzuru/theme-standard";
-import { classicTheme } from "@tsuzuru/theme-classic";
-import { darkNovelTheme } from "@tsuzuru/theme-dark-novel";
-import { minimalTheme } from "@tsuzuru/theme-minimal";
+import {
+  classicTheme,
+  darkNovelTheme,
+  minimalTheme,
+  standardTheme,
+  TsuzuruThemeProvider,
+} from "@tsuzuru/standard-ui-preact";
 import { useState } from "preact/hooks";
 
 const themes = {
@@ -61,35 +67,49 @@ export function App() {
   const [themeId, setThemeId] = useState<keyof typeof themes>("standard");
   const theme = themes[themeId];
 
-  return <div className={theme.className}>{/* app */}</div>;
+  return <TsuzuruThemeProvider theme={theme}>{/* app */}</TsuzuruThemeProvider>;
 }
 ```
 
 ## Local Theme
 
-Applications can define their own theme class by setting the same CSS variables
-used by `@tsuzuru/standard-ui-preact`.
+Applications can define their own theme object in `src/themes/*.ts` and set the
+standard UI tokens used by `@tsuzuru/standard-ui-preact`.
 
-```css
-.tzr-theme-custom {
-  --tzr-standard-ui-font-family: ui-serif, "Hiragino Mincho ProN", serif;
-  --tzr-standard-ui-text-color: #fff8e7;
-  --tzr-standard-ui-accent-color: #ffd27a;
-  --tzr-standard-ui-window-bg: rgba(16, 18, 24, 0.9);
-  --tzr-standard-ui-window-border: rgba(255, 232, 188, 0.45);
-  --tzr-standard-ui-window-radius: 8px;
-}
+```ts
+import type { TsuzuruTheme } from "@tsuzuru/standard-ui-preact";
+
+export const localTheme = {
+  id: "local",
+  name: "Local",
+  tokens: {
+    colors: {
+      surface: "rgba(16, 18, 24, 0.9)",
+      surfaceBorder: "rgba(255, 232, 188, 0.45)",
+      text: "#fff8e7",
+      accent: "#ffd27a",
+    },
+    typography: {
+      fontFamily: 'ui-serif, "Hiragino Mincho ProN", serif',
+    },
+  },
+} satisfies TsuzuruTheme;
 ```
 
 ```tsx
 import "@tsuzuru/standard-ui-preact/style.css";
-import "./my-tsuzuru-theme.css";
+import { TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
+import { localTheme } from "./themes/localTheme.js";
 
 export function App() {
   return (
-    <div className="tzr-theme-custom">
+    <TsuzuruThemeProvider theme={localTheme}>
       <TsuzuruGame scenario={scenario} assets={assets} />
-    </div>
+    </TsuzuruThemeProvider>
   );
 }
 ```
+
+Keep theme selection in application UI or config as theme ids. `.tzr` scenarios
+should not switch themes, and custom themes should not replace standard UI
+components.

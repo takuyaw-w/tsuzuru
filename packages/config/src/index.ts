@@ -3,6 +3,7 @@ export interface TsuzuruConfig {
   readonly scenario: TsuzuruScenarioConfig;
   readonly plugins?: readonly TsuzuruConfigPlugin[];
   readonly storage?: false | TsuzuruStorageConfig;
+  readonly ui?: TsuzuruUiConfig;
 }
 
 export interface TsuzuruProjectConfig {
@@ -17,6 +18,15 @@ export interface TsuzuruScenarioConfig {
 
 export interface TsuzuruConfigPlugin {
   readonly name: string;
+}
+
+export interface TsuzuruUiConfig {
+  readonly theme?: TsuzuruUiThemeConfig;
+}
+
+export interface TsuzuruUiThemeConfig {
+  readonly default?: string;
+  readonly available?: readonly string[];
 }
 
 export interface TsuzuruStorageConfig {

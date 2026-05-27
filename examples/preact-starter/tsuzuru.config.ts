@@ -8,5 +8,11 @@ export default defineTsuzuruConfig({
     entry: "scenario/main.tzr",
     files: ["scenario/**/*.tzr"],
   },
+  ui: {
+    theme: {
+      default: "standard",
+      available: ["standard", "classic", "dark-novel", "minimal", "local"],
+    },
+  },
   plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdEffectPlugin()],
 });

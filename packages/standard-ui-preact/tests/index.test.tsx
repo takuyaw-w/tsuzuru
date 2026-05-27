@@ -32,8 +32,11 @@ import {
   ScreenText,
   StatusLayer,
   type StatusLayerProps,
+  createTsuzuruThemeCssVariables,
   TsuzuruGame,
   type TsuzuruGameProps,
+  type TsuzuruTheme,
+  TsuzuruThemeProvider,
 } from "../src/index.js";
 
 type DivProps = ComponentProps<"div">;
@@ -141,6 +144,63 @@ describe("GameShell", () => {
     const node = expectVNode(GameShell({ children: "story", className: "custom-shell" }));
 
     expect(node.props.className).toBe("tzr-game-shell custom-shell");
+    expect(getNodeText(node)).toBe("story");
+  });
+});
+
+describe("theme API", () => {
+  it("allows user themes to satisfy TsuzuruTheme", () => {
+    const myTheme = {
+      id: "my-theme",
+      name: "My Theme",
+      tokens: {
+        colors: {
+          surface: "rgba(20, 20, 28, 0.88)",
+          text: "#f7f3ea",
+          accent: "#d6a85f",
+        },
+        messageWindow: {
+          borderRadius: "18px",
+          padding: "1.25rem 1.5rem",
+        },
+      },
+    } satisfies TsuzuruTheme;
+
+    expect(myTheme.id).toBe("my-theme");
+  });
+
+  it("maps provided theme tokens to CSS variables", () => {
+    const variables = createTsuzuruThemeCssVariables({
+      id: "my-theme",
+      name: "My Theme",
+      tokens: {
+        colors: { accent: "#d6a85f" },
+        messageWindow: { borderRadius: "18px" },
+      },
+    });
+
+    expect(variables).toMatchObject({
+      "--tzr-color-accent": "#d6a85f",
+      "--tzr-message-window-radius": "18px",
+    });
+    expect(variables["--tzr-color-text"]).toBeUndefined();
+  });
+
+  it("renders a namespaced theme provider with CSS variables", () => {
+    const node = expectVNode(
+      TsuzuruThemeProvider({
+        theme: {
+          id: "my-theme",
+          name: "My Theme",
+          className: "tzr-theme-my-theme",
+          tokens: { colors: { text: "#f7f3ea" } },
+        },
+        children: "story",
+      }),
+    );
+
+    expect(node.props.className).toBe("tzr-theme-root tzr-theme-my-theme");
+    expect(node.props.style).toMatchObject({ "--tzr-color-text": "#f7f3ea" });
     expect(getNodeText(node)).toBe("story");
   });
 });

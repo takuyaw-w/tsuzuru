@@ -118,6 +118,9 @@ export function validateTsuzuruConfig(value: unknown): TsuzuruConfig {
   if (value.storage !== undefined) {
     validateStorageConfig(value.storage, errors);
   }
+  if (value.ui !== undefined) {
+    validateUiConfig(value.ui, errors);
+  }
 
   if (errors.length > 0) {
     throw invalidConfig(errors);
@@ -324,6 +327,41 @@ function validateStorageSaves(value: unknown, errors: string[]): void {
   }
   if (value.key !== undefined && !isNonEmptyString(value.key)) {
     errors.push("storage.saves.key must be a non-empty string when provided.");
+  }
+}
+
+function validateUiConfig(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("ui must be an object when provided.");
+    return;
+  }
+
+  if (value.theme !== undefined) {
+    validateUiThemeConfig(value.theme, errors);
+  }
+}
+
+function validateUiThemeConfig(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("ui.theme must be an object when provided.");
+    return;
+  }
+
+  if (value.default !== undefined && !isNonEmptyString(value.default)) {
+    errors.push("ui.theme.default must be a non-empty string when provided.");
+  }
+
+  if (value.available !== undefined) {
+    if (!Array.isArray(value.available)) {
+      errors.push("ui.theme.available must be an array when provided.");
+      return;
+    }
+
+    for (const [index, themeId] of value.available.entries()) {
+      if (!isNonEmptyString(themeId)) {
+        errors.push(`ui.theme.available[${index}] must be a non-empty string.`);
+      }
+    }
   }
 }
 
