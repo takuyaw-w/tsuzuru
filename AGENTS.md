@@ -400,6 +400,16 @@ Do not update generated templates without checking that they still use the curre
 
 When unsure, preserve the current public API and report the uncertainty.
 
+## Subagent Policy
+
+Use subagents only when they add clear value. Keep concurrent subagents to
+three or fewer by default, do not start duplicate subagents for the same role,
+and close each subagent after it returns findings.
+
+Do not leave stale, blocked, or completed subagents open. The main agent owns
+the final synthesis and decision-making. See `.agents/subagents/` for detailed
+operating rules and role definitions.
+
 ## CodeGraph Usage
 
 When CodeGraph MCP tools are available and `.codegraph/` exists, prefer
