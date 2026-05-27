@@ -7,9 +7,12 @@
   --tzr-standard-ui-window-border: rgba(23, 32, 42, 0.18);
   --tzr-standard-ui-window-radius: 6px;
   --tzr-standard-ui-window-shadow: 0 12px 32px rgba(23, 32, 42, 0.16);
+  --tzr-standard-ui-message-window-backdrop-filter: blur(8px) saturate(1.03);
   --tzr-standard-ui-message-speaker-bg: rgba(255, 255, 255, 0.94);
   --tzr-standard-ui-message-speaker-border: rgba(23, 32, 42, 0.16);
   --tzr-standard-ui-message-speaker-color: #2f6f73;
+  --tzr-standard-ui-message-speaker-radius: 999px;
+  --tzr-standard-ui-message-speaker-shadow: 0 5px 14px rgba(23, 32, 42, 0.08);
   --tzr-standard-ui-message-speaker-marker-color: #2f6f73;
   --tzr-standard-ui-message-text-shadow: none;
   --tzr-standard-ui-message-advance-hint-font-size: 0.72rem;
@@ -23,6 +26,8 @@
   --tzr-standard-ui-choice-button-bg: rgba(255, 255, 255, 0.74);
   --tzr-standard-ui-choice-button-hover-bg: rgba(47, 111, 115, 0.14);
   --tzr-standard-ui-choice-button-border: rgba(23, 32, 42, 0.14);
+  --tzr-standard-ui-choice-button-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --tzr-standard-ui-choice-button-hover-shadow: 0 8px 18px rgba(23, 32, 42, 0.1);
   --tzr-standard-ui-screen-bg: linear-gradient(180deg, #eef4f3, #f9fbfb);
   --tzr-standard-ui-screen-panel-bg: rgba(255, 255, 255, 0.84);
   --tzr-standard-ui-screen-panel-border: rgba(23, 32, 42, 0.14);

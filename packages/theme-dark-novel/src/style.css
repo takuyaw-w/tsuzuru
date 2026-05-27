@@ -8,9 +8,12 @@
   --tzr-standard-ui-window-border: rgba(213, 125, 157, 0.42);
   --tzr-standard-ui-window-radius: 2px;
   --tzr-standard-ui-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 58px rgba(0, 0, 0, 0.62);
+  --tzr-standard-ui-message-window-backdrop-filter: blur(12px) saturate(1.05);
   --tzr-standard-ui-message-speaker-bg: linear-gradient(180deg, rgba(69, 25, 48, 0.92), rgba(28, 13, 26, 0.92));
   --tzr-standard-ui-message-speaker-border: rgba(213, 125, 157, 0.32);
   --tzr-standard-ui-message-speaker-color: #ffd1df;
+  --tzr-standard-ui-message-speaker-radius: 999px;
+  --tzr-standard-ui-message-speaker-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.28);
   --tzr-standard-ui-message-speaker-marker-color: #d57d9d;
   --tzr-standard-ui-message-text-shadow: 0 2px 5px rgba(0, 0, 0, 0.72);
   --tzr-standard-ui-message-advance-hint-font-size: 0.74rem;
@@ -20,11 +23,13 @@
   --tzr-standard-ui-novel-text-line-height: 2.08;
   --tzr-standard-ui-choice-layer-bg: linear-gradient(180deg, rgba(23, 13, 28, 0.96), rgba(7, 8, 14, 0.96));
   --tzr-standard-ui-choice-layer-border: rgba(213, 125, 157, 0.36);
-  --tzr-standard-ui-choice-layer-shadow: 0 24px 60px rgba(0, 0, 0, 0.62);
+  --tzr-standard-ui-choice-layer-shadow: 0 22px 52px rgba(0, 0, 0, 0.58);
   --tzr-standard-ui-choice-question-color: #ffd6e4;
   --tzr-standard-ui-choice-button-bg: rgba(255, 255, 255, 0.06);
   --tzr-standard-ui-choice-button-hover-bg: rgba(135, 49, 87, 0.44);
   --tzr-standard-ui-choice-button-border: rgba(213, 125, 157, 0.28);
+  --tzr-standard-ui-choice-button-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --tzr-standard-ui-choice-button-hover-shadow: 0 12px 26px rgba(0, 0, 0, 0.34);
   --tzr-standard-ui-screen-bg: radial-gradient(circle at 50% 12%, rgba(88, 25, 64, 0.52), transparent 32%),
     linear-gradient(180deg, #080810, #17101d 52%, #07070c);
   --tzr-standard-ui-screen-panel-bg: rgba(8, 8, 14, 0.82);

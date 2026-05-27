@@ -18,6 +18,7 @@ scene start:
   narration:
     シナリオは scenario/main.tzr に書きます。
     背景や立ち絵の対応は src/assets.ts で登録します。
+    少し長めの文章でも、メッセージウィンドウの中で読みやすく表示されるか確認できます。
 
   choice "どこへ向かう？":
     "駅前へ行く" id=goStation:

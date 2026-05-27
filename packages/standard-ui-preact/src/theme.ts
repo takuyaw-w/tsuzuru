@@ -22,20 +22,29 @@ export type TsuzuruThemeCssVariableName =
   | "--tzr-message-window-radius"
   | "--tzr-message-window-padding"
   | "--tzr-message-window-shadow"
+  | "--tzr-message-window-backdrop-filter"
   | "--tzr-message-window-text-color"
   | "--tzr-message-window-muted-text-color"
   | "--tzr-message-speaker-bg"
   | "--tzr-message-speaker-border"
   | "--tzr-message-speaker-color"
   | "--tzr-message-speaker-marker-color"
+  | "--tzr-message-speaker-radius"
+  | "--tzr-message-speaker-padding"
+  | "--tzr-message-speaker-shadow"
   | "--tzr-choice-layer-bg"
   | "--tzr-choice-layer-border"
   | "--tzr-choice-border-radius"
+  | "--tzr-choice-layer-padding"
   | "--tzr-choice-layer-shadow"
   | "--tzr-choice-question-color"
+  | "--tzr-choice-gap"
   | "--tzr-choice-button-bg"
   | "--tzr-choice-button-hover-bg"
   | "--tzr-choice-button-border"
+  | "--tzr-choice-button-padding"
+  | "--tzr-choice-button-shadow"
+  | "--tzr-choice-button-hover-shadow"
   | "--tzr-choice-button-text-color";
 
 export interface TsuzuruThemeTokens {
@@ -78,23 +87,32 @@ export interface TsuzuruMessageWindowThemeTokens {
   readonly borderRadius?: string;
   readonly padding?: string;
   readonly shadow?: string;
+  readonly backdropFilter?: string;
   readonly textColor?: string;
   readonly mutedTextColor?: string;
   readonly speakerBackground?: string;
   readonly speakerBorderColor?: string;
   readonly speakerTextColor?: string;
   readonly speakerMarkerColor?: string;
+  readonly speakerRadius?: string;
+  readonly speakerPadding?: string;
+  readonly speakerShadow?: string;
 }
 
 export interface TsuzuruChoiceLayerThemeTokens {
   readonly background?: string;
   readonly borderColor?: string;
   readonly borderRadius?: string;
+  readonly padding?: string;
   readonly shadow?: string;
   readonly questionTextColor?: string;
+  readonly gap?: string;
   readonly buttonBackground?: string;
   readonly buttonHoverBackground?: string;
   readonly buttonBorderColor?: string;
+  readonly buttonPadding?: string;
+  readonly buttonShadow?: string;
+  readonly buttonHoverShadow?: string;
   readonly buttonTextColor?: string;
 }
 
@@ -118,39 +136,48 @@ export const standardTheme = {
     typography: {
       fontFamily: "system-ui, sans-serif",
       messageFontSize: "clamp(1rem, 2vw, 1.28rem)",
-      messageLineHeight: "1.75",
+      messageLineHeight: "1.68",
     },
     radius: {
-      window: "8px",
-      choice: "8px",
+      window: "10px",
+      choice: "10px",
     },
     shadow: {
-      window: "inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 20px 48px rgba(0, 0, 0, 0.45)",
-      choice: "0 22px 52px rgba(0, 0, 0, 0.5)",
+      window: "inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 42px rgba(0, 0, 0, 0.44)",
+      choice: "0 18px 44px rgba(0, 0, 0, 0.46)",
       text: "0 1px 2px rgba(0, 0, 0, 0.62)",
     },
     messageWindow: {
       background: "linear-gradient(180deg, rgba(24, 24, 26, 0.88), rgba(8, 9, 12, 0.9)), rgba(0, 0, 0, 0.78)",
       borderColor: "rgba(247, 242, 226, 0.46)",
-      borderRadius: "8px",
-      padding: "clamp(46px, 4.2vw, 54px) clamp(18px, 3.3vw, 34px) clamp(16px, 2.8vw, 28px)",
-      shadow: "inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 20px 48px rgba(0, 0, 0, 0.45)",
+      borderRadius: "10px",
+      padding: "clamp(42px, 3.8vw, 50px) clamp(22px, 3.4vw, 36px) clamp(20px, 2.8vw, 28px)",
+      shadow: "inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 42px rgba(0, 0, 0, 0.44)",
+      backdropFilter: "blur(10px) saturate(1.08)",
       textColor: "#fffaf0",
       mutedTextColor: "rgba(255, 250, 240, 0.68)",
-      speakerBackground: "linear-gradient(180deg, rgba(24, 24, 26, 0.9), rgba(8, 9, 12, 0.88)), rgba(0, 0, 0, 0.72)",
-      speakerBorderColor: "rgba(247, 242, 226, 0.32)",
+      speakerBackground: "linear-gradient(180deg, rgba(36, 35, 34, 0.82), rgba(14, 15, 17, 0.78))",
+      speakerBorderColor: "rgba(247, 242, 226, 0.3)",
       speakerTextColor: "rgba(255, 226, 162, 0.96)",
       speakerMarkerColor: "rgba(255, 226, 162, 0.82)",
+      speakerRadius: "999px",
+      speakerPadding: "5px 16px",
+      speakerShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 16px rgba(0, 0, 0, 0.16)",
     },
     choiceLayer: {
       background: "linear-gradient(180deg, rgba(25, 30, 35, 0.92), rgba(8, 10, 13, 0.92)), rgba(0, 0, 0, 0.82)",
       borderColor: "rgba(247, 242, 226, 0.44)",
-      borderRadius: "8px",
-      shadow: "0 22px 52px rgba(0, 0, 0, 0.5)",
+      borderRadius: "10px",
+      padding: "clamp(16px, 2.4vw, 24px)",
+      shadow: "0 18px 44px rgba(0, 0, 0, 0.46)",
       questionTextColor: "#fff1c7",
+      gap: "9px",
       buttonBackground: "rgba(255, 255, 255, 0.08)",
       buttonHoverBackground: "rgba(120, 76, 48, 0.62)",
       buttonBorderColor: "rgba(247, 242, 226, 0.36)",
+      buttonPadding: "10px 16px",
+      buttonShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+      buttonHoverShadow: "0 10px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
       buttonTextColor: "#fffaf0",
     },
   },
@@ -209,22 +236,31 @@ export function resolveTsuzuruTheme(theme: TsuzuruTheme): TsuzuruResolvedTheme {
         borderRadius: messageWindow.borderRadius ?? radius.window,
         padding: messageWindow.padding,
         shadow: messageWindow.shadow ?? shadow.window,
+        backdropFilter: messageWindow.backdropFilter,
         textColor: messageWindow.textColor ?? colors.text,
         mutedTextColor: messageWindow.mutedTextColor ?? colors.mutedText,
         speakerBackground: messageWindow.speakerBackground,
         speakerBorderColor: messageWindow.speakerBorderColor ?? colors.surfaceBorder,
         speakerTextColor: messageWindow.speakerTextColor ?? colors.accent,
         speakerMarkerColor: messageWindow.speakerMarkerColor ?? colors.accent,
+        speakerRadius: messageWindow.speakerRadius ?? radius.window,
+        speakerPadding: messageWindow.speakerPadding,
+        speakerShadow: messageWindow.speakerShadow,
       },
       choiceLayer: {
         background: choiceLayer.background ?? colors.surface,
         borderColor: choiceLayer.borderColor ?? colors.surfaceBorder,
         borderRadius: choiceLayer.borderRadius ?? radius.choice,
+        padding: choiceLayer.padding,
         shadow: choiceLayer.shadow ?? shadow.choice,
         questionTextColor: choiceLayer.questionTextColor ?? colors.accent,
+        gap: choiceLayer.gap,
         buttonBackground: choiceLayer.buttonBackground,
         buttonHoverBackground: choiceLayer.buttonHoverBackground,
         buttonBorderColor: choiceLayer.buttonBorderColor ?? colors.surfaceBorder,
+        buttonPadding: choiceLayer.buttonPadding,
+        buttonShadow: choiceLayer.buttonShadow,
+        buttonHoverShadow: choiceLayer.buttonHoverShadow,
         buttonTextColor: choiceLayer.buttonTextColor ?? colors.text,
       },
     },
@@ -253,20 +289,29 @@ function createTokenCssVariables(tokens: TsuzuruThemeTokens | undefined): Record
   setVariable(variables, "--tzr-message-window-radius", tokens?.messageWindow?.borderRadius ?? tokens?.radius?.window);
   setVariable(variables, "--tzr-message-window-padding", tokens?.messageWindow?.padding);
   setVariable(variables, "--tzr-message-window-shadow", tokens?.messageWindow?.shadow ?? tokens?.shadow?.window);
+  setVariable(variables, "--tzr-message-window-backdrop-filter", tokens?.messageWindow?.backdropFilter);
   setVariable(variables, "--tzr-message-window-text-color", tokens?.messageWindow?.textColor);
   setVariable(variables, "--tzr-message-window-muted-text-color", tokens?.messageWindow?.mutedTextColor);
   setVariable(variables, "--tzr-message-speaker-bg", tokens?.messageWindow?.speakerBackground);
   setVariable(variables, "--tzr-message-speaker-border", tokens?.messageWindow?.speakerBorderColor);
   setVariable(variables, "--tzr-message-speaker-color", tokens?.messageWindow?.speakerTextColor);
   setVariable(variables, "--tzr-message-speaker-marker-color", tokens?.messageWindow?.speakerMarkerColor);
+  setVariable(variables, "--tzr-message-speaker-radius", tokens?.messageWindow?.speakerRadius);
+  setVariable(variables, "--tzr-message-speaker-padding", tokens?.messageWindow?.speakerPadding);
+  setVariable(variables, "--tzr-message-speaker-shadow", tokens?.messageWindow?.speakerShadow);
   setVariable(variables, "--tzr-choice-layer-bg", tokens?.choiceLayer?.background);
   setVariable(variables, "--tzr-choice-layer-border", tokens?.choiceLayer?.borderColor);
   setVariable(variables, "--tzr-choice-border-radius", tokens?.choiceLayer?.borderRadius ?? tokens?.radius?.choice);
+  setVariable(variables, "--tzr-choice-layer-padding", tokens?.choiceLayer?.padding);
   setVariable(variables, "--tzr-choice-layer-shadow", tokens?.choiceLayer?.shadow ?? tokens?.shadow?.choice);
   setVariable(variables, "--tzr-choice-question-color", tokens?.choiceLayer?.questionTextColor);
+  setVariable(variables, "--tzr-choice-gap", tokens?.choiceLayer?.gap);
   setVariable(variables, "--tzr-choice-button-bg", tokens?.choiceLayer?.buttonBackground);
   setVariable(variables, "--tzr-choice-button-hover-bg", tokens?.choiceLayer?.buttonHoverBackground);
   setVariable(variables, "--tzr-choice-button-border", tokens?.choiceLayer?.buttonBorderColor);
+  setVariable(variables, "--tzr-choice-button-padding", tokens?.choiceLayer?.buttonPadding);
+  setVariable(variables, "--tzr-choice-button-shadow", tokens?.choiceLayer?.buttonShadow);
+  setVariable(variables, "--tzr-choice-button-hover-shadow", tokens?.choiceLayer?.buttonHoverShadow);
   setVariable(variables, "--tzr-choice-button-text-color", tokens?.choiceLayer?.buttonTextColor);
   return variables;
 }

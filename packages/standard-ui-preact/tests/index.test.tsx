@@ -175,13 +175,33 @@ describe("theme API", () => {
       name: "My Theme",
       tokens: {
         colors: { accent: "#d6a85f" },
-        messageWindow: { borderRadius: "18px" },
+        messageWindow: {
+          borderRadius: "18px",
+          backdropFilter: "blur(12px)",
+          speakerRadius: "999px",
+          speakerPadding: "5px 14px",
+          speakerShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+        },
+        choiceLayer: {
+          padding: "1rem",
+          gap: "10px",
+          buttonPadding: "10px 14px",
+          buttonShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+        },
       },
     });
 
     expect(variables).toMatchObject({
       "--tzr-color-accent": "#d6a85f",
       "--tzr-message-window-radius": "18px",
+      "--tzr-message-window-backdrop-filter": "blur(12px)",
+      "--tzr-message-speaker-radius": "999px",
+      "--tzr-message-speaker-padding": "5px 14px",
+      "--tzr-message-speaker-shadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
+      "--tzr-choice-layer-padding": "1rem",
+      "--tzr-choice-gap": "10px",
+      "--tzr-choice-button-padding": "10px 14px",
+      "--tzr-choice-button-shadow": "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
     });
     expect(variables["--tzr-color-text"]).toBeUndefined();
   });
