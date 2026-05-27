@@ -207,10 +207,234 @@ button {
   line-height: 1.7;
 }
 
-.settings {
+.settings-screen {
+  position: relative;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(120deg, rgba(11, 27, 33, 0.86), rgba(61, 44, 60, 0.58)),
+    linear-gradient(180deg, rgba(8, 10, 12, 0.72), rgba(4, 5, 7, 0.94));
+}
+
+.settings-screen__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 244, 214, 0.08) 0 1px, transparent 1px 80px),
+    linear-gradient(0deg, rgba(255, 244, 214, 0.05) 0 1px, transparent 1px 56px);
+  mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+}
+
+.settings-config {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 14px;
-  margin-bottom: 18px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(8px, 1.5vw, 14px);
+  width: min(88%, 920px);
+  height: min(86%, 560px);
+  min-height: 0;
+}
+
+.settings-config__header,
+.settings-config__footer {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-config__footer {
+  position: relative;
+  z-index: 2;
+}
+
+.settings-config__eyebrow,
+.settings-config__status {
+  margin: 0;
+  color: rgba(244, 238, 222, 0.68);
+  font-size: clamp(0.68rem, 1vw, 0.78rem);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.settings-config__title {
+  margin: 0;
+  color: #fff7e6;
+  font-size: clamp(2.2rem, 5.4vw, 4.8rem);
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.settings-config__panel {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.28fr) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 240, 205, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%),
+    rgba(8, 13, 16, 0.78);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.settings-config__tab-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.settings-config__tabs {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  min-height: 0;
+  padding: clamp(14px, 2.4vw, 24px);
+  border-right: 1px solid rgba(255, 240, 205, 0.18);
+  background: rgba(255, 250, 232, 0.05);
+}
+
+.settings-config__tab,
+.settings-config__choice-button,
+.settings-config__back-button {
+  min-height: 38px;
+  border: 1px solid rgba(255, 240, 205, 0.28);
+  border-radius: 6px;
+  background: rgba(13, 20, 23, 0.74);
+  color: rgba(255, 250, 238, 0.82);
+  cursor: pointer;
+  font-weight: 650;
+  letter-spacing: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.settings-config__tab {
+  display: flex;
+  align-items: center;
+  justify-self: stretch;
+  padding: 0 14px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.settings-config:has(#settings-tab-text:checked) .settings-config__tab[for="settings-tab-text"],
+.settings-config:has(#settings-tab-sound:checked) .settings-config__tab[for="settings-tab-sound"],
+.settings-config__choice-button[aria-pressed="true"],
+.settings-config__back-button:hover,
+.settings-config__back-button:focus-visible {
+  border-color: rgba(255, 213, 126, 0.88);
+  background:
+    linear-gradient(180deg, rgba(255, 213, 126, 0.25), rgba(146, 76, 72, 0.2)),
+    rgba(40, 35, 31, 0.9);
+  color: #fff6df;
+}
+
+.settings-config__tab:hover,
+.settings-config__tab:focus-visible,
+.settings-config__choice-button:hover,
+.settings-config__choice-button:focus-visible {
+  border-color: rgba(255, 213, 126, 0.78);
+  color: #fff6df;
+}
+
+.settings-config__content {
+  min-height: 0;
+  padding: clamp(14px, 2.5vw, 26px);
+}
+
+.settings-config__section {
+  display: none;
+  gap: clamp(10px, 1.5vw, 14px);
+  height: 100%;
+  min-height: 0;
+  align-content: center;
+}
+
+.settings-config:has(#settings-tab-text:checked) .settings-config__section--text,
+.settings-config:has(#settings-tab-sound:checked) .settings-config__section--sound {
+  display: grid;
+}
+
+.settings-config__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(168px, 0.42fr);
+  gap: clamp(12px, 2vw, 22px);
+  align-items: center;
+  min-height: 58px;
+  padding: clamp(8px, 1.3vw, 12px) clamp(10px, 1.8vw, 16px);
+  border: 1px solid rgba(255, 240, 205, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 250, 232, 0.045);
+}
+
+.settings-config__item--slider {
+  grid-template-columns: minmax(128px, 0.34fr) minmax(0, 1fr);
+}
+
+.settings-config__item-copy {
+  min-width: 0;
+}
+
+.settings-config__item-label,
+.settings-config__item-description {
+  margin: 0;
+}
+
+.settings-config__item-label {
+  color: #fff6df;
+  font-size: clamp(0.86rem, 1.25vw, 1rem);
+  font-weight: 700;
+}
+
+.settings-config__item-description {
+  margin-top: 3px;
+  color: rgba(244, 238, 222, 0.62);
+  font-size: clamp(0.68rem, 1vw, 0.78rem);
+  line-height: 1.45;
+}
+
+.settings-config__toggle-group,
+.settings-config__segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.settings-config__choice-button {
+  padding: 0 10px;
+  text-align: center;
+}
+
+.settings-config__slider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
+  gap: 12px;
+  align-items: center;
+}
+
+.settings-config__slider {
+  width: 100%;
+  accent-color: #ffd57e;
+}
+
+.settings-config__value {
+  color: #ffe0a0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.settings-config__back-button {
+  min-width: 128px;
+  padding: 0 18px;
 }
 
 .gallery-grid {
@@ -329,5 +553,46 @@ button {
 
   .preact-basic-title-screen__menu {
     max-width: 360px;
+  }
+
+  .settings-config {
+    width: 94%;
+    height: 88%;
+    gap: 8px;
+  }
+
+  .settings-config__title {
+    font-size: clamp(1.9rem, 8vw, 3rem);
+  }
+
+  .settings-config__panel {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .settings-config__tabs,
+  .settings-config__content {
+    padding: 10px;
+  }
+
+  .settings-config__section {
+    gap: 8px;
+  }
+
+  .settings-config__item,
+  .settings-config__item--slider {
+    grid-template-columns: minmax(0, 0.45fr) minmax(0, 1fr);
+    min-height: 44px;
+    padding: 7px 9px;
+  }
+
+  .settings-config__item-description,
+  .settings-config__status {
+    display: none;
+  }
+
+  .settings-config__tab,
+  .settings-config__choice-button,
+  .settings-config__back-button {
+    min-height: 32px;
   }
 }

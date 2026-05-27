@@ -6,9 +6,13 @@ interface TestNodeProps {
   readonly children?: ComponentChildren;
   readonly className?: string;
   readonly id?: string;
+  readonly role?: string;
   readonly value?: string | number;
   readonly htmlFor?: string;
+  readonly "aria-label"?: string;
+  readonly "aria-pressed"?: boolean;
   readonly "aria-describedby"?: string;
+  readonly onClick?: () => void;
   readonly onChange?: (event: {
     readonly currentTarget: {
       readonly checked: boolean;
@@ -37,9 +41,12 @@ describe("SettingsScreen", () => {
       onBack: vi.fn(),
     });
 
-    expect(findLabelFor(screen, "settings-text-reveal-control")).not.toBeNull();
-    expect(findLabelFor(screen, "settings-text-speed-control")).not.toBeNull();
-    expect(findLabelFor(screen, "settings-text-sound-control")).not.toBeNull();
+    expect(getNodeText(screen)).toContain("CONFIG");
+    expect(findLabelFor(screen, "settings-tab-text")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-tab-sound")).not.toBeNull();
+    expect(findByRoleAndName(screen, "group", "Text reveal")).not.toBeNull();
+    expect(findByRoleAndName(screen, "group", "Text speed")).not.toBeNull();
+    expect(findByRoleAndName(screen, "group", "Text sound")).not.toBeNull();
     expect(findLabelFor(screen, "settings-text-sound-volume-control")).not.toBeNull();
     expect(findLabelFor(screen, "settings-bgm-volume-control")).not.toBeNull();
     expect(findLabelFor(screen, "settings-se-volume-control")).not.toBeNull();
@@ -59,12 +66,8 @@ describe("SettingsScreen", () => {
       onBack: vi.fn(),
     });
 
-    findById(screen, "settings-text-reveal-control")?.props.onChange?.({
-      currentTarget: { checked: false, value: "", valueAsNumber: Number.NaN },
-    });
-    findById(screen, "settings-text-speed-control")?.props.onChange?.({
-      currentTarget: { checked: false, value: "120", valueAsNumber: 120 },
-    });
+    findButtonByText(screen, "Off")?.props.onClick?.();
+    findButtonByText(screen, "Fast")?.props.onClick?.();
 
     expect(onChangePreferences).toHaveBeenCalledWith({
       ...defaultPreferences,
@@ -76,6 +79,60 @@ describe("SettingsScreen", () => {
     });
   });
 });
+
+function findByRoleAndName(value: ComponentChildren, role: string, name: string): VNode<TestNodeProps> | null {
+  if (value === null || value === undefined || typeof value === "boolean") {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (const child of value) {
+      const match = findByRoleAndName(child, role, name);
+      if (match !== null) {
+        return match;
+      }
+    }
+    return null;
+  }
+  if (!isValidElement(value)) {
+    return null;
+  }
+
+  const vnode = value as VNode<TestNodeProps>;
+  if (typeof vnode.type === "function") {
+    return findByRoleAndName(vnode.type(vnode.props), role, name);
+  }
+  if (vnode.props.role === role && vnode.props["aria-label"] === name) {
+    return vnode;
+  }
+  return findByRoleAndName(vnode.props.children, role, name);
+}
+
+function findButtonByText(value: ComponentChildren, text: string): VNode<TestNodeProps> | null {
+  if (value === null || value === undefined || typeof value === "boolean") {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (const child of value) {
+      const match = findButtonByText(child, text);
+      if (match !== null) {
+        return match;
+      }
+    }
+    return null;
+  }
+  if (!isValidElement(value)) {
+    return null;
+  }
+
+  const vnode = value as VNode<TestNodeProps>;
+  if (typeof vnode.type === "function") {
+    return findButtonByText(vnode.type(vnode.props), text);
+  }
+  if (vnode.type === "button" && getNodeText(vnode) === text) {
+    return vnode;
+  }
+  return findButtonByText(vnode.props.children, text);
+}
 
 function findById(value: ComponentChildren, id: string): VNode<TestNodeProps> | null {
   if (value === null || value === undefined || typeof value === "boolean") {

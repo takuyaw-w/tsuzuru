@@ -76,7 +76,7 @@ test("ignores mismatched save slots without enabling load actions", async ({ pag
 
 async function disableTextReveal(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByLabel("Text reveal", { exact: true }).uncheck();
+  await page.getByRole("group", { name: "Text reveal" }).getByRole("button", { name: "Off" }).click();
   await page.getByRole("button", { name: "Back", exact: true }).click();
 }
 

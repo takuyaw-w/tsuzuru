@@ -29,11 +29,13 @@ test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
   await page.getByRole("button", { name: "Settings" }).click();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
+  await expectWideConfigPanel(page);
   await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
-  await page.getByLabel("Text reveal", { exact: true }).uncheck();
-  await page.getByLabel("Text speed", { exact: true }).selectOption("120");
-  await page.getByLabel("Text sound", { exact: true }).uncheck();
+  await setToggle(page, "Text reveal", "Off");
+  await setSegment(page, "Text speed", "Fast");
+  await selectConfigTab(page, "Sound");
+  await setToggle(page, "Text sound", "Off");
   await expect(page.getByLabel("Text sound volume", { exact: true })).toBeVisible();
   await expect(page.getByLabel("BGM volume", { exact: true })).toBeVisible();
   await expect(page.getByLabel("SE volume", { exact: true })).toBeVisible();
@@ -62,19 +64,21 @@ test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
 
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
+  await expectWideConfigPanel(page);
   await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
   await expect(runtimeMenu).toHaveCount(0);
   await expect(messageWindow).toHaveCount(0);
-  await page.getByLabel("Text reveal", { exact: true }).check();
-  await page.getByLabel("Text speed", { exact: true }).selectOption("60");
-  await page.getByLabel("Text sound", { exact: true }).check();
+  await setToggle(page, "Text reveal", "On");
+  await setSegment(page, "Text speed", "Normal");
+  await selectConfigTab(page, "Sound");
+  await setToggle(page, "Text sound", "On");
   await setRangeValue(page.getByLabel("Text sound volume", { exact: true }), "0.55");
   await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.6");
   await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.8");
   await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.9");
   await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Settings" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "CONFIG" })).toHaveCount(0);
   await expect(messageWindow).toContainText("夜の旧校舎");
 
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
@@ -154,6 +158,8 @@ test("runtime settings screen pauses keyboard advance without a modal dialog", a
   const settingsScreen = page.getByRole("region", { name: "Settings" });
   const settingsRuntimeScreen = page.locator(".app__runtime-screen");
   await expect(settingsScreen).toBeVisible();
+  await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
+  await expectWideConfigPanel(page);
   await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
   await expect(runtimeMenu).toHaveCount(0);
   await expect(messageWindow).toHaveCount(0);
@@ -447,8 +453,28 @@ async function setRangeValue(locator: Locator, value: string): Promise<void> {
 
 async function disableTextReveal(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByLabel("Text reveal", { exact: true }).uncheck();
+  await setToggle(page, "Text reveal", "Off");
   await page.getByRole("button", { name: "Back", exact: true }).click();
+}
+
+async function setToggle(page: Page, groupName: string, value: "On" | "Off"): Promise<void> {
+  await page.getByRole("group", { name: groupName }).getByRole("button", { name: value }).click();
+}
+
+async function setSegment(page: Page, groupName: string, value: string): Promise<void> {
+  await page.getByRole("group", { name: groupName }).getByRole("button", { name: value }).click();
+}
+
+async function selectConfigTab(page: Page, name: "Text" | "Sound"): Promise<void> {
+  await page.locator(`label[for="settings-tab-${name.toLowerCase()}"]`).click();
+}
+
+async function expectWideConfigPanel(page: Page): Promise<void> {
+  const box = await page.locator(".settings-config__panel").boundingBox();
+  expect(box).not.toBeNull();
+  expect((box?.width ?? 0) / (box?.height ?? 1)).toBeGreaterThan(1.45);
+  const hasViewportScroll = await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight);
+  expect(hasViewportScroll).toBe(false);
 }
 
 async function advanceUntilText(messageWindow: Locator, text: string, maxClicks = 24): Promise<void> {
