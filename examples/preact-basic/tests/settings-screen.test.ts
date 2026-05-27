@@ -9,7 +9,13 @@ interface TestNodeProps {
   readonly value?: string | number;
   readonly htmlFor?: string;
   readonly "aria-describedby"?: string;
-  readonly onChange?: (event: { readonly currentTarget: { readonly value: string } }) => void;
+  readonly onChange?: (event: {
+    readonly currentTarget: {
+      readonly checked: boolean;
+      readonly value: string;
+      readonly valueAsNumber: number;
+    };
+  }) => void;
 }
 
 const defaultPreferences = {
@@ -23,58 +29,51 @@ const defaultPreferences = {
 } as const;
 
 describe("SettingsScreen", () => {
-  it("renders message presentation controls with associated labels", () => {
+  it("renders standard dialogue game settings with associated labels", () => {
     const screen = SettingsScreen({
       preferences: defaultPreferences,
       textSpeedOptions: [30, 60, 120],
-      messagePresentationMode: "dialogue",
-      messagePresentationSpeakerMode: "inline",
       onChangePreferences: vi.fn(),
-      onChangeMessagePresentationMode: vi.fn(),
-      onChangeMessagePresentationSpeakerMode: vi.fn(),
       onBack: vi.fn(),
     });
 
-    const presentationSelect = findById(screen, "settings-message-presentation-control");
-    const speakerSelect = findById(screen, "settings-novel-speaker-mode-control");
-    const presentationLabel = findLabelFor(screen, "settings-message-presentation-control");
-    const speakerLabel = findLabelFor(screen, "settings-novel-speaker-mode-control");
+    expect(findLabelFor(screen, "settings-text-reveal-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-text-speed-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-text-sound-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-text-sound-volume-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-bgm-volume-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-se-volume-control")).not.toBeNull();
+    expect(findLabelFor(screen, "settings-voice-volume-control")).not.toBeNull();
 
-    expect(presentationLabel).not.toBeNull();
-    expect(presentationSelect?.props.value).toBe("dialogue");
-    expect(getNodeText(presentationSelect)).toContain("Dialogue window");
-    expect(getNodeText(presentationSelect)).toContain("Novel text");
-    expect(speakerLabel).not.toBeNull();
-    expect(speakerSelect?.props.value).toBe("inline");
-    expect(speakerSelect?.props["aria-describedby"]).toBe("settings-novel-speaker-mode-hint");
-    expect(getNodeText(speakerSelect)).toContain("Inline");
-    expect(getNodeText(speakerSelect)).toContain("Block");
-    expect(getNodeText(speakerSelect)).toContain("Hidden");
+    expect(findById(screen, "settings-message-presentation-control")).toBeNull();
+    expect(findById(screen, "settings-novel-speaker-mode-control")).toBeNull();
+    expect(getNodeText(screen)).not.toContain("Novel");
   });
 
-  it("calls message presentation change callbacks", () => {
-    const onChangeMessagePresentationMode = vi.fn();
-    const onChangeMessagePresentationSpeakerMode = vi.fn();
+  it("calls preference change callbacks", () => {
+    const onChangePreferences = vi.fn();
     const screen = SettingsScreen({
       preferences: defaultPreferences,
       textSpeedOptions: [30, 60, 120],
-      messagePresentationMode: "dialogue",
-      messagePresentationSpeakerMode: "inline",
-      onChangePreferences: vi.fn(),
-      onChangeMessagePresentationMode,
-      onChangeMessagePresentationSpeakerMode,
+      onChangePreferences,
       onBack: vi.fn(),
     });
 
-    findById(screen, "settings-message-presentation-control")?.props.onChange?.({
-      currentTarget: { value: "novel" },
+    findById(screen, "settings-text-reveal-control")?.props.onChange?.({
+      currentTarget: { checked: false, value: "", valueAsNumber: Number.NaN },
     });
-    findById(screen, "settings-novel-speaker-mode-control")?.props.onChange?.({
-      currentTarget: { value: "block" },
+    findById(screen, "settings-text-speed-control")?.props.onChange?.({
+      currentTarget: { checked: false, value: "120", valueAsNumber: 120 },
     });
 
-    expect(onChangeMessagePresentationMode).toHaveBeenCalledWith("novel");
-    expect(onChangeMessagePresentationSpeakerMode).toHaveBeenCalledWith("block");
+    expect(onChangePreferences).toHaveBeenCalledWith({
+      ...defaultPreferences,
+      textRevealEnabled: false,
+    });
+    expect(onChangePreferences).toHaveBeenCalledWith({
+      ...defaultPreferences,
+      textSpeedCharactersPerSecond: 120,
+    });
   });
 });
 

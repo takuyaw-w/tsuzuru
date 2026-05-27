@@ -85,6 +85,12 @@ button {
   z-index: 6;
 }
 
+.app__runtime-screen {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
 .app__runtime-menu button:hover,
 .app__runtime-menu button:focus-visible {
   border-color: rgba(255, 220, 143, 0.92);

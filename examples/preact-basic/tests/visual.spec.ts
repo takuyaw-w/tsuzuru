@@ -3,27 +3,15 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 const SAVE_STORAGE_KEY = "tsuzuru:example-preact-basic:saves:v1";
 const PREFERENCES_STORAGE_KEY = "tsuzuru:example-preact-basic:preferences:v1";
 const READ_TRACKING_STORAGE_KEY = "tsuzuru:example-preact-basic:read-tracking:v1";
-const MESSAGE_PRESENTATION_MODE_STORAGE_KEY = "tsuzuru:example-preact-basic:messagePresentationMode";
-const MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY = "tsuzuru:example-preact-basic:messagePresentationSpeakerMode";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
-    ({
-      messagePresentationModeStorageKey,
-      messagePresentationSpeakerModeStorageKey,
-      preferencesStorageKey,
-      readTrackingStorageKey,
-      saveStorageKey,
-    }) => {
+    ({ preferencesStorageKey, readTrackingStorageKey, saveStorageKey }) => {
       window.localStorage.removeItem(saveStorageKey);
       window.localStorage.removeItem(preferencesStorageKey);
       window.localStorage.removeItem(readTrackingStorageKey);
-      window.localStorage.removeItem(messagePresentationModeStorageKey);
-      window.localStorage.removeItem(messagePresentationSpeakerModeStorageKey);
     },
     {
-      messagePresentationModeStorageKey: MESSAGE_PRESENTATION_MODE_STORAGE_KEY,
-      messagePresentationSpeakerModeStorageKey: MESSAGE_PRESENTATION_SPEAKER_MODE_STORAGE_KEY,
       preferencesStorageKey: PREFERENCES_STORAGE_KEY,
       readTrackingStorageKey: READ_TRACKING_STORAGE_KEY,
       saveStorageKey: SAVE_STORAGE_KEY,
@@ -31,7 +19,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
+test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByText("Step")).toHaveCount(0);
@@ -42,6 +30,7 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
   await page.getByLabel("Text reveal", { exact: true }).uncheck();
   await page.getByLabel("Text speed", { exact: true }).selectOption("120");
   await page.getByLabel("Text sound", { exact: true }).uncheck();
@@ -74,6 +63,9 @@ test("fullscreen visual novel UI smoke check", async ({ page }, testInfo) => {
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
+  await expect(runtimeMenu).toHaveCount(0);
+  await expect(messageWindow).toHaveCount(0);
   await page.getByLabel("Text reveal", { exact: true }).check();
   await page.getByLabel("Text speed", { exact: true }).selectOption("60");
   await page.getByLabel("Text sound", { exact: true }).check();
@@ -148,7 +140,7 @@ test("save and load restore retained message behind choices", async ({ page }) =
   await expect(retainedMessage).toContainText("物語の常用音");
 });
 
-test("runtime overlay behaves as a modal dialog for keyboard advance", async ({ page }) => {
+test("runtime settings screen pauses keyboard advance without a modal dialog", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
@@ -159,30 +151,22 @@ test("runtime overlay behaves as a modal dialog for keyboard advance", async ({ 
   await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
 
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
-  const settingsDialog = page.getByRole("dialog", { name: "Settings screen" });
-  const settingsButton = runtimeMenu.getByRole("button", { name: "Settings" });
-  await expect(settingsDialog).toBeVisible();
-  await settingsDialog.focus();
+  const settingsScreen = page.getByRole("region", { name: "Settings" });
+  const settingsRuntimeScreen = page.locator(".app__runtime-screen");
+  await expect(settingsScreen).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
+  await expect(runtimeMenu).toHaveCount(0);
+  await expect(messageWindow).toHaveCount(0);
+  await settingsRuntimeScreen.focus();
+  await expect(settingsRuntimeScreen).toBeFocused();
 
   await page.keyboard.press("Enter");
   await page.keyboard.press("Space");
+
+  await settingsScreen.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(settingsScreen).toHaveCount(0);
   await expect(messageWindow).toContainText("夜の旧校舎");
   await expect(messageWindow).not.toContainText("その隣で");
-
-  await settingsDialog.click({ position: { x: 4, y: 4 } });
-  await expect(messageWindow).toContainText("夜の旧校舎");
-  await expect(messageWindow).not.toContainText("その隣で");
-
-  await page.keyboard.press("Shift+Tab");
-  await expect(settingsDialog.getByRole("button", { name: "Back", exact: true })).toBeFocused();
-
-  await page.keyboard.press("Tab");
-  await expect(runtimeMenu.getByRole("button", { name: "Save" })).not.toBeFocused();
-
-  await page.keyboard.press("Escape");
-  await expect(settingsDialog).toHaveCount(0);
-  await expect(settingsButton).toBeFocused();
-  await expect(messageWindow).toContainText("夜の旧校舎");
 });
 
 test("effect demo choice exposes individual effect paths", async ({ page }) => {
