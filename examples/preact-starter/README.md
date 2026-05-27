@@ -54,6 +54,7 @@ examples/preact-starter/
 pnpm --filter @tsuzuru/example-preact-starter check:scenario
 pnpm --filter @tsuzuru/example-preact-starter typecheck
 pnpm --filter @tsuzuru/example-preact-starter build
+pnpm --filter @tsuzuru/example-preact-starter test:ui
 ```
 
 ## 次にやること
