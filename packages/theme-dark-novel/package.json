@@ -37,7 +37,7 @@
   "scripts": {
     "build": "pnpm --filter @tsuzuru/standard-ui-preact build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
-    "test": "pnpm run typecheck:self",
+    "test": "pnpm run typecheck",
     "typecheck": "pnpm --filter @tsuzuru/standard-ui-preact build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"
   },

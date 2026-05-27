@@ -113,3 +113,19 @@ export function App() {
 Keep theme selection in application UI or config as theme ids. `.tzr` scenarios
 should not switch themes, and custom themes should not replace standard UI
 components.
+
+## Theme Helper API
+
+`@tsuzuru/standard-ui-preact` exports the public theme object types and CSS
+variable helper API for applications that need to validate or derive local theme
+data:
+
+- `TsuzuruTheme`
+- `TsuzuruThemeCssVariables`
+- `TsuzuruThemeCssVariableName`
+- `createTsuzuruThemeCssVariables`
+- `resolveTsuzuruTheme`
+
+Use these helpers in application code or tooling around standard UI themes.
+Theme packages remain CSS variable packages; they do not own runtime behavior or
+scenario-driven theme switching.

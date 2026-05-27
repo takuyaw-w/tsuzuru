@@ -37,6 +37,8 @@ export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
 export type {
   TsuzuruChoiceLayerThemeTokens,
+  TsuzuruThemeCssVariableName,
+  TsuzuruThemeCssVariables,
   TsuzuruMessageWindowThemeTokens,
   TsuzuruResolvedTheme,
   TsuzuruTheme,

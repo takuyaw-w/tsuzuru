@@ -33,9 +33,12 @@ import {
   StatusLayer,
   type StatusLayerProps,
   createTsuzuruThemeCssVariables,
+  resolveTsuzuruTheme,
   TsuzuruGame,
   type TsuzuruGameProps,
   type TsuzuruTheme,
+  type TsuzuruThemeCssVariableName,
+  type TsuzuruThemeCssVariables,
   TsuzuruThemeProvider,
 } from "../src/index.js";
 
@@ -169,6 +172,15 @@ describe("theme API", () => {
     expect(myTheme.id).toBe("my-theme");
   });
 
+  it("exports CSS variable helper types from the public root", () => {
+    const variableName: TsuzuruThemeCssVariableName = "--tzr-color-accent";
+    const variables = {
+      [variableName]: "#d6a85f",
+    } satisfies TsuzuruThemeCssVariables;
+
+    expect(variables[variableName]).toBe("#d6a85f");
+  });
+
   it("maps provided theme tokens to CSS variables", () => {
     const variables = createTsuzuruThemeCssVariables({
       id: "my-theme",
@@ -204,6 +216,19 @@ describe("theme API", () => {
       "--tzr-choice-button-shadow": "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
     });
     expect(variables["--tzr-color-text"]).toBeUndefined();
+  });
+
+  it("exports the theme resolver from the public root", () => {
+    const resolved = resolveTsuzuruTheme({
+      id: "my-theme",
+      name: "My Theme",
+      tokens: {
+        colors: { text: "#f7f3ea", accent: "#d6a85f" },
+      },
+    });
+
+    expect(resolved.tokens.colors.text).toBe("#f7f3ea");
+    expect(resolved.tokens.colors.accent).toBe("#d6a85f");
   });
 
   it("renders a namespaced theme provider with CSS variables", () => {
