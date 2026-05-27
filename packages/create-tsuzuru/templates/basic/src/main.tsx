@@ -1,6 +1,3 @@
-import "@tsuzuru/standard-ui-preact/style.css";
-import "@tsuzuru/theme-standard/style.css";
-import "./styles.css";
 import { render } from "preact";
 import { App } from "./App.js";
 

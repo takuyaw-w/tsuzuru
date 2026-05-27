@@ -153,6 +153,7 @@ describe("runCli", () => {
       expect(exitCode).toBe(0);
       expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
       expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
+      expect(packageJson.dependencies["@tsuzuru/theme-standard"]).toBeUndefined();
     } finally {
       process.chdir(previousCwd);
     }
@@ -173,6 +174,7 @@ describe("runCli", () => {
       expect(exitCode).toBe(0);
       expect(packageJson.dependencies["@tsuzuru/preact"]).toBeDefined();
       expect(packageJson.dependencies["@tsuzuru/standard-ui-preact"]).toBeDefined();
+      expect(packageJson.dependencies["@tsuzuru/theme-standard"]).toBeUndefined();
     } finally {
       process.chdir(previousCwd);
     }

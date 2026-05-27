@@ -39,6 +39,10 @@ pnpm build
   シナリオの場所や storage の宣言的な設定をまとめています。
   save slot 数を変える場合は `storage.slots` を変更してください。
 
+- `src/themes/localTheme.ts`
+  作品用の固定テーマを編集します。`App.tsx` で `TsuzuruThemeProvider`
+  に渡しています。
+
 ## シナリオを書く
 
 `scenario/main.tzr` では、次のような id を使います。
@@ -63,6 +67,15 @@ show mio_smile at center
 タイトルや subtitle は `src/App.tsx` で変更できます。
 タイトル画面の見た目は `src/screens/TitleScreen.tsx` と `src/styles.css` にあります。
 
+## テーマを変える
+
+Theme は作品単位で固定します。`src/themes/localTheme.ts` の token を
+編集して見た目を変えるか、`App.tsx` で `TsuzuruThemeProvider` に渡す
+theme object を差し替えてください。
+
+`.tzr` シナリオから theme は切り替えません。プレイヤー向けの runtime
+theme switching UI も starter には含めていません。
+
 Load / Config は starter では未実装です。ボタンだけ置いてあります。
 `tsuzuru.config.ts` には最初から宣言的な `storage` 設定がありますが、
 save/load や設定画面を表示する処理は starter には含めていません。
@@ -84,6 +97,7 @@ public/assets/audio/
 src/App.tsx
 src/assets.ts
 src/screens/TitleScreen.tsx
+src/themes/localTheme.ts
 src/ui/GameRoot.tsx
 src/styles.css
 ```

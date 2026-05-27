@@ -1,8 +1,11 @@
-import { standardThemeClassName } from "@tsuzuru/theme-standard";
+import "@tsuzuru/standard-ui-preact/style.css";
+import "./styles.css";
+import { TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
 import { useState } from "preact/hooks";
 import scenario from "../scenario/main.tzr";
 import { assets } from "./assets.js";
 import { TitleScreen } from "./screens/TitleScreen.js";
+import { localTheme } from "./themes/localTheme.js";
 import { GameRoot } from "./ui/GameRoot.js";
 
 type AppScreen = "title" | "game";
@@ -21,5 +24,5 @@ export function App() {
       <GameRoot scenario={scenario} assets={assets} />
     );
 
-  return <div className={standardThemeClassName}>{content}</div>;
+  return <TsuzuruThemeProvider theme={localTheme}>{content}</TsuzuruThemeProvider>;
 }

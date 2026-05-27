@@ -53,11 +53,17 @@ declarative `storage` block and the template depends on
 `@tsuzuru/standard-game-storage`, but actual Save / Load / Settings screens and
 runtime save timing remain application code.
 
+The generated app applies one fixed custom theme through
+`TsuzuruThemeProvider`. Edit `src/themes/localTheme.ts` to change the work's
+look, or replace the theme object passed in `src/App.tsx`. The starter does not
+include runtime theme switching UI, and scenarios should not switch themes.
+
 Generated projects are intended to start from:
 
 - `scenario/main.tzr`
 - `public/assets/images/`
 - `public/assets/audio/`
+- `src/themes/localTheme.ts`
 
 The removed `html` template is no longer available. Passing `--template html`
 returns an unknown template error. Passing `--template vue` also returns an

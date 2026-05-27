@@ -19,5 +19,10 @@ export default defineTsuzuruConfig({
     slots: 3,
     saves: "standard-runtime",
   },
+  ui: {
+    theme: {
+      default: "local",
+    },
+  },
   plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdEffectPlugin()],
 });
