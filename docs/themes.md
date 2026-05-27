@@ -34,42 +34,26 @@ These theme objects are exported from `@tsuzuru/standard-ui-preact`. Each
 theme package still provides its `style.css` subpath and class name export for
 CSS compatibility.
 
-## Switching Themes
+## Fixed Themes in Games
 
-Import every official theme stylesheet you want to offer, keep the selected
-theme id in application state, and pass the selected theme object to
-`TsuzuruThemeProvider`. This does not affect runtime state, save data, or
-`.tzr` scenario behavior.
+Normal games and starter projects should apply one fixed theme for the work.
+Choose the theme in application code, import only the CSS needed for that
+theme, and pass the theme object to `TsuzuruThemeProvider`. This does not
+affect runtime state, save data, or `.tzr` scenario behavior.
 
 ```tsx
 import "@tsuzuru/standard-ui-preact/style.css";
 import "@tsuzuru/theme-standard/style.css";
-import "@tsuzuru/theme-classic/style.css";
-import "@tsuzuru/theme-dark-novel/style.css";
-import "@tsuzuru/theme-minimal/style.css";
-import {
-  classicTheme,
-  darkNovelTheme,
-  minimalTheme,
-  standardTheme,
-  TsuzuruThemeProvider,
-} from "@tsuzuru/standard-ui-preact";
-import { useState } from "preact/hooks";
-
-const themes = {
-  standard: standardTheme,
-  classic: classicTheme,
-  "dark-novel": darkNovelTheme,
-  minimal: minimalTheme,
-} as const;
+import { standardTheme, TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
 
 export function App() {
-  const [themeId, setThemeId] = useState<keyof typeof themes>("standard");
-  const theme = themes[themeId];
-
-  return <TsuzuruThemeProvider theme={theme}>{/* app */}</TsuzuruThemeProvider>;
+  return <TsuzuruThemeProvider theme={standardTheme}>{/* app */}</TsuzuruThemeProvider>;
 }
 ```
+
+Runtime theme switching is not the standard starter's main purpose. If a project
+needs to compare multiple themes or demonstrate theme switching, keep that in a
+dedicated showcase or example rather than in the starter game flow.
 
 ## Local Theme
 
@@ -110,9 +94,9 @@ export function App() {
 }
 ```
 
-Keep theme selection in application UI or config as theme ids. `.tzr` scenarios
-should not switch themes, and custom themes should not replace standard UI
-components.
+Keep the chosen theme in application code or config as a theme id. `.tzr`
+scenarios should not switch themes, and custom themes should not replace
+standard UI components.
 
 ## Theme Helper API
 

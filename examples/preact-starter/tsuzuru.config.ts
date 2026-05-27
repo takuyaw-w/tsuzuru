@@ -10,8 +10,7 @@ export default defineTsuzuruConfig({
   },
   ui: {
     theme: {
-      default: "standard",
-      available: ["standard", "classic", "dark-novel", "minimal", "local"],
+      default: "local",
     },
   },
   plugins: [createStdVisualPlugin(), createStdAudioPlugin(), createStdEffectPlugin()],

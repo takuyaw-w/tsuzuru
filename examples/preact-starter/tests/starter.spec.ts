@@ -1,26 +1,17 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-const THEME_IDS = ["standard", "classic", "dark-novel", "minimal", "local"] as const;
-
 test("starter title screen enters a visual novel game screen", async ({ page }, testInfo) => {
   await page.goto("/");
 
   const themeRoot = page.locator(".tzr-theme-root");
-  const themeSelect = page.getByLabel("Theme");
 
   await expect(page.getByRole("heading", { name: "はじめてのTsuzuru" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Load/ })).toBeDisabled();
   await expect(page.getByRole("button", { name: /Config/ })).toBeDisabled();
-  await expectTheme(themeRoot, themeSelect, "standard");
-  await expectAvailableThemes(themeSelect);
+  await expect(themeRoot).toHaveCount(1);
+  await expect(themeRoot).toHaveAttribute("data-tzr-theme", "local");
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
-
-  for (const themeId of ["classic", "dark-novel", "minimal", "local", "standard"] as const) {
-    await themeSelect.selectOption(themeId);
-    await expectTheme(themeRoot, themeSelect, themeId);
-    await page.screenshot({ fullPage: true, path: testInfo.outputPath(`title-theme-${themeId}.png`) });
-  }
 
   await page.getByRole("button", { name: "Start" }).click();
 
@@ -37,42 +28,29 @@ test("starter title screen enters a visual novel game screen", async ({ page }, 
   await expectBoxInsideViewport(page, messageWindow, { minWidth: 320, minHeight: 80 });
   await expect(messageWindow).toHaveClass(/tzr-message-window--narration/);
   await expect(messageWindow.locator(".tzr-message-window__speaker")).toHaveCount(0);
-  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-narration-standard.png") });
+  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-narration-local.png") });
 
   await advanceUntilText(page, messageWindow, "こんにちは");
   await expect(messageWindow).toHaveClass(/tzr-message-window--dialogue/);
   await expect(messageWindow.locator(".tzr-message-window__speaker")).toHaveText("mio");
-
-  for (const themeId of THEME_IDS) {
-    await themeSelect.selectOption(themeId);
-    await expectTheme(themeRoot, themeSelect, themeId);
-    await expect(messageWindow).toHaveClass(/tzr-message-window--dialogue/);
-    await expect(messageWindow.locator(".tzr-message-window__speaker")).toHaveText("mio");
-    await expectBoxInsideViewport(page, messageWindow, { minWidth: 320, minHeight: 80 });
-    await page.screenshot({ fullPage: true, path: testInfo.outputPath(`game-dialogue-${themeId}.png`) });
-  }
+  await expect(themeRoot).toHaveAttribute("data-tzr-theme", "local");
+  await expectBoxInsideViewport(page, messageWindow, { minWidth: 320, minHeight: 80 });
+  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-dialogue-local.png") });
 
   await advanceUntilText(page, messageWindow, "少し長めの文章でも");
   await expect(messageWindow).toContainText("メッセージウィンドウの中で読みやすく表示されるか確認できます");
   await expect(messageWindow).toHaveClass(/tzr-message-window--narration/);
   await expect(messageWindow.locator(".tzr-message-window__speaker")).toHaveCount(0);
   await expectBoxInsideViewport(page, messageWindow, { minWidth: 320, minHeight: 120 });
-  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-long-text-standard.png") });
+  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-long-text-local.png") });
 
   await advanceUntilChoice(page, messageWindow, choiceLayer, "どこへ向かう？");
   await expect(messageWindow).toHaveCount(0);
   await expect(choiceLayer.getByRole("button", { name: "駅前へ行く" })).toBeVisible();
   await expect(choiceLayer.getByRole("button", { name: "部屋に戻る" })).toBeVisible();
   await expectBoxInsideViewport(page, choiceLayer, { minWidth: 320, minHeight: 120 });
-
-  for (const themeId of THEME_IDS) {
-    await themeSelect.selectOption(themeId);
-    await expectTheme(themeRoot, themeSelect, themeId);
-    await expect(choiceLayer.getByRole("button", { name: "駅前へ行く" })).toBeVisible();
-    await expect(choiceLayer.getByRole("button", { name: "部屋に戻る" })).toBeVisible();
-    await expectBoxInsideViewport(page, choiceLayer, { minWidth: 320, minHeight: 120 });
-    await page.screenshot({ fullPage: true, path: testInfo.outputPath(`game-choice-${themeId}.png`) });
-  }
+  await expect(themeRoot).toHaveAttribute("data-tzr-theme", "local");
+  await page.screenshot({ fullPage: true, path: testInfo.outputPath("game-choice-local.png") });
 
   await choiceLayer.getByRole("button", { name: "駅前へ行く" }).click();
   await expect(page.locator('img[src="/assets/images/station.svg"]')).toBeVisible();
@@ -139,17 +117,6 @@ async function expectViewportAspectRatio(viewport: Locator) {
     return;
   }
   expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
-}
-
-async function expectAvailableThemes(themeSelect: Locator) {
-  await expect
-    .poll(() => themeSelect.locator("option").evaluateAll((options) => options.map((option) => option.value)))
-    .toEqual(["standard", "classic", "dark-novel", "minimal", "local"]);
-}
-
-async function expectTheme(themeRoot: Locator, themeSelect: Locator, themeId: string) {
-  await expect(themeSelect).toHaveValue(themeId);
-  await expect(themeRoot).toHaveAttribute("data-tzr-theme", themeId);
 }
 
 async function expectBoxInsideViewport(

@@ -157,18 +157,6 @@ importers:
       '@tsuzuru/standard-ui-preact':
         specifier: workspace:*
         version: link:../../packages/standard-ui-preact
-      '@tsuzuru/theme-classic':
-        specifier: workspace:*
-        version: link:../../packages/theme-classic
-      '@tsuzuru/theme-dark-novel':
-        specifier: workspace:*
-        version: link:../../packages/theme-dark-novel
-      '@tsuzuru/theme-minimal':
-        specifier: workspace:*
-        version: link:../../packages/theme-minimal
-      '@tsuzuru/theme-standard':
-        specifier: workspace:*
-        version: link:../../packages/theme-standard
       preact:
         specifier: ^10.0.0
         version: 10.29.1

@@ -210,38 +210,6 @@ button {
   font-size: 0.86rem;
 }
 
-.starter-theme-switcher {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 20;
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border: 1px solid var(--tzr-standard-ui-runtime-control-border);
-  border-radius: 999px;
-  background: var(--tzr-standard-ui-runtime-control-bg);
-  color: var(--tzr-standard-ui-text-color);
-  box-shadow: var(--tzr-standard-ui-window-shadow);
-  font: inherit;
-  font-size: 0.78rem;
-  line-height: 1.2;
-}
-
-.starter-theme-switcher select {
-  min-width: 136px;
-  min-height: 28px;
-  box-sizing: border-box;
-  border: 1px solid var(--tzr-standard-ui-screen-control-border);
-  border-radius: 6px;
-  background: var(--tzr-standard-ui-screen-control-bg);
-  color: var(--tzr-standard-ui-text-color);
-  font: inherit;
-  padding: 7px 8px;
-}
-
 .starter-game .tzr-message-window {
   right: clamp(16px, 4vw, 44px);
   bottom: clamp(16px, 4vw, 40px);
