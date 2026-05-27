@@ -54,6 +54,69 @@ export function getGeneratedProjectInstallArgs({ hasLockfile, smokeSource }) {
   return ["install", "--prefer-offline"];
 }
 
+function assertContains(source, expected, filePath) {
+  if (!source.includes(expected)) {
+    throw new Error(`${filePath} must contain ${JSON.stringify(expected)}.`);
+  }
+}
+
+function assertNotContains(source, unexpected, filePath) {
+  if (source.includes(unexpected)) {
+    throw new Error(`${filePath} must not contain ${JSON.stringify(unexpected)}.`);
+  }
+}
+
+function assertMissingDependency(packageJson, packageName) {
+  for (const dependencyBlock of ["dependencies", "devDependencies", "optionalDependencies"]) {
+    const dependencies = packageJson[dependencyBlock];
+    if (dependencies?.[packageName] !== undefined) {
+      throw new Error(`Generated package.json must not include ${packageName} in ${dependencyBlock}.`);
+    }
+  }
+}
+
+export async function verifyGeneratedProjectFixedTheme(projectDir) {
+  const packageJsonPath = join(projectDir, "package.json");
+  const appPath = join(projectDir, "src", "App.tsx");
+  const localThemePath = join(projectDir, "src", "themes", "localTheme.ts");
+  const configPath = join(projectDir, "tsuzuru.config.ts");
+
+  const [packageJsonSource, appSource, localThemeSource, configSource] = await Promise.all([
+    readFile(packageJsonPath, "utf8"),
+    readFile(appPath, "utf8"),
+    readFile(localThemePath, "utf8"),
+    readFile(configPath, "utf8"),
+  ]);
+  const packageJson = JSON.parse(packageJsonSource);
+
+  if (packageJson.dependencies?.["@tsuzuru/standard-ui-preact"] === undefined) {
+    throw new Error("Generated package.json must include @tsuzuru/standard-ui-preact.");
+  }
+  for (const packageName of [
+    "@tsuzuru/theme-standard",
+    "@tsuzuru/theme-classic",
+    "@tsuzuru/theme-dark-novel",
+    "@tsuzuru/theme-minimal",
+  ]) {
+    assertMissingDependency(packageJson, packageName);
+  }
+
+  assertContains(appSource, "TsuzuruThemeProvider", "src/App.tsx");
+  assertContains(appSource, 'import { localTheme } from "./themes/localTheme.js"', "src/App.tsx");
+  assertContains(appSource, "<TsuzuruThemeProvider theme={localTheme}>", "src/App.tsx");
+  for (const marker of ["ThemeSwitcher", "themeId", "const themes", "<select", "@tsuzuru/theme-standard"]) {
+    assertNotContains(appSource, marker, "src/App.tsx");
+  }
+
+  assertContains(localThemeSource, "satisfies TsuzuruTheme", "src/themes/localTheme.ts");
+  assertContains(localThemeSource, 'id: "local"', "src/themes/localTheme.ts");
+  assertContains(localThemeSource, "messageWindow", "src/themes/localTheme.ts");
+  assertContains(localThemeSource, "choiceLayer", "src/themes/localTheme.ts");
+
+  assertContains(configSource, 'default: "local"', "tsuzuru.config.ts");
+  assertNotContains(configSource, "available", "tsuzuru.config.ts");
+}
+
 async function packWorkspacePackage(packageName, destinationDir, cwd) {
   console.log("");
   console.log(`> pack local ${packageName}`);
@@ -246,6 +309,10 @@ async function main() {
         tempRoot,
       );
     }
+
+    console.log("");
+    console.log("> verify generated fixed local theme files");
+    await verifyGeneratedProjectFixedTheme(projectDir);
 
     const hasLockfile = await pathExists(join(projectDir, "pnpm-lock.yaml"));
     await runStep(
