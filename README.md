@@ -1,5 +1,7 @@
 # Tsuzuru
 
+[日本語版](./README.ja.md)
+
 Tsuzuru is a TypeScript visual novel engine for building browser-first novel
 games with readable `.tzr` scenario files, a framework-neutral core runtime,
 and a Preact-based official UI stack.
