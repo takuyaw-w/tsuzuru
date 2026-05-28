@@ -8,7 +8,7 @@ test("starter title screen enters a visual novel game screen", async ({ page }, 
   await expect(page.getByRole("heading", { name: "はじめてのTsuzuru" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Load/ })).toBeDisabled();
-  await expect(page.getByRole("button", { name: /Config/ })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Settings/ })).toBeDisabled();
   await expect(themeRoot).toHaveCount(1);
   await expect(themeRoot).toHaveAttribute("data-tzr-theme", "local");
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });

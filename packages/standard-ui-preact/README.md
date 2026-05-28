@@ -20,6 +20,32 @@ export function App() {
 `assets` maps DSL asset IDs to image or audio resources. Image entries can also
 omit `src` and provide a `label` / `className` for CSS placeholders.
 
+## Title screen
+
+`TitleScreen` is a presentational title menu component. It renders the provided
+title, optional copy, actions, extra children, and footer, then calls an action's
+`onSelect` callback when the corresponding button is selected. It does not own
+runtime startup, screen routing, save/load, settings, storage, background media,
+or audio playback.
+
+```tsx
+import { TitleScreen } from "@tsuzuru/standard-ui-preact";
+
+export function AppTitleScreen() {
+  return (
+    <TitleScreen
+      title="Tsuzuru Sample"
+      subtitle="A visual novel powered by Tsuzuru"
+      actions={[
+        { label: "Start", onSelect: () => startGame() },
+        { label: "Load", onSelect: () => openLoadScreen(), disabled: !hasSaveData },
+        { label: "Settings", onSelect: () => openSettingsScreen() },
+      ]}
+    />
+  );
+}
+```
+
 ## Message presentation
 
 `TsuzuruGame` uses the default dialogue presentation unless
@@ -77,11 +103,11 @@ import "@tsuzuru/standard-ui-preact/style.css";
 ```
 
 The package provides UI components such as `GameViewport`, `GameShell`,
-`MessageWindow`, fullscreen `NovelTextWindow`, `ChoiceLayer`, `StatusLayer`,
-`RuntimeMessageLayer`, `RuntimeNovelTextLayer`, `RuntimeControlBar`,
-`StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and `StdCameraLayer`,
-`StdParticleLayer`, `ScreenHost`, Screen primitives, plus the high-level
-`TsuzuruGame` starter component.
+`TitleScreen`, `MessageWindow`, fullscreen `NovelTextWindow`, `ChoiceLayer`,
+`StatusLayer`, `RuntimeMessageLayer`, `RuntimeNovelTextLayer`,
+`RuntimeControlBar`, `StdVisualLayer`, `StdAudioLayer`, `StdEffectLayer`, and
+`StdCameraLayer`, `StdParticleLayer`, `ScreenHost`, Screen primitives, plus the
+high-level `TsuzuruGame` starter component.
 
 Screen primitives such as `Screen`, `ScreenPanel`, `ScreenHeading`,
 `ScreenButton`, `ScreenField`, `ScreenList`, `ScreenListItem`, and `ScreenBadge`

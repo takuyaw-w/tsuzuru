@@ -1,10 +1,9 @@
 import "@tsuzuru/standard-ui-preact/style.css";
 import "./style.css";
-import { TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
+import { TitleScreen, TsuzuruThemeProvider } from "@tsuzuru/standard-ui-preact";
 import { useState } from "preact/hooks";
 import scenario from "../scenario/main.tzr";
 import { assets } from "./assets.js";
-import { TitleScreen } from "./screens/TitleScreen.js";
 import { localTheme } from "./themes/localTheme.js";
 import { GameRoot } from "./ui/GameRoot.js";
 
@@ -18,7 +17,13 @@ export function App() {
       <TitleScreen
         title="はじめてのTsuzuru"
         subtitle="シナリオを書いて、素材を登録するだけ。"
-        onStart={() => setScreen("game")}
+        description="scenario/main.tzr と src/assets.ts を編集して、自分の物語に差し替えられます。"
+        actions={[
+          { label: "Start", onSelect: () => setScreen("game") },
+          { label: "Load", onSelect: () => undefined, disabled: true },
+          { label: "Settings", onSelect: () => undefined, disabled: true },
+        ]}
+        footer="Tsuzuru Starter"
       />
     ) : (
       <GameRoot scenario={scenario} assets={assets} onTitle={() => setScreen("title")} />

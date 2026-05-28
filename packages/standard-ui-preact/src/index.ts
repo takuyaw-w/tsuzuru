@@ -35,6 +35,8 @@ export type {
 export { RuntimeControlBar } from "./runtime-control-bar.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
+export type { TitleScreenAction, TitleScreenProps } from "./title-screen.js";
+export { TitleScreen } from "./title-screen.js";
 export type {
   ActiveScreen,
   ScreenComponent,

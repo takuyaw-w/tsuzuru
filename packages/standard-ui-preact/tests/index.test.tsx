@@ -33,6 +33,8 @@ import {
   ScreenPanel,
   ScreenText,
   StatusLayer,
+  TitleScreen,
+  type TitleScreenAction,
   type StatusLayerProps,
   TsuzuruGame,
   type TsuzuruGameProps,
@@ -148,6 +150,75 @@ describe("GameShell", () => {
 
     expect(node.props.className).toBe("tzr-game-shell custom-shell");
     expect(getNodeText(node)).toBe("story");
+  });
+});
+
+describe("TitleScreen", () => {
+  it("renders title, optional copy, actions, children, and footer", () => {
+    const actions = [
+      { label: "Start", onSelect: vi.fn() },
+      { label: "Load", onSelect: vi.fn(), disabled: true },
+    ] satisfies TitleScreenAction[];
+    const node = expectVNode(
+      TitleScreen({
+        title: "Tsuzuru Sample",
+        subtitle: "A visual novel powered by Tsuzuru",
+        description: "Begin from the title menu.",
+        actions,
+        footer: "v1.0.0",
+        className: "custom-title",
+        style: { minHeight: "720px" },
+        children: <p className="custom-child">Extra title content</p>,
+      }),
+    );
+    const actionButtons = findByClass(node, "tzr-title-screen__action");
+
+    expect(node.type).toBe("section");
+    expect(node.props.className).toBe("tzr-title-screen custom-title");
+    expect(node.props.style).toMatchObject({ minHeight: "720px" });
+    expect(findByClass(node, "tzr-title-screen__title")).toHaveLength(1);
+    expect(findByClass(node, "tzr-title-screen__subtitle")).toHaveLength(1);
+    expect(findByClass(node, "tzr-title-screen__description")).toHaveLength(1);
+    expect(findByClass(node, "tzr-title-screen__footer")).toHaveLength(1);
+    expect(findByClass(node, "custom-child")).toHaveLength(1);
+    expect(actionButtons).toHaveLength(2);
+    expect(getNodeText(node)).toContain("Tsuzuru Sample");
+    expect(getNodeText(node)).toContain("A visual novel powered by Tsuzuru");
+    expect(getNodeText(node)).toContain("Begin from the title menu.");
+    expect(getNodeText(node)).toContain("Start");
+    expect(getNodeText(node)).toContain("Load");
+    expect(getNodeText(node)).toContain("v1.0.0");
+  });
+
+  it("omits optional subtitle and description when absent", () => {
+    const node = expectVNode(TitleScreen({ title: "Title", actions: [] }));
+
+    expect(findByClass(node, "tzr-title-screen__subtitle")).toHaveLength(0);
+    expect(findByClass(node, "tzr-title-screen__description")).toHaveLength(0);
+  });
+
+  it("calls enabled action on click and leaves disabled action inert", () => {
+    const onStart = vi.fn();
+    const onLoad = vi.fn();
+    const node = expectVNode(
+      TitleScreen({
+        title: "Title",
+        actions: [
+          { label: "Start", onSelect: onStart },
+          { label: "Load", onSelect: onLoad, disabled: true },
+        ],
+      }),
+    );
+    const actionButtons = findByClass(node, "tzr-title-screen__action");
+
+    actionButtons[0].props.onClick?.(createDivClickEvent());
+    actionButtons[1].props.onClick?.(createDivClickEvent());
+
+    expect(actionButtons[0].props.disabled).toBe(false);
+    expect(actionButtons[1].props.disabled).toBe(true);
+    expect(actionButtons[1].props.onClick).toBeUndefined();
+    expect(onStart).toHaveBeenCalledTimes(1);
+    expect(onLoad).not.toHaveBeenCalled();
   });
 });
 

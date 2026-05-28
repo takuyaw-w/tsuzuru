@@ -21,8 +21,8 @@ pnpm --filter @tsuzuru/example-preact-starter dev
 - `src/assets.ts`
   背景・キャラクター画像・音声を登録します。シナリオで使う `bg classroom` や `show mio_smile` の id と対応します。
 
-- `src/screens/TitleScreen.tsx`
-  タイトル画面をカスタマイズします。作品タイトル、説明文、メニュー表示を変更できます。
+- `src/App.tsx`
+  `@tsuzuru/standard-ui-preact` の `TitleScreen` を使ってタイトル画面とゲーム画面を切り替えます。作品タイトル、説明文、メニュー表示を変更できます。
 
 - `src/themes/localTheme.ts`
   作品用の固定テーマを編集します。`App.tsx` で `TsuzuruThemeProvider` に渡しています。
@@ -39,7 +39,6 @@ examples/preact-starter/
   scenario/main.tzr
   src/assets.ts
   src/themes/localTheme.ts
-  src/screens/TitleScreen.tsx
   src/ui/GameRoot.tsx
   public/assets/images/
   public/assets/audio/
@@ -61,7 +60,7 @@ pnpm --filter @tsuzuru/example-preact-starter test:ui
 
 - `scenario/main.tzr` のセリフを書き換える
 - `src/assets.ts` に自分の画像を登録する
-- `TitleScreen.tsx` のタイトルを変更する
+- `App.tsx` の `TitleScreen` props を変更する
 - `src/themes/localTheme.ts` の theme tokens を編集し、作品に合う固定テーマにする
 
 Load / Config は starter では未実装です。必要になったら save/load や設定画面を追加してください。
