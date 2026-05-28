@@ -76,6 +76,7 @@ export type TzrSceneStatement =
   | TzrStdEffectStatement
   | TzrStdCameraStatement
   | TzrStdParticleStatement
+  | TzrStdHotspotStatement
   | TzrJumpStatement
   | TzrEndStatement;
 
@@ -355,6 +356,15 @@ export type TzrStdParticleCommandName = "particle" | "stopParticle";
 export interface TzrStdParticleStatement {
   readonly type: "StdParticleStatement";
   readonly name: TzrStdParticleCommandName;
+  readonly args: readonly TzrArgument[];
+  readonly loc: SourceRange;
+}
+
+export type TzrStdHotspotCommandName = "hotspot" | "waitHotspot" | "clearHotspots";
+
+export interface TzrStdHotspotStatement {
+  readonly type: "StdHotspotStatement";
+  readonly name: TzrStdHotspotCommandName;
   readonly args: readonly TzrArgument[];
   readonly loc: SourceRange;
 }

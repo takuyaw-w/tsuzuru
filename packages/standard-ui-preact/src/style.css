@@ -1021,6 +1021,31 @@
   pointer-events: none;
 }
 
+.tzr-std-hotspot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tzr-std-hotspot-layer__button {
+  position: absolute;
+  display: block;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tzr-std-hotspot-layer__button:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
 .tzr-std-particle-layer {
   position: absolute;
   inset: 0;

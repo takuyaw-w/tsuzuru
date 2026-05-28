@@ -128,6 +128,11 @@ The following syntax is not Core. It is official standard plugin sugar.
   particle
   stopParticle
 
+@tsuzuru/plugin-std-hotspot:
+  hotspot <id> rect(x=<number>, y=<number>, width=<number>, height=<number>) jump <sceneId>
+  wait hotspot
+  clear hotspots
+
 @tsuzuru/plugin-std-system:
   call system.unlockEnding(id=...)
   call system.unlockCg(id=...)
@@ -1910,9 +1915,62 @@ Deferred:
 - wind / direction / speed / size / color / density options
 - smoke / fog / embers / leaves / custom particle definitions
 
-## 27. `@tsuzuru/plugin-std-system`
+## 27. `@tsuzuru/plugin-std-hotspot`
 
-### 26.1 Position
+Hotspot statements are sugar for `@tsuzuru/plugin-std-hotspot`.
+
+Hotspots are durable renderer-neutral clickable regions. The plugin stores
+rectangle definitions and jump actions; UI layers render them as transparent
+buttons over the `GameViewport`.
+
+### 27.1 Syntax
+
+```txt
+hotspot <id> rect(x=<number>, y=<number>, width=<number>, height=<number>) jump <sceneId>
+wait hotspot
+clear hotspots
+```
+
+Rules:
+
+- only `rect(...)` shapes are supported
+- only `jump <sceneId>` actions are supported
+- `x` and `y` must be `0` or greater
+- `width` and `height` must be greater than `0`
+- coordinates use a 960x540 viewport reference size
+- repeating the same hotspot id overwrites the existing hotspot
+- `wait hotspot` sets `waiting: true`
+- `clear hotspots` clears all hotspots and sets `waiting: false`
+
+### 27.2 Runtime State
+
+The std-hotspot plugin stores state under `runtimeState.plugins.stdHotspot`:
+
+```ts
+{
+  hotspots: Record<string, {
+    shape: { type: "rect"; x: number; y: number; width: number; height: number };
+    action: { type: "jump"; target: string };
+  }>;
+  waiting: boolean;
+}
+```
+
+When a hotspot is clicked, MVP clears `waiting` and jumps to the target scene.
+It does not automatically clear `hotspots`; scenarios should use
+`clear hotspots` when regions should be removed.
+
+Deferred:
+
+- circle / polygon shapes
+- hover effects and tooltips
+- conditional hotspots
+- arbitrary callbacks or external URLs
+- hotspot authoring/debug editors
+
+## 28. `@tsuzuru/plugin-std-system`
+
+### 28.1 Position
 
 ```txt
 scenario.* is Core
@@ -1924,7 +1982,7 @@ system.* updates go through call system.*
 std-system intentionally does not add dedicated DSL sugar. It uses the same
 `call namespace.action(...)` syntax available to user plugins.
 
-### 26.2 Minimal Semantic Actions
+### 28.2 Minimal Semantic Actions
 
 ```txt
 call system.unlockEnding(id=trueEnd)
@@ -1932,7 +1990,7 @@ call system.unlockCg(id=cg001)
 call system.unlockAchievement(id=firstClear)
 ```
 
-### 26.3 Meaning
+### 28.3 Meaning
 
 ```txt
 system.unlockEnding(id=<id>)
@@ -1945,7 +2003,7 @@ system.unlockAchievement(id=<id>)
   => unlock achievement
 ```
 
-### 26.4 Recommended System State Path
+### 28.4 Recommended System State Path
 
 ```txt
 system.endings.<id>.unlocked
@@ -1953,7 +2011,7 @@ system.cgs.<id>.unlocked
 system.achievements.<id>.unlocked
 ```
 
-### 26.5 Condition References
+### 28.5 Condition References
 
 ```txt
 if system.endings.trueEnd.unlocked:
@@ -1971,7 +2029,7 @@ evaluation remains deferred and is not part of the v1.0 stable subset. The
 compiler rejects `if system.*` until a renderer-neutral system condition
 resolver is added.
 
-### 26.6 Validation
+### 28.6 Validation
 
 - `id` is required.
 - `id` may be `IDENT` or `STRING`.
@@ -1981,7 +2039,7 @@ resolver is added.
 - No warning is emitted for re-unlock no-op.
 - `set system.*` and `add system.*` are prohibited.
 
-### 26.7 Not Adopted
+### 28.7 Not Adopted
 
 ```txt
 call system.set(path=..., value=...)
@@ -1992,9 +2050,9 @@ Generic `system.set` and dedicated `unlock ...` sugar are not adopted.
 
 ---
 
-## 28. File Splitting and Assets
+## 29. File Splitting and Assets
 
-### 27.1 File Splitting
+### 29.1 File Splitting
 
 The following are not included in the DSL for now:
 
@@ -2010,7 +2068,7 @@ Policy:
 - Entry file and entry scene are handled by config.
 - Cross-file scene resolution is handled by compiler / config layer.
 
-### 27.2 Assets
+### 29.2 Assets
 
 Policy:
 
@@ -2020,9 +2078,9 @@ Policy:
 
 ---
 
-## 29. Reserved / Not Adopted
+## 30. Reserved / Not Adopted
 
-### 28.1 Not Adopted
+### 30.1 Not Adopted
 
 ```txt
 raw script
@@ -2038,7 +2096,7 @@ flags.*
 vars.*
 ```
 
-### 28.2 Reserved
+### 30.2 Reserved
 
 ```txt
 macro
@@ -2208,6 +2266,10 @@ Phase 11:
   particle / stopParticle
 
 Phase 12:
+  std-hotspot sugar
+  hotspot / wait hotspot / clear hotspots
+
+Phase 13:
   std-system plugin
   call system.unlockEnding(id=...)
   call system.unlockCg(id=...)

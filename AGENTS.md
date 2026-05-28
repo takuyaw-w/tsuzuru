@@ -64,6 +64,7 @@ packages/plugin-std-text-sound
 packages/plugin-std-effect
 packages/plugin-std-camera
 packages/plugin-std-particle
+packages/plugin-std-hotspot
 packages/plugin-std-system
 ```
 
@@ -71,6 +72,7 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-hotspot-basic
 examples/preact-sound-novel
 examples/preact-starter
 ```
@@ -79,6 +81,7 @@ Primary runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-hotspot-basic
 examples/preact-sound-novel
 examples/preact-starter
 ```
@@ -186,6 +189,12 @@ Package responsibilities:
   - owns durable particle plugin state updates
   - supports snapshot / restore through runtime plugin state
   - does not render particle systems or resolve visual assets
+
+- `@tsuzuru/plugin-std-hotspot`
+  - provides standard hotspot command handlers
+  - owns durable hotspot plugin state updates
+  - supports snapshot / restore through runtime plugin state
+  - does not render clickable regions or own adventure-system state
 
 - `@tsuzuru/plugin-std-system`
   - provides standard system unlock command handlers
@@ -529,6 +538,9 @@ pnpm --filter @tsuzuru/plugin-std-camera typecheck
 
 pnpm --filter @tsuzuru/plugin-std-particle test
 pnpm --filter @tsuzuru/plugin-std-particle typecheck
+
+pnpm --filter @tsuzuru/plugin-std-hotspot test
+pnpm --filter @tsuzuru/plugin-std-hotspot typecheck
 
 pnpm --filter @tsuzuru/plugin-std-system test
 pnpm --filter @tsuzuru/plugin-std-system typecheck

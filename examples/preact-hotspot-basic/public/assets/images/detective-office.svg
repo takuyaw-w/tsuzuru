@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Detective office placeholder</title>
+  <desc id="desc">A simple generated-style office background for hotspot testing.</desc>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#263140"/>
+      <stop offset="1" stop-color="#151a21"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a211d"/>
+      <stop offset="1" stop-color="#15110f"/>
+    </linearGradient>
+    <linearGradient id="lamp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff2b0"/>
+      <stop offset="1" stop-color="#c38436"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#wall)"/>
+  <rect y="355" width="960" height="185" fill="url(#floor)"/>
+  <path d="M0 355h960" stroke="#3b2d27" stroke-width="4"/>
+  <path d="M55 395h850M38 440h890M20 492h920" stroke="#342821" stroke-width="3" opacity=".55"/>
+
+  <rect x="430" y="72" width="224" height="178" rx="4" fill="#0b1017" stroke="#61758a" stroke-width="8"/>
+  <path d="M542 78v166M436 162h212" stroke="#61758a" stroke-width="5"/>
+  <rect x="446" y="88" width="86" height="64" fill="#314b60"/>
+  <rect x="552" y="88" width="86" height="64" fill="#25394b"/>
+  <rect x="446" y="172" width="86" height="62" fill="#1c2a39"/>
+  <rect x="552" y="172" width="86" height="62" fill="#1a2531"/>
+  <path d="M475 115h20M590 122h28M468 205h40M576 198h24" stroke="#f0d36f" stroke-width="4" opacity=".6"/>
+
+  <rect x="744" y="118" width="142" height="344" rx="5" fill="#211815" stroke="#4b352b" stroke-width="8"/>
+  <rect x="766" y="142" width="96" height="294" fill="#2d211b"/>
+  <circle cx="846" cy="288" r="7" fill="#d6a654"/>
+  <path d="M776 175h74M776 405h74" stroke="#49352c" stroke-width="5"/>
+
+  <rect x="112" y="336" width="330" height="34" rx="8" fill="#5a3928"/>
+  <rect x="134" y="364" width="42" height="126" fill="#3d281e"/>
+  <rect x="372" y="364" width="42" height="126" fill="#3d281e"/>
+  <rect x="142" y="300" width="250" height="42" rx="8" fill="#735039"/>
+  <rect x="214" y="276" width="120" height="28" rx="4" fill="#9b7a45"/>
+  <path d="M228 289h90" stroke="#4b3824" stroke-width="4"/>
+  <rect x="304" y="322" width="70" height="12" rx="6" fill="#1d2430"/>
+
+  <circle cx="280" cy="228" r="54" fill="url(#lamp)" opacity=".16"/>
+  <path d="M260 206h44l-10 40h-24z" fill="url(#lamp)"/>
+  <path d="M282 246v54" stroke="#7c5d3d" stroke-width="8"/>
+  <path d="M236 300h94" stroke="#7c5d3d" stroke-width="8"/>
+
+  <rect x="44" y="88" width="220" height="230" rx="6" fill="#1d242e" stroke="#56616f" stroke-width="8"/>
+  <path d="M72 128h162M72 172h162M72 216h162M72 260h116" stroke="#7c8b9b" stroke-width="8" opacity=".42"/>
+  <path d="M710 470c-64 30-175 30-240 0" stroke="#0b0d10" stroke-width="18" opacity=".28"/>
+  <path d="M0 0h960v540H0z" fill="#000" opacity=".12"/>
+</svg>

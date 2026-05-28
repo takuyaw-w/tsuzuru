@@ -156,6 +156,36 @@ the stable-scope planning matrix, see
 This repository is a pnpm workspace with packages under `packages/*` and
 runnable examples under `examples/*`.
 
+```txt
+packages/
+  core/
+  config/
+  cli/
+  vite-plugin/
+  create-tsuzuru/
+  preact/
+  standard-ui-preact/
+  theme-standard/
+  theme-classic/
+  theme-dark-novel/
+  theme-minimal/
+  standard-game-storage/
+  plugin-std-visual/
+  plugin-std-audio/
+  plugin-std-text-sound/
+  plugin-std-effect/
+  plugin-std-camera/
+  plugin-std-particle/
+  plugin-std-hotspot/
+  plugin-std-system/
+
+examples/
+  preact-basic/
+  preact-hotspot-basic/
+  preact-sound-novel/
+  preact-starter/
+```
+
 | Package | Role |
 | --- | --- |
 | [`@tsuzuru/core`](packages/core/) | Parser, compiler, project compiler, runtime IR, runtime stepping, state, choices, jumps, waits, snapshots, restore helpers, and plugin command infrastructure. |
@@ -176,6 +206,7 @@ runnable examples under `examples/*`.
 | [`@tsuzuru/plugin-std-effect`](packages/plugin-std-effect/) | One-shot screen effect command handlers. |
 | [`@tsuzuru/plugin-std-camera`](packages/plugin-std-camera/) | Durable camera state command handlers. |
 | [`@tsuzuru/plugin-std-particle`](packages/plugin-std-particle/) | Durable particle state command handlers. |
+| [`@tsuzuru/plugin-std-hotspot`](packages/plugin-std-hotspot/) | Rectangular hotspot state and click-wait command handlers. |
 | [`@tsuzuru/plugin-std-system`](packages/plugin-std-system/) | Durable unlock state for endings, CGs, and achievements. |
 
 Core stays independent from Preact, DOM, CSS, Vite, browser storage, and asset
@@ -190,6 +221,7 @@ All current runnable examples are Preact-based:
 | --- | --- |
 | [`examples/preact-starter`](examples/preact-starter/) | Creator-facing starter example. Edit `scenario/main.tzr`, `src/assets.ts`, and the local theme to build a small novel game. |
 | [`examples/preact-basic`](examples/preact-basic/) | Integration reference for the core runtime, Preact adapter, standard UI layers, standard plugins, save/load, preferences, backlog, auto mode, skip mode, and read tracking as example-owned app behavior. |
+| [`examples/preact-hotspot-basic`](examples/preact-hotspot-basic/) | Minimal exploration ADV example for transparent rectangular hotspots and scene jumps. |
 | [`examples/preact-sound-novel`](examples/preact-sound-novel/) | Long-form sound-novel presentation example using `TsuzuruGame` with novel message presentation and text reveal controls. |
 
 Common example commands:

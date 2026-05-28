@@ -86,10 +86,12 @@ packages/
   plugin-std-effect/
   plugin-std-camera/
   plugin-std-particle/
+  plugin-std-hotspot/
   plugin-std-system/
 
 examples/
   preact-basic/
+  preact-hotspot-basic/
   preact-sound-novel/
   preact-starter/
 ```
@@ -113,6 +115,7 @@ Current runnable examples:
 
 ```txt
 examples/preact-basic
+examples/preact-hotspot-basic
 examples/preact-sound-novel
 examples/preact-starter
 ```
@@ -430,6 +433,27 @@ It does not:
 - own scene flow
 - own runtime stepping
 
+---
+
+### `@tsuzuru/plugin-std-hotspot`
+
+`@tsuzuru/plugin-std-hotspot` provides standard durable hotspot command
+handlers.
+
+Responsibilities:
+
+- maintain standard hotspot plugin state
+- store rectangular hotspot regions and jump actions
+- handle `hotspot`, `waitHotspot`, and `clearHotspots` command instructions
+- allow hotspot state to be saved and restored with runtime snapshots
+
+It does not:
+
+- render clickable regions
+- own adventure-system concepts such as inventory, locations, or evidence
+- resolve assets
+- own scene flow beyond command state updates
+
 Particle rendering and reduced-motion policy belong to the app, renderer, or
 example.
 
@@ -471,6 +495,7 @@ Current examples:
 
 ```txt
 examples/preact-basic
+examples/preact-hotspot-basic
 examples/preact-sound-novel
 examples/preact-starter
 ```
@@ -938,6 +963,7 @@ The detailed v1.0 release-gate matrix is tracked in
 | `@tsuzuru/plugin-std-effect` | One-shot effect events | Host should call `prepareStdEffectStateForSnapshot` before saving to clear one-shot events while preserving the sequence counter. |
 | `@tsuzuru/plugin-std-camera` | Durable camera transform/focus state | Keep plugin state as-is. |
 | `@tsuzuru/plugin-std-particle` | Durable current particle state | Keep plugin state as-is. |
+| `@tsuzuru/plugin-std-hotspot` | Durable hotspot regions and waiting flag | Keep plugin state as-is. |
 | `@tsuzuru/plugin-std-system` | Durable unlock state | Keep plugin state as-is. |
 
 Core snapshot creation preserves plugin state but does not automatically clear
@@ -1243,6 +1269,7 @@ pnpm --filter @tsuzuru/plugin-std-text-sound test
 pnpm --filter @tsuzuru/plugin-std-effect test
 pnpm --filter @tsuzuru/plugin-std-camera test
 pnpm --filter @tsuzuru/plugin-std-particle test
+pnpm --filter @tsuzuru/plugin-std-hotspot test
 pnpm --filter @tsuzuru/plugin-std-system test
 ```
 

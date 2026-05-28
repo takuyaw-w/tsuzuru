@@ -1,0 +1,34 @@
+{
+  "name": "@tsuzuru/example-preact-hotspot-basic",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run build:deps && pnpm run build:self",
+    "build:deps": "pnpm --filter @tsuzuru/config build && pnpm --filter @tsuzuru/core build && pnpm --filter @tsuzuru/cli build && pnpm --filter @tsuzuru/vite-plugin build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-hotspot build && pnpm --filter @tsuzuru/standard-ui-preact build",
+    "build:self": "vite build",
+    "check:scenario": "tsuzuru check",
+    "check:scenario:self": "node ../../packages/cli/dist/src/index.js check",
+    "dev": "pnpm run build:deps && vite",
+    "test": "vitest run tests/*.test.ts",
+    "test:ui": "playwright test -c playwright.config.ts",
+    "typecheck": "pnpm run build:deps && pnpm run typecheck:self",
+    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/cli": "workspace:*",
+    "@tsuzuru/config": "workspace:*",
+    "@tsuzuru/plugin-std-hotspot": "workspace:*",
+    "@tsuzuru/plugin-std-visual": "workspace:*",
+    "@tsuzuru/preact": "workspace:*",
+    "@tsuzuru/standard-ui-preact": "workspace:*",
+    "preact": "^10.0.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@tsuzuru/vite-plugin": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vite": "^8.0.10"
+  }
+}

@@ -141,15 +141,10 @@ function stepInstruction(
   }
 }
 
-function stepSceneJumpInstruction(
-  document: RuntimeDocument,
-  state: RuntimeState,
-  nextState: RuntimeState,
-  sceneId: string,
-): RuntimeStepResult {
+export function jumpRuntime(document: RuntimeDocument, state: RuntimeState, sceneId: string): RuntimeStepResult {
   const target = document.scenes[sceneId];
   if (target === undefined) {
-    return unsupportedInstruction(nextState, "SceneJumpInstruction");
+    return unsupportedInstruction(state, "SceneJumpInstruction");
   }
 
   return {
@@ -170,6 +165,15 @@ function stepSceneJumpInstruction(
       instructionIndex: target.statementIndex,
     },
   };
+}
+
+function stepSceneJumpInstruction(
+  document: RuntimeDocument,
+  _state: RuntimeState,
+  nextState: RuntimeState,
+  sceneId: string,
+): RuntimeStepResult {
+  return jumpRuntime(document, nextState, sceneId);
 }
 
 export function resolveChoice(_document: RuntimeDocument, state: RuntimeState, itemIndex: number): RuntimeStepResult {

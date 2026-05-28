@@ -35,8 +35,6 @@ export type {
 export { RuntimeControlBar } from "./runtime-control-bar.js";
 export type { StatusLayerProps } from "./StatusLayer.js";
 export { StatusLayer } from "./StatusLayer.js";
-export type { TitleScreenAction, TitleScreenProps } from "./title-screen.js";
-export { TitleScreen } from "./title-screen.js";
 export type {
   ActiveScreen,
   ScreenComponent,
@@ -99,6 +97,10 @@ export {
   STD_EFFECT_TARGET_NOT_FOUND_DIAGNOSTIC_CODE,
   StdEffectLayer,
 } from "./std-effect-layer.js";
+export type { StdHotspotLayerProps } from "./std-hotspot-layer.js";
+export { StdHotspotLayer } from "./std-hotspot-layer.js";
+export type { StdHotspotRuntimeLayerProps } from "./std-hotspot-runtime-layer.js";
+export { StdHotspotRuntimeLayer } from "./std-hotspot-runtime-layer.js";
 export type { StdParticleLayerProps } from "./std-particle-layer.js";
 export { StdParticleLayer } from "./std-particle-layer.js";
 export type { StdParticleRuntimeLayerProps } from "./std-particle-runtime-layer.js";
@@ -134,6 +136,8 @@ export {
 } from "./theme.js";
 export type { TsuzuruThemeProviderProps } from "./theme-provider.js";
 export { TsuzuruThemeProvider } from "./theme-provider.js";
+export type { TitleScreenAction, TitleScreenProps } from "./title-screen.js";
+export { TitleScreen } from "./title-screen.js";
 export type {
   TsuzuruGameDiagnostic,
   TsuzuruGameMessagePresentationMode,

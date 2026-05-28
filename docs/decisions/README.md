@@ -61,6 +61,7 @@ reintroduced.
 | 0032 | [Preact-Based Official UI Stack](0032-preact-based-official-ui-stack.md) | Accepted |
 | 0033 | [Treat background transitions as std-visual metadata](0033-std-visual-background-transitions.md) | Accepted |
 | 0034 | [Use tsuzuru.config.ts as the compile-time plugin source of truth](0034-tsuzuru-config-compile-plugin-source.md) | Accepted |
+| 0035 | [Standard Hotspot Plugin](0035-std-hotspot-plugin.md) | Accepted |
 
 ## Reading Order
 

@@ -5,6 +5,7 @@ import {
   createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
+  jumpRuntime,
   type RuntimeBlockReason,
   type RuntimeDocument,
   type RuntimeEvent,
@@ -29,6 +30,10 @@ export interface UseRuntimeOptions {
   readonly autoStepMaxSteps?: number;
 }
 
+export interface UseRuntimeJumpOptions {
+  readonly prepareState?: (state: RuntimeState) => RuntimeState;
+}
+
 export interface UseRuntimeResult {
   readonly state: RuntimeState;
   readonly event: RuntimeEvent | null;
@@ -36,6 +41,7 @@ export interface UseRuntimeResult {
   readonly step: () => void;
   readonly continueClick: () => void;
   readonly choose: (itemIndex: number) => void;
+  readonly jump: (sceneId: string, options?: UseRuntimeJumpOptions) => void;
   readonly reset: () => void;
   readonly createSnapshot: () => RuntimeSnapshot;
   readonly restoreSnapshot: (snapshot: RuntimeSnapshot) => void;
@@ -136,6 +142,31 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
         }
 
         const result = stepRuntime(document, resolved.state, stepOptions);
+        setEvent(result.event);
+        const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
+        if (nextVisibleEvent !== null) {
+          setVisibleEvent(nextVisibleEvent);
+        }
+        return result.state;
+      });
+    },
+    [document, stepOptions],
+  );
+
+  const jump = useCallback(
+    (sceneId: string, jumpOptions: UseRuntimeJumpOptions = {}) => {
+      setAutoStepCount(0);
+      setAutoStepError(null);
+      setState((currentState) => {
+        const preparedState = jumpOptions.prepareState?.(currentState) ?? currentState;
+        const jumped = jumpRuntime(document, preparedState, sceneId);
+        if (jumped.event.type === "error" || jumped.event.type === "unsupported") {
+          setEvent(jumped.event);
+          setVisibleEvent(jumped.event);
+          return jumped.state;
+        }
+
+        const result = stepRuntime(document, jumped.state, stepOptions);
         setEvent(result.event);
         const nextVisibleEvent = getRenderableRuntimeEvent(result.event);
         if (nextVisibleEvent !== null) {
@@ -255,6 +286,7 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
     step,
     continueClick,
     choose,
+    jump,
     reset,
     createSnapshot,
     restoreSnapshot,

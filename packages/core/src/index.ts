@@ -115,6 +115,7 @@ export {
   createRuntimeSnapshot,
   getRuntimeBlockReason,
   isRuntimeBlocked,
+  jumpRuntime,
   prepareRuntimeStateForSnapshot,
   resolveChoice,
   restoreRuntimeState,

@@ -42,6 +42,7 @@ import type {
   TzrShowStatement,
   TzrStdCameraStatement,
   TzrStdEffectStatement,
+  TzrStdHotspotStatement,
   TzrStdParticleStatement,
   TzrStopBgmStatement,
   TzrStopTextSoundStatement,
@@ -453,6 +454,9 @@ class TzrCompiler {
           break;
         case "StdParticleStatement":
           instructions.push(...this.buildStdParticleInstruction(statement));
+          break;
+        case "StdHotspotStatement":
+          instructions.push(...this.buildStdHotspotInstruction(statement));
           break;
         default:
           assertUnreachableSceneStatement(statement);
@@ -905,6 +909,19 @@ class TzrCompiler {
     ];
   }
 
+  private buildStdHotspotInstruction(statement: TzrStdHotspotStatement): readonly CommandInstruction[] {
+    this.validateStdHotspotSugar(statement);
+
+    return [
+      {
+        type: "CommandInstruction",
+        name: statement.name,
+        args: statement.args,
+        loc: statement.loc,
+      },
+    ];
+  }
+
   private validateStdEffectSugar(statement: TzrStdEffectStatement): void {
     if (statement.name !== "flash") {
       return;
@@ -1006,6 +1023,51 @@ class TzrCompiler {
     const zoom = findNamedArgument(statement.args, "zoom");
     if (zoom?.value.type === "NumberValue" && zoom.value.value <= 0) {
       this.addError(zoom.value.loc.start, "camera zoom must be greater than 0.");
+    }
+  }
+
+  private validateStdHotspotSugar(statement: TzrStdHotspotStatement): void {
+    if (statement.name !== "hotspot") {
+      return;
+    }
+
+    const id = statement.args[0];
+    if (id?.type !== "PositionalArgument" || id.value.type !== "StringValue" || id.value.value.length === 0) {
+      this.addError(statement.loc.start, "hotspot id must not be empty.");
+    }
+
+    const target = findNamedArgument(statement.args, "target");
+    if (target?.value.type !== "StringValue" || target.value.value.length === 0) {
+      this.addError(target?.loc.start ?? statement.loc.start, "hotspot jump target must not be empty.");
+    } else {
+      this.validateJumpTarget(target.value.value, target.value.loc.start);
+    }
+
+    for (const name of ["x", "y", "width", "height"] as const) {
+      const arg = findNamedArgument(statement.args, name);
+      if (arg?.value.type !== "NumberValue") {
+        continue;
+      }
+      if (!Number.isFinite(arg.value.value)) {
+        this.addError(arg.value.loc.start, `hotspot ${name} must be a finite number.`);
+      }
+    }
+
+    const x = findNamedArgument(statement.args, "x");
+    if (x?.value.type === "NumberValue" && x.value.value < 0) {
+      this.addError(x.value.loc.start, "hotspot x must be 0 or greater.");
+    }
+    const y = findNamedArgument(statement.args, "y");
+    if (y?.value.type === "NumberValue" && y.value.value < 0) {
+      this.addError(y.value.loc.start, "hotspot y must be 0 or greater.");
+    }
+    const width = findNamedArgument(statement.args, "width");
+    if (width?.value.type === "NumberValue" && width.value.value <= 0) {
+      this.addError(width.value.loc.start, "hotspot width must be greater than 0.");
+    }
+    const height = findNamedArgument(statement.args, "height");
+    if (height?.value.type === "NumberValue" && height.value.value <= 0) {
+      this.addError(height.value.loc.start, "hotspot height must be greater than 0.");
     }
   }
 

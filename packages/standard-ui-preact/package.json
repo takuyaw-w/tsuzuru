@@ -37,6 +37,8 @@
     "dist/std-camera-layer.*",
     "dist/std-camera-runtime-layer.*",
     "dist/std-effect-layer.*",
+    "dist/std-hotspot-layer.*",
+    "dist/std-hotspot-runtime-layer.*",
     "dist/std-particle-layer.*",
     "dist/std-particle-presentation.*",
     "dist/std-particle-runtime-layer.*",
@@ -71,10 +73,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm run build:self",
+    "build": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-hotspot build && pnpm run build:self",
     "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
     "test": "vitest run --dir tests",
-    "typecheck": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm run typecheck:self",
+    "typecheck": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-hotspot build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -82,6 +84,7 @@
     "@tsuzuru/plugin-std-audio": "workspace:^",
     "@tsuzuru/plugin-std-camera": "workspace:^",
     "@tsuzuru/plugin-std-effect": "workspace:^",
+    "@tsuzuru/plugin-std-hotspot": "workspace:^",
     "@tsuzuru/plugin-std-particle": "workspace:^",
     "@tsuzuru/plugin-std-visual": "workspace:^",
     "@tsuzuru/preact": "workspace:^"

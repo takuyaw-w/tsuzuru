@@ -156,6 +156,22 @@ const stdParticlePluginCommands = {
   stopParticle: definePluginCommand("stopParticle", { kind: "none" }),
 };
 
+const stdHotspotPluginCommands = {
+  hotspot: definePluginCommand("hotspot", {
+    kind: "mixed",
+    positional: [{ type: "string", nonEmpty: true }],
+    named: [
+      { name: "x", type: "number", min: 0 },
+      { name: "y", type: "number", min: 0 },
+      { name: "width", type: "number", min: 0 },
+      { name: "height", type: "number", min: 0 },
+      { name: "target", type: "string", nonEmpty: true },
+    ],
+  }),
+  waitHotspot: definePluginCommand("waitHotspot", { kind: "none" }),
+  clearHotspots: definePluginCommand("clearHotspots", { kind: "none" }),
+};
+
 const stdSystemPluginCommands = {
   "system.unlockEnding": definePluginCommand("system.unlockEnding", {
     kind: "named",
@@ -1111,6 +1127,44 @@ scene start:
     ]);
   });
 
+  it("compiles std hotspot sugar to plugin command instructions", () => {
+    const document = compileSource(`scene start:
+  hotspot desk rect(x=160, y=260, width=220, height=120) jump inspect_desk
+  hotspot door rect(x=720, y=180, width=120, height=360) jump hallway
+  wait hotspot
+  clear hotspots
+
+scene inspect_desk:
+  end
+
+scene hallway:
+  end
+`);
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      {
+        type: "CommandInstruction",
+        name: "hotspot",
+        args: [
+          { type: "PositionalArgument", value: { type: "StringValue", value: "desk" } },
+          { type: "NamedArgument", name: "x", value: { type: "NumberValue", value: 160 } },
+          { type: "NamedArgument", name: "y", value: { type: "NumberValue", value: 260 } },
+          { type: "NamedArgument", name: "width", value: { type: "NumberValue", value: 220 } },
+          { type: "NamedArgument", name: "height", value: { type: "NumberValue", value: 120 } },
+          { type: "NamedArgument", name: "target", value: { type: "StringValue", value: "inspect_desk" } },
+        ],
+      },
+      { type: "CommandInstruction", name: "hotspot" },
+      { type: "CommandInstruction", name: "waitHotspot", args: [] },
+      { type: "CommandInstruction", name: "clearHotspots", args: [] },
+      { type: "SceneInstruction", id: "inspect_desk" },
+      { type: "CommandInstruction", name: "stop" },
+      { type: "SceneInstruction", id: "hallway" },
+      { type: "CommandInstruction", name: "stop" },
+    ]);
+  });
+
   it("compiles visual statements inside body choice branches", () => {
     const document = compileSource(`scene start:
   choice "Choose":
@@ -1496,6 +1550,94 @@ scene start:
     ).toContain('Unknown plugin command "particle".');
   });
 
+  it("compiles and validates std hotspot plugin commands when metadata is passed through plugins", () => {
+    const document = compileSource(
+      `scene start:
+  hotspot desk rect(x=160, y=260, width=220, height=120) jump inspect_desk
+  wait hotspot
+  clear hotspots
+
+scene inspect_desk:
+  end
+`,
+      { plugins: [{ name: "stdHotspot", commands: stdHotspotPluginCommands }] },
+    );
+
+    expect(document.instructions).toMatchObject([
+      { type: "SceneInstruction", id: "start" },
+      { type: "CommandInstruction", name: "hotspot" },
+      { type: "CommandInstruction", name: "waitHotspot" },
+      { type: "CommandInstruction", name: "clearHotspots" },
+      { type: "SceneInstruction", id: "inspect_desk" },
+      { type: "CommandInstruction", name: "stop" },
+    ]);
+  });
+
+  it("rejects invalid std hotspot plugin command arguments when metadata is enabled", () => {
+    const options = { plugins: [{ name: "stdHotspot", commands: stdHotspotPluginCommands }] };
+
+    expect(
+      expectCompileFailure(
+        `scene start:
+  hotspot desk rect(x=-1, y=260, width=220, height=120) jump inspect_desk
+
+scene inspect_desk:
+  end
+`,
+        options,
+      ),
+    ).toContain("hotspot x must be 0 or greater.");
+    expect(
+      expectCompileFailure(
+        `scene start:
+  hotspot desk rect(x=160, y=-1, width=220, height=120) jump inspect_desk
+
+scene inspect_desk:
+  end
+`,
+        options,
+      ),
+    ).toContain("hotspot y must be 0 or greater.");
+    expect(
+      expectCompileFailure(
+        `scene start:
+  hotspot desk rect(x=160, y=260, width=0, height=120) jump inspect_desk
+
+scene inspect_desk:
+  end
+`,
+        options,
+      ),
+    ).toContain("hotspot width must be greater than 0.");
+    expect(
+      expectCompileFailure(
+        `scene start:
+  hotspot desk rect(x=160, y=260, width=220, height=0) jump inspect_desk
+
+scene inspect_desk:
+  end
+`,
+        options,
+      ),
+    ).toContain("hotspot height must be greater than 0.");
+  });
+
+  it("rejects std hotspot sugar when plugin metadata is enabled but std hotspot is not registered", () => {
+    expect(
+      expectCompileFailure(
+        `scene start:
+  hotspot desk rect(x=160, y=260, width=220, height=120) jump inspect_desk
+
+scene inspect_desk:
+  end
+`,
+        {
+          pluginCommands: [],
+        },
+      ),
+    ).toContain('Unknown plugin command "hotspot".');
+  });
+
   it("rejects invalid std camera plugin command arguments when metadata is enabled", () => {
     expect(
       expectCompileFailure("scene start:\n  camera duration=100\n", {
@@ -1534,7 +1676,7 @@ scene start:
     ).toContain('Unknown plugin command "cameraFocus".');
   });
 
-  it("keeps std visual, audio, text sound, effect, camera, and particle command compilation compatible without plugin metadata", () => {
+  it("keeps std visual, audio, text sound, effect, camera, particle, and hotspot command compilation compatible without plugin metadata", () => {
     const document = compileSource(`scene start:
   bg classroom
   clear bg
@@ -1545,6 +1687,12 @@ scene start:
   camera focus tone_stand zoom=1.2 duration=400
   particle rain
   stopParticle
+  hotspot desk rect(x=160, y=260, width=220, height=120) jump inspect_desk
+  wait hotspot
+  clear hotspots
+
+scene inspect_desk:
+  end
 `);
 
     expect(document.instructions).toMatchObject([
@@ -1558,6 +1706,11 @@ scene start:
       { type: "CommandInstruction", name: "cameraFocus" },
       { type: "CommandInstruction", name: "particle" },
       { type: "CommandInstruction", name: "stopParticle" },
+      { type: "CommandInstruction", name: "hotspot" },
+      { type: "CommandInstruction", name: "waitHotspot" },
+      { type: "CommandInstruction", name: "clearHotspots" },
+      { type: "SceneInstruction", id: "inspect_desk" },
+      { type: "CommandInstruction", name: "stop" },
     ]);
   });
 

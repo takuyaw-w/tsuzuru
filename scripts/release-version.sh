@@ -60,6 +60,7 @@ const files = [
   "packages/plugin-std-effect/package.json",
   "packages/plugin-std-camera/package.json",
   "packages/plugin-std-particle/package.json",
+  "packages/plugin-std-hotspot/package.json",
   "packages/plugin-std-system/package.json",
   "packages/vite-plugin/package.json",
   "packages/preact/package.json",
@@ -71,6 +72,7 @@ const files = [
   "packages/cli/package.json",
   "packages/create-tsuzuru/package.json",
   "examples/preact-basic/package.json",
+  "examples/preact-hotspot-basic/package.json",
   "examples/preact-sound-novel/package.json",
   "examples/preact-starter/package.json",
 ];

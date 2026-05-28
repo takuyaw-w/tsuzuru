@@ -61,6 +61,8 @@ jobs:
           path: |
             examples/preact-basic/playwright-report
             examples/preact-basic/test-results
+            examples/preact-hotspot-basic/playwright-report
+            examples/preact-hotspot-basic/test-results
             examples/preact-sound-novel/playwright-report
             examples/preact-sound-novel/test-results
             examples/preact-starter/playwright-report

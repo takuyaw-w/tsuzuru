@@ -1,0 +1,49 @@
+{
+  "name": "@tsuzuru/plugin-std-hotspot",
+  "version": "1.0.0",
+  "description": "Standard hotspot plugin state and command handlers for Tsuzuru.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/src/index.*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-hotspot"
+  },
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-hotspot#readme",
+  "keywords": [
+    "tsuzuru",
+    "visual-novel",
+    "plugin",
+    "hotspot"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm --filter @tsuzuru/core build && pnpm run build:self",
+    "build:self": "tsc -p tsconfig.json",
+    "test": "vitest run --dir tests",
+    "typecheck": "pnpm --filter @tsuzuru/core build && pnpm run typecheck:self",
+    "typecheck:self": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tsuzuru/core": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -46,6 +46,7 @@ import type {
   TzrStdCameraStatement,
   TzrStdEffectCommandName,
   TzrStdEffectStatement,
+  TzrStdHotspotStatement,
   TzrStdParticleCommandName,
   TzrStdParticleStatement,
   TzrStopBgmStatement,
@@ -114,12 +115,13 @@ interface ParsedVisualStatementBody {
 }
 
 type StateStatementKeyword = "set" | "add";
-type CallWaitStatementKeyword = "call" | "wait" | "transition";
+type CallWaitStatementKeyword = "call" | "wait" | "transition" | HotspotStatementKeyword;
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
 type AudioAssetStatementKeyword = "bgm" | "se" | "voice" | "textSound";
 type EffectStatementKeyword = TzrStdEffectCommandName;
 type CameraStatementKeyword = "camera" | "camera focus" | "reset camera";
 type ParticleStatementKeyword = TzrStdParticleCommandName;
+type HotspotStatementKeyword = "hotspot";
 
 interface InlineRawAttribute {
   readonly key: string;
@@ -420,6 +422,9 @@ class TzrParser {
     }
     if (source === "call" || source.startsWith("call ")) {
       return this.parseCallStatement(line, source, statementColumn);
+    }
+    if (isHotspotStatementSource(source)) {
+      return this.parseStdHotspotStatement(line, source, statementColumn);
     }
     if (source === "wait" || source.startsWith("wait ")) {
       return this.parseWaitStatement(line, source, statementColumn);
@@ -2423,6 +2428,227 @@ class TzrParser {
     };
   }
 
+  private parseStdHotspotStatement(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): TzrStdHotspotStatement | undefined {
+    if (source === "wait hotspot" || source.startsWith("wait hotspot ")) {
+      this.cursor += 1;
+      if (source !== "wait hotspot") {
+        this.addError(
+          line,
+          statementColumn + "wait hotspot".length + 1,
+          "wait hotspot statement must not have extra trailing tokens.",
+        );
+        return undefined;
+      }
+      return {
+        type: "StdHotspotStatement",
+        name: "waitHotspot",
+        args: [],
+        loc: this.lineRange(line),
+      };
+    }
+
+    if (source === "clear hotspots" || source.startsWith("clear hotspots ")) {
+      this.cursor += 1;
+      if (source !== "clear hotspots") {
+        this.addError(
+          line,
+          statementColumn + "clear hotspots".length + 1,
+          "clear hotspots statement must not have extra trailing tokens.",
+        );
+        return undefined;
+      }
+      return {
+        type: "StdHotspotStatement",
+        name: "clearHotspots",
+        args: [],
+        loc: this.lineRange(line),
+      };
+    }
+
+    const parsed = this.parseHotspotCommand(line, source, statementColumn);
+    this.cursor += 1;
+    if (parsed === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "StdHotspotStatement",
+      name: "hotspot",
+      args: parsed,
+      loc: this.lineRange(line),
+    };
+  }
+
+  private parseHotspotCommand(
+    line: SourceLine,
+    source: string,
+    statementColumn: number,
+  ): readonly TzrArgument[] | undefined {
+    const rest = source.slice("hotspot".length).trim();
+    if (rest.length === 0) {
+      this.addError(line, statementColumn, "hotspot id is required.");
+      return undefined;
+    }
+
+    const restColumn = statementColumn + source.indexOf(rest);
+    const id = rest.match(/^\S+/)?.[0];
+    if (id === undefined || id.length === 0) {
+      this.addError(line, restColumn, "hotspot id is required.");
+      return undefined;
+    }
+    if (!isValidTzrIdentifier(id)) {
+      this.addError(line, restColumn, "Invalid hotspot id.");
+      return undefined;
+    }
+
+    const shapeRest = rest.slice(id.length).trim();
+    if (shapeRest.length === 0) {
+      this.addError(line, restColumn + id.length, "hotspot shape is required.");
+      return undefined;
+    }
+    const shapeRestColumn = restColumn + rest.indexOf(shapeRest);
+    if (!shapeRest.startsWith("rect")) {
+      const shape = shapeRest.match(/^\S+/)?.[0] ?? "";
+      this.addError(line, shapeRestColumn, `Unsupported hotspot shape "${shape}".`);
+      return undefined;
+    }
+
+    const openParenIndex = shapeRest.indexOf("(");
+    if (openParenIndex === -1 || shapeRest.slice(0, openParenIndex).trim() !== "rect") {
+      this.addError(line, shapeRestColumn, "hotspot rect shape must include parentheses.");
+      return undefined;
+    }
+
+    const closeParenIndex = this.findCallWaitClosingParenthesis(shapeRest, openParenIndex);
+    if (closeParenIndex === undefined) {
+      this.addError(line, shapeRestColumn + openParenIndex, "hotspot rect shape is missing closing parenthesis.");
+      return undefined;
+    }
+
+    const argsSource = shapeRest.slice(openParenIndex + 1, closeParenIndex);
+    const rectArgs = this.parseNamedArguments(line, argsSource, shapeRestColumn + openParenIndex + 1, "hotspot");
+    if (rectArgs === undefined) {
+      return undefined;
+    }
+    const rect = this.normalizeHotspotRectArguments(line, rectArgs);
+    if (rect === undefined) {
+      return undefined;
+    }
+
+    const actionRest = shapeRest.slice(closeParenIndex + 1).trim();
+    if (actionRest.length === 0) {
+      this.addError(line, shapeRestColumn + closeParenIndex + 1, "hotspot action is required.");
+      return undefined;
+    }
+    const actionRestColumn = shapeRestColumn + shapeRest.indexOf(actionRest);
+    const action = actionRest.match(/^\S+/)?.[0] ?? "";
+    if (action !== "jump") {
+      this.addError(line, actionRestColumn, `Unsupported hotspot action "${action}".`);
+      return undefined;
+    }
+
+    const targetRest = actionRest.slice("jump".length).trim();
+    if (targetRest.length === 0) {
+      this.addError(line, actionRestColumn + "jump".length, "hotspot jump target is required.");
+      return undefined;
+    }
+    const targetColumn = actionRestColumn + actionRest.indexOf(targetRest);
+    if (/\s/.test(targetRest)) {
+      this.addError(
+        line,
+        targetColumn + targetRest.search(/\s/),
+        "hotspot statement must not have extra trailing tokens.",
+      );
+      return undefined;
+    }
+    if (!isValidTzrIdentifier(targetRest)) {
+      this.addError(line, targetColumn, "Invalid hotspot jump target.");
+      return undefined;
+    }
+
+    return [
+      {
+        type: "PositionalArgument",
+        value: {
+          type: "StringValue",
+          value: id,
+          loc: {
+            start: this.location(line.line, restColumn),
+            end: this.location(line.line, restColumn + id.length),
+          },
+        },
+        loc: {
+          start: this.location(line.line, restColumn),
+          end: this.location(line.line, restColumn + id.length),
+        },
+      },
+      ...rect,
+      {
+        type: "NamedArgument",
+        name: "target",
+        value: {
+          type: "StringValue",
+          value: targetRest,
+          loc: {
+            start: this.location(line.line, targetColumn),
+            end: this.location(line.line, targetColumn + targetRest.length),
+          },
+        },
+        loc: {
+          start: this.location(line.line, targetColumn),
+          end: this.location(line.line, targetColumn + targetRest.length),
+        },
+      },
+    ];
+  }
+
+  private normalizeHotspotRectArguments(
+    line: SourceLine,
+    args: readonly TzrNamedArgument[],
+  ): readonly TzrArgument[] | undefined {
+    const required = ["x", "y", "width", "height"] as const;
+    const argsByName = new Map(args.map((arg) => [arg.name, arg]));
+    const normalized: TzrArgument[] = [];
+    let ok = true;
+
+    for (const arg of args) {
+      if (!required.includes(arg.name as (typeof required)[number])) {
+        this.addError(line, arg.loc.start.column, `Unsupported hotspot rect argument "${arg.name}".`);
+        ok = false;
+      }
+    }
+
+    for (const name of required) {
+      const arg = argsByName.get(name);
+      if (arg === undefined) {
+        this.addError(line, 1, `hotspot rect argument "${name}" is required.`);
+        ok = false;
+        continue;
+      }
+      if (arg.value.type !== "NumberValue") {
+        this.addError(line, arg.value.loc.start.column, `hotspot rect argument "${name}" must be a number.`);
+        ok = false;
+        continue;
+      }
+      normalized.push({
+        type: "NamedArgument",
+        name,
+        value: {
+          type: "NumberValue",
+          value: arg.value.value,
+          loc: arg.value.loc,
+        },
+        loc: arg.loc,
+      });
+    }
+
+    return ok ? normalized : undefined;
+  }
+
   private parseStdEffectArguments(
     line: SourceLine,
     source: string,
@@ -3800,6 +4026,17 @@ function isParticleStatementSource(source: string): boolean {
     source.startsWith("particle ") ||
     source === "stopParticle" ||
     source.startsWith("stopParticle ")
+  );
+}
+
+function isHotspotStatementSource(source: string): boolean {
+  return (
+    source === "hotspot" ||
+    source.startsWith("hotspot ") ||
+    source === "wait hotspot" ||
+    source.startsWith("wait hotspot ") ||
+    source === "clear hotspots" ||
+    source.startsWith("clear hotspots ")
   );
 }
 

@@ -1,0 +1,81 @@
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #121418;
+}
+
+.hotspot-app {
+  min-height: 100dvh;
+}
+
+.hotspot-game-root {
+  display: grid;
+  place-items: center;
+  color: var(--tzr-standard-ui-text-color);
+  font-family: var(--tzr-standard-ui-font-family);
+}
+
+.hotspot-game-root__viewport {
+  width: min(100vw, 1280px);
+}
+
+.hotspot-game-root__shell {
+  background: #10151a;
+}
+
+.hotspot-game-root__surface,
+.hotspot-game-root__message {
+  position: absolute;
+  inset: 0;
+}
+
+.hotspot-game-root__surface {
+  overflow: hidden;
+  outline: none;
+}
+
+.hotspot-game-root__message {
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hotspot-game-root__message :where(.tzr-message-window, .tzr-choice-layer, .tzr-status-layer) {
+  pointer-events: auto;
+}
+
+.hotspot-game-root__message--hotspot-waiting :where(.tzr-message-window, .tzr-choice-layer, .tzr-status-layer) {
+  pointer-events: none;
+}
+
+.hotspot-game-root__menu {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.hotspot-game-root__menu button {
+  min-width: 72px;
+  padding: 8px 12px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 6px;
+  background: rgb(16 20 26 / 82%);
+  color: #f5f7fb;
+  cursor: pointer;
+}
+
+.hotspot-background--office {
+  object-fit: cover;
+}
+
+@media (max-width: 720px) {
+  .hotspot-game-root__menu {
+    top: 8px;
+    right: 8px;
+  }
+}
