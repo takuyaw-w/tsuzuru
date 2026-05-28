@@ -942,9 +942,7 @@ function isInteractiveClickTarget(target: EventTarget | null): boolean {
 function isKeyboardHandledTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    target.closest(
-      ".tzr-screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea",
-    ) !== null
+    target.closest(".tzr-screen, .tzr-message-window, .tzr-choice-layer, button, a, input, select, textarea") !== null
   );
 }
 

@@ -25,12 +25,7 @@ const SETTINGS_TABS = [
   { id: "sound", label: "Sound" },
 ] as const satisfies readonly { readonly id: SettingsTab; readonly label: string }[];
 
-export function SettingsScreen({
-  preferences,
-  textSpeedOptions,
-  onChangePreferences,
-  onBack,
-}: SettingsScreenProps) {
+export function SettingsScreen({ preferences, textSpeedOptions, onChangePreferences, onBack }: SettingsScreenProps) {
   return (
     <Screen className="settings-screen" aria-label="Settings">
       <div className="settings-screen__backdrop" aria-hidden="true" />
@@ -54,11 +49,7 @@ export function SettingsScreen({
         <div className="settings-config__panel">
           <nav className="settings-config__tabs" aria-label="Config categories">
             {SETTINGS_TABS.map((tab) => (
-              <label
-                key={tab.id}
-                className="settings-config__tab"
-                htmlFor={`settings-tab-${tab.id}`}
-              >
+              <label key={tab.id} className="settings-config__tab" htmlFor={`settings-tab-${tab.id}`}>
                 {tab.label}
               </label>
             ))}

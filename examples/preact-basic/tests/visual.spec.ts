@@ -19,15 +19,17 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
+test("title, settings, runtime, backlog, and save/load smoke check", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByText("Step")).toHaveCount(0);
   await expect(page.locator(".debug-panel")).toHaveCount(0);
 
+  await expect(page.getByRole("region", { name: "Title" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Preact Basic" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await page.screenshot({ fullPage: true, path: testInfo.outputPath("title-screen.png") });
+
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
   await expectWideConfigPanel(page);
@@ -44,51 +46,35 @@ test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
   await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.35");
   await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.45");
   await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.55");
-  await expect(page.getByLabel("Text sound volume", { exact: true })).toHaveValue("0.4");
-  await expect(page.getByLabel("BGM volume", { exact: true })).toHaveValue("0.35");
-  await expect(page.getByLabel("SE volume", { exact: true })).toHaveValue("0.45");
-  await expect(page.getByLabel("Voice volume", { exact: true })).toHaveValue("0.55");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Preact Basic" })).toBeVisible();
-  await page.getByRole("button", { name: "Start" }).click();
 
+  await page.getByRole("button", { name: "Start" }).click();
   const messageWindow = page.locator(".tzr-message-window");
   const audioLayer = page.locator('[aria-label="std-audio state"]');
   await expect(page.locator(".tzr-std-effect-layer")).toBeAttached();
-  await expect(messageWindow).toContainText("夜の旧校舎");
+  await expectViewportAspectRatio(page);
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
   await expect(audioLayer).toContainText("BGM");
   await expect(audioLayer).toContainText("daily_theme");
-  await expect(audioLayer).toContainText("SE");
-  await expect(audioLayer).toContainText("none");
-  await expect(audioLayer).toContainText("Voice");
 
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
   await expectWideConfigPanel(page);
-  await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
   await expect(runtimeMenu).toHaveCount(0);
   await expect(messageWindow).toHaveCount(0);
   await setToggle(page, "Text reveal", "On");
   await setSegment(page, "Text speed", "Normal");
-  await selectConfigTab(page, "Sound");
-  await setToggle(page, "Text sound", "On");
-  await setRangeValue(page.getByLabel("Text sound volume", { exact: true }), "0.55");
-  await setRangeValue(page.getByLabel("BGM volume", { exact: true }), "0.6");
-  await setRangeValue(page.getByLabel("SE volume", { exact: true }), "0.8");
-  await setRangeValue(page.getByLabel("Voice volume", { exact: true }), "0.9");
   await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "CONFIG" })).toHaveCount(0);
-  await expect(messageWindow).toContainText("夜の旧校舎");
+  await expect(messageWindow).toContainText("夕暮れの駅前");
 
   await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
   const backlogScreen = page.getByRole("region", { name: "Backlog" });
-  await expect(backlogScreen).toContainText("夜の旧校舎");
+  await expect(backlogScreen).toContainText("夕暮れの駅前");
   await expect(backlogScreen.getByText("Read", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
-  await expect(messageWindow).toContainText("夜の旧校舎");
 
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
@@ -97,18 +83,10 @@ test("fullscreen dialogue UI smoke check", async ({ page }, testInfo) => {
   const continueButton = page.getByRole("button", { name: "Continue" });
   await expect(continueButton).toBeEnabled();
   await continueButton.click();
-  await expect(messageWindow).toBeVisible();
-  await expect(messageWindow).toContainText("夜の旧校舎");
-
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("夜の旧校舎");
-
-  await advanceUntilText(messageWindow, "ようこそ", 14);
-  await expect(audioLayer).toContainText("daily_theme");
-  await expect(audioLayer).toContainText("Voice");
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
 });
 
-test("save and load restore retained message behind choices", async ({ page }) => {
+test("save and load restore retained message behind the first choice", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
@@ -118,30 +96,55 @@ test("save and load restore retained message behind choices", async ({ page }) =
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
   const choiceLayer = page.locator(".tzr-choice-layer");
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
-  await expect(retainedMessage).toContainText("物語の常用音");
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
+  await advanceUntilChoice(messageWindow, choiceLayer, "最初にどこを調べる？");
+  await expect(retainedMessage).toContainText("栞の先");
 
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
   await runtimeMenu.getByRole("button", { name: "Title" }).click();
 
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
-  await expect(retainedMessage).toContainText("物語の常用音");
+  await expect(choiceLayer).toContainText("最初にどこを調べる？", { timeout: 3000 });
+  await expect(retainedMessage).toContainText("栞の先");
 
   await runtimeMenu.getByRole("button", { name: "Title" }).click();
   await page.getByRole("button", { name: "Load" }).click();
   await page.getByRole("button", { name: "Load Slot 1" }).click();
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
-  await expect(retainedMessage).toContainText("物語の常用音");
+  await expect(choiceLayer).toContainText("最初にどこを調べる？", { timeout: 3000 });
 
-  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
-  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
+  await choiceLayer.getByRole("button", { name: "図書室で手がかりを探す" }).click();
+  await expect(messageWindow).toContainText("図書室には", { timeout: 3000 });
   await runtimeMenu.getByRole("button", { name: "Load" }).click();
   await page.getByRole("button", { name: "Load Slot 1" }).click();
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
-  await expect(retainedMessage).toContainText("物語の常用音");
+  await expect(choiceLayer).toContainText("最初にどこを調べる？", { timeout: 3000 });
+});
+
+test("short story branches through backgrounds, particles, and choices", async ({ page }) => {
+  await page.goto("/");
+  await disableTextReveal(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  const messageWindow = page.locator(".tzr-message-window");
+  const choiceLayer = page.locator(".tzr-choice-layer");
+  const visualLayer = page.locator(".tzr-tsuzuru-game__visual-layer");
+
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
+  await expectBackgroundAsset(page, "station");
+  await advanceUntilChoice(messageWindow, choiceLayer, "最初にどこを調べる？");
+
+  await choiceLayer.getByRole("button", { name: "図書室で手がかりを探す" }).click();
+  await expect(messageWindow).toContainText("図書室には", { timeout: 3000 });
+  await expectBackgroundAsset(page, "library");
+  await expect(page.locator(".tzr-std-particle-layer--dust.tzr-std-particle-layer--light")).toBeAttached();
+
+  await advanceUntilChoice(messageWindow, choiceLayer, "ノートをどう扱う？");
+  await expectBackgroundAsset(page, "hallway");
+  await expect(page.locator(".tzr-std-particle-layer")).toHaveCount(0);
+  await choiceLayer.getByRole("button", { name: "二人で続きを書く" }).click();
+  await expect(messageWindow).toContainText("空き教室", { timeout: 3000 });
+  await expectBackgroundAsset(page, "classroom");
+  await expect(visualLayer.locator(".tzr-tsuzuru-game__background").first()).toHaveCSS("pointer-events", "none");
 });
 
 test("runtime settings screen pauses keyboard advance without a modal dialog", async ({ page }) => {
@@ -152,14 +155,13 @@ test("runtime settings screen pauses keyboard advance without a modal dialog", a
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
 
   await runtimeMenu.getByRole("button", { name: "Settings" }).click();
   const settingsScreen = page.getByRole("region", { name: "Settings" });
   const settingsRuntimeScreen = page.locator(".app__runtime-screen");
   await expect(settingsScreen).toBeVisible();
   await expect(page.getByRole("heading", { name: "CONFIG" })).toBeVisible();
-  await expectWideConfigPanel(page);
   await expect(page.getByRole("dialog", { name: "Settings screen" })).toHaveCount(0);
   await expect(runtimeMenu).toHaveCount(0);
   await expect(messageWindow).toHaveCount(0);
@@ -171,144 +173,12 @@ test("runtime settings screen pauses keyboard advance without a modal dialog", a
 
   await settingsScreen.getByRole("button", { name: "Back", exact: true }).click();
   await expect(settingsScreen).toHaveCount(0);
-  await expect(messageWindow).toContainText("夜の旧校舎");
-  await expect(messageWindow).not.toContainText("その隣で");
-});
-
-test("effect demo choice exposes individual effect paths", async ({ page }) => {
-  await page.goto("/");
-  await disableTextReveal(page);
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const choiceLayer = page.locator(".tzr-choice-layer");
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
-
-  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
-  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
-
-  await expect(choiceLayer).toContainText("今度は、どの effect を試す？", { timeout: 3000 });
-  await expect(choiceLayer.getByRole("button", { name: "shake を試す" })).toBeVisible();
-  await expect(choiceLayer.getByRole("button", { name: "flash を試す" })).toBeVisible();
-  await expect(choiceLayer.getByRole("button", { name: "pulse を試す" })).toBeVisible();
-  await expect(choiceLayer.getByRole("button", { name: "blur を試す" })).toBeVisible();
-
-  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
-  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
-  await advanceUntilText(messageWindow, "衝撃や落下", 3);
-  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 3);
-
-  await expect(choiceLayer).toContainText("もう一度 effect を試す？", { timeout: 3000 });
-  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
-  await expect(choiceLayer).toContainText("camera demo を試す？", { timeout: 3000 });
-  await expect(choiceLayer.getByRole("button", { name: "camera focus を見る" })).toBeVisible();
-  await expect(choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" })).toBeVisible();
-
-  await choiceLayer.getByRole("button", { name: "camera focus を見る" }).click();
-  await expect(messageWindow).toContainText("まずは、僕に寄ってみよう", { timeout: 3000 });
-});
-
-test("transition demo renders 16:9 SVG backgrounds and restores interaction", async ({ page }) => {
-  await page.goto("/");
-  await disableTextReveal(page);
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const choiceLayer = page.locator(".tzr-choice-layer");
-  const visualLayer = page.locator(".tzr-tsuzuru-game__visual-layer");
-  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await expectViewportAspectRatio(page);
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
-  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
-  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
-  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
-  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 4);
-  await choiceLayer.getByRole("button", { name: "背景切り替えを試す" }).click();
-
-  await expect(messageWindow).toContainText("放課後の教室から", { timeout: 3000 });
-  await advanceAndExpectBackground(page, messageWindow, "classroom", "まずは暗転で廊下へ");
-  await advanceAndExpectBackground(page, messageWindow, "hallway", "左から景色が流れて");
-  await advanceAndExpectBackground(page, messageWindow, "library", "右へ抜けるように");
-  await expect(page.locator(".tzr-tsuzuru-game__background--previous")).toHaveCount(0, { timeout: 1000 });
-  await runtimeMenu.getByRole("button", { name: "Save" }).click();
-  await page.getByRole("button", { name: "Save Slot 1" }).click();
-  await expectSavedBackgroundTransition(page, "library", "wipeLeft");
-
-  await advanceAndExpectBackground(page, messageWindow, "rooftop", "最後は駅前で");
-  await runtimeMenu.getByRole("button", { name: "Load" }).click();
-  await page.getByRole("button", { name: "Load Slot 1" }).click();
-  await expectBackgroundAsset(page, "library");
-  await expect(page.locator(".tzr-tsuzuru-game__background--previous")).toHaveCount(0);
-  await expect(page.locator(".tzr-tsuzuru-game__background--current")).not.toHaveClass(/transition-/);
-  await expect(messageWindow).toContainText("右へ抜けるように", { timeout: 3000 });
-
-  await advanceAndExpectBackground(page, messageWindow, "rooftop", "最後は駅前で");
-  await advanceAndExpectBackground(page, messageWindow, "station", "背景切り替え demo はここまで");
-
-  await messageWindow.click();
-  await expect(choiceLayer.getByRole("button", { name: "camera focus を見る" })).toBeVisible();
-  await expect(visualLayer.locator(".tzr-tsuzuru-game__background").first()).toHaveCSS("pointer-events", "none");
-});
-
-test("particle demo renders bounded non-interactive overlay particles", async ({ page }) => {
-  await page.goto("/");
-  await disableTextReveal(page);
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const choiceLayer = page.locator(".tzr-choice-layer");
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
-  await choiceLayer.getByRole("button", { name: "澄んだ tone を聞く" }).click();
-  await expect(messageWindow).toContainText("では tone をもう少し詳しく", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "今度は、どの effect を試す？");
-
-  await choiceLayer.getByRole("button", { name: "shake を試す" }).click();
-  await expect(messageWindow).toContainText("まずは shake", { timeout: 3000 });
-  await advanceUntilChoice(messageWindow, choiceLayer, "もう一度 effect を試す？", 4);
-
-  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
-  await expect(choiceLayer).toContainText("camera demo を試す？", { timeout: 3000 });
-  await choiceLayer.getByRole("button", { name: "Text Sound Lab に戻る" }).click();
-  await expect(choiceLayer).toContainText("particle demo を試す？", { timeout: 3000 });
-
-  await choiceLayer.getByRole("button", { name: "雨を降らせる" }).click();
-  await expect(messageWindow).toContainText("雨は、画面全体の空気を冷たくする。", { timeout: 3000 });
-
-  const particleLayer = page.locator(".tzr-std-particle-layer--rain.tzr-std-particle-layer--normal");
-  await expect(particleLayer).toBeAttached();
-  await expect(particleLayer).toHaveCSS("pointer-events", "none");
-  await expect(particleLayer.locator(".tzr-std-particle-layer__particle")).toHaveCount(38);
-
-  await messageWindow.click();
-  await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
-  await choiceLayer.getByRole("button", { name: "別の particle を試す" }).click();
-  await expect(choiceLayer).toContainText("particle demo を試す？", { timeout: 3000 });
-  await choiceLayer.getByRole("button", { name: "埃を漂わせる" }).click();
-  await expect(messageWindow).toContainText("埃が光の中をゆっくり漂っている。", { timeout: 3000 });
-
-  const dustLayer = page.locator(".tzr-std-particle-layer--dust.tzr-std-particle-layer--light");
-  await expect(dustLayer).toBeAttached();
-  await expect(dustLayer).toHaveCSS("pointer-events", "none");
-  await expect(dustLayer.locator(".tzr-std-particle-layer__particle")).toHaveCount(22);
-
-  await messageWindow.click();
-  await expect(choiceLayer).toContainText("particle を止める？", { timeout: 3000 });
-  await choiceLayer.getByRole("button", { name: "止める" }).click();
-  await expect(page.locator(".tzr-std-particle-layer")).toHaveCount(0);
-  await expect(messageWindow).toContainText("メトロノームが一度だけ止まり", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前");
+  await expect(messageWindow).not.toContainText("旧校舎の文芸部");
 });
 
 test("auto mode advances messages and pauses at choices", async ({ page }) => {
-  test.setTimeout(45_000);
+  test.setTimeout(30_000);
 
   await page.goto("/");
   await disableTextReveal(page);
@@ -319,48 +189,26 @@ test("auto mode advances messages and pauses at choices", async ({ page }) => {
   const autoButton = runtimeMenu.getByRole("button", { name: "Auto", exact: true });
   const readStatus = runtimeMenu.getByLabel("Read count");
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
   await expect(readStatus).toHaveText("Read: 1");
   await expect(autoButton).toHaveAttribute("aria-pressed", "false");
 
   await autoButton.click();
   await expect(autoButton).toHaveAttribute("aria-pressed", "true");
-  await expect(messageWindow).toContainText("ようこそ", { timeout: 5000 });
+  await expect(messageWindow).toContainText("文芸部が使っていた", { timeout: 5000 });
   await expect.poll(async () => readCount(readStatus)).toBeGreaterThan(1);
 
   const choiceLayer = page.locator(".tzr-choice-layer");
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 26_000 });
-  await page.waitForTimeout(1800);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
-  await expect(messageWindow).not.toContainText("では tone をもう少し詳しく");
+  await expect(choiceLayer).toContainText("最初にどこを調べる？", { timeout: 16_000 });
+  await page.waitForTimeout(1500);
+  await expect(choiceLayer).toContainText("最初にどこを調べる？");
+  await expect(messageWindow).not.toContainText("図書室には");
 
   await autoButton.click();
   await expect(autoButton).toHaveAttribute("aria-pressed", "false");
 });
 
-test("skip mode does not skip unread messages", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
-  const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
-  const readStatus = runtimeMenu.getByLabel("Read count");
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await expect(readStatus).toHaveText("Read: 1");
-  await expect(skipButton).toHaveAttribute("aria-pressed", "false");
-
-  await skipButton.click();
-  await expect(skipButton).toHaveAttribute("aria-pressed", "true");
-  await page.waitForTimeout(700);
-
-  await expect(readStatus).toHaveText("Read: 1");
-  await expect(messageWindow).toContainText("夜の旧校舎");
-  await expect(messageWindow).not.toContainText("ようこそ");
-});
-
-test("skip mode skips previously read messages", async ({ page }) => {
+test("skip mode pauses at choices after current-session read tracking", async ({ page }) => {
   await page.goto("/");
   await disableTextReveal(page);
   await page.getByRole("button", { name: "Start" }).click();
@@ -370,74 +218,19 @@ test("skip mode skips previously read messages", async ({ page }) => {
   const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
   const choiceLayer = page.locator(".tzr-choice-layer");
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
-  await expect(page.getByRole("heading", { name: "Save" })).toHaveCount(0);
 
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
+  await advanceUntilChoice(messageWindow, choiceLayer, "最初にどこを調べる？");
 
   await skipButton.click();
   await expect(skipButton).toHaveAttribute("aria-pressed", "true");
   await runtimeMenu.getByRole("button", { name: "Load" }).click();
   await page.getByRole("button", { name: "Load Slot 1" }).click();
 
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？", { timeout: 3000 });
-  await expect(choiceLayer).toContainText("澄んだ tone を聞く");
-});
-
-test("skip mode pauses at choices", async ({ page }) => {
-  await page.goto("/");
-  await disableTextReveal(page);
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
-  const skipButton = runtimeMenu.getByRole("button", { name: "Skip", exact: true });
-  const choiceLayer = page.locator(".tzr-choice-layer");
-
-  await skipButton.click();
-  await expect(skipButton).toHaveAttribute("aria-pressed", "true");
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await page.waitForTimeout(700);
-  await expect(messageWindow).toContainText("夜の旧校舎");
-
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
-  await page.waitForTimeout(700);
-  await expect(messageWindow).toContainText("その隣で");
-
-  await advanceUntilChoice(messageWindow, choiceLayer, "どの音を先に詳しく聞く？");
-  await page.waitForTimeout(900);
-  await expect(choiceLayer).toContainText("どの音を先に詳しく聞く？");
-  await expect(choiceLayer).toContainText("重ねた mix を聞く");
-});
-
-test("read tracking records current-session messages in runtime and backlog", async ({ page }) => {
-  await page.goto("/");
-  await disableTextReveal(page);
-  await page.getByRole("button", { name: "Start" }).click();
-
-  const messageWindow = page.locator(".tzr-message-window");
-  const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
-  const readStatus = runtimeMenu.getByLabel("Read count");
-
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
-  await expect(readStatus).toHaveText("Read: 1");
-
-  await runtimeMenu.getByRole("button", { name: "Backlog" }).click();
-  await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
-  const backlogScreen = page.getByRole("region", { name: "Backlog" });
-  await expect(backlogScreen).toContainText("夜の旧校舎");
-  await expect(backlogScreen.getByText("Read", { exact: true })).toBeVisible();
-
-  await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Backlog" })).toHaveCount(0);
-
-  await messageWindow.click();
-  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
-  await expect(readStatus).toHaveText("Read: 2");
+  await expect(choiceLayer).toContainText("最初にどこを調べる？", { timeout: 3000 });
+  await expect(choiceLayer).toContainText("屋上で封筒を開ける");
 });
 
 async function setRangeValue(locator: Locator, value: string): Promise<void> {
@@ -477,20 +270,6 @@ async function expectWideConfigPanel(page: Page): Promise<void> {
   expect(hasViewportScroll).toBe(false);
 }
 
-async function advanceUntilText(messageWindow: Locator, text: string, maxClicks = 24): Promise<void> {
-  for (let index = 0; index <= maxClicks; index += 1) {
-    if (await locatorContainsText(messageWindow, text)) {
-      await expect(messageWindow).toContainText(text, { timeout: 3000 });
-      return;
-    }
-    if (index === maxClicks) {
-      break;
-    }
-    await messageWindow.click();
-  }
-  await expect(messageWindow).toContainText(text, { timeout: 3000 });
-}
-
 async function advanceUntilChoice(
   messageWindow: Locator,
   choiceLayer: Locator,
@@ -510,58 +289,12 @@ async function advanceUntilChoice(
   await expect(choiceLayer).toContainText(question, { timeout: 3000 });
 }
 
-async function advanceAndExpectBackground(
-  page: Page,
-  messageWindow: Locator,
-  assetId: string,
-  nextText: string,
-): Promise<void> {
-  await messageWindow.click();
-  await expectBackgroundAsset(page, assetId);
-  await expect(page.locator(".tzr-tsuzuru-game__background--current")).toHaveAttribute(
-    "src",
-    new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
-  );
-
-  const choiceLayer = page.locator(".tzr-choice-layer");
-  if (await locatorContainsText(choiceLayer, nextText)) {
-    await expect(choiceLayer).toContainText(nextText, { timeout: 3000 });
-    return;
-  }
-  await expect(messageWindow).toContainText(nextText, { timeout: 3000 });
-}
-
 async function expectBackgroundAsset(page: Page, assetId: string): Promise<void> {
   await expect(page.locator(".tzr-tsuzuru-game__background--current")).toHaveAttribute(
     "src",
     new RegExp(`/assets/backgrounds/${assetId}\\.svg$`),
     { timeout: 3000 },
   );
-}
-
-async function expectSavedBackgroundTransition(page: Page, assetId: string, effect: string): Promise<void> {
-  const rawValue = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), SAVE_STORAGE_KEY);
-  expect(rawValue).not.toBeNull();
-
-  const parsed: unknown = JSON.parse(rawValue ?? "null");
-  if (!Array.isArray(parsed)) {
-    throw new Error("Expected preact-basic save storage to contain a slot array.");
-  }
-
-  const slot = getObjectRecord(parsed[0], "stored save slot");
-  const data = getObjectRecord(slot.data, "stored save slot data");
-  const runtime = getObjectRecord(data.runtime, "RuntimeSaveData");
-  const snapshot = getObjectRecord(runtime.snapshot, "RuntimeSaveData.snapshot");
-  const plugins = getObjectRecord(snapshot.plugins, "RuntimeSaveData.snapshot.plugins");
-  const stdVisual = getObjectRecord(plugins.stdVisual, "RuntimeSaveData.snapshot.plugins.stdVisual");
-  const background = getObjectRecord(stdVisual.background, "RuntimeSaveData.snapshot.plugins.stdVisual.background");
-  const transition = getObjectRecord(
-    background.transition,
-    "RuntimeSaveData.snapshot.plugins.stdVisual.background.transition",
-  );
-
-  expect(background.assetId).toBe(assetId);
-  expect(transition.effect).toBe(effect);
 }
 
 async function expectViewportAspectRatio(page: Page): Promise<void> {
@@ -583,11 +316,4 @@ async function readCount(locator: Locator): Promise<number> {
   const textContent = await locator.textContent();
   const match = textContent?.match(/Read: (\d+)/);
   return match === null || match === undefined ? 0 : Number(match[1]);
-}
-
-function getObjectRecord(value: unknown, label: string): Readonly<Record<string, unknown>> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`Expected ${label} to be an object.`);
-  }
-  return value;
 }

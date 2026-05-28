@@ -1,4 +1,4 @@
-import { Screen, ScreenActions, ScreenButton } from "@tsuzuru/standard-ui-preact";
+import { Screen, TitleScreen as StandardTitleScreen, type TitleScreenAction } from "@tsuzuru/standard-ui-preact";
 
 interface TitleScreenProps {
   readonly onStart: () => void;
@@ -19,6 +19,15 @@ export function TitleScreen({
   onGallery,
   canContinue,
 }: TitleScreenProps) {
+  const titleActions = [
+    { label: "Start", onSelect: onStart },
+    { label: "Continue", onSelect: onContinue, disabled: !canContinue },
+    { label: "Load", onSelect: onLoad },
+    { label: "Settings", onSelect: onSettings },
+    { label: "Backlog", onSelect: onBacklog },
+    { label: "Gallery", onSelect: onGallery },
+  ] satisfies readonly TitleScreenAction[];
+
   return (
     <Screen className="preact-basic-title-screen" aria-label="Title">
       <div className="preact-basic-title-screen__art" aria-hidden="true">
@@ -27,29 +36,14 @@ export function TitleScreen({
         <span className="preact-basic-title-screen__art-rail preact-basic-title-screen__art-rail--front" />
         <span className="preact-basic-title-screen__art-rail preact-basic-title-screen__art-rail--back" />
       </div>
-      <div className="preact-basic-title-screen__content">
-        <div className="preact-basic-title-screen__copy">
-          <p className="preact-basic-title-screen__eyebrow">Tsuzuru</p>
-          <h1 className="preact-basic-title-screen__title">Preact Basic</h1>
-          <p className="preact-basic-title-screen__subtitle">夕暮れの駅から始まる、小さな分岐のサンプル。</p>
-        </div>
-        <div className="preact-basic-title-screen__menu">
-          <ScreenActions>
-            <ScreenButton variant="primary" onClick={onStart}>
-              Start
-            </ScreenButton>
-            <ScreenButton disabled={!canContinue} onClick={onContinue}>
-              Continue
-            </ScreenButton>
-          </ScreenActions>
-          <ScreenActions columns={2}>
-            <ScreenButton onClick={onLoad}>Load</ScreenButton>
-            <ScreenButton onClick={onSettings}>Settings</ScreenButton>
-            <ScreenButton onClick={onBacklog}>Backlog</ScreenButton>
-            <ScreenButton onClick={onGallery}>Gallery</ScreenButton>
-          </ScreenActions>
-        </div>
-      </div>
+      <StandardTitleScreen
+        className="preact-basic-title-screen__standard"
+        title="Preact Basic"
+        subtitle="放課後の駅から始まる、小さな分岐のノベルゲーム。"
+        description="夕暮れ、旧校舎、忘れられたノート。短い寄り道が、白紙のページを少しだけ動かしていく。"
+        actions={titleActions}
+        footer="放課後の栞"
+      />
     </Screen>
   );
 }

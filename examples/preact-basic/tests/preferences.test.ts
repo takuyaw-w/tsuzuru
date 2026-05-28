@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  DEFAULT_EXAMPLE_PREFERENCES,
-  type ExamplePreferences,
-  gameStorage,
-  TEXT_SPEED_OPTIONS,
-} from "../src/App.js";
+import { DEFAULT_EXAMPLE_PREFERENCES, type ExamplePreferences, gameStorage, TEXT_SPEED_OPTIONS } from "../src/App.js";
 
 const PREFERENCES_STORAGE_KEY = gameStorage.keys.preferences;
 
@@ -85,7 +80,6 @@ describe("preferences", () => {
     expect(gameStorage.preferences.load()).toEqual(DEFAULT_EXAMPLE_PREFERENCES);
     expect(gameStorage.preferences.save(validPreferences)).toEqual(validPreferences);
   });
-
 });
 
 function stubPreferencesStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> {

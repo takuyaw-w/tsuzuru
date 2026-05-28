@@ -105,36 +105,6 @@ button {
     linear-gradient(118deg, #173343 0%, #536f67 53%, #8d6974 100%);
 }
 
-.preact-basic-title-screen__content {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
-  gap: clamp(24px, 5vw, 72px);
-  align-items: end;
-  width: 100%;
-  max-width: 1120px;
-  min-height: 100%;
-}
-
-.preact-basic-title-screen__copy {
-  align-self: end;
-  padding-bottom: clamp(12px, 3vw, 28px);
-}
-
-.preact-basic-title-screen__menu {
-  align-self: end;
-  display: grid;
-  gap: 12px;
-  width: 100%;
-  padding: 16px;
-  border: 1px solid rgba(248, 244, 229, 0.24);
-  border-radius: 8px;
-  background: rgba(7, 10, 12, 0.56);
-  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(12px);
-}
-
 .preact-basic-title-screen__art {
   position: absolute;
   inset: 0;
@@ -182,29 +152,30 @@ button {
   opacity: 0.48;
 }
 
-.preact-basic-title-screen__eyebrow {
-  margin: 0 0 14px;
-  color: rgba(255, 250, 240, 0.72);
-  font-size: 0.92rem;
-  letter-spacing: 0;
-  text-transform: uppercase;
+.preact-basic-title-screen__standard {
+  z-index: 1;
+  min-height: 100%;
+  padding: clamp(30px, 6vw, 64px);
+  background: transparent;
+  --tzr-standard-ui-title-screen-content-width: min(420px, 100%);
+  --tzr-standard-ui-title-screen-actions-width: min(320px, 100%);
 }
 
-.preact-basic-title-screen__title {
-  max-width: 720px;
-  margin: 0 0 16px;
-  color: #fff8e8;
-  font-size: clamp(2.8rem, 8vw, 6.2rem);
-  line-height: 0.96;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.45);
+.preact-basic-title-screen__standard .tzr-title-screen__inner {
+  padding: 18px;
+  border: 1px solid rgba(248, 244, 229, 0.24);
+  border-radius: 8px;
+  background: rgba(7, 10, 12, 0.56);
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
 }
 
-.preact-basic-title-screen__subtitle {
-  max-width: 480px;
-  margin: 0;
-  color: rgba(255, 250, 240, 0.82);
-  font-size: clamp(0.95rem, 1.8vw, 1.14rem);
-  line-height: 1.7;
+.preact-basic-title-screen__standard .tzr-title-screen__title {
+  font-size: clamp(2.6rem, 7.2vw, 5.4rem);
+}
+
+.preact-basic-title-screen__standard .tzr-title-screen__description {
+  color: rgba(255, 250, 240, 0.74);
 }
 
 .settings-screen {
@@ -546,13 +517,12 @@ button {
     width: min(100vw, calc(100dvh * 16 / 9));
   }
 
-  .preact-basic-title-screen__content {
-    grid-template-columns: 1fr;
-    align-content: end;
+  .preact-basic-title-screen__standard {
+    padding: clamp(18px, 5vw, 30px);
   }
 
-  .preact-basic-title-screen__menu {
-    max-width: 360px;
+  .preact-basic-title-screen__standard .tzr-title-screen__inner {
+    width: min(360px, 100%);
   }
 
   .settings-config {

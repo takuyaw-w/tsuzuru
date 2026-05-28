@@ -31,7 +31,7 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   const messageWindow = page.locator(".tzr-message-window");
   const runtimeMenu = page.getByRole("navigation", { name: "Runtime menu" });
 
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
   await runtimeMenu.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "Save Slot 1" }).click();
 
@@ -40,11 +40,11 @@ test("saves to localStorage and restores the visible runtime message", async ({ 
   expectRuntimeSaveSlotEnvelope(data);
 
   await messageWindow.click();
-  await expect(messageWindow).toContainText("その隣で", { timeout: 4000 });
+  await expect(messageWindow).toContainText("旧校舎の文芸部", { timeout: 4000 });
 
   await runtimeMenu.getByRole("button", { name: "Load" }).click();
   await page.getByRole("button", { name: "Load Slot 1" }).click();
-  await expect(messageWindow).toContainText("夜の旧校舎", { timeout: 3000 });
+  await expect(messageWindow).toContainText("夕暮れの駅前", { timeout: 3000 });
 
   expect(pageErrors).toEqual([]);
 });

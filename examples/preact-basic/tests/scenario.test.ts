@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { assets } from "../assets.js";
 import scenario from "../scenario/main.tzr";
 
-const messageSpeakers = new Set(["narration", "tone", "noize", "mix"]);
+const messageSpeakers = new Set(["narration", "mio", "ren"]);
 const maxMessageBlockLineCount = 3;
 const maxMessageLineDisplayWidth = 72;
 
@@ -40,31 +40,36 @@ describe("preact-basic scenario", () => {
     }
   });
 
-  it("includes the std-system unlock demo scene", async () => {
+  it("keeps unlock commands tied to story endings", async () => {
     const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "03-ending.tzr"), "utf8");
 
-    expect(scenario).toContain("scene system_unlock_demo:");
-    expect(scenario).toContain("call system.unlockCg(id=textSoundLab)");
-    expect(scenario).toContain("call system.unlockAchievement(id=firstTextSoundLab)");
-    expect(scenario).toContain("call system.unlockEnding(id=textSoundLabComplete)");
+    expect(scenario).toContain("scene ending_warm:");
+    expect(scenario).toContain("call system.unlockEnding(id=afterSchoolBookmarkWarm)");
+    expect(scenario).toContain("call system.unlockEnding(id=afterSchoolBookmarkQuiet)");
+    expect(scenario).toContain("call system.unlockAchievement(id=firstBookmarkRoute)");
     expect(scenario).not.toContain("unlock ending");
   });
 
-  it("includes the std-particle demo scenes", async () => {
+  it("uses current DSL branching without becoming a plugin showcase", async () => {
     const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "02-common.tzr"), "utf8");
 
-    expect(scenario).toContain('choice "particle demo を試す？"');
-    expect(scenario).toContain("particle rain intensity=normal");
-    expect(scenario).toContain("particle snow intensity=light");
-    expect(scenario).toContain("particle sakura intensity=normal");
+    expect(scenario).toContain('choice "ノートをどう扱う？"');
+    expect(scenario).toContain("if scenario.hasKey:");
     expect(scenario).toContain("particle dust intensity=light");
     expect(scenario).toContain("stopParticle");
+    expect(scenario).not.toContain('choice "particle demo を試す？"');
+    expect(scenario).not.toContain('choice "今度は、どの effect を試す？"');
   });
 
-  it("maps transition demo backgrounds to 16:9 SVG assets", async () => {
+  it("maps story backgrounds to 16:9 SVG assets", async () => {
     const expectedBackgrounds = ["classroom", "library", "station", "rooftop", "hallway"] as const;
     const backgroundRoot = join(import.meta.dirname, "..", "public", "assets", "backgrounds");
-    const scenario = await readFile(join(import.meta.dirname, "..", "scenario", "chapters", "02-common.tzr"), "utf8");
+    const scenarioSources = await Promise.all(
+      ["chapters/01-opening.tzr", "chapters/02-common.tzr", "chapters/03-ending.tzr"].map((filePath) =>
+        readFile(join(import.meta.dirname, "..", "scenario", filePath), "utf8"),
+      ),
+    );
+    const scenario = scenarioSources.join("\n");
 
     for (const assetId of expectedBackgrounds) {
       const background = assets.visual.backgrounds[assetId];

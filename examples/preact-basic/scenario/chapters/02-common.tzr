@@ -1,316 +1,112 @@
-scene focus_choice:
-  choice "どの音を先に詳しく聞く？":
-    "澄んだ tone を聞く" id=focusTone:
-      se page
-      jump focus_tone
-
-    "ざらついた noize を聞く" id=focusNoize:
-      se page
-      jump focus_noize
-
-    "重ねた mix を聞く" id=focusMix:
-      se page
-      jump focus_mix
-
-scene focus_tone:
-  tone:
-    では tone をもう少し詳しく。
-    音高があると、文字の列に細い線が通る。
-
-  tone:
-    高すぎると落ち着かないし、低すぎると足音みたいになる。
-    今の C5 は、説明役として少し明るい。
-
-  tone:
-    でも画面を占領しない高さを狙っている。
-
-  noize:
-    トーンの音は、輪郭がはっきりしている。
-    私の noise よりも、どこで文字が出たのか分かりやすい。
-
-  mix:
-    そのかわり、長い文章では規則正しさが目立つこともある。
-    だから volume と duration は短めにする。
-
-  mix:
-    文字の後ろにそっと置くのが大事。
-
-  jump effect_choice
-
-scene focus_noize:
-  noize:
-    では noize の時間。
-    noise は、音程を聞かせるより、ページのざらつきを感じさせる。
-
-  noize:
-    古い視聴覚室の空調、カセットの無音部分、紙の束をめくる指。
-    そういう細かいものを、一文字ずつ小さく散らす。
-
-  tone:
-    高さがないから、読み手の頭の中の声を邪魔しにくいね。
-
-  mix:
-    一方で、音の芯が必要な場面では少し弱く感じるかもしれない。
-    そこを補うために、mix では小さな tone layer を重ねている。
-
-  jump effect_choice
-
-scene focus_mix:
-  mix:
-    では mix を聞いて。
-    私の profile は E5 の triangle tone を使う。
-
-  mix:
-    そこに white noise を重ねている。
-
-  mix:
-    triangle は sine より少しだけ存在感がある。
-    noise を薄く入れると、息のある合図になる。
-
-  tone:
-    tone だけの明るさより、少し実用向けに丸くなる。
-
-  noize:
-    noise だけのざらつきより、文字の位置が見えやすくなる。
-
-  jump effect_choice
-
-scene effect_choice:
-  choice "今度は、どの effect を試す？":
-    "shake を試す" id=tryShake:
-      jump effect_shake
-
-    "flash を試す" id=tryFlash:
-      jump effect_flash
-
-    "pulse を試す" id=tryPulse:
-      jump effect_pulse
-
-    "blur を試す" id=tryBlur:
-      jump effect_blur
-
-scene effect_shake:
-  noize:
-    まずは shake。
-    画面全体が短く揺れる。
-
-  shake screen intensity=strong duration=420
-  se page
-
-  tone:
-    衝撃や落下、遠くの爆発に使いやすい。
-
-  jump effect_choice_after
-
-scene effect_flash:
-  tone:
-    次は flash。
-    一瞬だけ画面に光を入れる。
-
-  flash color="#ffffff" duration=140
-  se page
-
-  mix:
-    雷、カメラのフラッシュ、気づきの演出に向いている。
-
-  jump effect_choice_after
-
-scene effect_pulse:
-  mix:
-    pulse は、画面やメッセージを一瞬だけ押し出す。
-
-  pulse message intensity=strong duration=260
-  se page
-
-  noize:
-    心音、強調、クリック感に使える。
-
-  jump effect_choice_after
-
-scene effect_blur:
-  tone:
-    blur は、視界の輪郭をゆっくり滲ませる。
-
-  blur screen amount=8 duration=420
-  se page
-
-  mix:
-    めまい、回想、意識が遠のく場面に向いている。
-
-  jump effect_choice_after
-
-scene effect_choice_after:
-  choice "もう一度 effect を試す？":
-    "別の effect を試す" id=tryAnotherEffect:
-      jump effect_choice
-
-    "背景切り替えを試す" id=tryTransition:
-      jump transition_demo
-
-    "Text Sound Lab に戻る" id=returnToLab:
-      jump camera_choice
-
-scene transition_demo:
-  narration:
-    放課後の教室から、帰り道をたどります。
-
-  bg classroom
-
-  narration:
-    まずは暗転で廊下へ出ます。
-
-  bg hallway with fade(duration=500)
-  wait 500
-
-  narration:
-    左から景色が流れて、図書室の前を通ります。
-
-  bg library with wipeLeft(duration=450)
-  wait 450
-
-  narration:
-    右へ抜けるように階段を上がり、屋上へ寄ります。
-
-  bg rooftop with wipeRight(duration=450)
-  wait 450
-
-  narration:
-    最後は駅前で一息つきます。
-
-  bg station with fade(duration=500)
-  wait 500
-
-  narration:
-    背景切り替え demo はここまでです。
-
-  jump camera_choice
-
-scene camera_choice:
-  choice "camera demo を試す？":
-    "camera focus を見る" id=tryCameraFocus:
-      jump camera_focus_demo
-
-    "Text Sound Lab に戻る" id=skipCameraDemo:
-      jump particle_choice
-
-scene camera_focus_demo:
-  camera focus tone_stand zoom=1.2 duration=400
-
-  tone:
-    まずは、僕に寄ってみよう。
-
-  camera focus noize_stand zoom=1.2 duration=400
-
-  noize:
-    次は私。画面の重心が少し変わる。
-
-  camera focus mix_stand zoom=1.18 duration=400 easing=easeOut
-
-  mix:
-    focus は、会話の視線を作るための camera state。
-
-  pulse message intensity=light duration=180
-  camera x=0 y=-20 zoom=1.08 duration=500
-
-  narration:
-    三人を少し引き締めるように、画面全体が寄った。
-
-  reset camera duration=400
-
-  narration:
-    カメラは、元の位置へ戻った。
-
-  jump particle_choice
-
-scene particle_choice:
-  choice "particle demo を試す？":
-    "雨を降らせる" id=particleRain:
-      jump particle_rain
-
-    "雪を降らせる" id=particleSnow:
-      jump particle_snow
-
-    "桜を舞わせる" id=particleSakura:
-      jump particle_sakura
-
-    "埃を漂わせる" id=particleDust:
-      jump particle_dust
-
-    "Text Sound Lab に戻る" id=returnToLab:
-      jump after_focus
-
-scene particle_rain:
-  particle rain intensity=normal
-
-  noize:
-    雨は、画面全体の空気を冷たくする。
-
-  jump particle_after
-
-scene particle_snow:
-  particle snow intensity=light
-
-  tone:
-    雪は、音を少しだけ遠ざける。
-
-  jump particle_after
-
-scene particle_sakura:
-  particle sakura intensity=normal
-
-  mix:
-    桜は、場面を少しだけ柔らかくする。
-
-  jump particle_after
-
-scene particle_dust:
+scene library_route:
+  bg library with fade(duration=400)
+  show mio_stand at left with dissolve(duration=200)
+  show ren_stand at right with dissolve(duration=200)
   particle dust intensity=light
 
   narration:
-    埃が光の中をゆっくり漂っている。
+    図書室には、閉館後の光だけが残っていた。
+    書架の間を、細かな埃がゆっくり流れていく。
 
-  jump particle_after
+  mio:
+    この棚、文芸部の古い部誌が並んでる。
+    ノートと同じ筆跡のタイトルもあるよ。
 
-scene particle_after:
-  choice "particle を止める？":
-    "止める" id=stopParticleDemo:
-      stopParticle
-      jump after_focus
+  ren:
+    ここに鍵が挟まってる。
+    「視聴覚室」と書いてあるから、最後のページの続きはそこかもしれない。
 
-    "別の particle を試す" id=tryAnotherParticle:
-      jump particle_choice
+  set scenario.hasKey = true
+  call system.unlockCg(id=libraryBookmark)
+  se page
+  jump after_search
 
-scene after_focus:
+scene rooftop_route:
+  bg rooftop with fade(duration=400)
+  show mio_stand at left with dissolve(duration=200)
+  show ren_stand at right with dissolve(duration=200)
+  camera focus mio_stand zoom=1.12 duration=350
+
   narration:
-    メトロノームが一度だけ止まり、三人は同じ原稿を手に取った。
+    屋上には、まだ少しだけ夏の熱が残っていた。
+    フェンスの影が、ノートの上で細く揺れている。
 
-  tone:
-    短い音は、読み進める速度を少しだけ整える。
-    音が強すぎると急かされるけれど、ちょうどよければ文章が前へ進む。
+  mio:
+    封筒の中身は、誰かの下書きみたい。
+    でも宛名がないね。
 
-  noize:
-    無音も悪くない。
-    でも、ほんの少しだけ粒があると、画面が眠らない。
+  reset camera duration=300
 
-  noize:
-    夜の教室なら、蛍光灯のかすかな震えみたいに聞こえる。
+  ren:
+    こっちは鍵じゃない。
+    でも「最後の一文は二人で決めて」と書いてある。
 
-  mix:
-    最後は好みの問題。
-    澄んだ合図が好きな人もいるし、紙のような音が好きな人もいる。
+  set scenario.hasKey = false
+  add scenario.trust += 1
+  jump after_search
 
-  mix:
-    重ねた音は、その間を探すための道具になる。
+scene after_search:
+  bg hallway with fade(duration=350)
+  stopParticle
 
-  choice "最後に、どの text sound が好き？":
-    "tone の澄んだ音" id=likeTone:
-      se page
-      jump like_tone
+  if scenario.hasKey:
+    narration:
+      視聴覚室の鍵は、思ったより軽かった。
+      二人は廊下の奥へ急ぐ。
+  else:
+    narration:
+      封筒の下書きを胸にしまい、二人は廊下へ戻った。
+      鍵はないけれど、ノートの続きはもう少しだけ読めそうだ。
 
-    "noize のざらつき" id=likeNoize:
-      se page
-      jump like_noize
+  mio:
+    返すだけなら、もう十分かもしれない。
+    でも、最後のページが白紙なのが気になる。
 
-    "mix の重なり" id=likeMix:
-      se page
-      jump like_mix
+  ren:
+    白紙のまま返すか、短い返事を書いてから返すか。
+    どっちも間違いではないと思う。
+
+  choice "ノートをどう扱う？":
+    "二人で続きを書く" id=writeTogether:
+      add scenario.trust += 1
+      jump write_together
+
+    "元の棚へ戻す" id=returnNotebook:
+      jump return_notebook
+
+scene write_together:
+  bg classroom with fade(duration=350)
+  show mio_stand at left
+  show ren_stand at right
+  pulse message intensity=light duration=180
+
+  narration:
+    空き教室の机に、ノートをそっと開いた。
+    窓の外では、駅の明かりがひとつずつ灯っていく。
+
+  mio:
+    「なくした物語は、誰かが拾った時点で続きになる」
+    こんな感じでどうかな。
+
+  ren:
+    いいと思う。
+    返す人にも、拾った人にも残る一文だ。
+
+  jump ending_check
+
+scene return_notebook:
+  bg library with fade(duration=350)
+  show mio_stand at left
+  show ren_stand at right
+
+  narration:
+    二人はノートを部誌の棚へ戻した。
+    栞だけが少し前に出て、次に見つける人を待っている。
+
+  mio:
+    勝手に続きを書かないのも、ひとつの返し方だよね。
+
+  ren:
+    うん。白紙を残す勇気も、物語の一部だと思う。
+
+  jump ending_check

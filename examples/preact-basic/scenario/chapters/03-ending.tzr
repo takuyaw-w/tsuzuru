@@ -1,79 +1,54 @@
-scene like_tone:
-  tone:
-    ありがとう。
-    澄んだ音は、文章に小さな灯りを置く。
+scene ending_check:
+  if scenario.trust >= 2:
+    jump ending_warm
+  else:
+    jump ending_quiet
 
-  tone:
-    読む速度が変わっても、音の高さが道しるべになる。
+scene ending_warm:
+  bg station with fade(duration=450)
+  show mio_stand at left with dissolve(duration=200)
+  show ren_stand at right with dissolve(duration=200)
 
-  noize:
-    そのぶん、音量は控えめがいい。
-    きれいな音ほど、強いとすぐ目立つから。
-
-  mix:
-    トーンを主役にするなら、noise はほんの少しだけで十分。
-  jump system_unlock_demo
-
-scene like_noize:
-  noize:
-    いい選択。
-    ざらつきは、文字の背後に空気を作る。
-
-  noize:
-    声を決めすぎないから、読み手の想像がそのまま残る。
-
-  tone:
-    音高を使わない勇気、という感じだね。
-
-  mix:
-    静かな場面やモノローグでは、noise の控えめさがよく効く。
-  jump system_unlock_demo
-
-scene like_mix:
-  mix:
-    うれしい。
-    重ねた音は、説明しすぎないけれど印象を残せる。
-
-  mix:
-    tone の芯と noise の手触りを、場面に合わせて配合できる。
-
-  tone:
-    音名で芯を決めて、波形で丸める。
-
-  noize:
-    そこに白い粒を少しだけ足す。
-  jump system_unlock_demo
-
-scene system_unlock_demo:
   narration:
-    Text Sound Lab の記録が、システムに保存された。
+    駅前へ戻るころ、ノートの表紙は夕焼けの色に染まっていた。
+    白紙だった最後のページには、二人の字が並んでいる。
 
-  call system.unlockCg(id=textSoundLab)
-  call system.unlockAchievement(id=firstTextSoundLab)
-  call system.unlockEnding(id=textSoundLabComplete)
+  mio:
+    明日、文芸部の棚に戻そう。
+    きっと誰かが、続きを見つけてくれる。
 
-  mix:
-    これで、ギャラリーと実績に今日の実験が残るはず。
+  ren:
+    その時は、今日のことも少しだけ物語になる。
 
+  call system.unlockEnding(id=afterSchoolBookmarkWarm)
+  call system.unlockAchievement(id=firstBookmarkRoute)
+  jump lab_end
+
+scene ending_quiet:
+  bg station with fade(duration=450)
+  hide ren_stand
+  show mio_stand at center with dissolve(duration=200)
+
+  narration:
+    駅前へ戻るころ、ノートは拾った時と同じ重さに戻っていた。
+    けれど、ページをめくった指先には確かに温度が残っている。
+
+  mio:
+    今日は返すだけ。
+    でも、また何か拾ったら一緒に考えよう。
+
+  call system.unlockEnding(id=afterSchoolBookmarkQuiet)
   jump lab_end
 
 scene lab_end:
   narration:
-    視聴覚室の明かりが落ち、スピーカーの残響も静かに消えていく。
+    電車の音が近づき、放課後の短い寄り道が終わる。
+    ノートの栞は、次のページを静かに指していた。
 
-  tone:
-    次は note を変えて、低い音も試してみよう。
-
-  noize:
-    pink noise も、きっと別の手触りになる。
-
-  mix:
-    そして物語に合う音を、必要なだけ選べばいい。
-
-  hide tone_stand
-  hide noize_stand
-  hide mix_stand
+  hide mio_stand
+  hide ren_stand
   clear bg
+  reset camera duration=250
   stopParticle
   stopBgm
   end

@@ -1,146 +1,65 @@
-# Tsuzuru Preact Basic Fullscreen Example
+# Tsuzuru Preact Basic Example
 
-This example runs a multi-file scenario project from `scenario/main.tzr` as a fullscreen visual-novel style browser screen. The app imports the `.tzr` entry directly through `@tsuzuru/vite-plugin`, then drives the compiled document through `@tsuzuru/preact`'s `useRuntime`.
+This example runs a short visual-novel style browser game from
+`scenario/main.tzr`. The app imports the `.tzr` entry through
+`@tsuzuru/vite-plugin`, then drives the compiled document with
+`@tsuzuru/preact`'s `useRuntime`.
 
-It demonstrates the current runnable DSL v2 subset: `include "./path.tzr"` compile-time directives, cross-file scene jumps with `jump targetScene`, visual sugar including clear commands and transition metadata, audio sugar, dialogue, narration, state updates, `if` / `else`, conditional body choices, waits, and `end`.
+The bundled scenario is `放課後の栞`, a 2-5 minute starter-scale story. It uses
+the current DSL v2 only: `include`, `scene`, `bg`, `show`, dialogue, narration,
+state updates, `if`, choices, jumps, plugin commands, waits, and `end`.
 
-Title, load, settings, backlog, and gallery screens are ordinary TSX components under `src/screens`. The `.tzr` files focus on the scenario body after Start.
+The app opens on a title screen and uses the `TitleScreen`, `GameViewport`,
+`GameShell`, `RuntimeControlBar`, `RuntimeMessageLayer`, `ChoiceLayer`,
+`StdVisualRuntimeLayer`, `StdAudioRuntimeLayer`, `StdEffectLayer`,
+`StdCameraRuntimeLayer`, and `StdParticleRuntimeLayer` components from
+`@tsuzuru/standard-ui-preact`.
 
-The example also includes a Save / Load MVP. It uses three localStorage-backed
-save slots, enables Title Continue when a latest save exists, and shows Save /
-Load as runtime overlays so the runtime is not unmounted while those screens are
-open. This localStorage storage is example-side host behavior, not Tsuzuru's
-engine-wide storage policy. Storage options are declared in `tsuzuru.config.ts`
-and wired through `createStandardGameStorageFromConfig`, so keys, slots,
-preferences, read tracking, and the standard runtime save adapter share one
-config-driven setup path.
+Title, load, settings, backlog, gallery, save, and load screens remain
+example-side TSX under `src/screens`. They are intentionally small so the
+example stays useful as a starter reference instead of becoming a framework.
 
-If the player saves and loads while choices are visible, the choice and the
-retained previous message window behind the choices are restored. The retained
-message is persisted in the example-side save data wrapper as host-owned
-presentation state; the `RuntimeSaveData` payload itself is unchanged.
+The example includes a Save / Load MVP. It uses three localStorage-backed save
+slots, enables Title Continue when a latest save exists, and shows Save / Load
+as runtime overlays so the runtime is not unmounted while those screens are
+open. Storage options are declared in `tsuzuru.config.ts` and wired through
+`createStandardGameStorageFromConfig`.
 
-The runtime overlay Backlog screen records displayed narration and dialogue as
-message history. This is also example-side presentation state, not core runtime
-state, and it is not persisted in save data yet.
+Settings are a full-screen CONFIG-style screen inside the 16:9 viewport. They
+are connected only to existing standard preferences: text reveal, text speed,
+text sound on/off, text sound volume, BGM volume, SE volume, and voice volume.
+Preferences are stored with the same config-driven storage setup.
 
-The Settings screen includes a Text Preferences MVP. It can turn text reveal on
-or off and choose slow, normal, or fast text speed. It can also switch message
-presentation between the default dialogue window and a fullscreen sound-novel
-style text layer, using the same `.tzr` scenario while changing only the UI
-presentation. Novel text mode can show speakers inline, as a separate block
-line, or hidden. These preferences are example-side host state persisted with
-localStorage; `@tsuzuru/core`, `@tsuzuru/preact`, and
-`@tsuzuru/standard-ui-preact` do not own this preference policy.
+The example does not bundle real audio files. `assets.ts` maps BGM / SE / Voice
+IDs to host-owned public paths, and the browser may report missing audio files
+without stopping the app. Text sound uses the browser helper from
+`@tsuzuru/plugin-std-text-sound` and generated Web Audio profiles.
 
-The example also includes an Audio Playback MVP. The std-audio plugin records
-BGM, SE, and Voice state/events, and the runtime view passes that state to
-`StdAudioRuntimeLayer` from `@tsuzuru/standard-ui-preact`. BGM / SE / Voice
-volume can be changed from Settings. Audio files are not bundled; place files
-under `public/assets/audio/...` to match the asset map. Playback and asset
-resolution are host-owned presentation behavior, not core or plugin behavior.
-The example keeps only the example-specific asset and preferences glue around
-the standard audio runtime layer.
-
-Text Sound Lab is the bundled scenario. It uses three characters, `tone`,
-`noize`, and `mix`, to demonstrate `tone`, `noise`, and `mix` profiles from
-`@tsuzuru/plugin-std-text-sound`. Narration and character defaults are resolved
-from `assets.ts`, and the package browser helper is called from the text reveal
-character callback. Settings can turn text sound on or off and adjust volume.
-No real text sound audio files are bundled.
-
-The runtime menu also includes an Auto Mode MVP. Auto Mode can be toggled from
-the `Auto` button and advances narration or dialogue after the full text is
-visible. It stops at choices and never selects an option automatically. This is
-example-side presentation behavior, not a core runtime feature.
-
-Read Tracking MVP records narration and dialogue shown during the current
-runtime session as read. The runtime UI shows a read count, and Backlog entries
-show a `Read` badge. This is example-side host state, not a core runtime
-feature, is not stored in save data yet, and is intended as a future Skip Mode
-building block.
-
-The runtime menu also includes a Skip Mode MVP. Skip Mode can be toggled from
-the `Skip` button and quickly advances narration or dialogue that was already
-read before it became visible. A first-time message is marked read when shown,
-but it is not skipped during that same display. Choices are never selected
-automatically. Skip Mode is example-side presentation behavior, not a core
-runtime feature, and the MVP uses only current-session Read Tracking rather than
-persistent read state.
-
-Scenario files live under `scenario/`. Add new `.tzr` files there, then reference
-them from `scenario/main.tzr` with `include "./path.tzr"`. The app imports
-`scenario/main.tzr` directly, and `@tsuzuru/vite-plugin` follows those include
-directives during Vite dev/build. Asset IDs and their example-side presentation
-mapping live in `assets.ts`, including visual asset URLs and audio URLs. Title,
-load, settings, backlog, and gallery UI belong in `src/screens`.
-
-`tsuzuru.config.ts` is consumed by both `tsuzuru check` and
-`@tsuzuru/vite-plugin`. The CLI reads `scenario.entry`, expands
-`scenario.files`, loads the matched `.tzr` files, and validates the scenario
-project. Vite dev/build use `config.plugins` for compile-time command
-validation while importing the same creator-facing entry file.
-The same config exports `projectIdentity`, which this example uses for save and
-read-tracking compatibility checks. Keep its `id` and `version` stable if you
-want existing local saves to remain loadable.
-
-The runtime hook is configured with `autoClearWait: true` and `autoStepTransientEvents: true`, so waits continue after their duration and transient events such as `if`, state updates, jumps, and plugin commands are not rendered as message text. Waits are treated as internal timing and the example does not show `Waiting ...` status text.
-
-Visual state is rendered with `StdCameraRuntimeLayer` and
-`StdVisualRuntimeLayer` from `@tsuzuru/standard-ui-preact`. The example still
-owns the small `cameraFocus` offset policy that maps sprite positions to camera
-offsets, while the standard UI package owns the camera transform wrapper and
-basic std-visual transition rendering. Transition execution is not part of the
-core runtime. Exit transitions for `hide`, `clear bg`, and `clear sprites`
-remain future scope because those operations remove the surviving visual state.
-
-Standard effect events are rendered with `StdEffectLayer` from
-`@tsuzuru/standard-ui-preact`. This example passes its own target selectors so
-shake, pulse, and blur can target the fullscreen surface, message layer, and
-standard sprite layer.
-
-Standard particle state is rendered with `StdParticleRuntimeLayer` from
-`@tsuzuru/standard-ui-preact`. The example still owns the scenario commands that
-turn rain and dust on/off, but it no longer carries local particle rendering
-components.
-
-The runtime menu uses `RuntimeControlBar` from
-`@tsuzuru/standard-ui-preact`. The component only renders controls and calls the
-handlers supplied by this example; the Save, Load, Backlog, Settings, and Title
-screens remain example-side TSX.
+Scenario files live under `scenario/`. Add new `.tzr` files there, then
+reference them from `scenario/main.tzr` with `include "./path.tzr"`. Asset IDs
+and example-side presentation mapping live in `assets.ts`. Example-specific
+background SVGs live under `public/assets/backgrounds/`.
 
 Controls:
 
-- The example opens on the TSX title screen. Click Start, then click, Enter, or Space to start and advance scenario messages.
-- While text is revealing, Click, Enter, or Space reveals the full message.
-- After the full message is visible, Click, Enter, or Space advances to the next event.
-- The runtime `Auto` button toggles Auto Mode. When enabled, narration and
-  dialogue advance automatically after full text display.
-- The runtime `Skip` button toggles Skip Mode. When enabled, narration and
-  dialogue that were read earlier in the current session advance quickly.
-- Choices are shown above the current message presentation while the previous message remains visible. Click a choice button to select it.
+- The example opens on the title screen. Click Start to enter the game.
+- Click, Enter, or Space advances messages. While text is revealing, the first
+  advance request reveals the full message.
+- Runtime menu actions open Save, Load, Backlog, Settings, or return to Title.
+- Auto advances dialogue and narration after the full text is visible, and stops
+  at choices.
+- Skip advances only messages already read in the current session, and stops at
+  choices.
 
 ```sh
 pnpm --filter @tsuzuru/example-preact-basic dev
 pnpm --filter @tsuzuru/example-preact-basic check:scenario
+pnpm --filter @tsuzuru/example-preact-basic test
 pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic test:ui
 ```
 
-The UI check uses Playwright to start the example dev server at
-`http://127.0.0.1:5173/`, capture a title-screen screenshot under
-`test-results`, run short click-through smoke checks, and verify the
-localStorage-backed Save -> Load -> Restore path. The save/load smoke confirms
-that the example stores a `RuntimeSaveSlot` envelope with a version 2 runtime
-snapshot before loading the saved runtime view back into the browser UI.
-If Chromium has not been installed for Playwright yet, run:
-
-```sh
-pnpm exec playwright install chromium
-```
-
-The standard visual layer can fall back to asset ID placeholders when an image is
-not mapped. This example maps background SVG files and leaves sprite entries as
-label placeholders. Audio asset IDs are mapped by the example, but audio files
-are not required for the smoke test; missing files are reported without stopping
-the app.
+The Playwright UI check starts the example dev server at
+`http://127.0.0.1:5173/`, captures a title-screen screenshot, runs title /
+settings / runtime / choice smoke checks, and verifies the localStorage-backed
+Save -> Load -> Restore path.

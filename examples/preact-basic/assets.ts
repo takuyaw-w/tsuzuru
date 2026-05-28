@@ -8,36 +8,35 @@ const textSound = {
       duration: "short",
       volume: 0.16,
     },
-    tone: {
+    mio: {
       type: "tone",
       note: "C5",
       waveform: "sine",
       duration: "short",
       volume: 0.5,
     },
-    noize: {
-      type: "noise",
-      color: "white",
-      duration: "short",
-      volume: 0.22,
-    },
-    mix: {
+    ren: {
       type: "mix",
       duration: "short",
-      volume: 0.55,
+      volume: 0.48,
       layers: [
-        { type: "tone", note: "E5", waveform: "triangle", volume: 0.7 },
-        { type: "noise", color: "white", volume: 0.12 },
+        { type: "tone", note: "E4", waveform: "triangle", volume: 0.5 },
+        { type: "noise", color: "pink", volume: 0.16 },
       ],
+    },
+    room: {
+      type: "noise",
+      color: "pink",
+      duration: "short",
+      volume: 0.18,
     },
   },
   defaults: {
     narration: "narration",
-    dialogue: "tone",
+    dialogue: "room",
     characters: {
-      tone: "tone",
-      noize: "noize",
-      mix: "mix",
+      mio: "mio",
+      ren: "ren",
     },
   },
 } satisfies StdTextSoundConfig;
@@ -67,14 +66,11 @@ export const assets = {
       },
     },
     sprites: {
-      tone_stand: {
-        label: "トーン",
+      mio_stand: {
+        label: "美緒",
       },
-      noize_stand: {
-        label: "ノイズ",
-      },
-      mix_stand: {
-        label: "ミックス",
+      ren_stand: {
+        label: "蓮",
       },
     },
   },
