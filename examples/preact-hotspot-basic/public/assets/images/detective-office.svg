@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
-  <title id="title">Detective office placeholder</title>
-  <desc id="desc">A simple generated-style office background for hotspot testing.</desc>
+  <title id="title">Old study placeholder</title>
+  <desc id="desc">A simple self-contained old study background for hotspot testing.</desc>
   <defs>
     <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#263140"/>

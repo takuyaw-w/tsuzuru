@@ -10,6 +10,12 @@ describe("preact hotspot basic scenario", () => {
         expect.objectContaining({ type: "CommandInstruction", name: "clearHotspots" }),
       ]),
     );
-    expect(Object.keys(scenario.scenes)).toEqual(["room_search", "inspect_desk", "inspect_window", "hallway"]);
+    expect(Object.keys(scenario.scenes)).toEqual([
+      "start",
+      "inspect_desk",
+      "inspect_window",
+      "inspect_bookshelf",
+      "inspect_door",
+    ]);
   });
 });

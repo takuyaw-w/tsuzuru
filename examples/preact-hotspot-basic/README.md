@@ -6,5 +6,6 @@ Minimal Preact example for `@tsuzuru/plugin-std-hotspot`.
 pnpm --filter @tsuzuru/example-preact-hotspot-basic dev
 ```
 
-The scenario places transparent rectangular hotspots on a 960x540 viewport,
-waits for a hotspot click, and jumps to the target scene.
+The scenario places transparent rectangular hotspots for a desk, window,
+bookshelf, and door on a 960x540 viewport, waits for a hotspot click, jumps to
+the target inspection scene, clears stale hotspots, and returns to exploration.

@@ -16,7 +16,7 @@ export function App() {
       <TitleScreen
         title="Hotspot Basic"
         subtitle="透明なクリック領域で探索する小さなADV"
-        description="机、窓、ドアをクリックして、scene jump の流れを確認できます。"
+        description="机、窓、本棚、扉をクリックして、scene jump の流れを確認できます。"
         actions={[
           { label: "Start", onSelect: () => setScreen("game") },
           { label: "Load", onSelect: () => undefined, disabled: true },

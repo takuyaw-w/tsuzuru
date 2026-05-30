@@ -1,42 +1,50 @@
 title "Hotspot Basic"
 
-scene room_search:
-  bg office with fade(duration=300)
+scene start:
+  bg study_room with fade(duration=300)
 
   narration:
-    夜の探偵事務所。手がかりになりそうな場所をクリックして調べよう。
+    古い書斎に入った。
+    気になる場所を調べてみよう。
 
-  hotspot desk rect(x=120, y=318, width=310, height=140) jump inspect_desk
+  hotspot desk rect(x=120, y=300, width=320, height=150) jump inspect_desk
   hotspot window rect(x=430, y=96, width=210, height=150) jump inspect_window
-  hotspot door rect(x=746, y=130, width=130, height=332) jump hallway
+  hotspot bookshelf rect(x=44, y=88, width=220, height=230) jump inspect_bookshelf
+  hotspot door rect(x=746, y=130, width=130, height=332) jump inspect_door
   wait hotspot
 
 scene inspect_desk:
   clear hotspots
 
   narration:
-    机の上には古い手帳が置かれている。最後のページに、短い走り書きが残っていた。
+    机の上には、古い手帳が置かれている。
+    表紙には、かすれた文字で「記録」と書かれていた。
 
-  set scenario.checkedDesk = true
-  jump room_search
+  jump start
 
 scene inspect_window:
   clear hotspots
 
   narration:
-    窓の外では雨粒が街灯をにじませている。向かいのビルには、まだ明かりがついている。
+    窓の外は薄暗い。
+    遠くで雨音が聞こえる。
 
-  set scenario.checkedWindow = true
-  jump room_search
+  jump start
 
-scene hallway:
+scene inspect_bookshelf:
   clear hotspots
 
-  if scenario.checkedDesk and scenario.checkedWindow:
-    narration:
-      手帳と窓の明かり。二つの手がかりがそろった。廊下の先で、次の調査が待っている。
-  else:
-    narration:
-      廊下へ出る前に、部屋の中をもう少し調べた方がよさそうだ。
+  narration:
+    本棚には古い推理小説が並んでいる。
+    一冊だけ、最近動かされた跡がある。
 
-  end
+  jump start
+
+scene inspect_door:
+  clear hotspots
+
+  narration:
+    扉には鍵がかかっている。
+    どこかに鍵があるのかもしれない。
+
+  jump start

@@ -151,6 +151,7 @@ Core は Preact、DOM、CSS、Vite、browser storage、asset loading から独�
 | --- | --- |
 | [`examples/preact-starter`](examples/preact-starter/) | creator-facing starter example。`scenario/main.tzr`、`src/assets.ts`、local theme を編集して小さなノベルゲームを作れます。 |
 | [`examples/preact-basic`](examples/preact-basic/) | core runtime、Preact adapter、standard UI layers、standard plugins、save/load、preferences、backlog、auto mode、skip mode、read tracking を example-owned app behavior として確認する integration reference。 |
+| [`examples/preact-hotspot-basic`](examples/preact-hotspot-basic/) | 透明な rectangular hotspot と scene jump で探索 ADV 風のクリック領域を確認する minimal example。 |
 | [`examples/preact-sound-novel`](examples/preact-sound-novel/) | `TsuzuruGame` の novel message presentation と text reveal controls を使う long-form sound-novel presentation example。 |
 
 よく使う example commands:
