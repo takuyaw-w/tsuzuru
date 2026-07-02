@@ -243,7 +243,8 @@ Editor tooling は `.tzr` authoring UX を大きく改善できます。
 ### `system.*` condition resolver
 
 `call system.unlock...` による write-side behavior は plugin-dependent feature として扱えます。
-一方で、`if system.*` のような read-side condition は、core と plugin state の境界を慎重に設計する必要があります。
+`if system.*` のような read-side condition は、最初の runtime-state resolver scope を実装済みです。
+残る課題は browser persistence、gallery / achievement UI、remote profile などの host policy です。
 最初の設計 scope は [`system-condition-resolver.md`](design/system-condition-resolver.md) にまとめています。
 
 ### Visual coordinate placement
