@@ -14,6 +14,22 @@ export interface RuntimeBranchFrame {
 
 export type RuntimeValue = string | number | boolean | null;
 
+export type RuntimeConditionNamespace = "system" | (string & {});
+
+export interface RuntimeConditionResolveError {
+  readonly code: RuntimeErrorCode;
+  readonly message: string;
+}
+
+export type RuntimeConditionResolveResult =
+  | { readonly ok: true; readonly value: RuntimeValue | null | undefined }
+  | { readonly ok: false; readonly error: RuntimeConditionResolveError };
+
+export interface RuntimeConditionResolver {
+  readonly namespace: RuntimeConditionNamespace;
+  readonly resolve: (path: readonly string[], state: RuntimeState) => RuntimeConditionResolveResult;
+}
+
 export type RuntimeVariables = Readonly<Record<string, RuntimeValue>>;
 
 export type RuntimePluginStates = Readonly<Record<string, unknown>>;
@@ -108,6 +124,7 @@ export type RuntimeBlockReason = "wait" | "choice" | "click";
 
 export interface RuntimeStepOptions {
   readonly commandHandlers?: Readonly<Record<string, RuntimePluginCommandHandler>>;
+  readonly conditionResolvers?: readonly RuntimeConditionResolver[];
   readonly onDiagnostic?: RuntimeDiagnosticReporter;
 }
 
@@ -237,6 +254,11 @@ export type RuntimeErrorCode =
   | "state_add_non_number"
   | "state_reference_missing"
   | "condition_invalid_numeric_comparison"
+  | "condition_resolver_missing"
+  | "condition_resolver_duplicate"
+  | "condition_resolver_failed"
+  | "condition_system_state_missing"
+  | "condition_system_path_unsupported"
   | "condition_system_reference_unsupported";
 
 export interface RuntimeErrorEvent {

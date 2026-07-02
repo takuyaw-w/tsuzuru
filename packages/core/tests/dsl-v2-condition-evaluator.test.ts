@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { evaluateTzrCondition } from "../src/condition-evaluator.js";
-import { createInitialRuntimeState, parseTzrConditionExpression, type RuntimeDocument } from "../src/index.js";
+import {
+  createInitialRuntimeState,
+  parseTzrConditionExpression,
+  type RuntimeConditionResolver,
+  type RuntimeConditionResolveResult,
+  type RuntimeDocument,
+  type RuntimeState,
+  type RuntimeValue,
+} from "../src/index.js";
+
+function resolver(
+  namespace: string,
+  resolve: (path: readonly string[], state: RuntimeState) => RuntimeConditionResolveResult,
+): RuntimeConditionResolver {
+  return { namespace, resolve };
+}
+
+function ok(value: RuntimeValue | null | undefined): RuntimeConditionResolveResult {
+  return { ok: true, value };
+}
 
 function parseCondition(source: string) {
   const result = parseTzrConditionExpression(source, { filePath: "scenario/condition.tzr" });
@@ -20,6 +39,21 @@ function createDocument(): RuntimeDocument {
 }
 
 describe("evaluateTzrCondition", () => {
+  it("keeps condition resolver fixtures typed for resolver tests", () => {
+    const state = createInitialRuntimeState(createDocument());
+    const systemResolver = resolver("system", (path, receivedState) => {
+      expect(path).toEqual(["flags", "ready"]);
+      expect(receivedState).toBe(state);
+      return ok(true);
+    });
+
+    expect(systemResolver.namespace).toBe("system");
+    expect(systemResolver.resolve(["flags", "ready"], state)).toEqual({
+      ok: true,
+      value: true,
+    });
+  });
+
   it("evaluates scenario references from runtime variables", () => {
     const state = {
       ...createInitialRuntimeState(createDocument()),
