@@ -49,10 +49,14 @@ Runtime execution needs the command handlers:
 
 ```ts
 import { stepRuntime } from "@tsuzuru/core";
-import { createStdSystemCommandHandlers } from "@tsuzuru/plugin-std-system";
+import {
+  createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
+} from "@tsuzuru/plugin-std-system";
 
 const result = stepRuntime(document, runtimeState, {
   commandHandlers: createStdSystemCommandHandlers(),
+  conditionResolvers: [createStdSystemConditionResolver()],
 });
 ```
 
@@ -111,12 +115,42 @@ Sets `stdSystem.achievements.firstTextSoundLab` to `{ unlocked: true }`.
 For all commands, `id` is required, may be an identifier or non-empty string,
 and extra arguments are rejected by plugin command metadata.
 
-## Condition Policy
+## Condition Reads
 
-The v1.0 planning scope supports unlock commands and durable runtime state, but
-does not include `system.*` condition evaluation. The compiler still rejects
-system condition references. Use `scenario.*` state for branching until a
-renderer-neutral system condition resolver is designed after v1.0.
+std-system exposes the `system` condition namespace. Compile scenarios that use
+`system.*` reads with `createStdSystemPlugin()` and run them with
+`createStdSystemConditionResolver()`:
+
+```ts
+import { createInitialRuntimeState, stepRuntime } from "@tsuzuru/core";
+import {
+  createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
+  createStdSystemPlugin,
+} from "@tsuzuru/plugin-std-system";
+
+const runtimeState = createInitialRuntimeState(document, {
+  plugins: [createStdSystemPlugin()],
+});
+
+const result = stepRuntime(document, runtimeState, {
+  commandHandlers: createStdSystemCommandHandlers(),
+  conditionResolvers: [createStdSystemConditionResolver()],
+});
+```
+
+Supported condition paths are exactly:
+
+```txt
+system.endings.<id>.unlocked
+system.cgs.<id>.unlocked
+system.achievements.<id>.unlocked
+```
+
+The resolver reads only `runtimeState.plugins.stdSystem`. Missing ids return
+`false`. Unsupported collections or fields are runtime condition errors. The
+resolver does not read localStorage, IndexedDB, remote profiles, gallery UI, or
+host storage.
 
 ## Persistence Policy
 

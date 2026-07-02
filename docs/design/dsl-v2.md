@@ -841,9 +841,13 @@ system.*
 ```
 
 v1.0 stable condition references are `scenario.*` only. Condition parsing
-accepts `system.*` as parser-level design syntax, but the compiler rejects
-`system.*` condition references and runtime evaluation remains unsupported until
-a renderer-neutral std-system condition resolver is designed.
+accepts `system.*` references, and std-system condition reads are
+plugin-dependent. Compile-time support requires a plugin definition such as
+`createStdSystemPlugin()` that declares `conditionNamespaces: ["system"]`.
+Runtime support requires `conditionResolvers: [createStdSystemConditionResolver()]`.
+The supported std-system reads are limited to
+`system.endings.<id>.unlocked`, `system.cgs.<id>.unlocked`, and
+`system.achievements.<id>.unlocked`.
 
 Invalid:
 
@@ -1055,7 +1059,7 @@ Rules:
 
 ### 17.2 `system.*`
 
-Global persistent state provided by `@tsuzuru/plugin-std-system`.
+Unlock state provided by `@tsuzuru/plugin-std-system`.
 
 ```txt
 system.endings.trueEnd.unlocked
@@ -1065,9 +1069,12 @@ system.achievements.firstClear.unlocked
 
 Rules:
 
-- Not part of the v1.0 stable condition subset.
-- Can be parsed in conditions, but compile/runtime condition evaluation remains
-  post-v1.0 design work.
+- Condition reads are plugin-dependent.
+- Compile with std-system condition namespace metadata, such as
+  `createStdSystemPlugin()`.
+- Run with `createStdSystemConditionResolver()`.
+- Reads use only `runtimeState.plugins.stdSystem`; browser persistence, gallery
+  UI, remote profiles, and host storage policy are out of scope.
 - Direct mutation via `set` / `add` is not allowed.
 - Mutation must go through `call system.*`.
 
@@ -2024,10 +2031,23 @@ if system.achievements.firstClear.unlocked:
   jump bonusScene
 ```
 
-Condition parsing accepts `system.*` references, but compile/runtime condition
-evaluation remains deferred and is not part of the v1.0 stable subset. The
-compiler rejects `if system.*` until a renderer-neutral system condition
-resolver is added.
+Condition reads are plugin-dependent. Compile scenarios with std-system
+condition namespace metadata, and pass `createStdSystemConditionResolver()` to
+runtime stepping:
+
+```ts
+compileTzr(source, {
+  plugins: [createStdSystemPlugin()],
+});
+
+stepRuntime(document, state, {
+  commandHandlers: createStdSystemCommandHandlers(),
+  conditionResolvers: [createStdSystemConditionResolver()],
+});
+```
+
+The resolver reads only `runtimeState.plugins.stdSystem`. It does not read
+browser persistence, gallery UI, remote profiles, or host storage.
 
 ### 28.6 Validation
 

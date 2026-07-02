@@ -9,12 +9,12 @@
 対象は次の 4 つ。
 
 - rich text / inline events
-- `system.*` condition resolver
+- remaining `system.*` persistence / gallery policy
 - visual coordinate placement
 - audio transitions
 
-目的は、実装前に core、standard plugin、Preact / standard UI、host app の責務を分けること。
-ここで書く内容は current behavior ではなく、post-v1 の設計開始点である。
+目的は、core、standard plugin、Preact / standard UI、host app の責務を分けること。
+`system.*` の最初の runtime-state resolver は実装済みであり、この文書では残りの post-v1 境界を扱う。
 
 ## Shared Principles
 
@@ -99,13 +99,26 @@ Do not promote rich text / inline events from parser-only until:
 - core parser/compiler/runtime tests cover accepted and rejected syntax
 - docs explain what is stable and what remains renderer-specific
 
-## `system.*` Condition Resolver
+## `system.*` Persistence / Gallery Policy
 
 ### Current Boundary
 
 `call system.unlock...` is a plugin-dependent write-side behavior.
-`if system.*` condition reads are not stable because core does not own
-std-system persistence or host gallery policy.
+The first narrow `system.*` condition resolver is implemented for current
+runtime plugin state reads:
+
+```txt
+system.endings.<id>.unlocked
+system.cgs.<id>.unlocked
+system.achievements.<id>.unlocked
+```
+
+Compile-time support requires std-system condition namespace metadata, and
+runtime support requires `createStdSystemConditionResolver()`. The resolver
+reads only `runtimeState.plugins.stdSystem`.
+
+Browser persistence, remote profiles, gallery UI, and host storage policy
+remain outside that implemented scope.
 
 ### Proposed Responsibility Split
 
@@ -137,33 +150,32 @@ Host / adapter code should own:
 
 ### Resolver Shape
 
-A future resolver should be explicit and renderer-neutral. A conceptual shape is:
-
-```ts
-type RuntimeConditionResolver = {
-  get(namespace: string, path: readonly string[]): unknown;
-};
-```
-
-Core evaluation can ask the resolver for `system.*` values without importing
-std-system. Missing values should be falsey or diagnostic-driven by explicit
-policy, not by accidental JavaScript property access.
+The implemented resolver contract is explicit and renderer-neutral. Core
+evaluation asks a registered condition resolver for `system.*` values without
+importing std-system. Missing ids are false for supported std-system
+collections; unsupported paths are diagnostics, not accidental JavaScript
+property access.
 
 ### Promotion Gate
 
-Do not promote `system.*` condition reads until:
+The first promotion gate is satisfied for runtime std-system plugin state
+reads:
 
 - resolver behavior exists without coupling core to std-system
 - missing resolver and unknown path diagnostics are tested
 - std-system state read helpers are documented
 - save / load interaction with plugin state is documented
-- examples show a small branch using `system.*` without browser persistence
-  becoming core behavior
 
-The detailed first-scope design is tracked in
-[`system-condition-resolver.md`](system-condition-resolver.md). It narrows the
-first implementation to current runtime plugin state reads and keeps browser
-persistence out of scope.
+Remaining future work must not broaden this behavior until:
+
+- persistence source selection is explicit
+- host override policy is documented
+- gallery / achievement UI remains host-owned
+- indexed key syntax or string-key paths have a separate parser/compiler design
+- examples do not imply browser persistence is core behavior
+
+The implemented first-scope design is tracked in
+[`system-condition-resolver.md`](system-condition-resolver.md).
 
 ## Visual Coordinate Placement
 
@@ -274,16 +286,18 @@ Do not promote audio transitions until:
 
 Recommended order:
 
-1. `system.*` condition resolver design spike, because it mainly affects core
-   condition evaluation and std-system boundaries.
-2. Visual coordinate placement, because the state shape is durable but the
+1. Visual coordinate placement, because the state shape is durable but the
    renderer contract can stay narrow.
-3. Audio transitions, because browser playback and restore policy need careful
+2. Audio transitions, because browser playback and restore policy need careful
    host-owned behavior.
-4. Rich text / inline events, because it crosses text rendering, backlog,
+3. Rich text / inline events, because it crosses text rendering, backlog,
    audio, save/load, and UI interaction.
+4. Remaining `system.*` persistence / gallery policy, because the first
+   runtime-state resolver already exists and future work should wait for a
+   concrete host need.
 
-This order keeps the highest cross-cutting text model change last.
+This order leaves any broader system persistence policy until a concrete host
+need exists.
 
 ## Required Checks When Implementing
 

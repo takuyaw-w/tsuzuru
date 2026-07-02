@@ -217,6 +217,29 @@ For current v0.x snapshots, branch frames are included directly in snapshots.
 - false with `elseBranch`: push and execute `elseBranch`
 - false without `elseBranch`: advance to the next top-level instruction
 
+`scenario.*` references read from `RuntimeState.variables`. Other condition
+namespaces require runtime condition resolvers supplied through
+`RuntimeStepOptions.conditionResolvers`:
+
+```ts
+stepRuntime(document, state, {
+  conditionResolvers: [resolver],
+});
+```
+
+For non-`scenario.*` references, the runtime expects exactly one resolver for
+the namespace. Missing resolvers produce an `error` event with
+`code: "condition_resolver_missing"`. Duplicate resolvers for the same
+namespace produce `code: "condition_resolver_duplicate"`. Resolver failures are
+reported as runtime `error` events; they do not make core import plugin-specific
+state shapes.
+
+`@tsuzuru/plugin-std-system` provides `createStdSystemConditionResolver()` for
+`system.endings.<id>.unlocked`, `system.cgs.<id>.unlocked`, and
+`system.achievements.<id>.unlocked`. That resolver reads only
+`runtimeState.plugins.stdSystem`; it does not read browser persistence, gallery
+UI, remote profiles, or host storage.
+
 `SceneJumpInstruction` resolves against `RuntimeDocument.scenes`. It moves `pointer.instructionIndex` to the scene's `statementIndex` and does not apply an extra `+1` advance. Jump clears branch frames, pending choice, pending wait, and click wait.
 
 Cross-file authoring targets are validated and aggregated before runtime by

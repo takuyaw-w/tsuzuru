@@ -105,13 +105,42 @@ add scenario.score += 1
 
 `set scenario.b = scenario.a` copies an existing `scenario.*` runtime value at
 execution time. Missing source values produce a runtime error event.
-For conditions, the v1.0 stable subset is `scenario.*` references only.
-`system.*` condition references are parser-level future syntax and are not
-compiled for current runnable scenarios. std-system unlock state can still be
-written through plugin commands such as `call system.unlockEnding(id=trueEnd)`
-when `@tsuzuru/plugin-std-system` is registered. Reading that unlock state from
-`if system.*` or conditional choices remains post-v1.0 design work.
-`system.*` state remains deferred and cannot be targeted or copied by `set`.
+Conditions support `scenario.*` references directly. `system.*` condition reads
+are plugin-dependent: compile with std-system metadata and run with the
+std-system condition resolver.
+
+```ts
+import { compileTzr, stepRuntime } from "@tsuzuru/core";
+import {
+  createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
+  createStdSystemPlugin,
+} from "@tsuzuru/plugin-std-system";
+
+const document = compileTzr(source, {
+  plugins: [createStdSystemPlugin()],
+});
+
+const result = stepRuntime(document, runtimeState, {
+  commandHandlers: createStdSystemCommandHandlers(),
+  conditionResolvers: [createStdSystemConditionResolver()],
+});
+```
+
+Supported std-system condition paths are exactly:
+
+```txt
+system.endings.<id>.unlocked
+system.cgs.<id>.unlocked
+system.achievements.<id>.unlocked
+```
+
+These reads use only `runtimeState.plugins.stdSystem`. They do not read browser
+persistence, gallery UI, remote profiles, or host storage. std-system unlock
+state is written through plugin commands such as
+`call system.unlockEnding(id=trueEnd)`. Direct `set system.*` and `add
+system.*` mutation remains invalid, and `system.*` references cannot be copied
+by `set`.
 The core runtime emits wait events for `wait 1000`, but does not start browser
 timers; hosts clear the wait after their own timer completes.
 Visual transitions on `show`, `hide`, and `clear` compile to

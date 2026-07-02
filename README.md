@@ -339,7 +339,8 @@ Current limitations include:
   breaks, and text block metadata remain deferred syntax
 - visual coordinate placement and audio transition syntax remain future design
   work
-- `system.*` condition reads are not part of the current stable DSL subset
+- `system.*` condition reads are limited to current std-system runtime plugin
+  state and require the std-system condition resolver
 - save data migration is not provided; current helpers validate and reject
   incompatible data rather than migrating arbitrary old saves
 - `@tsuzuru/standard-ui-preact` provides reusable components and starter runtime

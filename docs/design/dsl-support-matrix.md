@@ -41,8 +41,9 @@ The main non-stable DSL areas are explicitly post-v1.0 or optional tooling:
 - rich inline markup and text block controls are parser-only today and are
   explicitly not part of the v1.0 stable subset
 - namespaced `wait namespace.event(...)` remains design-only
-- `system.*` conditions parse but are compile-unsupported and are explicitly
-  not part of the v1.0 stable subset
+- `system.*` condition reads are plugin-dependent: compile-time support
+  requires std-system condition namespace metadata, and runtime support requires
+  `createStdSystemConditionResolver()`
 - visual preset placement (`left` / `center` / `right`) is the v1.0 target;
   coordinate placement remains parser-only
 - statement-level audio commands (`bgm`, `stopBgm`, `se`, `voice`) are the
@@ -53,9 +54,11 @@ For v1.0, plain narration, dialogue, and `say` text are the stable text
 authoring target. Rich text, inline events, blank-line click waits, page breaks,
 and text block metadata remain post-v1.0 design work.
 
-For v1.0 conditions, `scenario.*` references are the stable target.
-`system.*` condition references remain post-v1.0 resolver design work; use
-`call system.unlock...` commands for std-system write-side behavior.
+For v1.0 conditions, `scenario.*` references are the stable target. `system.*`
+condition reads are supported only for the current std-system runtime plugin
+state through the std-system condition namespace metadata plus
+`createStdSystemConditionResolver()`. Use `call system.unlock...` commands for
+std-system write-side behavior.
 
 For v1.0 visual placement, `show asset at left`, `show asset at center`, and
 `show asset at right` are the stable std-visual target. `show asset at
@@ -85,7 +88,7 @@ this matrix instead of defining a separate supported syntax.
 | `choice "..."` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Runtime emits body-choice events and resumes selected body. |
 | `"label" id=... if scenario.*:` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Conditional choice filtering supports `scenario.*` conditions. |
 | `if` / `elif` / `else` with `scenario.*` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Logical `and` / `or` / `not`, comparisons, literals, and parentheses are covered. |
-| `if system.*` | Core / std-system boundary | yes | rejected | no | std-system future | yes | no | yes | `parser-only` | Compiler rejects system condition references until a renderer-neutral resolver exists. Not included in the v1.0 stable subset. |
+| `if system.*` | Core / std-system boundary | yes | yes with condition namespace metadata | resolver-dependent | std-system resolver | yes | no | yes | `plugin-dependent` | Supported paths are `system.endings.<id>.unlocked`, `system.cgs.<id>.unlocked`, and `system.achievements.<id>.unlocked`; compile with `createStdSystemPlugin()` metadata and run with `createStdSystemConditionResolver()`. |
 | `jump sceneId` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Cross-file jump validation is supported through `compileTzrProject`. |
 | `end` | Core flow | yes | stop command | yes | n/a | yes | yes | yes | `stable` | Compiles to the core stop command. |
 | `set scenario.x = <value>` | Core state | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Values: string, number, boolean, `null`, or existing `scenario.*` reference. |
@@ -166,8 +169,9 @@ v1.0 blockers are tracked in
 Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
 rich inline text, inline waits, inline audio events) are not part of the v1.0
 stable subset. They remain post-v1.0 design work.
-`system.*` conditions are also not part of the v1.0 stable subset; std-system
-write-side `call system.unlock...` commands remain plugin-dependent.
+`system.*` condition reads are plugin-dependent and limited to current
+std-system runtime plugin state; std-system write-side
+`call system.unlock...` commands remain plugin-dependent.
 Visual coordinate placement is also not part of the v1.0 stable subset; preset
 std-visual placement remains plugin-dependent.
 Audio transitions are also not part of the v1.0 stable subset; statement-level
@@ -175,12 +179,12 @@ std-audio commands remain plugin-dependent.
 Editor / syntax highlighting is not a v1.0 blocker; it remains optional tooling
 that should follow this matrix.
 
-Post-v1 feature boundary guidance for rich text / inline events, `system.*`
-condition reads, visual coordinate placement, and audio transitions is tracked
-in [`post-v1-feature-boundaries.md`](post-v1-feature-boundaries.md). That
-document is design guidance only and does not promote any syntax to stable
-support.
-The first-scope design for `system.*` condition reads is tracked in
+Post-v1 feature boundary guidance for rich text / inline events, remaining
+`system.*` persistence/gallery policy, visual coordinate placement, and audio
+transitions is tracked in
+[`post-v1-feature-boundaries.md`](post-v1-feature-boundaries.md). That document
+is design guidance only and does not promote future syntax to stable support.
+The implemented first-scope design for `system.*` condition reads is tracked in
 [`system-condition-resolver.md`](system-condition-resolver.md).
 
 ## Recommended Issues
@@ -200,18 +204,19 @@ The first-scope design for `system.*` condition reads is tracked in
 - Risk: making rich text stable too early can constrain renderer and adapter
   behavior.
 
-### 2. Design `system.*` condition resolver after v1.0
+### 2. Extend `system.*` beyond runtime plugin state
 
-- Purpose: support reading std-system durable unlock state in conditions without
-  moving plugin persistence semantics into core.
-- Scope: renderer-neutral resolver contract, runtime condition evaluator
-  boundary, std-system state shape, save/load compatibility, docs, and examples.
-- Done when: `if system.*` and conditional choices using `system.*` have an
-  explicit resolver design, tests, and user docs before being promoted from
-  parser-only.
+- Purpose: design any future std-system condition reads that need browser
+  persistence, gallery state, remote profiles, or host storage policy.
+- Scope: persistence source selection, host override policy, save/load
+  compatibility, docs, and examples.
+- Done when: future condition reads have an explicit source-of-truth policy,
+  tests, and user docs before being promoted beyond the current
+  `runtimeState.plugins.stdSystem` resolver.
 - Suggested checks: `pnpm --filter @tsuzuru/core test`,
   `pnpm --filter @tsuzuru/plugin-std-system test`.
-- Risk: system state may require a renderer-neutral persistent-state boundary.
+- Risk: persistent system state can constrain host app storage and gallery
+  behavior if it is made implicit.
 
 ### 3. Design visual coordinate placement after v1.0
 

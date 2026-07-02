@@ -248,7 +248,7 @@ Current limitations include:
 - generic macros、presets、reusable staging syntax、scenario-local procedures は実装されていません。
 - rich inline text、inline waits/events、inline audio events、text block page breaks、text block metadata は deferred syntax です。
 - visual coordinate placement と audio transition syntax は future design work です。
-- `system.*` condition reads は current stable DSL subset には含まれません。
+- `system.*` condition reads は current std-system runtime plugin state に限定され、std-system condition resolver が必要です。
 - save data migration は提供していません。現在の helpers は任意の古い saves を migrate するのではなく、incompatible data を validate して reject します。
 - `@tsuzuru/standard-ui-preact` は reusable components と starter runtime wiring を提供しますが、Save / Load、Settings、Backlog、Gallery などの project screens と asset policy は application code です。
 
