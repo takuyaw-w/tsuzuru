@@ -81,6 +81,51 @@ describe("createStdSystemPlugin", () => {
 });
 
 describe("std-system condition resolver", () => {
+  it("runs a compiled system unlock command before a system condition branch", () => {
+    const parsed = parseTzr(
+      `scene start:
+  call system.unlockEnding(id=trueEnd)
+  if system.endings.trueEnd.unlocked:
+    narration:
+      unlocked
+`,
+      { filePath: "scenario/std-system.tzr" },
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("expected parser success");
+    }
+
+    const compiled = compileTzr(parsed.document, {
+      plugins: [createStdSystemPlugin()],
+    });
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) {
+      throw new Error("expected compiler success");
+    }
+
+    const initialState = createInitialRuntimeState(compiled.document, {
+      plugins: [createStdSystemPlugin()],
+    });
+    const scene = stepRuntime(compiled.document, initialState);
+    const unlockEnding = stepRuntime(compiled.document, scene.state, {
+      commandHandlers: createStdSystemCommandHandlers(),
+    });
+    const branch = stepRuntime(compiled.document, unlockEnding.state, {
+      conditionResolvers: [createStdSystemConditionResolver()],
+    });
+
+    expect(branch.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "narration",
+        lines: [{ text: "unlocked" }],
+      },
+    });
+  });
+
   it("resolves unlocked endings cgs and achievements", () => {
     const result = runStdSystemCommands(
       command("system.unlockEnding", [namedIdentifier("id", "trueEnd")]),
