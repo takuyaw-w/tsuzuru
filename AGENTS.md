@@ -594,8 +594,9 @@ Do not add long speculative roadmap sections to `AGENTS.md`.
 Use dedicated docs for detailed design records:
 
 ```txt
-docs/decisions/
+docs/history/decisions/
 docs/plans/
+docs/history/plans/
 docs/design/
 ```
 

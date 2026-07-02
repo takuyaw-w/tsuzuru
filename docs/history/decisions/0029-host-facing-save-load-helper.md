@@ -113,8 +113,8 @@ Revisit this decision if:
 ## Related Documents
 
 - `docs/architecture.md`
-- `docs/decisions/0014-save-load-mvp.md`
-- `docs/decisions/0018-retained-message-save-load.md`
-- `docs/decisions/0028-runtime-snapshot-compatibility.md`
+- `docs/history/decisions/0014-save-load-mvp.md`
+- `docs/history/decisions/0018-retained-message-save-load.md`
+- `docs/history/decisions/0028-runtime-snapshot-compatibility.md`
 - `packages/core/src/runtime-snapshot.ts`
 - `packages/core/tests/runtime-snapshot-prepare.test.ts`

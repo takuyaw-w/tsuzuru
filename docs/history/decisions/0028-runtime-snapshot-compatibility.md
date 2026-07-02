@@ -105,6 +105,6 @@ Revisit this decision when:
 
 - `AGENTS.md`
 - `docs/architecture.md`
-- `docs/decisions/0014-save-load-mvp.md`
+- `docs/history/decisions/0014-save-load-mvp.md`
 - `packages/core/src/runtime-snapshot.ts`
 - `packages/core/tests/runtime-snapshot-compatibility.test.ts`

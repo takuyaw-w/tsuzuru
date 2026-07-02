@@ -1,464 +1,319 @@
 # Tsuzuru Roadmap
 
-> Status: partially historical. The old v0.1 scope sections are retained as
-> pre-DSL-v2-cleanup history. Entries that mention old parser/compiler
-> semantics, old DSL syntax, removed macro API, or removed example names are not
-> current feature guidance. Use
-> [`design/design/dsl-v2.md`](design/design/dsl-v2.md) and
-> [`plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md) for the current
-> DSL direction.
+この文書は、Tsuzuru の今後の開発判断をそろえるための現行 roadmap です。
+細かい実装 TODO ではなく、何を優先し、何を後回しにし、何をやらないかを明確にするために使います。
 
-This document defines Tsuzuru's product scope by milestone.
+現在の実装詳細は、必要に応じて次の文書を参照してください。
 
-`TODOS.md` is the operational task list.  
-This roadmap is the product and architecture scope boundary.
+- [Architecture](architecture.md)
+- [DSL](dsl.md)
+- [DSL support matrix](design/dsl-support-matrix.md)
+- [Runtime](runtime.md)
+- [Plugin API](plugin-api.md)
+- [v1.0 Release Gate](plans/v1.0-release-gate.md)
 
-## Product Direction
+## プロダクト方針
 
-Tsuzuru is a web-first visual novel engine built with TypeScript, Vite-oriented workflows, and a framework-neutral core. The official v0.x UI stack, templates, and examples focus on Preact-based JSX. Vue support is out of the initial scope and may be reconsidered later as an optional adapter.
+Tsuzuru は、ブラウザ向けノベルゲームを作るための TypeScript 製エンジンです。
 
-The goal is not to clone KAG, TyranoScript, or Ren'Py.
+一番の軸は、既存エンジン互換の DSL ではなく、ノベルゲームの流れを素直に読める `.tzr` ファイルで書けることです。
+シーン、会話、選択肢、分岐、演出コマンドが、できるだけそのまま読める形で並ぶことを重視します。
 
-Tsuzuru should provide:
+Tsuzuru が目指すもの:
 
-- readable `.tzr` scenario files
-- static validation
-- predictable runtime behavior
-- TypeScript-based plugins
-- future TypeScript-based reusable extensions if macro support is reintroduced
-- Preact-based UI customization
-- static web app distribution
+- ノベルゲームの流れを `.tzr` に素直に書ける
+- `.tzr` は JavaScript / TypeScript ではなく、意図的に小さいシナリオ DSL にする
+- parser / compiler / runtime が静的に検査できる形を保つ
+- 演出、UI、保存、アセット解決、配布方法は TypeScript 側で拡張できる
+- 生成 starter から、ブラウザで動く静的 Web アプリとして配れる
 
-The guiding principle:
+Tsuzuru が目指さないもの:
+
+- KAG / TyranoScript / Ren'Py 互換
+- 任意 JavaScript / TypeScript を `.tzr` 内で実行する仕組み
+- `.tzr` を汎用プログラミング言語にすること
+- core runtime に DOM、Preact、Vite、browser storage、asset loading を持ち込むこと
+
+基本方針:
 
 ```txt
-Keep the scenario readable.
-Keep the runtime predictable.
-Keep extension logic in TypeScript.
+シナリオの流れは .tzr に書く。
+実行、演出、UI、保存、配布の責務は TypeScript 側に置く。
 ```
 
-## v0.1 Goal
+## 主な対象ユーザー
 
-> Historical note: this v0.1 section describes the pre-DSL-v2-cleanup milestone.
-> It is not the current supported DSL/API list.
+第一の対象は、ノベルゲームを作りたい人です。
+npm、Vite、TypeScript に詳しいことは前提にしません。
+ただし、Node.js を入れてコマンドを実行し、生成されたファイルを編集するところまでは受け入れる想定です。
 
-The historical v0.1 goal was complete when a small visual novel could be written in `.tzr`, compiled by `@tsuzuru/core`, rendered by `@tsuzuru/preact`, and verified through examples.
+開発者向けには、TypeScript で parser / compiler / runtime / plugin / UI を拡張できる構造を提供します。
+ただし、入口の説明では package 境界や内部設計よりも、まず `.tzr` を編集してゲームの流れが変わる体験を優先します。
 
-This v0.1 scope has been completed and stabilization checks have passed. This marks the planned v0.1 scope as complete, but does not mean Tsuzuru is production ready or comparable to mature visual novel engines.
+## 現在の状態
 
-## Historical v0.1 Scope
+現在の Tsuzuru は、v1.0 系の package set を持つ初期段階のエンジンです。
+成熟した商用ノベルゲームエンジンと同等ではありませんが、小規模な作品や実験を始めるための土台は揃っています。
 
-The pre-cleanup v0.1 scope included:
+現行の主な package:
 
-- `.tzr` parser
-- AST definitions
-- compiler
-- compiler diagnostics
-- compiled IR
-- same-file scene and label declarations
-- same-file jump validation
-- narration
-- speaker dialogue
-- choices
-- limited conditionals
-- variables
-- flags
-- core text flow commands
-- runtime stepping
-- runtime events
-- choice resolution
-- plugin command registration
-- plugin command argument validation
-- macro expansion
-- macro safety validation
-- runtime snapshot creation
-- runtime restoration
-- Preact adapter
-- basic `RuntimeView`
-- `useRuntime`
-- visible event handling
-- click-to-advance behavior
-- choice selection behavior
-- basic save/load adapter utilities
-- `examples/basic`
+- `@tsuzuru/core`
+  - `.tzr` parser
+  - compiler
+  - project compiler
+  - runtime IR
+  - runtime stepping
+  - choices / jumps / waits
+  - scenario state
+  - snapshot / restore
+  - plugin command dispatch
+
+- `@tsuzuru/config`
+  - `defineTsuzuruConfig`
+  - project config の型と Node config loading
+
+- `@tsuzuru/cli`
+  - `tsuzuru check`
+  - scenario validation
+
+- `@tsuzuru/vite-plugin`
+  - Vite で `.tzr` を compiled runtime document として import する plugin
+  - `include` を含む scenario project loading
+
+- `create-tsuzuru`
+  - Vite + Preact starter の project generator
+
+- `@tsuzuru/preact`
+  - core runtime と Preact の接続
+  - `useRuntime`
+  - `RuntimeView`
+  - Preact-facing save / restore helpers
+
+- `@tsuzuru/standard-ui-preact`
+  - reusable Preact UI components
+  - `TsuzuruGame`
+  - standard runtime layers
+  - title / message / choice / control / screen primitives
+
+- `@tsuzuru/theme-standard`
+- `@tsuzuru/theme-classic`
+- `@tsuzuru/theme-dark-novel`
+- `@tsuzuru/theme-minimal`
+  - standard UI 向け CSS variable theme
+
+- `@tsuzuru/standard-game-storage`
+  - preferences
+  - read tracking
+  - save slot stores
+  - standard runtime save adapter
+
+- `@tsuzuru/plugin-std-visual`
+- `@tsuzuru/plugin-std-audio`
+- `@tsuzuru/plugin-std-text-sound`
+- `@tsuzuru/plugin-std-effect`
+- `@tsuzuru/plugin-std-camera`
+- `@tsuzuru/plugin-std-particle`
+- `@tsuzuru/plugin-std-hotspot`
+- `@tsuzuru/plugin-std-system`
+  - 標準演出・状態管理用の plugin command metadata と runtime handlers
+
+現行 examples:
+
+- `examples/preact-starter`
+  - creator-facing starter example
 - `examples/preact-basic`
-- basic docs
-- root README quickstart
+  - core / Preact / standard UI / standard plugins / save-load / preferences / backlog / auto / skip / read tracking の統合 reference
+- `examples/preact-hotspot-basic`
+  - hotspot を使った探索 ADV の最小 example
+- `examples/preact-sound-novel`
+  - sound-novel presentation の example
 
-## Historical v0.1 DSL Scope
+## v1.x の重点
 
-The removed legacy `.tzr` DSL supported:
+v1.x では、新機能を広げるよりも、使い始めの体験と作者体験を固めます。
+
+### 1. 初回体験
+
+目標は、npm や Vite を深く知らない人でも、次の流れを迷わず進められることです。
+
+```sh
+npm create tsuzuru@latest my-game
+cd my-game
+npm install
+npm run dev
+```
+
+その後、`scenario/main.tzr` を少し編集し、ブラウザ上の表示が変わるところまでを最初の成功体験にします。
+
+この段階では、package 構造や TypeScript plugin の説明を前面に出しすぎません。
+まず「`.tzr` を書き換えるとノベルゲームの流れが変わる」ことを伝えます。
+
+### 2. 作者体験
+
+`.tzr` を書く人が迷わない状態を目指します。
+
+優先すること:
+
+- DSL syntax の説明を短く、実例中心にする
+- エラーを、作者が次に直すべき場所が分かる形に近づける
+- generated starter の `scenario/main.tzr` を編集しやすくする
+- README / template README / example README の役割を分ける
+- 「現在使える syntax」と「後で検討する syntax」を混ぜない
+
+### 3. 信頼性
+
+package として安心して試せる状態を保ちます。
+
+優先すること:
+
+- `release-readiness:check` を現行 package / example inventory と同期させる
+- `create-tsuzuru` local smoke を維持する
+- docs と実装の乖離を減らす
+- root README、Japanese README、architecture、roadmap の役割を明確にする
+- historical docs と current docs を分ける
+
+## 直近でやること
+
+### Roadmap / docs 整理
+
+- `docs/roadmap.md` を現行 roadmap として維持する
+- 旧 v0.1 scope は historical note として短く扱う
+- current behavior は README、architecture、DSL docs、support matrix、package README に寄せる
+- docs 内で、未実装機能を実装済みのように見せない
+
+### README / README.ja.md の入口整理
+
+- 外向けの最初の導線は `npm create tsuzuru@latest my-game` を基本にする
+- pnpm は repository development / contributor 向けの補足に下げる
+- 最初の価値を「package install」ではなく「`.tzr` を編集して画面に反映されること」に置く
+- 既存 DSL 互換ではなく、素直に読める `.tzr` であることを明確にする
+
+### `create-tsuzuru` starter の改善
+
+- generated project の README を、生成後ユーザー向けにする
+- `scenario/main.tzr`、`src/assets.ts`、`public/assets/*`、`tsuzuru.config.ts` の役割を短く説明する
+- Load / Config など placeholder の意味を明確にする
+- `.tzr` を少し編集するチュートリアルを入れる
+
+### Examples の役割整理
+
+- `examples/preact-starter` は、生成 starter に近い最小導線として保つ
+- `examples/preact-basic` は、統合 reference として保つ
+- `examples/preact-hotspot-basic` は、ADV / hotspot reference として保つ
+- `examples/preact-sound-novel` は、sound novel presentation reference として保つ
+
+Examples は「全部を最初に理解するもの」ではなく、目的別の reference として扱います。
+
+### Quality gate / release readiness
+
+- package / example inventory と root scripts を同期させる
+- publish package contents の検査を維持する
+- generated starter の smoke を維持する
+- docs だけが古くなる状態を早めに検出できるようにする
+
+## 後で検討すること
+
+以下は有用ですが、v1.x の最初に広げすぎると初回体験がぼやけるため、設計を分けて扱います。
+
+### Editor support
+
+- syntax highlighting
+- VS Code extension
+- snippets
+- diagnostics
+- outline / jump target navigation
+
+Editor tooling は `.tzr` authoring UX を大きく改善できます。
+ただし、engine v1.x の必須条件ではなく、DSL support matrix と同期する別 topic として扱います。
+
+### Rich text / inline events
+
+- rich inline text
+- inline waits
+- inline audio events
+- page breaks
+- text block metadata
+
+これらは text rendering、backlog、save/load、renderer contract に影響するため、個別設計が必要です。
+現在の安定方向は plain narration / dialogue text です。
+
+### `system.*` condition resolver
+
+`call system.unlock...` による write-side behavior は plugin-dependent feature として扱えます。
+一方で、`if system.*` のような read-side condition は、core と plugin state の境界を慎重に設計する必要があります。
+
+### Visual coordinate placement
+
+`show asset at left/center/right` のような preset placement は扱いやすい一方、任意座標は renderer coordinate policy、responsive layout、safe area と結びつきます。
+座標指定は、renderer contract を決めてから進めます。
+
+### Audio transitions
+
+`bgm ... with fadeIn(...)` や `stopBgm with fadeOut(...)` は、audio timing、restore、save/load と関係します。
+statement-level audio command を先に安定させ、transition は別設計にします。
+
+### Save data migration
+
+現行方針は、互換性のない save data を安全に検証・拒否することです。
+古い save data を移行する仕組みは、作品単位の運用や versioning policy と関係するため、v1.x 初期の必須範囲には入れません。
+
+## Non-Goals
+
+以下は当面の開発対象にしません。
+
+- KAG / TyranoScript / Ren'Py compatibility
+- 任意 JavaScript / TypeScript の `.tzr` 内実行
+- generic macro system
+- scenario-local macro definitions
+- preset / stage / reusable staging syntax
+- visual scripting editor
+- GUI editor
+- Live2D integration
+- Pixi integration
+- cloud save
+- RPG / map / battle systems
+- plugin marketplace
+- advanced animation editor
+
+将来検討する場合も、core DSL の制約や package boundary を崩さない独立 topic として扱います。
+
+## v0.1 について
+
+以前の v0.1 roadmap は、DSL v2 cleanup 前の歴史的な計画です。
+旧 syntax、旧 parser/compiler semantics、macro API、削除済み example 名は、現在の機能ガイドではありません。
+
+現在の public parser/compiler API は次です。
+
+```ts
+import { parseTzr, compileTzr } from "@tsuzuru/core";
+```
+
+現在の `.tzr` syntax は、`docs/dsl.md` と `docs/design/dsl-support-matrix.md` を参照してください。
+
+削除済みの legacy syntax:
 
 ```txt
-#scene("id")
-#label("id")
-
+#scene(...)
+#label(...)
 :: Speaker
-Dialogue text
-
-Narration text
-
 @command(...)
 $macro(...)
-
 @if(...)
 @else
 @endif
-
-? Question
-- "Choice text" -> #target
 ```
 
-Supported jump target forms:
+これらは historical context 以外では使いません。
 
-```txt
-#label
-file.tzr
-file.tzr#label
-```
+## Roadmap の更新ルール
 
-Same-file labels are validated.
+この文書は、次の場合に更新します。
 
-Cross-file target shape may be accepted, but cross-file existence validation is not required for v0.1 unless explicitly re-scoped.
+- Tsuzuru の主対象ユーザーを変えるとき
+- v1.x の重点を変えるとき
+- package boundary を変えるとき
+- current feature と future feature の扱いを変えるとき
+- README や examples が新しい能力を示すようになったとき
+- Non-Goals を見直すとき
 
-## Historical v0.1 Core Commands
-
-Core-owned commands include:
-
-```txt
-@jump(...)
-@stop()
-@wait(...)
-@waitClick()
-@page()
-@set(...)
-@inc(...)
-@dec(...)
-@flag(...)
-@unflag(...)
-```
-
-Core-owned commands affect scenario flow, runtime state, save/load behavior, or execution control.
-
-They should not be moved into plugin ownership.
-
-## Historical v0.1 Plugin Scope
-
-v0.1 plugins support command registration and validation.
-
-Plugin commands may represent presentation behavior such as:
-
-```txt
-@bg("school_evening")
-@bgm("daily")
-@se("door")
-@show(character="haruka", pose="smile", at="center")
-@hide(character="haruka")
-@transition("fade", duration=300)
-@shake(target="screen", duration=300)
-```
-
-v0.1 plugin goals:
-
-- register plugin-owned command names
-- validate unknown command names
-- validate plugin command schemas
-- validate plugin command arguments
-- dispatch plugin commands through runtime handlers
-
-Plugins must not own core flow control.
-
-## Historical v0.1 Macro Scope
-
-The removed legacy macro API treated macros as compile-time presentation shorthand.
-
-Macro calls use:
-
-```txt
-$enter("haruka", "smile", "center")
-```
-
-v0.1 macro goals:
-
-- register macros in TypeScript
-- expand macros during compilation
-- remove macro calls from runtime IR
-- validate expanded commands
-- reject unsafe macro expansion results
-
-For v0.1, macros must not generate:
-
-- scenes
-- labels
-- conditionals
-- choices
-- macro instructions
-- jumps
-
-Macro argument schema validation is not required for v0.1 unless explicitly re-scoped.
-
-## Historical v0.1 Preact Scope
-
-`@tsuzuru/preact` should provide:
-
-- `useRuntime`
-- `RuntimeView`
-- renderable event handling
-- visible event handling
-- auto-step behavior for transient events
-- click-to-advance wiring
-- choice selection wiring
-- basic save/load adapter utilities
-- restore helpers for runtime snapshots and visible events
-
-`RuntimeView` should remain a convenience component.
-
-It should not become a full game UI framework in v0.1.
-
-## Historical v0.1 Example Scope
-
-The removed legacy examples demonstrated the pre-cleanup architecture.
-
-`examples/basic` should demonstrate core usage.
-
-`examples/preact-basic` should demonstrate:
-
-- parsing scenario source
-- compiling scenario source
-- registering plugin commands
-- handling plugin command events
-- rendering runtime events
-- click-to-advance
-- choices
-- save
-- load
-- clear save
-
-The example scenario should ideally include:
-
-- narration
-- dialogue
-- choice
-- jump
-- if
-- flag
-- variable
-- wait
-- plugin command
-- save/load-friendly flow
-
-## Historical v0.1 Documentation Scope
-
-v0.1 documentation should include:
-
-- root README quickstart
-- DSL documentation
-- runtime documentation
-- plugin API documentation
-- macro API documentation
-- architecture documentation
-- example README files
-- clear limitations
-
-Documentation must describe current behavior accurately.
-
-Do not document future features as implemented behavior.
-
-## Explicit Non-Goals for v0.1
-
-The following are not part of v0.1:
-
-- GUI editor
-- visual scripting editor
-- TyranoScript compatibility
-- KAG / KS compatibility
-- Ren'Py compatibility
-- arbitrary JavaScript inside `.tzr`
-- arbitrary TypeScript inside `.tzr`
-- scenario-local macro definitions
-- complex expression language
-- inline JavaScript expressions
-- Live2D
-- Pixi integration
-- advanced animation editor
-- voice system
-- backlog
-- skip mode
-- auto mode
-- read tracking
-- gallery
-- achievements
-- cloud save
-- RPG systems
-- map systems
-- battle systems
-- multi-language translation workflow
-- plugin marketplace
-- packaged plugin distribution
-
-These may be reconsidered later, but should not be introduced during v0.1 stabilization.
-
-## Deferred from v0.1
-
-The following can be deferred to post-v0.1 unless explicitly re-scoped:
-
-- macro argument schema validation
-- cross-file jump existence validation
-- `create-tsuzuru`
-- `@tsuzuru/vite`
-- backlog
-- skip mode
-- auto mode
-- read tracking
-- text speed settings
-- ruby text
-- variable interpolation
-- inline links
-- multiple save slots
-- config screen
-- audio volume settings
-- packaged plugin distribution
-- VS Code extension
-- syntax highlighting
-
-## post-v0.1 Candidates
-
-## Project Creation
-
-Possible package:
-
-```txt
-create-tsuzuru
-```
-
-Potential scope:
-
-- generate Vite + Preact project
-- include sample `.tzr`
-- include example plugin command setup
-- include minimal save/load UI
-- include TypeScript config
-- include package scripts
-
-This is not part of v0.1 unless explicitly re-scoped.
-
-For v0.1, project creation is manual. Users should follow the root README quickstart or use `examples/preact-basic` as the current runnable Vite + Preact reference.
-
-## Vite Integration
-
-Possible package:
-
-```txt
-@tsuzuru/vite
-```
-
-This is not part of v0.1. For v0.1, Vite projects should load `.tzr` files with `?raw` or another host-owned file loading path and pass the source string to `parseTzr`, then compile it with `compileTzr`.
-
-Potential scope:
-
-- import `.tzr` files
-- compile `.tzr` at build time
-- provide diagnostics during development
-- support hot reload for scenarios
-- optionally expose raw source and compiled IR
-
-This is not part of v0.1 unless explicitly re-scoped.
-
-## Editor Support
-
-Potential scope:
-
-- syntax highlighting
-- diagnostics
-- snippets
-- VS Code extension
-- jump target navigation
-- outline view
-
-This should come after the DSL stabilizes.
-
-## Runtime Features
-
-Potential scope:
-
-- backlog
-- skip mode
-- auto mode
-- read tracking
-- text speed settings
-- multiple save slots
-- config screen
-- audio volume settings
-
-These should not be implemented until the core runtime and save/load model are stable.
-
-## Visual Features
-
-Potential scope:
-
-- richer transition system
-- camera-like effects
-- advanced character positioning
-- voice playback
-- Live2D
-- Pixi integration
-
-These should stay plugin-oriented where possible.
-
-## Compatibility
-
-Tsuzuru may borrow concepts from existing engines, but compatibility is not a near-term goal.
-
-Not planned for v0.1:
-
-- TyranoScript compatibility
-- KAG / KS compatibility
-- Ren'Py compatibility
-
-If compatibility is ever considered, it should be treated as a separate adapter or migration tool, not as a constraint on core DSL design.
-
-## Re-Scoping Rules
-
-A post-v0.1 feature can move into v0.1 only if:
-
-- it is explicitly requested
-- it does not destabilize the DSL
-- it does not violate architecture boundaries
-- it can be tested
-- it can be documented accurately
-- it does not introduce large unrelated work
-- it does not make `.tzr` a general-purpose scripting language
-
-## Release Readiness
-
-v0.1 readiness requires:
-
-- `pnpm install` passes
-- `pnpm test` passes
-- `pnpm typecheck` passes
-- `pnpm --filter @tsuzuru/core build` passes
-- `pnpm --filter @tsuzuru/preact build` passes
-- `pnpm --filter @tsuzuru/example-preact-basic build` passes
-- examples work from a clean checkout
-- public exports are reviewed
-- README quickstart is accurate
-- docs match implementation
-- limitations are explicit
-- TODOs reflect actual status
-
-As of the v0.1 final readiness review, these release-readiness checks have been completed for the planned v0.1 scope. Deferred post-v0.1 items remain intentionally unimplemented unless explicitly re-scoped.
-
-## Roadmap Maintenance
-
-Update this file when:
-
-- v0.1 scope changes
-- a feature is explicitly deferred
-- a post-v0.1 feature becomes planned
-- a package boundary changes
-- a major architectural decision changes
-- documentation starts implying a new capability
-
-Do not use this file as a task checklist.
-
-Use `TODOS.md` for operational task tracking.
+細かい作業 checklist は、この文書ではなく dedicated plan docs や issue / TODO に置きます。

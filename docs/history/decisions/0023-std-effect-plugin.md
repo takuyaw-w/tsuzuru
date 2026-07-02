@@ -79,5 +79,5 @@ The following effects are not part of this MVP:
 - `docs/plugins/std-effect.md`
 - `docs/plugins/std-visual.md`
 - `docs/plugins/std-audio.md`
-- `docs/decisions/0004-std-visual-plugin.md`
-- `docs/decisions/0005-std-audio-plugin.md`
+- `docs/history/decisions/0004-std-visual-plugin.md`
+- `docs/history/decisions/0005-std-audio-plugin.md`

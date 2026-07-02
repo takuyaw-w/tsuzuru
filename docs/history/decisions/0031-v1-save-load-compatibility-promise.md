@@ -151,9 +151,9 @@ Revisit this decision when:
 ## Related Documents
 
 - `docs/architecture.md`
-- `docs/decisions/0028-runtime-snapshot-compatibility.md`
-- `docs/decisions/0029-host-facing-save-load-helper.md`
-- `docs/decisions/0030-runtime-save-slot-envelope.md`
+- `docs/history/decisions/0028-runtime-snapshot-compatibility.md`
+- `docs/history/decisions/0029-host-facing-save-load-helper.md`
+- `docs/history/decisions/0030-runtime-save-slot-envelope.md`
 - `docs/plans/v1.0-release-gate.md`
 - `packages/core/src/runtime-snapshot.ts`
 - `packages/core/src/runtime-save-slot.ts`

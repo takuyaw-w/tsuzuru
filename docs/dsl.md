@@ -159,6 +159,6 @@ $macro(...)
 
 Historical decisions and cleanup notes remain in:
 
-- [`docs/decisions`](decisions/)
+- [`docs/history/decisions`](history/decisions/)
 - [`docs/plans/dsl-v2-compile-to-ir.md`](plans/dsl-v2-compile-to-ir.md)
 - [`docs/plans/legacy-dsl-cleanup.md`](plans/legacy-dsl-cleanup.md)

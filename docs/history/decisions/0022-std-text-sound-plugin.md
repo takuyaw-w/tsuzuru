@@ -97,5 +97,5 @@ renderer-neutral runtime state.
 
 - `docs/plugins/std-text-sound.md`
 - `docs/plugins/std-audio.md`
-- `docs/decisions/0005-std-audio-plugin.md`
-- `docs/decisions/0012-text-preferences-mvp.md`
+- `docs/history/decisions/0005-std-audio-plugin.md`
+- `docs/history/decisions/0012-text-preferences-mvp.md`

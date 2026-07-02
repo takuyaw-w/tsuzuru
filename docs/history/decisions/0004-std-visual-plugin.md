@@ -181,6 +181,6 @@ plugin は `console.warn` を直接呼びません。runtime diagnostics / logge
 
 - `AGENTS.md`
 - `docs/plugin-api.md`
-- `docs/decisions/0002-core-preact-boundary.md`
-- `docs/decisions/0003-macro-vs-plugin.md`
+- `docs/history/decisions/0002-core-preact-boundary.md`
+- `docs/history/decisions/0003-macro-vs-plugin.md`
 - `docs/plugins/std-visual.md`

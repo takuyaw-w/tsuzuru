@@ -85,5 +85,5 @@ moving host playback policy into core runtime semantics.
 ## Related Documents
 
 - `AGENTS.md`
-- `docs/decisions/0005-std-audio-plugin.md`
+- `docs/history/decisions/0005-std-audio-plugin.md`
 - `examples/preact-basic/README.md`

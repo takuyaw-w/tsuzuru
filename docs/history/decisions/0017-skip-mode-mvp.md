@@ -108,6 +108,6 @@ Owns:
 ## Related Documents
 
 - `AGENTS.md`
-- `docs/decisions/0015-auto-mode-mvp.md`
-- `docs/decisions/0016-read-tracking-mvp.md`
+- `docs/history/decisions/0015-auto-mode-mvp.md`
+- `docs/history/decisions/0016-read-tracking-mvp.md`
 - `examples/preact-basic/README.md`

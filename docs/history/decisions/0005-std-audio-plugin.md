@@ -245,4 +245,4 @@ runtime warning を持たない理由は、std-audio の v0.2 初期 command set
 
 - `docs/plugins/std-audio.md`
 - `docs/plugins/std-visual.md`
-- `docs/decisions/0004-std-visual-plugin.md`
+- `docs/history/decisions/0004-std-visual-plugin.md`

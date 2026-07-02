@@ -46,7 +46,7 @@ has a minimal plugin command validation foundation through
 | `docs/plans/legacy-dsl-cleanup.md` | keep with note | Retained as this cleanup record and follow-up tracker. |
 | Old example dist-only directories | delete now | Removed because they referenced deleted legacy examples and were not runnable source packages. |
 | `README.md` | rewrite/minimize | Kept DSL v2-first; removed wording that implied current macro support. |
-| ADRs under `docs/decisions/` | keep with note | Retained as historical decisions. Broken links to the removed macro API doc were replaced. |
+| ADRs under `docs/history/decisions/` | keep with note | Retained as historical decisions. Broken links to the removed macro API doc were replaced. |
 | `docs/roadmap.md` | keep with note | Retained as partially historical roadmap. It has a status note warning about legacy syntax and APIs. |
 | `docs/architecture.md` | keep with note | Retained as the DSL v2-first architecture map. |
 

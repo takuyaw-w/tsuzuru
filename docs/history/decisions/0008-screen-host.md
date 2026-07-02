@@ -183,9 +183,9 @@ v0.6.0 では transition / animation / zIndex prop は提供しません。
 
 ## Related Documents
 
-- `docs/plans/v0.6-screen-host.md`
-- `docs/decisions/0006-standard-ui-preact.md`
-- `docs/decisions/0007-standard-ui-viewport.md`
+- `docs/history/plans/v0.6-screen-host.md`
+- `docs/history/decisions/0006-standard-ui-preact.md`
+- `docs/history/decisions/0007-standard-ui-viewport.md`
 - `packages/standard-ui-preact/src/screen-host.tsx`
 - `packages/standard-ui-preact/src/style.css`
 - `examples/standard-ui-preact/src/App.tsx`

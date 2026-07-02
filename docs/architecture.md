@@ -107,8 +107,10 @@ docs/
   roadmap.md
   design/
     dsl-v2.md
-  decisions/
   plans/
+  history/
+    decisions/
+    plans/
 ```
 
 Current runnable examples:
@@ -1114,7 +1116,8 @@ Current tooling includes:
 
 - TypeScript
 - Vitest
-- Biome
+- Oxlint
+- Oxfmt
 
 Root scripts provide repository-level checks:
 
@@ -1127,7 +1130,7 @@ pnpm typecheck
 pnpm --filter @tsuzuru/example-preact-basic build
 ```
 
-Biome owns formatting, linting, and import organization.
+Oxfmt owns formatting, and Oxlint owns linting.
 
 Do not introduce ESLint or Prettier unless explicitly requested.
 

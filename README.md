@@ -249,9 +249,9 @@ Start here:
 
 - [Architecture](docs/architecture.md): package boundaries and runtime pipeline.
 - [DSL](docs/dsl.md): current `.tzr` syntax entry point.
-- [DSL v2 design](docs/design/dsl-v2.md): design direction and syntax notes.
 - [DSL support matrix](docs/design/dsl-support-matrix.md): current stable,
   parser-only, plugin-dependent, and deferred syntax status.
+- [Roadmap](docs/roadmap.md): current product direction and near-term focus.
 - [Runtime](docs/runtime.md): runtime state, events, choices, waits, variables,
   snapshots, and restore behavior.
 - [Plugin API](docs/plugin-api.md): plugin command metadata and runtime handler
@@ -261,14 +261,12 @@ Start here:
 - [Themes](docs/themes.md): official theme package boundaries and usage.
 - [Screen primitives](docs/ui/screen-primitives.md): reusable UI building blocks
   for project-specific screens.
-- [Architecture decisions](docs/decisions/): accepted design decisions and
-  rationale.
-- [Plans](docs/plans/): current and historical implementation plans.
 - [Release notes](docs/releases/): release records and publish notes.
 
-Some plan and release documents are historical records. Prefer the architecture,
-DSL, support matrix, package README files, and current examples when you need
-the current implementation surface.
+Historical design records and old implementation plans live under
+`docs/history/`. Prefer the architecture, roadmap, DSL, support matrix, package
+README files, and current examples when you need the current implementation
+surface.
 
 ## Development
 

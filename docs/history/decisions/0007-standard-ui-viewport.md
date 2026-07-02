@@ -199,8 +199,8 @@ inner を absolute にした理由は、aspect-ratio で作った outer rectangl
 
 ## Related Documents
 
-- `docs/plans/v0.5-standard-ui-viewport.md`
-- `docs/decisions/0006-standard-ui-preact.md`
+- `docs/history/plans/v0.5-standard-ui-viewport.md`
+- `docs/history/decisions/0006-standard-ui-preact.md`
 - `packages/standard-ui-preact/src/game-viewport.tsx`
 - `packages/standard-ui-preact/src/style.css`
 - `examples/standard-ui-preact/src/App.tsx`

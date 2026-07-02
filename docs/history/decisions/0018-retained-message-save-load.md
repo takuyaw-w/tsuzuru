@@ -74,5 +74,5 @@ runtime semantics unless a concrete cross-host API requirement emerges.
 ## Related Documents
 
 - `AGENTS.md`
-- `docs/decisions/0014-save-load-mvp.md`
+- `docs/history/decisions/0014-save-load-mvp.md`
 - `examples/preact-basic/README.md`

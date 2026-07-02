@@ -102,5 +102,5 @@ first renderer layer straightforward.
 
 ## Related Documents
 
-- [`docs/plugins/std-hotspot.md`](../plugins/std-hotspot.md)
-- [`examples/preact-hotspot-basic`](../../examples/preact-hotspot-basic/)
+- [`docs/plugins/std-hotspot.md`](../../plugins/std-hotspot.md)
+- [`examples/preact-hotspot-basic`](../../../examples/preact-hotspot-basic/)

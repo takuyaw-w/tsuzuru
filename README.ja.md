@@ -178,18 +178,16 @@ pnpm examples:e2e
 
 - [Architecture](docs/architecture.md): package boundaries と runtime pipeline。
 - [DSL](docs/dsl.md): 現在の `.tzr` syntax entry point。
-- [DSL v2 design](docs/design/dsl-v2.md): design direction と syntax notes。
 - [DSL support matrix](docs/design/dsl-support-matrix.md): current stable、parser-only、plugin-dependent、deferred syntax status。
+- [Roadmap](docs/roadmap.md): 現在の product direction と near-term focus。
 - [Runtime](docs/runtime.md): runtime state、events、choices、waits、variables、snapshots、restore behavior。
 - [Plugin API](docs/plugin-api.md): plugin command metadata と runtime handler boundaries。
 - [Plugin docs](docs/plugins/): standard visual、audio、text-sound、effect、camera、particle、system、Vite plugin の詳細。
 - [Themes](docs/themes.md): official theme package boundaries と usage。
 - [Screen primitives](docs/ui/screen-primitives.md): project-specific screens のための reusable UI building blocks。
-- [Architecture decisions](docs/decisions/): accepted design decisions と rationale。
-- [Plans](docs/plans/): current and historical implementation plans。
 - [Release notes](docs/releases/): release records と publish notes。
 
-一部の plan / release documents は historical records です。現在の implementation surface を確認したい場合は、architecture、DSL、support matrix、package README files、current examples を優先してください。
+Historical design records と古い implementation plans は `docs/history/` 配下にあります。現在の implementation surface を確認したい場合は、architecture、roadmap、DSL、support matrix、package README files、current examples を優先してください。
 
 ## Development
 

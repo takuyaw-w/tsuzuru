@@ -69,21 +69,21 @@ When changing DSL behavior, read:
 
 1. `0001-dsl-is-not-js.md`
 2. `0003-macro-vs-plugin.md`
-3. `../dsl.md`
-4. `../architecture.md`
+3. `../../dsl.md`
+4. `../../architecture.md`
 
 When changing package boundaries, read:
 
 1. `0002-core-preact-boundary.md`
-2. `../architecture.md`
-3. `../runtime.md`
+2. `../../architecture.md`
+3. `../../runtime.md`
 
 When changing plugin behavior or revisiting historical macro decisions, read:
 
 1. `0003-macro-vs-plugin.md`
-2. `../plugin-api.md`
-3. `../dsl.md`
-4. `../plans/legacy-dsl-cleanup.md`
+2. `../../plugin-api.md`
+3. `../../dsl.md`
+4. `../../plans/legacy-dsl-cleanup.md`
 
 ## File Naming
 
@@ -195,6 +195,6 @@ docs/architecture.md
 docs/roadmap.md
   -> milestone scope and future candidates
 
-docs/decisions/*.md
-  -> accepted design decisions and rationale
+docs/history/decisions/*.md
+  -> historical design decisions and rationale
 ```

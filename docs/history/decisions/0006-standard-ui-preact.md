@@ -191,8 +191,8 @@ theme system は v0.4 では作りません。theme、animation、advanced respo
 
 ## Related Documents
 
-- `docs/plans/v0.4-standard-ui-preact.md`
+- `docs/history/plans/v0.4-standard-ui-preact.md`
 - `docs/plugins/std-visual.md`
 - `docs/plugins/std-audio.md`
-- `docs/decisions/0004-std-visual-plugin.md`
-- `docs/decisions/0005-std-audio-plugin.md`
+- `docs/history/decisions/0004-std-visual-plugin.md`
+- `docs/history/decisions/0005-std-audio-plugin.md`

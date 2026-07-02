@@ -466,4 +466,4 @@ Even then, prefer adding explicit adapter APIs over weakening the core boundary.
 - `docs/plugin-api.md`
 - `docs/plans/legacy-dsl-cleanup.md`
 - `docs/roadmap.md`
-- `docs/decisions/0001-dsl-is-not-js.md`
+- `docs/history/decisions/0001-dsl-is-not-js.md`

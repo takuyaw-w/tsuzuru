@@ -452,11 +452,11 @@ Revisit this decision if:
 ## Related Documents
 
 - `AGENTS.md`
-- `docs/decisions/0002-core-preact-boundary.md`
-- `docs/decisions/0004-std-visual-plugin.md`
-- `docs/decisions/0005-std-audio-plugin.md`
-- `docs/decisions/0006-standard-ui-preact.md`
-- `docs/decisions/0010-create-tsuzuru.md`
-- `docs/decisions/0011-include-based-multi-file-scenario.md`
-- `docs/decisions/0019-audio-playback-mvp.md`
-- `docs/plans/v0.17-html-package.md`
+- `docs/history/decisions/0002-core-preact-boundary.md`
+- `docs/history/decisions/0004-std-visual-plugin.md`
+- `docs/history/decisions/0005-std-audio-plugin.md`
+- `docs/history/decisions/0006-standard-ui-preact.md`
+- `docs/history/decisions/0010-create-tsuzuru.md`
+- `docs/history/decisions/0011-include-based-multi-file-scenario.md`
+- `docs/history/decisions/0019-audio-playback-mvp.md`
+- `docs/history/plans/v0.17-html-package.md`

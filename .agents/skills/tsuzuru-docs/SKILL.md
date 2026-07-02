@@ -42,7 +42,7 @@ scope as available behavior.
 - Use current package names and workspace paths.
 - Do not add speculative roadmap prose unless the target doc is explicitly a plan.
 - Keep docs aligned with code and examples in the same change.
-- Use dedicated docs under `docs/decisions`, `docs/plans`, or `docs/design` for design records.
+- Use dedicated docs under `docs/history/decisions`, `docs/plans`, `docs/history/plans`, or `docs/design` for design records.
 
 ## Verification
 
