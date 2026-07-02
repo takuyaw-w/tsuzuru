@@ -110,18 +110,26 @@ are plugin-dependent: compile with std-system metadata and run with the
 std-system condition resolver.
 
 ```ts
-import { compileTzr, stepRuntime } from "@tsuzuru/core";
+import { compileTzr, parseTzr, stepRuntime } from "@tsuzuru/core";
 import {
   createStdSystemCommandHandlers,
   createStdSystemConditionResolver,
   createStdSystemPlugin,
 } from "@tsuzuru/plugin-std-system";
 
-const document = compileTzr(source, {
+const parsed = parseTzr(source);
+if (!parsed.ok) {
+  throw new Error("Parse failed.");
+}
+
+const compiled = compileTzr(parsed.document, {
   plugins: [createStdSystemPlugin()],
 });
+if (!compiled.ok) {
+  throw new Error("Compile failed.");
+}
 
-const result = stepRuntime(document, runtimeState, {
+const result = stepRuntime(compiled.document, runtimeState, {
   commandHandlers: createStdSystemCommandHandlers(),
   conditionResolvers: [createStdSystemConditionResolver()],
 });

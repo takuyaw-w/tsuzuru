@@ -2036,11 +2036,19 @@ condition namespace metadata, and pass `createStdSystemConditionResolver()` to
 runtime stepping:
 
 ```ts
-compileTzr(source, {
+const parsed = parseTzr(source);
+if (!parsed.ok) {
+  throw new Error("Parse failed.");
+}
+
+const compiled = compileTzr(parsed.document, {
   plugins: [createStdSystemPlugin()],
 });
+if (!compiled.ok) {
+  throw new Error("Compile failed.");
+}
 
-stepRuntime(document, state, {
+stepRuntime(compiled.document, state, {
   commandHandlers: createStdSystemCommandHandlers(),
   conditionResolvers: [createStdSystemConditionResolver()],
 });
