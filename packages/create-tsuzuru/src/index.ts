@@ -23,7 +23,7 @@ function detectPackageManager(userAgent = process.env.npm_config_user_agent): Pa
   if (userAgent?.startsWith("pnpm/")) return "pnpm";
   if (userAgent?.startsWith("npm/")) return "npm";
   if (userAgent?.startsWith("yarn/")) return "yarn";
-  return "pnpm";
+  return "npm";
 }
 
 function getNextStepCommands(packageManager = detectPackageManager()): NextStepCommands {
@@ -31,7 +31,7 @@ function getNextStepCommands(packageManager = detectPackageManager()): NextStepC
     case "npm":
       return ["npm install", "npm run check:scenario", "npm run dev"];
     case "pnpm":
-      return ["pnpm dev"];
+      return ["pnpm install", "pnpm check:scenario", "pnpm dev"];
     case "yarn":
       return ["yarn install", "yarn check:scenario", "yarn dev"];
   }

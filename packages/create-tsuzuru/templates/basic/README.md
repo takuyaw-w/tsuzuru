@@ -2,29 +2,61 @@
 
 Tsuzuru でノベルゲームを作るためのスターターです。
 
-起動するとタイトル画面が表示され、Start を押すと本編が始まります。
-まずは Preact や runtime の詳細を知らなくても、シナリオと素材から編集できます。
+まずは、生成された project を起動して、`scenario/main.tzr` を少し編集し、ブラウザ上の表示が変わるところまで確認します。
 
-## 起動
+## 起動する
 
-```bash
+依存関係を入れます。
+
+```sh
+npm install
+```
+
+開発サーバーを起動します。
+
+```sh
+npm run dev
+```
+
+シナリオだけを確認したい場合は、次のコマンドを使います。
+
+```sh
+npm run check:scenario
+```
+
+公開用に build する場合は、次のコマンドを使います。
+
+```sh
+npm run build
+```
+
+npm 以外を使っている場合は、同じ script 名を使ってください。
+
+```sh
+pnpm install
 pnpm dev
 ```
 
-シナリオだけを確認したい場合:
-
-```bash
-pnpm check:scenario
+```sh
+yarn install
+yarn dev
 ```
 
-公開用の build:
+## 最初に編集する
 
-```bash
-pnpm install
-pnpm build
+まず `scenario/main.tzr` を編集します。
+最初は scenario/main.tzr を編集し、セリフが画面に反映されることを確認します。
+
+```tzr
+mio:
+  こんにちは。
+  これは Tsuzuru のスターターです。
 ```
 
-## まず編集するファイル
+たとえば、このセリフを好きな文章に変えて保存します。
+ブラウザに戻ると、Start 後の表示が変わります。
+
+## よく編集するファイル
 
 - `scenario/main.tzr`
   セリフ、ナレーション、背景、キャラクター表示、選択肢、分岐を書きます。
@@ -35,6 +67,9 @@ pnpm build
 - `public/assets/audio/`
   BGM、効果音、ボイスを置きます。
 
+- `src/assets.ts`
+  `.tzr` で使う asset id と、実際の画像や音声ファイルをつなぎます。
+
 - `tsuzuru.config.ts`
   シナリオの場所や storage の宣言的な設定をまとめています。
   save slot 数を変える場合は `storage.slots` を変更してください。
@@ -43,7 +78,7 @@ pnpm build
   作品用の固定テーマを編集します。`App.tsx` で `TsuzuruThemeProvider`
   に渡しています。
 
-## シナリオを書く
+## シナリオと素材をつなぐ
 
 `scenario/main.tzr` では、次のような id を使います。
 
@@ -76,9 +111,12 @@ theme object を差し替えてください。
 `.tzr` シナリオから theme は切り替えません。プレイヤー向けの runtime
 theme switching UI も starter には含めていません。
 
+## Load / Config について
+
 Load / Config は starter では未実装です。ボタンだけ置いてあります。
 `tsuzuru.config.ts` には最初から宣言的な `storage` 設定がありますが、
 save/load や設定画面を表示する処理は starter には含めていません。
+
 必要になったら `@tsuzuru/standard-game-storage` の
 `createStandardGameStorageFromConfig` で config から storage を生成し、
 アプリ側で保存データの作成、復元、画面との接続を追加してください。

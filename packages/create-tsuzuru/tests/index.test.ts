@@ -44,7 +44,7 @@ describe("runCli", () => {
     {
       name: "pnpm",
       userAgent: "pnpm/11.0.0 npm/? node/v25.0.0 linux x64",
-      expectedNextSteps: ["pnpm dev"],
+      expectedNextSteps: ["pnpm install", "pnpm check:scenario", "pnpm dev"],
     },
     {
       name: "yarn",
@@ -54,7 +54,7 @@ describe("runCli", () => {
     {
       name: "unknown",
       userAgent: "bun/1.3.0 npm/? node/v25.0.0 linux x64",
-      expectedNextSteps: ["pnpm dev"],
+      expectedNextSteps: ["npm install", "npm run check:scenario", "npm run dev"],
     },
   ])("prints $name next steps", async ({ userAgent, expectedNextSteps }) => {
     const root = await createTempRoot();

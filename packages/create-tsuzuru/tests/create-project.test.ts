@@ -155,6 +155,13 @@ describe("createProject", () => {
     expect(readmeSource).toContain("tsuzuru.config.ts");
     expect(readmeSource).toContain("src/themes/localTheme.ts");
     expect(readmeSource).toContain("theme switching UI");
+    expect(readmeSource).toContain("npm install");
+    expect(readmeSource).toContain("npm run dev");
+    expect(readmeSource).toContain("npm run check:scenario");
+    expect(readmeSource).toContain("scenario/main.tzr を編集");
+    expect(readmeSource).toContain("npm 以外を使っている場合");
+    expect(readmeSource).toContain("pnpm dev");
+    expect(readmeSource).not.toContain("pnpm install --prefer-offline");
     expect(tsuzuruConfigSource).toContain('id: "my-game"');
     expect(tsuzuruConfigSource).toContain("project: projectIdentity");
     expect(tsuzuruConfigSource).toContain("storage: {");
@@ -192,14 +199,18 @@ describe("createProject", () => {
     ).resolves.toContain("Mio smiling character placeholder");
   });
 
-  it("includes a check:scenario script", async () => {
+  it("uses package-manager neutral starter scripts", async () => {
     const root = await createTempRoot();
 
     await createProject({ cwd: root, projectName: "my-game" });
     const packageJson = JSON.parse(await readFile(join(root, "my-game", "package.json"), "utf8")) as {
+      readonly packageManager?: string;
       readonly scripts: Record<string, string>;
     };
 
+    expect(packageJson.packageManager).toBeUndefined();
+    expect(packageJson.scripts.dev).toBe("vite");
+    expect(packageJson.scripts.build).toBe("tsuzuru check && vite build");
     expect(packageJson.scripts["check:scenario"]).toBe("tsuzuru check");
     expect(packageJson.scripts.typecheck).toBe("tsc -p tsconfig.json --noEmit");
   });

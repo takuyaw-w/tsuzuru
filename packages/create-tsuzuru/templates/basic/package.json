@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm install --prefer-offline && vite",
+    "dev": "vite",
     "build": "tsuzuru check && vite build",
     "check:scenario": "tsuzuru check",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -26,6 +26,5 @@
     "@tsuzuru/vite-plugin": "^1.0.0",
     "typescript": "^6.0.3",
     "vite": "^8.1.2"
-  },
-  "packageManager": "pnpm@11.0.0"
+  }
 }
