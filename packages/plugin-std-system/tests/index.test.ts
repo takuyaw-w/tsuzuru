@@ -12,6 +12,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
   createStdSystemPlugin,
   getStdSystemState,
   isAchievementUnlocked,
@@ -19,6 +20,7 @@ import {
   isEndingUnlocked,
   isStdSystemState,
   stdSystemPluginCommands,
+  tryGetStdSystemState,
 } from "../src/index.js";
 
 const loc = {
@@ -40,6 +42,7 @@ describe("createStdSystemPlugin", () => {
     });
 
     expect(plugin.commands).toBe(stdSystemPluginCommands);
+    expect(plugin.conditionNamespaces).toEqual(["system"]);
     expect(state.plugins.stdSystem).toEqual(initialSystemState);
   });
 
@@ -59,11 +62,106 @@ describe("createStdSystemPlugin", () => {
     );
   });
 
+  it("returns undefined when stdSystem state is missing or malformed", () => {
+    expect(tryGetStdSystemState(createInitialRuntimeState(createDocument()))).toBeUndefined();
+    expect(
+      tryGetStdSystemState({
+        ...createInitialRuntimeState(createDocument()),
+        plugins: { stdSystem: { endings: {}, cgs: {} } },
+      }),
+    ).toBeUndefined();
+  });
+
   it("checks stdSystem state shape", () => {
     expect(isStdSystemState(initialSystemState)).toBe(true);
     expect(isStdSystemState({ endings: { trueEnd: { unlocked: true } }, cgs: {}, achievements: {} })).toBe(true);
     expect(isStdSystemState({ endings: { trueEnd: { unlocked: false } }, cgs: {}, achievements: {} })).toBe(true);
     expect(isStdSystemState({ endings: {}, achievements: {} })).toBe(false);
+  });
+});
+
+describe("std-system condition resolver", () => {
+  it("resolves unlocked endings cgs and achievements", () => {
+    const result = runStdSystemCommands(
+      command("system.unlockEnding", [namedIdentifier("id", "trueEnd")]),
+      command("system.unlockCg", [namedString("id", "gallery-main")]),
+      command("system.unlockAchievement", [namedIdentifier("id", "firstClear")]),
+    );
+    const resolver = createStdSystemConditionResolver();
+
+    expect(resolver.namespace).toBe("system");
+    expect(resolver.resolve(["endings", "trueEnd", "unlocked"], result.state)).toEqual({ ok: true, value: true });
+    expect(resolver.resolve(["cgs", "gallery-main", "unlocked"], result.state)).toEqual({ ok: true, value: true });
+    expect(resolver.resolve(["achievements", "firstClear", "unlocked"], result.state)).toEqual({
+      ok: true,
+      value: true,
+    });
+    expect(resolver.resolve(["endings", "missing", "unlocked"], result.state)).toEqual({ ok: true, value: false });
+    expect(resolver.resolve(["cgs", "missing", "unlocked"], result.state)).toEqual({ ok: true, value: false });
+    expect(resolver.resolve(["achievements", "missing", "unlocked"], result.state)).toEqual({
+      ok: true,
+      value: false,
+    });
+  });
+
+  it("returns unsupported path and missing state errors", () => {
+    const resolver = createStdSystemConditionResolver();
+    const state = createInitialRuntimeState(createDocument(), {
+      plugins: [createStdSystemPlugin()],
+    });
+
+    expect(resolver.resolve(["endings", "trueEnd", "title"], state)).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_path_unsupported",
+        message: 'Unsupported system condition path "system.endings.trueEnd.title".',
+      },
+    });
+    expect(resolver.resolve(["profiles", "main", "unlocked"], state)).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_path_unsupported",
+        message: 'Unsupported system condition path "system.profiles.main.unlocked".',
+      },
+    });
+    expect(resolver.resolve(["profiles", "main", "unlocked"], createInitialRuntimeState(createDocument()))).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_path_unsupported",
+        message: 'Unsupported system condition path "system.profiles.main.unlocked".',
+      },
+    });
+    expect(
+      resolver.resolve(["profiles", "main", "unlocked"], {
+        ...createInitialRuntimeState(createDocument()),
+        plugins: { stdSystem: { endings: {}, cgs: {} } },
+      }),
+    ).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_path_unsupported",
+        message: 'Unsupported system condition path "system.profiles.main.unlocked".',
+      },
+    });
+    expect(resolver.resolve(["endings", "trueEnd", "unlocked"], createInitialRuntimeState(createDocument()))).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_state_missing",
+        message: "runtimeState.plugins.stdSystem is not initialized. Register createStdSystemPlugin().",
+      },
+    });
+    expect(
+      resolver.resolve(["endings", "trueEnd", "unlocked"], {
+        ...createInitialRuntimeState(createDocument()),
+        plugins: { stdSystem: { endings: {}, cgs: {} } },
+      }),
+    ).toEqual({
+      ok: false,
+      error: {
+        code: "condition_system_state_missing",
+        message: "runtimeState.plugins.stdSystem is not initialized. Register createStdSystemPlugin().",
+      },
+    });
   });
 });
 

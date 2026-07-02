@@ -10,6 +10,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
   createStdSystemPlugin,
   getStdSystemState,
   isAchievementUnlocked,
@@ -59,6 +60,60 @@ describe("std system save/load integration", () => {
       lines: [{ text: "After unlocks." }],
     });
     expect(getStdSystemState(afterUnlocks.state)).toEqual(getStdSystemState(restored));
+  });
+
+  it("exposes restored unlock state through the system condition resolver", () => {
+    const document = compileSource(`scene start:
+  call system.unlockEnding(id=trueEnd)
+  call system.unlockCg(id="gallery-main")
+  call system.unlockAchievement(id=firstClear)
+`);
+    const commandHandlers = createStdSystemCommandHandlers();
+    let state = createInitialRuntimeState(document, {
+      plugins: [createStdSystemPlugin()],
+    });
+
+    state = stepRuntime(document, state, { commandHandlers }).state;
+    state = stepRuntime(document, state, { commandHandlers }).state;
+    state = stepRuntime(document, state, { commandHandlers }).state;
+    state = stepRuntime(document, state, { commandHandlers }).state;
+
+    const restored = restoreRuntimeState(jsonRoundTrip(createRuntimeSnapshot(state)));
+    const resolver = createStdSystemConditionResolver();
+
+    expect(resolver.resolve(["endings", "trueEnd", "unlocked"], restored)).toEqual({ ok: true, value: true });
+    expect(resolver.resolve(["cgs", "gallery-main", "unlocked"], restored)).toEqual({ ok: true, value: true });
+    expect(resolver.resolve(["achievements", "firstClear", "unlocked"], restored)).toEqual({ ok: true, value: true });
+    expect(resolver.resolve(["endings", "missing", "unlocked"], restored)).toEqual({ ok: true, value: false });
+  });
+
+  it("uses restored unlock state for runtime condition visibility", () => {
+    const document = compileSource(`scene start:
+  call system.unlockEnding(id=trueEnd)
+  if system.endings.trueEnd.unlocked:
+    narration:
+      Restored ending is visible.
+`);
+    const commandHandlers = createStdSystemCommandHandlers();
+    const conditionResolvers = [createStdSystemConditionResolver()];
+    const initialState = createInitialRuntimeState(document, {
+      plugins: [createStdSystemPlugin()],
+    });
+
+    const scene = stepRuntime(document, initialState, { commandHandlers, conditionResolvers });
+    const unlocked = stepRuntime(document, scene.state, { commandHandlers, conditionResolvers });
+    const restored = restoreRuntimeState(jsonRoundTrip(createRuntimeSnapshot(unlocked.state)));
+    const afterRestore = stepRuntime(document, restored, { commandHandlers, conditionResolvers });
+
+    expect(afterRestore.event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "narration",
+        lines: [{ text: "Restored ending is visible." }],
+      },
+    });
   });
 });
 

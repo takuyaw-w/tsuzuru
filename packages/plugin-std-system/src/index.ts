@@ -2,6 +2,7 @@ import {
   type CommandInstruction,
   definePluginCommand,
   type PluginCommandMap,
+  type RuntimeConditionResolver,
   type RuntimePluginCommandHandler,
   type RuntimePluginDefinition,
   type RuntimeState,
@@ -18,6 +19,10 @@ export interface StdSystemState {
   readonly cgs: Readonly<Record<string, StdSystemUnlockEntry>>;
   readonly achievements: Readonly<Record<string, StdSystemUnlockEntry>>;
 }
+
+export type StdSystemPluginDefinition = RuntimePluginDefinition<StdSystemState> & {
+  readonly conditionNamespaces: readonly ["system"];
+};
 
 const STD_SYSTEM_UNLOCK_ARGS = [{ name: "id", type: ["string", "identifier"], nonEmpty: true }] as const;
 
@@ -36,9 +41,10 @@ export const stdSystemPluginCommands = {
   }),
 } satisfies PluginCommandMap;
 
-export function createStdSystemPlugin(): RuntimePluginDefinition<StdSystemState> {
+export function createStdSystemPlugin(): StdSystemPluginDefinition {
   return {
     name: STD_SYSTEM_PLUGIN_NAME,
+    conditionNamespaces: ["system"],
     commands: stdSystemPluginCommands,
     createInitialState: createInitialStdSystemState,
   };
@@ -53,12 +59,53 @@ export function createStdSystemCommandHandlers(): Readonly<Record<string, Runtim
 }
 
 export function getStdSystemState(runtimeState: RuntimeState): StdSystemState {
-  const state = runtimeState.plugins[STD_SYSTEM_PLUGIN_NAME];
-  if (!isStdSystemState(state)) {
+  const state = tryGetStdSystemState(runtimeState);
+  if (state === undefined) {
     throw new Error("runtimeState.plugins.stdSystem is not initialized. Register createStdSystemPlugin().");
   }
 
   return state;
+}
+
+export function tryGetStdSystemState(runtimeState: RuntimeState): StdSystemState | undefined {
+  const state = runtimeState.plugins[STD_SYSTEM_PLUGIN_NAME];
+  return isStdSystemState(state) ? state : undefined;
+}
+
+export function createStdSystemConditionResolver(): RuntimeConditionResolver {
+  return {
+    namespace: "system",
+    resolve: (path, runtimeState) => {
+      const supportedPath = getSupportedSystemConditionPath(path);
+      if (supportedPath === undefined) {
+        return unsupportedSystemConditionPath(path);
+      }
+
+      const state = tryGetStdSystemState(runtimeState);
+      if (state === undefined) {
+        return {
+          ok: false,
+          error: {
+            code: "condition_system_state_missing",
+            message: "runtimeState.plugins.stdSystem is not initialized. Register createStdSystemPlugin().",
+          },
+        };
+      }
+
+      const [collectionName, id] = supportedPath;
+      if (collectionName === "endings") {
+        return { ok: true, value: isEndingUnlocked(state, id) };
+      }
+      if (collectionName === "cgs") {
+        return { ok: true, value: isCgUnlocked(state, id) };
+      }
+      if (collectionName === "achievements") {
+        return { ok: true, value: isAchievementUnlocked(state, id) };
+      }
+
+      return unsupportedSystemConditionPath(path);
+    },
+  };
 }
 
 export function isStdSystemState(value: unknown): value is StdSystemState {
@@ -142,6 +189,31 @@ function getRequiredUnlockId(instruction: CommandInstruction): string {
 
 function throwInvalidRuntimeArguments(instruction: CommandInstruction): never {
   throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std system command arguments.`);
+}
+
+function getSupportedSystemConditionPath(
+  path: readonly string[],
+): readonly [keyof StdSystemState, string] | undefined {
+  if (path.length !== 3 || path[1] === undefined || path[2] !== "unlocked") {
+    return undefined;
+  }
+
+  const collectionName = path[0];
+  if (collectionName !== "endings" && collectionName !== "cgs" && collectionName !== "achievements") {
+    return undefined;
+  }
+
+  return [collectionName, path[1]];
+}
+
+function unsupportedSystemConditionPath(path: readonly string[]): ReturnType<RuntimeConditionResolver["resolve"]> {
+  return {
+    ok: false,
+    error: {
+      code: "condition_system_path_unsupported",
+      message: `Unsupported system condition path "system.${path.join(".")}".`,
+    },
+  };
 }
 
 function isUnlockEntryRecord(value: unknown): value is Readonly<Record<string, StdSystemUnlockEntry>> {
