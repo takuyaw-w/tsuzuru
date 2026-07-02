@@ -144,6 +144,7 @@ scene next:
 | [`@tsuzuru/plugin-std-effect`](packages/plugin-std-effect/) | One-shot screen effect command handlers。 |
 | [`@tsuzuru/plugin-std-camera`](packages/plugin-std-camera/) | Durable camera state command handlers。 |
 | [`@tsuzuru/plugin-std-particle`](packages/plugin-std-particle/) | Durable particle state command handlers。 |
+| [`@tsuzuru/plugin-std-hotspot`](packages/plugin-std-hotspot/) | Rectangular hotspot state and click-wait command handlers。 |
 | [`@tsuzuru/plugin-std-system`](packages/plugin-std-system/) | endings、CGs、achievements 向けの durable unlock state。 |
 
 Core は Preact、DOM、CSS、Vite、browser storage、asset loading から独立しています。UI adapters、standard UI、examples、applications が browser と framework behavior を所有します。

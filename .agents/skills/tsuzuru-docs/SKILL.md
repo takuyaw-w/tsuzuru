@@ -22,7 +22,9 @@ scope as available behavior.
 ## Current Constraints
 
 - Document the current parser/compiler API exported by `@tsuzuru/core`.
-- Document `examples/dsl-v2-basic` as the runnable example.
+- Document the current Preact examples as runnable examples. Use
+  `examples/preact-starter` for the creator-facing starter path and
+  `examples/preact-basic` for broad integration behavior.
 - Do not document removed DSL syntax as supported.
 - Do not document macro, preset, or stage features as implemented.
 - Keep historical context in dedicated decision or plan docs, not in task skills.
@@ -59,7 +61,7 @@ When docs include runnable commands or API examples, also run the relevant check
 
 ```sh
 rtk pnpm typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 ```
 
 ## Final Report

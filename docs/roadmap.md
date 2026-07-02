@@ -8,6 +8,7 @@
 - [Architecture](architecture.md)
 - [DSL](dsl.md)
 - [DSL support matrix](design/dsl-support-matrix.md)
+- [Post-v1 feature boundary design](design/post-v1-feature-boundaries.md)
 - [Runtime](runtime.md)
 - [Plugin API](plugin-api.md)
 - [v1.0 Release Gate](plans/v1.0-release-gate.md)
@@ -214,6 +215,8 @@ Examples は「全部を最初に理解するもの」ではなく、目的別�
 ## 後で検討すること
 
 以下は有用ですが、v1.x の最初に広げすぎると初回体験がぼやけるため、設計を分けて扱います。
+rich text、`system.*` condition resolver、visual coordinate placement、audio transitions の境界は
+[`post-v1-feature-boundaries.md`](design/post-v1-feature-boundaries.md) にまとめています。
 
 ### Editor support
 

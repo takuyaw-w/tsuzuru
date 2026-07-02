@@ -38,7 +38,9 @@ generated files, and tests that require exact assertion text.
 
 - Treat the modern `.tzr` DSL under `packages/core/src` as current.
 - Use the public parser/compiler API exported from `@tsuzuru/core`.
-- Treat `examples/dsl-v2-basic` as the current runnable example.
+- Treat the Preact examples under `examples/preact-*` as the current runnable
+  examples. Use `examples/preact-basic` for broad integration checks unless the
+  task targets starter, hotspot, or sound-novel behavior specifically.
 - Do not reintroduce removed DSL syntax, deleted examples, or deleted parser/compiler APIs.
 - Do not introduce macro, preset, or stage syntax unless explicitly requested.
 - Do not move scenario semantics into Preact, UI packages, examples, or plugins.
@@ -72,7 +74,7 @@ rtk pnpm lint
 rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 rtk git diff --check
 ```
 

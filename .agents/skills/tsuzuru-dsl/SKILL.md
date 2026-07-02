@@ -17,7 +17,7 @@ DSL-facing diagnostics, and DSL documentation.
 3. `packages/core/src/scenario-ast.ts`
 4. `packages/core/src/compiler.ts`
 5. Relevant parser/compiler tests under `packages/core/tests`
-6. Current example scenario under `examples/dsl-v2-basic`
+6. Relevant current example scenario under `examples/preact-*`
 
 ## Investigation Guidance
 
@@ -32,7 +32,9 @@ syntax examples, diagnostics, docs, and test assertion text.
 - Do not add arbitrary JavaScript or TypeScript execution inside `.tzr` files.
 - Do not restore removed DSL syntax or removed parser/compiler APIs.
 - Do not add macro, preset, or stage syntax unless explicitly requested.
-- Treat `examples/dsl-v2-basic` as the current runnable example.
+- Treat the Preact examples under `examples/preact-*` as the current runnable
+  examples. Use `examples/preact-basic` for broad DSL integration checks unless
+  the task targets starter, hotspot, or sound-novel behavior specifically.
 
 ## Change Guidance
 
@@ -59,7 +61,7 @@ rtk git diff --check
 When syntax appears in examples or docs:
 
 ```sh
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 rtk pnpm test
 rtk pnpm typecheck
 ```

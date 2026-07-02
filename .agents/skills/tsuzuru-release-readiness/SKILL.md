@@ -34,9 +34,11 @@ scenarios, and exact test or diagnostic text.
 
 - Current parser/compiler API is exported from `@tsuzuru/core`.
 - Current DSL implementation lives under `packages/core/src`.
-- Current runnable example is `examples/dsl-v2-basic`.
-- TypeScript, Vitest, and Biome versions are managed through the pnpm catalog.
-- Biome is a root dev dependency and root-level tool.
+- Current runnable examples are `examples/preact-starter`,
+  `examples/preact-basic`, `examples/preact-hotspot-basic`, and
+  `examples/preact-sound-novel`.
+- TypeScript, Vitest, Oxfmt, and Oxlint versions are managed through the pnpm catalog.
+- Oxfmt and Oxlint are root dev dependencies and root-level tools.
 - Do not restore deleted APIs, deleted examples, or removed DSL syntax.
 - Do not treat macro, preset, or stage features as current release scope unless explicitly requested.
 
@@ -47,7 +49,7 @@ scenarios, and exact test or diagnostic text.
 - README and docs describe current behavior.
 - Example builds from repository root.
 - Tests and typecheck pass.
-- Biome format, lint, and check pass.
+- Oxfmt format checks, Oxlint lint checks, and root `check` pass.
 - Lockfile is current and installable with `--frozen-lockfile`.
 - TODO updates are evidence-backed.
 
@@ -62,7 +64,7 @@ rtk pnpm lint
 rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 rtk git diff --check
 ```
 

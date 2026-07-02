@@ -70,7 +70,7 @@ rtk pnpm typecheck
 When examples change:
 
 ```sh
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 ```
 
 ## Final Report

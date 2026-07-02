@@ -64,7 +64,7 @@ When public API, runtime document shape, or examples are affected:
 ```sh
 rtk pnpm test
 rtk pnpm typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 ```
 
 ## Final Report

@@ -175,6 +175,12 @@ std-audio commands remain plugin-dependent.
 Editor / syntax highlighting is not a v1.0 blocker; it remains optional tooling
 that should follow this matrix.
 
+Post-v1 feature boundary guidance for rich text / inline events, `system.*`
+condition reads, visual coordinate placement, and audio transitions is tracked
+in [`post-v1-feature-boundaries.md`](post-v1-feature-boundaries.md). That
+document is design guidance only and does not promote any syntax to stable
+support.
+
 ## Recommended Issues
 
 ### 1. Design rich text and inline event support after v1.0

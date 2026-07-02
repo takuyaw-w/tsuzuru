@@ -33,7 +33,8 @@ test assertions, docs, config, and example scenario files.
 - Preact owns hooks, visible event adaptation, convenience rendering, and adapter-level save/load utilities.
 - Do not add scenario semantics to UI components.
 - Do not depend on example-specific assumptions in package source.
-- Use `examples/dsl-v2-basic` only for runnable integration verification.
+- Use the Preact examples under `examples/preact-*` for runnable integration
+  verification.
 
 ## Change Guidance
 
@@ -61,7 +62,7 @@ When core or examples are affected:
 ```sh
 rtk pnpm --filter @tsuzuru/core test
 rtk pnpm --filter @tsuzuru/core typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm --filter @tsuzuru/example-preact-basic build
 ```
 
 ## Final Report

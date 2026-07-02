@@ -31,7 +31,7 @@ text.
 ## Current Constraints
 
 - Tests should target the current parser/compiler API exported by `@tsuzuru/core`.
-- Current runnable example is `examples/dsl-v2-basic`.
+- Current runnable examples are the Preact examples under `examples/preact-*`.
 - Do not add tests for removed DSL syntax as supported behavior.
 - Do not add macro, preset, or stage tests unless explicitly requested.
 - Do not weaken test assertions to accommodate tooling updates.
@@ -75,7 +75,7 @@ rtk pnpm lint
 rtk pnpm check
 rtk pnpm test
 rtk pnpm typecheck
-rtk pnpm --filter @tsuzuru/example-dsl-v2-basic build
+rtk pnpm examples:check
 rtk git diff --check
 ```
 
