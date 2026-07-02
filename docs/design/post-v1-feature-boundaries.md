@@ -160,6 +160,11 @@ Do not promote `system.*` condition reads until:
 - examples show a small branch using `system.*` without browser persistence
   becoming core behavior
 
+The detailed first-scope design is tracked in
+[`system-condition-resolver.md`](system-condition-resolver.md). It narrows the
+first implementation to current runtime plugin state reads and keeps browser
+persistence out of scope.
+
 ## Visual Coordinate Placement
 
 ### Current Boundary

@@ -180,6 +180,8 @@ condition reads, visual coordinate placement, and audio transitions is tracked
 in [`post-v1-feature-boundaries.md`](post-v1-feature-boundaries.md). That
 document is design guidance only and does not promote any syntax to stable
 support.
+The first-scope design for `system.*` condition reads is tracked in
+[`system-condition-resolver.md`](system-condition-resolver.md).
 
 ## Recommended Issues
 
