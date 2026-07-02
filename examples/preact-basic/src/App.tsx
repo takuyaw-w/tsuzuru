@@ -19,7 +19,11 @@ import {
   prepareStdEffectStateForSnapshot,
 } from "@tsuzuru/plugin-std-effect";
 import { createStdParticleCommandHandlers, createStdParticlePlugin } from "@tsuzuru/plugin-std-particle";
-import { createStdSystemCommandHandlers, createStdSystemPlugin } from "@tsuzuru/plugin-std-system";
+import {
+  createStdSystemCommandHandlers,
+  createStdSystemConditionResolver,
+  createStdSystemPlugin,
+} from "@tsuzuru/plugin-std-system";
 import {
   createStdTextSoundCommandHandlers,
   createStdTextSoundPlugin,
@@ -372,6 +376,7 @@ function RuntimeApp({
   const runtime = useRuntime(document, {
     plugins,
     commandHandlers,
+    conditionResolvers: [createStdSystemConditionResolver()],
     onDiagnostic: recordDiagnostic,
     autoStart: initialSaveData === null,
     autoClearWait: true,

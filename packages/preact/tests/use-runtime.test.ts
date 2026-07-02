@@ -3,9 +3,11 @@ import {
   createInitialRuntimeState,
   createRuntimeSnapshot,
   parseTzr,
+  type RuntimeConditionResolver,
   type RuntimeDocument,
   type RuntimeEvent,
   type RuntimeSnapshot,
+  type RuntimeValue,
   stepRuntime,
 } from "@tsuzuru/core";
 import { type ComponentChildren, h, isValidElement, render, type VNode } from "preact";
@@ -55,6 +57,29 @@ function compileScript(source: string): RuntimeDocument {
   }
 
   return compiled.document;
+}
+
+function compileScriptWithOptions(source: string, options: Parameters<typeof compileTzr>[1]): RuntimeDocument {
+  const parsed = parseTzr(source, { filePath: "scenario/main.tzr" });
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) {
+    throw new Error("expected parser success");
+  }
+
+  const compiled = compileTzr(parsed.document, options);
+  expect(compiled.ok).toBe(true);
+  if (!compiled.ok) {
+    throw new Error("expected compiler success");
+  }
+
+  return compiled.document;
+}
+
+function resolver(namespace: string, value: RuntimeValue): RuntimeConditionResolver {
+  return {
+    namespace,
+    resolve: () => ({ ok: true, value }),
+  };
 }
 
 function expectVNode(value: ComponentChildren): VNode {
@@ -503,6 +528,40 @@ scene start:
       lines: [{ text: "Stayed." }],
     });
     expect(runtime().blockReason).toBeNull();
+  });
+
+  it("passes condition resolvers to runtime stepping", async () => {
+    const document = compileScriptWithOptions(
+      `scene start:
+  if system.endings.trueEnd.unlocked:
+    narration:
+      True ending unlocked.
+`,
+      { plugins: [{ name: "stdSystem", conditionNamespaces: ["system"] }] },
+    );
+    const runtime = await mountRuntime(document, {
+      conditionResolvers: [resolver("system", true)],
+      autoStepTransientEvents: true,
+    });
+
+    await act(async () => {
+      runtime().step();
+    });
+    await flushTimersAndUpdates();
+
+    expect(runtime().event).toMatchObject({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "narration",
+        lines: [{ text: "True ending unlocked." }],
+      },
+    });
+    expect(runtime().visibleEvent).toMatchObject({
+      type: "narration",
+      lines: [{ text: "True ending unlocked." }],
+    });
   });
 
   it("creates and restores runtime save data", async () => {

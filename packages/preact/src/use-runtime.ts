@@ -23,6 +23,7 @@ import { createRuntimeSaveDataFromState, type RuntimeSaveData, restoreRuntimeSna
 export interface UseRuntimeOptions {
   readonly plugins?: RuntimeInitialStateOptions["plugins"];
   readonly commandHandlers?: RuntimeStepOptions["commandHandlers"];
+  readonly conditionResolvers?: RuntimeStepOptions["conditionResolvers"];
   readonly onDiagnostic?: RuntimeStepOptions["onDiagnostic"];
   readonly autoStart?: boolean;
   readonly autoClearWait?: boolean;
@@ -64,6 +65,7 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
   const autoStepTransientEvents = options.autoStepTransientEvents ?? false;
   const autoStepMaxSteps = options.autoStepMaxSteps ?? 1000;
   const commandHandlers = options.commandHandlers;
+  const conditionResolvers = options.conditionResolvers;
   const onDiagnostic = options.onDiagnostic;
   const [autoStepCount, setAutoStepCount] = useState(0);
   const [autoStepError, setAutoStepError] = useState<string | null>(null);
@@ -71,9 +73,10 @@ export function useRuntime(document: RuntimeDocument, options: UseRuntimeOptions
   const stepOptions = useMemo<RuntimeStepOptions>(
     () => ({
       ...(commandHandlers === undefined ? {} : { commandHandlers }),
+      ...(conditionResolvers === undefined ? {} : { conditionResolvers }),
       ...(onDiagnostic === undefined ? {} : { onDiagnostic }),
     }),
-    [commandHandlers, onDiagnostic],
+    [commandHandlers, conditionResolvers, onDiagnostic],
   );
 
   const stepFrom = useCallback(
