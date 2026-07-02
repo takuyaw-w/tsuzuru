@@ -69,6 +69,7 @@ type StdVisualBackgroundTransitionEffect = Extract<
 export interface TzrCompilePluginDefinition {
   readonly name: string;
   readonly commands?: PluginCommandMap;
+  readonly conditionNamespaces?: readonly string[];
 }
 
 export type TzrCompilePluginCommandInput = PluginCommandMap | readonly PluginCommandDefinition[];
@@ -115,6 +116,7 @@ export function compileTzr(document: TzrDocument, options: TzrCompileOptions = {
 class TzrCompiler {
   private readonly errors: Diagnostic[] = [];
   private readonly pluginCommands: ReadonlyMap<string, PluginCommandDefinition> | undefined;
+  private readonly conditionNamespaces: ReadonlySet<string>;
   private title: TzrTitleDeclaration | undefined;
   private readonly characters = new Map<string, TzrCharacterDeclaration>();
   private readonly scenes = new Map<string, TzrSceneDeclaration>();
@@ -124,6 +126,7 @@ class TzrCompiler {
     options: TzrCompileOptions,
   ) {
     this.pluginCommands = this.collectPluginCommandDefinitions(options);
+    this.conditionNamespaces = this.collectConditionNamespaces(options);
   }
 
   public compile(): TzrCompileResult {
@@ -248,6 +251,22 @@ class TzrCompiler {
     registry.set(command.name, command);
   }
 
+  private collectConditionNamespaces(options: TzrCompileOptions): ReadonlySet<string> {
+    const namespaces = new Set<string>();
+
+    for (const plugin of options.plugins ?? []) {
+      for (const namespace of plugin.conditionNamespaces ?? []) {
+        if (namespaces.has(namespace)) {
+          this.addError(this.documentStartLocation(), `Duplicate condition namespace metadata for "${namespace}".`);
+          continue;
+        }
+        namespaces.add(namespace);
+      }
+    }
+
+    return namespaces;
+  }
+
   private validateScenePresence(): void {
     if (this.scenes.size === 0) {
       this.addError(this.documentStartLocation(), "DSL v2 document must include at least one scene.");
@@ -319,8 +338,15 @@ class TzrCompiler {
   private validateSupportedCondition(expression: TzrConditionExpression): void {
     switch (expression.type) {
       case "ConditionReference":
-        if (expression.root === "system") {
-          this.addError(expression.loc.start, "system condition references are not compile-supported yet.");
+        if (expression.root !== "scenario" && !this.conditionNamespaces.has(expression.root)) {
+          const hint =
+            expression.root === "system"
+              ? ' Register a plugin that declares conditionNamespaces: ["system"].'
+              : "";
+          this.addError(
+            expression.loc.start,
+            `Condition namespace "${expression.root}" is not compile-supported.${hint}`,
+          );
         }
         break;
       case "ConditionStringLiteral":

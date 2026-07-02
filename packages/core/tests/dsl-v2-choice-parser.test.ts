@@ -333,14 +333,18 @@ describe("parseTzr choice statements", () => {
     ).toContain("choice item condition is required.");
   });
 
-  it("rejects invalid conditional choice item conditions", () => {
-    expect(
-      expectChoiceFailure(`scene start:
+  it("parses custom namespace conditional choice item conditions", () => {
+    const statement = parseSingleChoice(`scene start:
   choice "Choose":
-    "Open notebook" if player.inventory.hasNotebook:
+    "Open notebook" if inventory.hasNotebook:
       jump notebook
-`),
-    ).toContain('Invalid choice item condition: Invalid reference root "player".');
+`);
+
+    expect(statement.items[0]?.condition).toMatchObject({
+      type: "ConditionReference",
+      root: "inventory",
+      path: "inventory.hasNotebook",
+    });
   });
 
   it("rejects conditional items missing a colon", () => {

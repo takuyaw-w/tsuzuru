@@ -404,7 +404,7 @@ export type TzrConditionExpression =
 export interface TzrConditionReference {
   readonly type: "ConditionReference";
   readonly path: string;
-  readonly root: "scenario" | "system";
+  readonly root: string;
   readonly loc: SourceRange;
 }
 

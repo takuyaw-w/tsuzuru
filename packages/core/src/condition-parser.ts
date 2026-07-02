@@ -250,11 +250,7 @@ class TzrConditionExpressionParser {
       return undefined;
     }
 
-    const root = parts[0];
-    if (root !== "scenario" && root !== "system") {
-      this.addError(token.loc.start, `Invalid reference root "${root}".`);
-      return undefined;
-    }
+    const root = parts[0] ?? "";
 
     return {
       type: "ConditionReference",

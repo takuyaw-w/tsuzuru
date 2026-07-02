@@ -2033,14 +2033,88 @@ scene inspect_desk:
     });
   });
 
-  it("rejects system condition references for now", () => {
+  it("rejects system condition references without condition namespace support", () => {
     expect(
       expectCompileFailure(`scene start:
   if system.endings.trueEnd.unlocked:
     narration:
       True end.
 `),
-    ).toContain("system condition references are not compile-supported yet.");
+    ).toContain(
+      'Condition namespace "system" is not compile-supported. Register a plugin that declares conditionNamespaces: ["system"].',
+    );
+  });
+
+  it("compiles system condition references with condition namespace support", () => {
+    const document = compileSource(
+      `scene start:
+  if system.endings.trueEnd.unlocked:
+    narration:
+      True end.
+`,
+      { plugins: [{ name: "stdSystem", conditionNamespaces: ["system"] }] },
+    );
+
+    const instruction = document.instructions[1];
+    expect(instruction).toMatchObject({ type: "IfInstruction" });
+    if (instruction?.type !== "IfInstruction") {
+      throw new Error("expected IfInstruction");
+    }
+    expect(instruction.condition).toMatchObject({
+      type: "ConditionReference",
+      root: "system",
+      path: "system.endings.trueEnd.unlocked",
+    });
+  });
+
+  it("rejects custom condition references without condition namespace support", () => {
+    expect(
+      expectCompileFailure(`scene start:
+  if inventory.hasNotebook:
+    narration:
+      Open it.
+`),
+    ).toContain('Condition namespace "inventory" is not compile-supported.');
+  });
+
+  it("compiles custom condition references with condition namespace support", () => {
+    const document = compileSource(
+      `scene start:
+  if inventory.hasNotebook:
+    narration:
+      Open it.
+`,
+      { plugins: [{ name: "inventory", conditionNamespaces: ["inventory"] }] },
+    );
+
+    const instruction = document.instructions[1];
+    expect(instruction).toMatchObject({ type: "IfInstruction" });
+    if (instruction?.type !== "IfInstruction") {
+      throw new Error("expected IfInstruction");
+    }
+    expect(instruction.condition).toMatchObject({
+      type: "ConditionReference",
+      root: "inventory",
+      path: "inventory.hasNotebook",
+    });
+  });
+
+  it("rejects duplicate condition namespace metadata", () => {
+    expect(
+      expectCompileFailure(
+        `scene start:
+  if system.endings.trueEnd.unlocked:
+    narration:
+      True end.
+`,
+        {
+          plugins: [
+            { name: "stdSystemA", conditionNamespaces: ["system"] },
+            { name: "stdSystemB", conditionNamespaces: ["system"] },
+          ],
+        },
+      ),
+    ).toContain('Duplicate condition namespace metadata for "system".');
   });
 
   it("rejects unsupported statements inside if branch bodies", () => {
@@ -2103,15 +2177,31 @@ scene later:
     });
   });
 
-  it("rejects system references in conditional choice item conditions for now", () => {
-    expect(
-      expectCompileFailure(`scene start:
+  it("compiles conditional choice items using registered system namespace", () => {
+    const document = compileSource(
+      `scene start:
   choice "Choose":
-    "True end" if system.endings.trueEnd.unlocked:
+    "Main visual" if system.cgs.mainVisual.unlocked:
       narration:
-        True end.
-`),
-    ).toContain("system condition references are not compile-supported yet.");
+        Main visual.
+`,
+      { plugins: [{ name: "stdSystem", conditionNamespaces: ["system"] }] },
+    );
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "BodyChoiceInstruction",
+      items: [
+        {
+          label: "Main visual",
+          condition: {
+            type: "ConditionReference",
+            root: "system",
+            path: "system.cgs.mainVisual.unlocked",
+          },
+          body: [{ type: "NarrationInstruction", lines: [{ text: "Main visual." }] }],
+        },
+      ],
+    });
   });
 
   it("rejects unsupported statements inside choice item bodies", () => {

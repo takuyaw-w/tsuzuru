@@ -201,10 +201,17 @@ describe("parseTzr if statements", () => {
     );
   });
 
-  it("rejects invalid if conditions", () => {
-    expect(expectIfFailure("scene start:\n  if player.score:\n    jump route\n")).toContain(
-      'Invalid if condition: Invalid reference root "player".',
-    );
+  it("parses custom namespace if conditions", () => {
+    const statement = parseSingleIf(`scene start:
+  if inventory.hasNotebook:
+    jump route
+`);
+
+    expect(statement.condition).toMatchObject({
+      type: "ConditionReference",
+      root: "inventory",
+      path: "inventory.hasNotebook",
+    });
   });
 
   it("rejects empty if bodies", () => {
@@ -225,10 +232,25 @@ describe("parseTzr if statements", () => {
     ).toContain("elif header must end with `:`.");
   });
 
+  it("parses custom namespace elif conditions", () => {
+    const statement = parseSingleIf(`scene start:
+  if scenario.a:
+    jump first
+  elif inventory.hasNotebook:
+    jump second
+`);
+
+    expect(statement.elifBranches[0]?.condition).toMatchObject({
+      type: "ConditionReference",
+      root: "inventory",
+      path: "inventory.hasNotebook",
+    });
+  });
+
   it("rejects invalid elif conditions", () => {
     expect(
-      expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif player.score:\n    jump second\n"),
-    ).toContain('Invalid elif condition: Invalid reference root "player".');
+      expectIfFailure("scene start:\n  if scenario.a:\n    jump first\n  elif scenario.:\n    jump second\n"),
+    ).toContain('Invalid elif condition: Invalid dotted identifier "scenario.".');
   });
 
   it("rejects empty elif bodies", () => {

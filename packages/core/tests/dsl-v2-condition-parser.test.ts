@@ -42,6 +42,14 @@ describe("parseTzrConditionExpression", () => {
     });
   });
 
+  it("parses custom namespace boolean references", () => {
+    expect(parseCondition("inventory.hasNotebook")).toMatchObject({
+      type: "ConditionReference",
+      root: "inventory",
+      path: "inventory.hasNotebook",
+    });
+  });
+
   it("parses string comparisons", () => {
     expect(parseCondition('scenario.route.current == "common"')).toMatchObject({
       type: "ConditionComparisonExpression",
@@ -161,11 +169,8 @@ describe("parseTzrConditionExpression", () => {
     expect(expectConditionFailure("")).toContain("Condition expression must not be empty.");
   });
 
-  it("rejects arbitrary reference roots", () => {
-    expect(expectConditionFailure("player.score")).toContain('Invalid reference root "player".');
-  });
-
   it("rejects invalid dotted references", () => {
+    expect(expectConditionFailure("inventory")).toContain('Invalid dotted identifier "inventory".');
     expect(expectConditionFailure("scenario.")).toContain('Invalid dotted identifier "scenario.".');
     expect(expectConditionFailure("scenario..score")).toContain('Invalid dotted identifier "scenario..score".');
     expect(expectConditionFailure("scenario.score-value")).toContain(
