@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  collectTsuzuruDependencyNames,
   getGeneratedProjectInstallArgs,
   getRegistryCreateCommand,
   parseSmokeSource,
@@ -70,6 +71,25 @@ describe("getGeneratedProjectInstallArgs", () => {
   });
 });
 
+describe("collectTsuzuruDependencyNames", () => {
+  it("collects direct and transitive local Tsuzuru dependency blocks", () => {
+    expect(
+      collectTsuzuruDependencyNames({
+        dependencies: {
+          "@tsuzuru/core": "^1.0.0",
+          preact: "^10.0.0",
+        },
+        devDependencies: {
+          "@tsuzuru/vite-plugin": "^1.0.0",
+        },
+        optionalDependencies: {
+          "@tsuzuru/plugin-std-hotspot": "^1.0.0",
+        },
+      }),
+    ).toEqual(["@tsuzuru/core", "@tsuzuru/plugin-std-hotspot", "@tsuzuru/vite-plugin"]);
+  });
+});
+
 describe("verifyGeneratedProjectFixedTheme", () => {
   async function createGeneratedProjectFixture(overrides = {}) {
     const root = await mkdtemp(join(tmpdir(), "tsuzuru-smoke-fixture-"));
@@ -114,13 +134,7 @@ describe("verifyGeneratedProjectFixedTheme", () => {
     );
     await writeFile(
       join(projectDir, "tsuzuru.config.ts"),
-      overrides.configSource ??
-        [
-          "export default {",
-          '  ui: { theme: { default: "local" } },',
-          "};",
-          "",
-        ].join("\n"),
+      overrides.configSource ?? ["export default {", '  ui: { theme: { default: "local" } },', "};", ""].join("\n"),
     );
 
     return { projectDir, root };

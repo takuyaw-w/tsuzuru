@@ -39,8 +39,8 @@
   --tzr-standard-ui-font-family: system-ui, sans-serif;
   --tzr-standard-ui-text-color: #fffaf0;
   --tzr-standard-ui-muted-text-color: rgba(255, 250, 240, 0.68);
-  --tzr-standard-ui-window-bg: linear-gradient(180deg, rgba(24, 24, 26, 0.88), rgba(8, 9, 12, 0.9)),
-    rgba(0, 0, 0, 0.78);
+  --tzr-standard-ui-window-bg:
+    linear-gradient(180deg, rgba(24, 24, 26, 0.88), rgba(8, 9, 12, 0.9)), rgba(0, 0, 0, 0.78);
   --tzr-standard-ui-window-border: rgba(247, 242, 226, 0.46);
   --tzr-standard-ui-window-radius: 10px;
   --tzr-standard-ui-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 42px rgba(0, 0, 0, 0.44);
@@ -48,8 +48,7 @@
   --tzr-standard-ui-message-window-inline-inset: clamp(18px, 4.2vw, 48px);
   --tzr-standard-ui-message-window-bottom: clamp(18px, 4.4vw, 44px);
   --tzr-standard-ui-message-window-height: clamp(184px, 22.5%, 216px);
-  --tzr-standard-ui-message-window-padding: clamp(42px, 3.8vw, 50px) clamp(22px, 3.4vw, 36px)
-    clamp(20px, 2.8vw, 28px);
+  --tzr-standard-ui-message-window-padding: clamp(42px, 3.8vw, 50px) clamp(22px, 3.4vw, 36px) clamp(20px, 2.8vw, 28px);
   --tzr-standard-ui-message-window-narration-padding: clamp(28px, 3.2vw, 40px) clamp(22px, 3.4vw, 36px)
     clamp(22px, 3vw, 30px);
   --tzr-standard-ui-message-window-backdrop-filter: blur(10px) saturate(1.08);
@@ -76,14 +75,9 @@
   --tzr-standard-ui-message-advance-hint-right: clamp(16px, 3vw, 30px);
   --tzr-standard-ui-message-advance-hint-bottom: 4px;
   --tzr-standard-ui-message-advance-hint-font-size: 0.78rem;
-  --tzr-standard-ui-novel-text-layer-padding: clamp(42px, 8vw, 96px) clamp(24px, 7vw, 88px)
-    clamp(54px, 10vw, 112px);
-  --tzr-standard-ui-novel-text-layer-bg: linear-gradient(
-      180deg,
-      rgba(4, 5, 8, 0.5) 0%,
-      rgba(4, 5, 8, 0.2) 48%,
-      rgba(4, 5, 8, 0.62) 100%
-    ),
+  --tzr-standard-ui-novel-text-layer-padding: clamp(42px, 8vw, 96px) clamp(24px, 7vw, 88px) clamp(54px, 10vw, 112px);
+  --tzr-standard-ui-novel-text-layer-bg:
+    linear-gradient(180deg, rgba(4, 5, 8, 0.5) 0%, rgba(4, 5, 8, 0.2) 48%, rgba(4, 5, 8, 0.62) 100%),
     linear-gradient(90deg, rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.08) 52%, rgba(0, 0, 0, 0.26));
   --tzr-standard-ui-novel-text-body-max-width: none;
   --tzr-standard-ui-novel-text-font-size: clamp(1.1rem, 2.2vw, 1.42rem);
@@ -94,8 +88,8 @@
   --tzr-standard-ui-choice-layer-inline-inset: clamp(28px, 14vw, 190px);
   --tzr-standard-ui-choice-layer-bottom: clamp(28px, 8vw, 76px);
   --tzr-standard-ui-choice-layer-padding: clamp(16px, 2.4vw, 24px);
-  --tzr-standard-ui-choice-layer-bg: linear-gradient(180deg, rgba(25, 30, 35, 0.92), rgba(8, 10, 13, 0.92)),
-    rgba(0, 0, 0, 0.82);
+  --tzr-standard-ui-choice-layer-bg:
+    linear-gradient(180deg, rgba(25, 30, 35, 0.92), rgba(8, 10, 13, 0.92)), rgba(0, 0, 0, 0.82);
   --tzr-standard-ui-choice-layer-border: rgba(247, 242, 226, 0.44);
   --tzr-standard-ui-choice-layer-shadow: 0 18px 44px rgba(0, 0, 0, 0.46);
   --tzr-standard-ui-choice-question-color: #fff1c7;
@@ -105,14 +99,15 @@
   --tzr-standard-ui-choice-button-hover-bg: rgba(120, 76, 48, 0.62);
   --tzr-standard-ui-choice-button-border: rgba(247, 242, 226, 0.36);
   --tzr-standard-ui-choice-button-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --tzr-standard-ui-choice-button-hover-shadow: 0 10px 24px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --tzr-standard-ui-choice-button-hover-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   --tzr-standard-ui-choice-button-min-height: 44px;
   --tzr-standard-ui-choice-button-padding: 10px 16px;
   --tzr-standard-ui-choice-layer-above-message-inline-inset: clamp(30px, 18vw, 260px);
   --tzr-standard-ui-choice-layer-retained-message-gap: clamp(22px, 3.4vw, 38px);
   --tzr-standard-ui-screen-padding: clamp(20px, 5vw, 56px);
-  --tzr-standard-ui-screen-bg: linear-gradient(180deg, rgba(25, 33, 40, 0.5), rgba(6, 8, 10, 0.9)),
+  --tzr-standard-ui-screen-bg:
+    linear-gradient(180deg, rgba(25, 33, 40, 0.5), rgba(6, 8, 10, 0.9)),
     linear-gradient(115deg, rgba(29, 64, 78, 0.86), rgba(72, 94, 81, 0.78) 52%, rgba(112, 72, 86, 0.72));
   --tzr-standard-ui-screen-panel-width: min(420px, 100%);
   --tzr-standard-ui-screen-panel-padding: clamp(18px, 3vw, 30px);
@@ -129,17 +124,9 @@
   --tzr-standard-ui-screen-button-min-height: 40px;
   --tzr-standard-ui-screen-button-padding: 10px 14px;
   --tzr-standard-ui-screen-button-primary-border: rgba(255, 220, 143, 0.72);
-  --tzr-standard-ui-screen-button-primary-bg: linear-gradient(
-    180deg,
-    rgba(176, 113, 68, 0.9),
-    rgba(119, 65, 54, 0.84)
-  );
+  --tzr-standard-ui-screen-button-primary-bg: linear-gradient(180deg, rgba(176, 113, 68, 0.9), rgba(119, 65, 54, 0.84));
   --tzr-standard-ui-screen-button-danger-border: rgba(255, 190, 190, 0.54);
-  --tzr-standard-ui-screen-button-danger-bg: linear-gradient(
-    180deg,
-    rgba(166, 70, 70, 0.9),
-    rgba(108, 42, 52, 0.84)
-  );
+  --tzr-standard-ui-screen-button-danger-bg: linear-gradient(180deg, rgba(166, 70, 70, 0.9), rgba(108, 42, 52, 0.84));
   --tzr-standard-ui-runtime-control-bg: rgba(15, 23, 42, 0.72);
   --tzr-standard-ui-runtime-control-border: rgba(248, 250, 252, 0.24);
   --tzr-standard-ui-runtime-control-hover-bg: rgba(68, 64, 60, 0.78);
@@ -1212,9 +1199,11 @@
   place-items: center;
   background:
     linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(135deg, #20242b, #111318);
-  background-size: 64px 64px, 64px 64px, auto;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(135deg, #20242b, #111318);
+  background-size:
+    64px 64px,
+    64px 64px,
+    auto;
 }
 
 .tzr-tsuzuru-game__sprite-layer {

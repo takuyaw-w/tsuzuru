@@ -115,7 +115,9 @@ function assertRootTypecheckScript(context) {
   }
 
   if (script.includes("packages:graph:check") || script.includes(TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG)) {
-    context.failures.push('root script "typecheck" must not call packages:graph:check or the experimental package graph.');
+    context.failures.push(
+      'root script "typecheck" must not call packages:graph:check or the experimental package graph.',
+    );
   }
 
   let previousIndex = -1;
@@ -163,7 +165,9 @@ function assertReleaseReadinessScript(context) {
       continue;
     }
     if (index < previousIndex) {
-      context.failures.push(`root script "release-readiness:check" must run "${expected}" after earlier release checks.`);
+      context.failures.push(
+        `root script "release-readiness:check" must run "${expected}" after earlier release checks.`,
+      );
     }
     previousIndex = index;
   }
@@ -264,7 +268,9 @@ function assertPackagesGraphCheckScript(context) {
 
   const packagesBuild = scripts["packages:build"] ?? "";
   if (packagesBuild.includes("tsc -b") || packagesBuild.includes(TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG)) {
-    context.failures.push('root script "packages:build" must remain an artifact build and must not use packages graph validation.');
+    context.failures.push(
+      'root script "packages:build" must remain an artifact build and must not use packages graph validation.',
+    );
   }
 }
 
@@ -376,7 +382,9 @@ function assertExamplesSelfCheckCoversExamples(context) {
 
     for (const command of ["check:scenario:self", "test", "typecheck:self", "build:self"]) {
       if (!scriptIncludesFilterCommand(script, exampleName, command)) {
-        context.failures.push(`root script "examples:check:self" does not include "--filter ${exampleName} ${command}".`);
+        context.failures.push(
+          `root script "examples:check:self" does not include "--filter ${exampleName} ${command}".`,
+        );
       }
     }
   }
@@ -493,7 +501,9 @@ function assertTypeScriptBuildGraphPlan(context) {
 
 function assertTypeScriptBuildGraphPilots(context) {
   const pilotPackages = TYPESCRIPT_BUILD_GRAPH_PILOT_PACKAGES.filter((pilotPackage) =>
-    context.packageEntries.some((packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name),
+    context.packageEntries.some(
+      (packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name,
+    ),
   );
   if (pilotPackages.length === 0) {
     return;
@@ -507,7 +517,9 @@ function assertTypeScriptBuildGraphPilots(context) {
 
 function assertTypeScriptBuildGraphReferenceExperiment(context) {
   const referenceEdgePilots = TYPESCRIPT_BUILD_GRAPH_REFERENCE_EDGE_PILOTS.filter((pilotPackage) =>
-    context.packageEntries.some((packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name),
+    context.packageEntries.some(
+      (packageEntry) => packageEntry.dir === pilotPackage.dir && packageEntry.name === pilotPackage.name,
+    ),
   );
   if (referenceEdgePilots.length === 0) {
     return;
@@ -529,7 +541,9 @@ function assertTypeScriptBuildGraphReferenceExperiment(context) {
   const experimentalTsconfigPath = TYPESCRIPT_PACKAGES_EXPERIMENTAL_TSCONFIG;
   const absoluteExperimentalTsconfigPath = join(context.rootDir, experimentalTsconfigPath);
   if (!existsSync(absoluteExperimentalTsconfigPath)) {
-    context.failures.push(`${experimentalTsconfigPath} is missing for the TypeScript build graph reference experiment.`);
+    context.failures.push(
+      `${experimentalTsconfigPath} is missing for the TypeScript build graph reference experiment.`,
+    );
     return;
   }
 
@@ -624,7 +638,9 @@ function assertTypeScriptBuildGraphPilot(context, pilotPackage) {
     if (packageJson !== undefined) {
       const typecheckSelf = packageJson.scripts?.["typecheck:self"];
       if (typeof typecheckSelf === "string" && !typecheckSelf.includes("--noEmit")) {
-        context.failures.push(`${pilotPackage.name} script "typecheck:self" must use --noEmit for the source-only pilot.`);
+        context.failures.push(
+          `${pilotPackage.name} script "typecheck:self" must use --noEmit for the source-only pilot.`,
+        );
       }
     }
     return;
@@ -699,7 +715,10 @@ function readTxtBlockAfter(source, marker) {
     return undefined;
   }
 
-  return match[1].split("\n").map((line) => line.trim()).filter(Boolean);
+  return match[1]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function readTreeSection(lines, sectionName) {
@@ -725,8 +744,6 @@ function assertSameList(context, label, actual, expected) {
   const actualText = actual.join("\n");
   const expectedText = expected.join("\n");
   if (actualText !== expectedText) {
-    context.failures.push(
-      `${label} is out of sync. Expected [${expected.join(", ")}], got [${actual.join(", ")}].`,
-    );
+    context.failures.push(`${label} is out of sync. Expected [${expected.join(", ")}], got [${actual.join(", ")}].`);
   }
 }

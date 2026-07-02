@@ -10,6 +10,7 @@ import { promisify } from "node:util";
 
 const projectName = "tsuzuru-smoke-app";
 const execFileAsync = promisify(execFile);
+const localTsuzuruDependencyBlocks = ["dependencies", "devDependencies", "optionalDependencies"];
 
 function resolveCommand(command) {
   return process.platform === "win32" ? `${command}.cmd` : command;
@@ -41,9 +42,7 @@ export function getRegistryCreateCommand(packageManager) {
         args: ["create", "tsuzuru", projectName],
       };
     default:
-      throw new Error(
-        `Unsupported TSUZURU_SMOKE_CREATE_PM value: ${packageManager}. Expected "pnpm" or "npm".`,
-      );
+      throw new Error(`Unsupported TSUZURU_SMOKE_CREATE_PM value: ${packageManager}. Expected "pnpm" or "npm".`);
   }
 }
 
@@ -67,12 +66,31 @@ function assertNotContains(source, unexpected, filePath) {
 }
 
 function assertMissingDependency(packageJson, packageName) {
-  for (const dependencyBlock of ["dependencies", "devDependencies", "optionalDependencies"]) {
+  for (const dependencyBlock of localTsuzuruDependencyBlocks) {
     const dependencies = packageJson[dependencyBlock];
     if (dependencies?.[packageName] !== undefined) {
       throw new Error(`Generated package.json must not include ${packageName} in ${dependencyBlock}.`);
     }
   }
+}
+
+export function collectTsuzuruDependencyNames(packageJson) {
+  const packageNames = new Set();
+
+  for (const dependencyBlock of localTsuzuruDependencyBlocks) {
+    const dependencies = packageJson[dependencyBlock];
+    if (dependencies === undefined) {
+      continue;
+    }
+
+    for (const packageName of Object.keys(dependencies)) {
+      if (packageName.startsWith("@tsuzuru/")) {
+        packageNames.add(packageName);
+      }
+    }
+  }
+
+  return [...packageNames].sort();
 }
 
 export async function verifyGeneratedProjectFixedTheme(projectDir) {
@@ -155,7 +173,9 @@ async function findCreatedTarball(destinationDir, entriesBeforePack, packageName
     .filter((entry) => entry.endsWith(".tgz"));
 
   if (createdTarballs.length !== 1) {
-    throw new Error(`pack local ${packageName} did not return JSON and produced ${createdTarballs.length} new tarball(s).`);
+    throw new Error(
+      `pack local ${packageName} did not return JSON and produced ${createdTarballs.length} new tarball(s).`,
+    );
   }
 
   return join(destinationDir, createdTarballs[0]);
@@ -177,10 +197,12 @@ async function rewriteGeneratedTsuzuruDependencies(projectDir, tarballDir, rootD
         continue;
       }
 
-      dependencies[packageName] = `file:${await getWorkspacePackageTarball(packageName, tarballs, tarballDir, rootDir)}`;
+      dependencies[packageName] =
+        `file:${await getWorkspacePackageTarball(packageName, tarballs, tarballDir, rootDir)}`;
     }
   }
 
+  await packTransitiveTsuzuruDependencies(tarballs, tarballDir, rootDir);
   await rewritePackedTsuzuruDependencies(tarballs);
 
   if (tarballs.size > 0) {
@@ -192,6 +214,41 @@ async function rewriteGeneratedTsuzuruDependencies(projectDir, tarballDir, rootD
   }
 
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+}
+
+async function packTransitiveTsuzuruDependencies(tarballs, tarballDir, rootDir) {
+  let foundNewDependency = true;
+
+  while (foundNewDependency) {
+    foundNewDependency = false;
+
+    const tarballPaths = Array.from(tarballs.values());
+    for (const tarballPath of tarballPaths) {
+      const packageJson = await readPackedPackageJson(tarballPath);
+      for (const packageName of collectTsuzuruDependencyNames(packageJson)) {
+        if (tarballs.has(packageName)) {
+          continue;
+        }
+
+        tarballs.set(packageName, await packWorkspacePackage(packageName, tarballDir, rootDir));
+        foundNewDependency = true;
+      }
+    }
+  }
+}
+
+async function readPackedPackageJson(tarballPath) {
+  const extractDir = await mkdtemp(join(tmpdir(), "tsuzuru-local-tarball-read-"));
+
+  try {
+    await execFileAsync("tar", ["-xzf", tarballPath, "-C", extractDir], {
+      maxBuffer: 1024 * 1024 * 10,
+    });
+
+    return JSON.parse(await readFile(join(extractDir, "package", "package.json"), "utf8"));
+  } finally {
+    await rm(extractDir, { recursive: true, force: true });
+  }
 }
 
 async function getWorkspacePackageTarball(packageName, tarballs, tarballDir, rootDir) {
@@ -214,7 +271,7 @@ async function rewritePackedTsuzuruDependencies(tarballs) {
       const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
       let changed = false;
 
-      for (const dependencyBlock of ["dependencies", "devDependencies", "optionalDependencies"]) {
+      for (const dependencyBlock of localTsuzuruDependencyBlocks) {
         const dependencies = packageJson[dependencyBlock];
         if (dependencies === undefined) {
           continue;
@@ -302,12 +359,7 @@ async function main() {
       await rewriteGeneratedTsuzuruDependencies(projectDir, tarballDir, process.cwd());
     } else {
       const createCommand = getRegistryCreateCommand(createPackageManager);
-      await runStep(
-        `create project with ${createPackageManager}`,
-        createCommand.command,
-        createCommand.args,
-        tempRoot,
-      );
+      await runStep(`create project with ${createPackageManager}`, createCommand.command, createCommand.args, tempRoot);
     }
 
     console.log("");

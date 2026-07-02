@@ -52,8 +52,10 @@ export interface CreateStandardGameStorageOptions<TSaveData = never> {
   readonly storage?: StandardGameStorageLike | null;
 }
 
-export interface CreateStandardGameStorageOptionsWithSaves<TSaveData>
-  extends Omit<CreateStandardGameStorageOptions<TSaveData>, "saves"> {
+export interface CreateStandardGameStorageOptionsWithSaves<TSaveData> extends Omit<
+  CreateStandardGameStorageOptions<TSaveData>,
+  "saves"
+> {
   readonly saves: CreateStandardGameStorageSavesOptions<TSaveData>;
 }
 

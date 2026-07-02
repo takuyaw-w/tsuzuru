@@ -71,9 +71,12 @@ describe("validatePackedPackage", () => {
   });
 
   it("fails when files is an empty array", () => {
-    expect(validatePackedPackage({ ...packageEntry, packageJson: { ...packageEntry.packageJson, files: [] } }, validEntries())).toContain(
-      "@fixture/example package.json files must not be empty.",
-    );
+    expect(
+      validatePackedPackage(
+        { ...packageEntry, packageJson: { ...packageEntry.packageJson, files: [] } },
+        validEntries(),
+      ),
+    ).toContain("@fixture/example package.json files must not be empty.");
   });
 
   it("fails when legacy-only paths are included", () => {
@@ -83,9 +86,9 @@ describe("validatePackedPackage", () => {
   });
 
   it("fails when TypeScript build info is included", () => {
-    expect(validatePackedPackage(packageEntry, [...validEntries(), "package/.tsbuildinfo/tsconfig.tsbuildinfo"])).toContain(
-      '@fixture/example tarball includes TypeScript build info path ".tsbuildinfo/tsconfig.tsbuildinfo".',
-    );
+    expect(
+      validatePackedPackage(packageEntry, [...validEntries(), "package/.tsbuildinfo/tsconfig.tsbuildinfo"]),
+    ).toContain('@fixture/example tarball includes TypeScript build info path ".tsbuildinfo/tsconfig.tsbuildinfo".');
     expect(validatePackedPackage(packageEntry, [...validEntries(), "package/dist/tsconfig.tsbuildinfo"])).toContain(
       '@fixture/example tarball includes TypeScript build info path "dist/tsconfig.tsbuildinfo".',
     );

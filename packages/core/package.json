@@ -2,14 +2,22 @@
   "name": "@tsuzuru/core",
   "version": "1.0.0",
   "description": "Core parser, compiler, project compiler, and runtime primitives for Tsuzuru.",
+  "keywords": [
+    "dsl",
+    "runtime",
+    "scenario",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
-  "type": "module",
-  "types": "./dist/src/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/core"
   },
   "files": [
     "dist/src/ast.*",
@@ -33,22 +41,14 @@
     "dist/src/runtime-types.*",
     "dist/src/scenario-ast.*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/core"
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
   },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/core#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "scenario",
-    "dsl",
-    "runtime"
-  ],
   "publishConfig": {
     "access": "public"
   },

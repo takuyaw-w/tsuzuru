@@ -101,7 +101,8 @@ function findByRoleAndName(value: ComponentChildren, role: string, name: string)
   if (typeof vnode.type === "function") {
     return findByRoleAndName(vnode.type(vnode.props), role, name);
   }
-  if (vnode.props.role === role && vnode.props["aria-label"] === name) {
+  const nodeRole = vnode.props.role ?? (vnode.type === "fieldset" ? "group" : undefined);
+  if (nodeRole === role && vnode.props["aria-label"] === name) {
     return vnode;
   }
   return findByRoleAndName(vnode.props.children, role, name);

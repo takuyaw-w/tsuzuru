@@ -2,23 +2,23 @@
   "name": "tsuzuru",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/tsuzuru-engine/tsuzuru.git"
   },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru#readme",
+  "type": "module",
   "scripts": {
-    "format": "biome format --write .",
-    "format:check": "biome format .",
-    "lint": "biome lint .",
-    "lint:fix": "biome lint --write .",
-    "check": "node scripts/check-quality-gate.mjs && biome check .",
-    "check:fix": "biome check --write .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "check": "node scripts/check-quality-gate.mjs && oxfmt --check && oxlint",
+    "check:fix": "oxfmt && oxlint --fix",
     "inventory:check": "node scripts/check-quality-gate.mjs",
     "packages:build": "pnpm --filter @tsuzuru/core build:self && pnpm --filter @tsuzuru/config build:self && pnpm --filter @tsuzuru/standard-game-storage build:self && pnpm --filter @tsuzuru/cli build:self && pnpm --filter @tsuzuru/vite-plugin build:self && pnpm --filter create-tsuzuru build:self && pnpm --filter @tsuzuru/preact build:self && pnpm --filter @tsuzuru/plugin-std-visual build:self && pnpm --filter @tsuzuru/plugin-std-audio build:self && pnpm --filter @tsuzuru/plugin-std-effect build:self && pnpm --filter @tsuzuru/plugin-std-camera build:self && pnpm --filter @tsuzuru/plugin-std-particle build:self && pnpm --filter @tsuzuru/plugin-std-hotspot build:self && pnpm --filter @tsuzuru/standard-ui-preact build:self && pnpm --filter @tsuzuru/theme-standard build:self && pnpm --filter @tsuzuru/theme-classic build:self && pnpm --filter @tsuzuru/theme-dark-novel build:self && pnpm --filter @tsuzuru/theme-minimal build:self && pnpm --filter @tsuzuru/plugin-std-text-sound build:self && pnpm --filter @tsuzuru/plugin-std-system build:self",
     "packages:graph:check": "pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose",
@@ -38,8 +38,9 @@
     "release:version": "bash scripts/release-version.sh"
   },
   "devDependencies": {
-    "@biomejs/biome": "catalog:",
     "@playwright/test": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

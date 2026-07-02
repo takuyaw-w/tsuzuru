@@ -2,7 +2,25 @@
   "name": "@tsuzuru/plugin-std-visual",
   "version": "1.0.0",
   "description": "Standard visual plugin state and command handlers for Tsuzuru.",
+  "keywords": [
+    "plugin",
+    "tsuzuru",
+    "visual",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-visual#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-visual"
+  },
+  "files": [
+    "dist/src/index.*"
+  ],
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
@@ -11,24 +29,6 @@
       "import": "./dist/src/index.js"
     }
   },
-  "files": [
-    "dist/src/index.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/plugin-std-visual"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-visual#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "plugin",
-    "visual"
-  ],
   "publishConfig": {
     "access": "public"
   },

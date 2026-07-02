@@ -289,7 +289,10 @@ describe("checkQualityGate", () => {
   it("fails when the examples E2E workflow becomes a push gate", async () => {
     const root = await createFixtureRepo();
     const source = await readFile(join(root, ".github/workflows/examples-e2e.yml"), "utf8");
-    await writeFile(join(root, ".github/workflows/examples-e2e.yml"), source.replace("  workflow_dispatch:", "  push:\n  workflow_dispatch:"));
+    await writeFile(
+      join(root, ".github/workflows/examples-e2e.yml"),
+      source.replace("  workflow_dispatch:", "  push:\n  workflow_dispatch:"),
+    );
 
     expect(checkQualityGate(root).failures).toContain(
       ".github/workflows/examples-e2e.yml must remain optional and must not run on push or pull_request.",
@@ -377,7 +380,9 @@ describe("checkQualityGate", () => {
     expect(checkQualityGate(root).failures).toContain(
       'packages/config/tsconfig.json must set compilerOptions.tsBuildInfoFile to ".tsbuildinfo/tsconfig.tsbuildinfo".',
     );
-    expect(checkQualityGate(root).failures).toContain("packages/config/tsconfig.json must not put tsBuildInfoFile under dist.");
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/config/tsconfig.json must not put tsBuildInfoFile under dist.",
+    );
   });
 
   it("fails when TypeScript build info is not ignored", async () => {
@@ -385,7 +390,9 @@ describe("checkQualityGate", () => {
     await writeConfigPilotFiles(root);
     await writeFile(join(root, ".gitignore"), "");
 
-    expect(checkQualityGate(root).failures).toContain(".gitignore must ignore TypeScript build info cache directories.");
+    expect(checkQualityGate(root).failures).toContain(
+      ".gitignore must ignore TypeScript build info cache directories.",
+    );
   });
 
   it("fails when the config typecheck:self does not use the test tsconfig", async () => {
@@ -422,7 +429,9 @@ describe("checkQualityGate", () => {
       tsconfig.compilerOptions.noEmit = false;
     });
 
-    expect(checkQualityGate(root).failures).toContain("packages/core/tsconfig.test.json must set compilerOptions.noEmit to true.");
+    expect(checkQualityGate(root).failures).toContain(
+      "packages/core/tsconfig.test.json must set compilerOptions.noEmit to true.",
+    );
   });
 
   it("fails when a dependency-edge pilot does not use the test tsconfig", async () => {
@@ -591,7 +600,8 @@ describe("checkQualityGate", () => {
     const root = await createFixtureRepo();
     await writePackageCoreReferenceExperimentFiles(root);
     await mutateRootPackageJson(root, (packageJson) => {
-      packageJson.scripts["packages:graph:check"] = "pnpm exec tsc -p tsconfig.packages.experimental.json --dry --verbose";
+      packageJson.scripts["packages:graph:check"] =
+        "pnpm exec tsc -p tsconfig.packages.experimental.json --dry --verbose";
     });
 
     expect(checkQualityGate(root).failures).toContain(
@@ -607,7 +617,9 @@ describe("checkQualityGate", () => {
     });
 
     expect(checkQualityGate(root).failures).toContain('root script "packages:graph:check" does not include "--dry".');
-    expect(checkQualityGate(root).failures).toContain('root script "packages:graph:check" does not include "--verbose".');
+    expect(checkQualityGate(root).failures).toContain(
+      'root script "packages:graph:check" does not include "--verbose".',
+    );
   });
 
   it("fails when packages:graph:check mixes in artifact build work", async () => {
@@ -688,10 +700,9 @@ async function createFixtureRepo() {
         "pnpm --filter @fixture/addon pack --dry-run",
         "pnpm --filter @fixture/core pack --dry-run",
       ].join(" && "),
-      "packages:build": [
-        "pnpm --filter @fixture/addon build:self",
-        "pnpm --filter @fixture/core build:self",
-      ].join(" && "),
+      "packages:build": ["pnpm --filter @fixture/addon build:self", "pnpm --filter @fixture/core build:self"].join(
+        " && ",
+      ),
       "packages:graph:check": "pnpm exec tsc -b tsconfig.packages.experimental.json --dry --verbose",
       "packages:typecheck:self": [
         "pnpm --filter @fixture/addon typecheck:self",

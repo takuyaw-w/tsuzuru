@@ -2,7 +2,28 @@
   "name": "@tsuzuru/preact",
   "version": "1.0.0",
   "description": "Preact runtime adapter and convenience runtime view for Tsuzuru.",
+  "keywords": [
+    "preact",
+    "runtime",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/preact#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/preact"
+  },
+  "files": [
+    "dist/index.*",
+    "dist/runtime-save.*",
+    "dist/runtime-view.*",
+    "dist/use-runtime.*"
+  ],
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,27 +32,6 @@
       "import": "./dist/index.js"
     }
   },
-  "files": [
-    "dist/index.*",
-    "dist/runtime-save.*",
-    "dist/runtime-view.*",
-    "dist/use-runtime.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/preact"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/preact#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "preact",
-    "runtime"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -45,12 +45,12 @@
   "dependencies": {
     "@tsuzuru/core": "workspace:^"
   },
-  "peerDependencies": {
-    "preact": "^10.0.0"
-  },
   "devDependencies": {
-    "preact": "^10.0.0",
+    "preact": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
   }
 }

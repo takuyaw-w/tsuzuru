@@ -16,10 +16,7 @@ const LEGACY_TARBALL_PATH_PATTERNS = [
   /(^|\/)examples\/preact-std-audio(\/|$)/,
 ];
 
-const TYPESCRIPT_BUILD_INFO_TARBALL_PATH_PATTERNS = [
-  /(^|\/)\.tsbuildinfo(\/|$)/,
-  /(^|\/)[^/]*\.tsbuildinfo$/,
-];
+const TYPESCRIPT_BUILD_INFO_TARBALL_PATH_PATTERNS = [/(^|\/)\.tsbuildinfo(\/|$)/, /(^|\/)[^/]*\.tsbuildinfo$/];
 
 export async function checkPublishReadiness(rootDir = process.cwd(), options = {}) {
   const packPackage = options.packPackage ?? packPackageWithPnpm;

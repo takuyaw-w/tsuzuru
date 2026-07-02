@@ -2,17 +2,25 @@
   "name": "create-tsuzuru",
   "version": "1.0.0",
   "description": "Minimal project generator for Tsuzuru.",
+  "keywords": [
+    "create",
+    "scaffold",
+    "tsuzuru",
+    "visual-novel",
+    "vite"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/create-tsuzuru#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
-  "type": "module",
-  "types": "./dist/src/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/create-tsuzuru"
+  },
   "bin": {
     "create-tsuzuru": "./dist/src/index.js"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    }
   },
   "files": [
     "dist/src/create-project.*",
@@ -21,22 +29,14 @@
     "templates",
     "README.md"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/create-tsuzuru"
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
   },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/create-tsuzuru#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "create",
-    "scaffold",
-    "vite"
-  ],
   "scripts": {
     "build": "pnpm run build:self",
     "build:self": "tsc -p tsconfig.json",
@@ -45,7 +45,7 @@
     "typecheck:self": "tsc -p tsconfig.test.json"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -2,15 +2,21 @@
   "name": "@tsuzuru/standard-ui-preact",
   "version": "1.0.0",
   "description": "Reusable Preact UI components for Tsuzuru visual novel screens.",
+  "keywords": [
+    "preact",
+    "tsuzuru",
+    "ui",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/standard-ui-preact#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
-  "type": "module",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./style.css": "./dist/style.css"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/standard-ui-preact"
   },
   "files": [
     "dist/atoms/**",
@@ -54,21 +60,15 @@
     "dist/useStdAudioNotices.*",
     "dist/useTextReveal.*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/standard-ui-preact"
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
   },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/standard-ui-preact#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "preact",
-    "ui"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -89,12 +89,12 @@
     "@tsuzuru/plugin-std-visual": "workspace:^",
     "@tsuzuru/preact": "workspace:^"
   },
-  "peerDependencies": {
-    "preact": "^10.0.0"
-  },
   "devDependencies": {
-    "preact": "^10.0.0",
+    "preact": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
   }
 }

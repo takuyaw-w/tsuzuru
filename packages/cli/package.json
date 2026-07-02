@@ -2,17 +2,24 @@
   "name": "@tsuzuru/cli",
   "version": "1.0.0",
   "description": "Command line tools for checking Tsuzuru projects.",
+  "keywords": [
+    "cli",
+    "scenario",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
-  "type": "module",
-  "types": "./dist/src/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "tsuzuru": "./dist/src/index.js"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    }
   },
   "files": [
     "dist/src/check.*",
@@ -21,21 +28,14 @@
     "dist/src/index.*",
     "dist/src/scenario-files.*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/cli"
+  "type": "module",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
   },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/cli#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "cli",
-    "scenario"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -49,10 +49,10 @@
   "dependencies": {
     "@tsuzuru/config": "workspace:^",
     "@tsuzuru/core": "workspace:^",
-    "tinyglobby": "^0.2.16"
+    "tinyglobby": "^0.2.17"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

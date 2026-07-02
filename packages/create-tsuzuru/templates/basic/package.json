@@ -2,7 +2,6 @@
   "name": "{{projectName}}",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.0.0",
   "scripts": {
     "dev": "pnpm install --prefer-offline && vite",
     "build": "tsuzuru check && vite build",
@@ -19,13 +18,14 @@
     "@tsuzuru/preact": "^1.0.0",
     "@tsuzuru/standard-game-storage": "^1.0.0",
     "@tsuzuru/standard-ui-preact": "^1.0.0",
-    "preact": "^10.0.0"
+    "preact": "^10.29.3"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.5",
     "@tsuzuru/cli": "^1.0.0",
     "@tsuzuru/vite-plugin": "^1.0.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10"
-  }
+    "vite": "^8.1.2"
+  },
+  "packageManager": "pnpm@11.0.0"
 }

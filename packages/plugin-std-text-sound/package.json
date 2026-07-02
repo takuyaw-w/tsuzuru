@@ -2,7 +2,26 @@
   "name": "@tsuzuru/plugin-std-text-sound",
   "version": "1.0.0",
   "description": "Standard text sound plugin state and command handlers for Tsuzuru.",
+  "keywords": [
+    "plugin",
+    "text-sound",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-text-sound#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-text-sound"
+  },
+  "files": [
+    "dist/src/browser.*",
+    "dist/src/index.*"
+  ],
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
@@ -15,25 +34,6 @@
       "import": "./dist/src/browser.js"
     }
   },
-  "files": [
-    "dist/src/browser.*",
-    "dist/src/index.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/plugin-std-text-sound"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-text-sound#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "plugin",
-    "text-sound"
-  ],
   "publishConfig": {
     "access": "public"
   },

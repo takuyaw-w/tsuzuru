@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/node_modules",
+    "**/dist",
+    "**/coverage",
+    "**/.vite",
+    "**/.turbo",
+    "**/test-results",
+    "**/playwright-report",
+    "**/screenshots",
+    "*.md",
+    "**/*.md",
+    "packages/**/dist",
+    "examples/**/dist",
+    "pnpm-lock.yaml"
+  ],
+  "printWidth": 120,
+  "tabWidth": 2,
+  "semi": true,
+  "singleQuote": false
+}

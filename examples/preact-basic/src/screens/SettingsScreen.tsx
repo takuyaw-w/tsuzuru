@@ -145,7 +145,7 @@ function ToggleSetting({ label, description, checked, onChange }: ToggleSettingP
         <p className="settings-config__item-label">{label}</p>
         <p className="settings-config__item-description">{description}</p>
       </div>
-      <div className="settings-config__toggle-group" role="group" aria-label={label}>
+      <fieldset className="settings-config__toggle-group" aria-label={label}>
         <button
           type="button"
           className="settings-config__choice-button"
@@ -162,7 +162,7 @@ function ToggleSetting({ label, description, checked, onChange }: ToggleSettingP
         >
           Off
         </button>
-      </div>
+      </fieldset>
     </div>
   );
 }
@@ -188,7 +188,7 @@ function SegmentedSetting<T extends string | number>({
         <p className="settings-config__item-label">{label}</p>
         <p className="settings-config__item-description">Choose how quickly each message appears.</p>
       </div>
-      <div className="settings-config__segmented" role="group" aria-label={label}>
+      <fieldset className="settings-config__segmented" aria-label={label}>
         {options.map((option) => (
           <button
             key={option}
@@ -200,7 +200,7 @@ function SegmentedSetting<T extends string | number>({
             {getLabel(option)}
           </button>
         ))}
-      </div>
+      </fieldset>
     </div>
   );
 }

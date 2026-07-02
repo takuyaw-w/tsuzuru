@@ -2,7 +2,25 @@
   "name": "@tsuzuru/plugin-std-effect",
   "version": "1.0.0",
   "description": "Standard one-shot effect plugin state and command handlers for Tsuzuru.",
+  "keywords": [
+    "effect",
+    "plugin",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-effect#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/plugin-std-effect"
+  },
+  "files": [
+    "dist/src/index.*"
+  ],
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
@@ -11,24 +29,6 @@
       "import": "./dist/src/index.js"
     }
   },
-  "files": [
-    "dist/src/index.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/plugin-std-effect"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/plugin-std-effect#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "plugin",
-    "effect"
-  ],
   "publishConfig": {
     "access": "public"
   },

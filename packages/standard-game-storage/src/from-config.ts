@@ -134,9 +134,7 @@ function resolveStorageOptions(
     ...(readTracking === undefined
       ? {}
       : {
-          readTracking: {
-            ...(readTracking.key === undefined ? {} : { storageKey: readTracking.key }),
-          },
+          readTracking: readTracking.key === undefined ? {} : { storageKey: readTracking.key },
         }),
     ...(options.storage === undefined ? {} : { storage: options.storage }),
   };

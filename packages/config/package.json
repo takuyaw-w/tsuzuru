@@ -2,7 +2,25 @@
   "name": "@tsuzuru/config",
   "version": "1.0.0",
   "description": "Project configuration helpers for Tsuzuru.",
+  "keywords": [
+    "config",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/config#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/config"
+  },
+  "files": [
+    "dist/src/index.*",
+    "dist/src/node.*"
+  ],
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
@@ -15,24 +33,6 @@
       "import": "./dist/src/node.js"
     }
   },
-  "files": [
-    "dist/src/index.*",
-    "dist/src/node.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/config"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/config#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "config"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -47,7 +47,7 @@
     "jiti": "^2.7.0"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -2,7 +2,26 @@
   "name": "@tsuzuru/vite-plugin",
   "version": "1.0.0",
   "description": "Vite plugin for importing Tsuzuru .tzr scenario files as compiled runtime documents.",
+  "keywords": [
+    "scenario",
+    "tsuzuru",
+    "visual-novel",
+    "vite"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/vite-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/vite-plugin"
+  },
+  "files": [
+    "dist/src/client.*",
+    "dist/src/index.*"
+  ],
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "exports": {
@@ -14,25 +33,6 @@
       "types": "./dist/src/client.d.ts"
     }
   },
-  "files": [
-    "dist/src/client.*",
-    "dist/src/index.*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/vite-plugin"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/vite-plugin#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "vite",
-    "scenario"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -47,13 +47,13 @@
     "@tsuzuru/config": "workspace:^",
     "@tsuzuru/core": "workspace:^"
   },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
   "peerDependencies": {
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^25.6.0",
-    "typescript": "catalog:",
-    "vite": "^8.0.10",
-    "vitest": "catalog:"
   }
 }

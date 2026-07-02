@@ -2,7 +2,26 @@
   "name": "@tsuzuru/theme-classic",
   "version": "1.0.0",
   "description": "Classic CSS variable theme for Tsuzuru standard UI.",
+  "keywords": [
+    "css",
+    "theme",
+    "tsuzuru",
+    "visual-novel"
+  ],
+  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/theme-classic#readme",
+  "bugs": {
+    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
+    "directory": "packages/theme-classic"
+  },
+  "files": [
+    "dist/index.*",
+    "dist/style.css"
+  ],
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,25 +31,6 @@
     },
     "./style.css": "./dist/style.css"
   },
-  "files": [
-    "dist/index.*",
-    "dist/style.css"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsuzuru-engine/tsuzuru.git",
-    "directory": "packages/theme-classic"
-  },
-  "bugs": {
-    "url": "https://github.com/tsuzuru-engine/tsuzuru/issues"
-  },
-  "homepage": "https://github.com/tsuzuru-engine/tsuzuru/tree/main/packages/theme-classic#readme",
-  "keywords": [
-    "tsuzuru",
-    "visual-novel",
-    "theme",
-    "css"
-  ],
   "publishConfig": {
     "access": "public"
   },

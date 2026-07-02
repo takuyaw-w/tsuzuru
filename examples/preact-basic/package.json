@@ -29,13 +29,13 @@
     "@tsuzuru/preact": "workspace:*",
     "@tsuzuru/standard-game-storage": "workspace:*",
     "@tsuzuru/standard-ui-preact": "workspace:*",
-    "preact": "^10.0.0"
+    "preact": "catalog:"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.5",
+    "@preact/preset-vite": "catalog:",
     "@tsuzuru/vite-plugin": "workspace:*",
     "typescript": "catalog:",
-    "vitest": "catalog:",
-    "vite": "^8.0.10"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
