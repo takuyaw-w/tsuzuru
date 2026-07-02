@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type BodyChoiceInstruction,
   type CommandInstruction,
   clearClickWait,
   clearWait,
@@ -8,9 +9,13 @@ import {
   createRuntimeSnapshot,
   definePluginCommand,
   getRuntimeBlockReason,
+  type IfInstruction,
   isRuntimeBlocked,
+  parseTzrConditionExpression,
   parseTzr,
   type RuntimeDocument,
+  type RuntimeConditionResolveResult,
+  type RuntimeConditionResolver,
   type RuntimePluginCommandHandler,
   restoreRuntimeState,
   stepRuntime,
@@ -63,7 +68,36 @@ function positionalString(value: string): TzrArgument {
   };
 }
 
-function createDocument(instructions: readonly CommandInstruction[] = []): RuntimeDocument {
+function condition(source: string): IfInstruction["condition"] {
+  const parsed = parseTzrConditionExpression(source, { filePath: "scenario/runtime.tzr" });
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) {
+    throw new Error("expected condition parser success");
+  }
+
+  return parsed.expression;
+}
+
+function resolver(
+  namespace: RuntimeConditionResolver["namespace"],
+  resolve: RuntimeConditionResolver["resolve"],
+): RuntimeConditionResolver {
+  return { namespace, resolve };
+}
+
+function ok(value: Extract<RuntimeConditionResolveResult, { ok: true }>["value"]): RuntimeConditionResolveResult {
+  return { ok: true, value };
+}
+
+function narration(text: string): RuntimeDocument["instructions"][number] {
+  return {
+    type: "NarrationInstruction",
+    lines: [{ text, loc }],
+    loc,
+  };
+}
+
+function createDocument(instructions: RuntimeDocument["instructions"] = []): RuntimeDocument {
   return {
     filePath: "scenario/runtime.tzr",
     instructions,
@@ -230,6 +264,113 @@ scene start:
     expect(set.event).toEqual({ type: "state", command: "set", name: "scenario.score", value: 2 });
     expect(add.event).toEqual({ type: "state", command: "add", name: "scenario.score", value: 5 });
     expect(add.state.variables).toEqual({ "scenario.score": 5 });
+  });
+
+  it("uses RuntimeStepOptions conditionResolvers for if branches", () => {
+    const instruction: IfInstruction = {
+      type: "IfInstruction",
+      condition: condition("system.endings.trueEnd.unlocked"),
+      thenBranch: [narration("True ending unlocked.")],
+      elifBranches: [],
+      loc,
+    };
+    const document = createDocument([instruction]);
+
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      conditionResolvers: [
+        resolver("system", (path) => {
+          expect(path).toEqual(["endings", "trueEnd", "unlocked"]);
+          return ok(true);
+        }),
+      ],
+    });
+
+    expect(result.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "then",
+      event: {
+        type: "narration",
+        lines: [{ text: "True ending unlocked.", loc }],
+      },
+    });
+  });
+
+  it("uses RuntimeStepOptions conditionResolvers for elif branch selection", () => {
+    const instruction: IfInstruction = {
+      type: "IfInstruction",
+      condition: condition("system.flags.firstRoute"),
+      thenBranch: [narration("First route.")],
+      elifBranches: [
+        {
+          condition: condition("system.flags.secondRoute"),
+          body: [narration("Second route.")],
+          loc,
+        },
+      ],
+      elseBranch: [narration("Fallback route.")],
+      loc,
+    };
+    const document = createDocument([instruction]);
+
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      conditionResolvers: [
+        resolver("system", (path) => ok(path.join(".") === "flags.secondRoute")),
+      ],
+    });
+
+    expect(result.event).toEqual({
+      type: "if",
+      result: true,
+      branch: "elif",
+      branchIndex: 0,
+      event: {
+        type: "narration",
+        lines: [{ text: "Second route.", loc }],
+      },
+    });
+  });
+
+  it("uses RuntimeStepOptions conditionResolvers to filter body choice items", () => {
+    const instruction: BodyChoiceInstruction = {
+      type: "BodyChoiceInstruction",
+      question: "Where next?",
+      items: [
+        {
+          label: "Open gallery",
+          id: "gallery",
+          condition: condition("system.gallery.unlocked"),
+          body: [narration("Gallery opened.")],
+          loc,
+        },
+        {
+          label: "Open locked ending",
+          id: "locked-ending",
+          condition: condition("system.endings.locked.unlocked"),
+          body: [narration("Locked ending opened.")],
+          loc,
+        },
+      ],
+      loc,
+    };
+    const document = createDocument([instruction]);
+
+    const result = stepRuntime(document, createInitialRuntimeState(document), {
+      conditionResolvers: [
+        resolver("system", (path) => ok(path.join(".") === "gallery.unlocked")),
+      ],
+    });
+
+    expect(result.event).toEqual({
+      type: "choice",
+      question: "Where next?",
+      items: [{ id: "gallery", text: "Open gallery" }],
+    });
+    expect(result.state.pendingChoice).toMatchObject({
+      kind: "body",
+      question: "Where next?",
+      items: [{ id: "gallery", text: "Open gallery" }],
+    });
   });
 
   it("does not support removed low-level state helper commands as core commands", () => {
