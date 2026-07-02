@@ -137,7 +137,7 @@ function stepInstruction(
     case "IfInstruction":
       return stepIfInstruction(document, state, nextState, instruction, options, stepInstruction);
     case "BodyChoiceInstruction":
-      return stepBodyChoiceInstruction(nextState, instruction);
+      return stepBodyChoiceInstruction(nextState, instruction, options);
   }
 }
 

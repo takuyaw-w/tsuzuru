@@ -1,4 +1,8 @@
-import { evaluateTzrCondition, type TzrConditionEvaluationError } from "./condition-evaluator.js";
+import {
+  evaluateTzrCondition,
+  type TzrConditionEvaluationError,
+  type TzrConditionEvaluationOptions,
+} from "./condition-evaluator.js";
 import type {
   BodyChoiceInstruction,
   BodyChoiceInstructionItem,
@@ -36,7 +40,7 @@ export function stepIfInstruction(
   options: RuntimeStepOptions,
   stepInstruction: RuntimeInstructionStepper,
 ): RuntimeStepResult {
-  const selected = selectIfBranch(instruction, state);
+  const selected = selectIfBranch(instruction, state, options);
   if (!selected.ok) {
     return {
       state: nextState,
@@ -82,8 +86,12 @@ export function stepIfInstruction(
   };
 }
 
-export function stepBodyChoiceInstruction(state: RuntimeState, instruction: BodyChoiceInstruction): RuntimeStepResult {
-  const visibleItems = filterBodyChoiceItems(state, instruction);
+export function stepBodyChoiceInstruction(
+  state: RuntimeState,
+  instruction: BodyChoiceInstruction,
+  options: RuntimeStepOptions = {},
+): RuntimeStepResult {
+  const visibleItems = filterBodyChoiceItems(state, instruction, options);
   if (!visibleItems.ok) {
     return {
       state,
@@ -139,7 +147,11 @@ type BodyChoiceFilterResult =
       readonly error: TzrConditionEvaluationError;
     };
 
-function filterBodyChoiceItems(state: RuntimeState, instruction: BodyChoiceInstruction): BodyChoiceFilterResult {
+function filterBodyChoiceItems(
+  state: RuntimeState,
+  instruction: BodyChoiceInstruction,
+  options: RuntimeStepOptions,
+): BodyChoiceFilterResult {
   const items: BodyChoiceInstructionItem[] = [];
 
   for (const item of instruction.items) {
@@ -148,7 +160,7 @@ function filterBodyChoiceItems(state: RuntimeState, instruction: BodyChoiceInstr
       continue;
     }
 
-    const result = evaluateTzrCondition(item.condition, state);
+    const result = evaluateTzrCondition(item.condition, state, conditionEvaluationOptions(options));
     if (!result.ok) {
       return result;
     }
@@ -195,8 +207,8 @@ type IfBranchSelection =
       readonly error: TzrConditionEvaluationError;
     };
 
-function selectIfBranch(instruction: IfInstruction, state: RuntimeState): IfBranchSelection {
-  const thenResult = evaluateTzrCondition(instruction.condition, state);
+function selectIfBranch(instruction: IfInstruction, state: RuntimeState, options: RuntimeStepOptions): IfBranchSelection {
+  const thenResult = evaluateTzrCondition(instruction.condition, state, conditionEvaluationOptions(options));
   if (!thenResult.ok) {
     return thenResult;
   }
@@ -210,7 +222,7 @@ function selectIfBranch(instruction: IfInstruction, state: RuntimeState): IfBran
   }
 
   for (const [branchIndex, branch] of instruction.elifBranches.entries()) {
-    const elifResult = evaluateTzrCondition(branch.condition, state);
+    const elifResult = evaluateTzrCondition(branch.condition, state, conditionEvaluationOptions(options));
     if (!elifResult.ok) {
       return elifResult;
     }
@@ -239,6 +251,10 @@ function selectIfBranch(instruction: IfInstruction, state: RuntimeState): IfBran
     result: false,
     branch: "none",
   };
+}
+
+function conditionEvaluationOptions(options: RuntimeStepOptions): TzrConditionEvaluationOptions {
+  return options.conditionResolvers === undefined ? {} : { conditionResolvers: options.conditionResolvers };
 }
 
 function ifEvent(result: boolean, branch: IfRuntimeEvent["branch"], branchIndex?: number): IfRuntimeEvent {
