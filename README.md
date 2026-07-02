@@ -62,20 +62,25 @@ so it can be parsed, validated, compiled, and connected to TypeScript plugins.
 
 ## Quick Start
 
-For npm users, the intended project-generator path is `create-tsuzuru`:
+Start with the project generator:
 
 ```sh
-pnpm create tsuzuru my-game
+npm create tsuzuru@latest my-game
 cd my-game
-pnpm dev
+npm install
+npm run dev
 ```
 
-The default template is the current Vite + Preact starter. The same starter is
-also available explicitly:
+The generated app opens with a title screen. Press Start, then edit
+`scenario/main.tzr` and save the file. The first experience should be seeing a
+small story change reflected in the browser.
+
+The default template is the current Vite + Preact starter. The same starter can
+also be selected explicitly:
 
 ```sh
-pnpm create tsuzuru my-game --template basic
-pnpm create tsuzuru my-game --template preact
+npm create tsuzuru@latest my-game -- --template basic
+npm create tsuzuru@latest my-game -- --template preact
 ```
 
 This command uses the generator and dependency versions available from npm. If
@@ -90,10 +95,10 @@ pnpm --filter @tsuzuru/example-preact-starter dev
 Generated projects include these useful scripts:
 
 ```sh
-pnpm check:scenario
-pnpm typecheck
-pnpm build
-pnpm preview
+npm run check:scenario
+npm run typecheck
+npm run build
+npm run preview
 ```
 
 The starter is meant to be edited from:

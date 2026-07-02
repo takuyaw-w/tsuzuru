@@ -35,19 +35,24 @@ Tsuzuru は汎用 scripting language や KAG、TyranoScript、Ren'Py の clone �
 
 ## Quick Start
 
-npm ユーザー向けには、`create-tsuzuru` が想定される project-generator path です。
+まず project generator から始めます。
 
 ```sh
-pnpm create tsuzuru my-game
+npm create tsuzuru@latest my-game
 cd my-game
-pnpm dev
+npm install
+npm run dev
 ```
+
+生成された app は title screen から始まります。
+Start を押したあと、`scenario/main.tzr` を編集して保存してください。
+最初の体験は、`.tzr` の小さな変更がブラウザ上の表示に反映されることです。
 
 default template は現在の Vite + Preact starter です。同じ starter は明示的にも指定できます。
 
 ```sh
-pnpm create tsuzuru my-game --template basic
-pnpm create tsuzuru my-game --template preact
+npm create tsuzuru@latest my-game -- --template basic
+npm create tsuzuru@latest my-game -- --template preact
 ```
 
 このコマンドは npm で利用できる generator と dependency versions を使います。この repository の current source を、対応する workspace packages がすべて publish される前に試す場合は、checkout 済みの starter example を使ってください。
@@ -57,13 +62,13 @@ pnpm install --frozen-lockfile
 pnpm --filter @tsuzuru/example-preact-starter dev
 ```
 
-Generated projects には、次の便利な scripts が含まれます。
+生成された project には、次の便利な scripts が含まれます。
 
 ```sh
-pnpm check:scenario
-pnpm typecheck
-pnpm build
-pnpm preview
+npm run check:scenario
+npm run typecheck
+npm run build
+npm run preview
 ```
 
 starter では主に次のファイルを編集します。
