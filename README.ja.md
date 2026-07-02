@@ -151,6 +151,7 @@ Core は Preact、DOM、CSS、Vite、browser storage、asset loading から独�
 ## Examples
 
 現在の runnable examples はすべて Preact-based です。
+examples は目的別 reference です。最初は `preact-starter` を見て、確認したい挙動に合わせて別の example を開いてください。
 
 | Example | Purpose |
 | --- | --- |

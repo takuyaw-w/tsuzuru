@@ -1,65 +1,63 @@
 # Tsuzuru Preact Basic Example
 
-This example runs a short visual-novel style browser game from
-`scenario/main.tzr`. The app imports the `.tzr` entry through
-`@tsuzuru/vite-plugin`, then drives the compiled document with
-`@tsuzuru/preact`'s `useRuntime`.
+この example は、Tsuzuru の Preact stack をまとめて確認する統合 reference です。
+`scenario/main.tzr` の短いシナリオを、standard UI、standard plugins、save/load、preferences、backlog、auto、skip、read tracking と一緒に動かします。
 
-The bundled scenario is `放課後の栞`, a 2-5 minute starter-scale story. It uses
-the current DSL v2 only: `include`, `scene`, `bg`, `show`, dialogue, narration,
-state updates, `if`, choices, jumps, plugin commands, waits, and `end`.
+## 役割
 
-The app opens on a title screen and uses the `TitleScreen`, `GameViewport`,
-`GameShell`, `RuntimeControlBar`, `RuntimeMessageLayer`, `ChoiceLayer`,
-`StdVisualRuntimeLayer`, `StdAudioRuntimeLayer`, `StdEffectLayer`,
-`StdCameraRuntimeLayer`, and `StdParticleRuntimeLayer` components from
-`@tsuzuru/standard-ui-preact`.
+- core runtime、Preact adapter、standard UI layers の接続を見る
+- visual / audio / text-sound / effect / camera / particle / system plugin の基本的な使い方を見る
+- save/load、settings、backlog、auto、skip、read tracking を app 側の実装例として見る
+- starter より広い機能を確認する reference として使う
 
-Title, load, settings, backlog, gallery, save, and load screens remain
-example-side TSX under `src/screens`. They are intentionally small so the
-example stays useful as a starter reference instead of becoming a framework.
+最初に `.tzr` を編集して表示が変わる流れだけを見たい場合は `examples/preact-starter` を使います。
 
-The example includes a Save / Load MVP. It uses three localStorage-backed save
-slots, enables Title Continue when a latest save exists, and shows Save / Load
-as runtime overlays so the runtime is not unmounted while those screens are
-open. Storage options are declared in `tsuzuru.config.ts` and wired through
-`createStandardGameStorageFromConfig`.
-
-Settings are a full-screen CONFIG-style screen inside the 16:9 viewport. They
-are connected only to existing standard preferences: text reveal, text speed,
-text sound on/off, text sound volume, BGM volume, SE volume, and voice volume.
-Preferences are stored with the same config-driven storage setup.
-
-The example does not bundle real audio files. `assets.ts` maps BGM / SE / Voice
-IDs to host-owned public paths, and the browser may report missing audio files
-without stopping the app. Text sound uses the browser helper from
-`@tsuzuru/plugin-std-text-sound` and generated Web Audio profiles.
-
-Scenario files live under `scenario/`. Add new `.tzr` files there, then
-reference them from `scenario/main.tzr` with `include "./path.tzr"`. Asset IDs
-and example-side presentation mapping live in `assets.ts`. Example-specific
-background SVGs live under `public/assets/backgrounds/`.
-
-Controls:
-
-- The example opens on the title screen. Click Start to enter the game.
-- Click, Enter, or Space advances messages. While text is revealing, the first
-  advance request reveals the full message.
-- Runtime menu actions open Save, Load, Backlog, Settings, or return to Title.
-- Auto advances dialogue and narration after the full text is visible, and stops
-  at choices.
-- Skip advances only messages already read in the current session, and stops at
-  choices.
+## 起動
 
 ```sh
 pnpm --filter @tsuzuru/example-preact-basic dev
+```
+
+## よく見るファイル
+
+- `scenario/main.tzr`
+  scenario の entry です。`include` で分割された `.tzr` files を読み込みます。
+
+- `scenario/`
+  会話、分岐、state updates、plugin commands、waits などを含む scenario files を置きます。
+
+- `src/assets.ts`
+  scenario asset id と example 側の presentation mapping を定義します。
+
+- `src/screens/`
+  title、save、load、settings、backlog、gallery など、project-specific screens を実装します。
+
+- `tsuzuru.config.ts`
+  scenario files、plugins、storage settings を宣言します。
+
+## 操作
+
+- title screen で Start を選ぶと game に入ります。
+- Click、Enter、Space で message を進めます。
+- 表示途中の text は、最初の advance で全文表示になります。
+- runtime menu から Save、Load、Backlog、Settings、Title へ移動できます。
+- Auto は text 表示後に進み、choices で停止します。
+- Skip は現在 session で既読の messages だけ進み、choices で停止します。
+
+## チェック
+
+```sh
 pnpm --filter @tsuzuru/example-preact-basic check:scenario
 pnpm --filter @tsuzuru/example-preact-basic test
+pnpm --filter @tsuzuru/example-preact-basic typecheck
 pnpm --filter @tsuzuru/example-preact-basic build
 pnpm --filter @tsuzuru/example-preact-basic test:ui
 ```
 
-The Playwright UI check starts the example dev server at
-`http://127.0.0.1:5173/`, captures a title-screen screenshot, runs title /
-settings / runtime / choice smoke checks, and verifies the localStorage-backed
-Save -> Load -> Restore path.
+`test:ui` は Playwright で title、settings、runtime、choice、localStorage-backed Save -> Load -> Restore path を確認します。
+
+## 補足
+
+この example は real audio files を bundle していません。
+`src/assets.ts` は BGM / SE / Voice ids を host-owned public paths に mapping します。
+browser が missing audio files を報告しても、app の動作確認は止まりません。

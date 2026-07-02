@@ -220,7 +220,9 @@ framework behavior.
 
 ## Examples
 
-All current runnable examples are Preact-based:
+All current runnable examples are Preact-based. They are purpose-specific
+references; start with `preact-starter`, then open the example that matches the
+behavior you want to inspect.
 
 | Example | Purpose |
 | --- | --- |
