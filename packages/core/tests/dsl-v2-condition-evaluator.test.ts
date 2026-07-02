@@ -107,7 +107,9 @@ describe("evaluateTzrCondition", () => {
 
     expect(
       evaluateTzrCondition(
-        parseCondition("system.endings.trueEnd.unlocked and system.endings.trueEnd.clearCount >= 2 and scenario.score > 3"),
+        parseCondition(
+          "system.endings.trueEnd.unlocked and system.endings.trueEnd.clearCount >= 2 and scenario.score > 3",
+        ),
         state,
         { conditionResolvers: [systemResolver] },
       ),
@@ -132,10 +134,7 @@ describe("evaluateTzrCondition", () => {
 
   it("returns a duplicate resolver error when a namespace is registered more than once", () => {
     const state = createInitialRuntimeState(createDocument());
-    const conditionResolvers = [
-      resolver("system", () => ok(true)),
-      resolver("system", () => ok(false)),
-    ];
+    const conditionResolvers = [resolver("system", () => ok(true)), resolver("system", () => ok(false))];
 
     expect(
       evaluateTzrCondition(parseCondition("system.endings.trueEnd.unlocked"), state, {

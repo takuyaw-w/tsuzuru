@@ -340,9 +340,7 @@ class TzrCompiler {
       case "ConditionReference":
         if (expression.root !== "scenario" && !this.conditionNamespaces.has(expression.root)) {
           const hint =
-            expression.root === "system"
-              ? ' Register a plugin that declares conditionNamespaces: ["system"].'
-              : "";
+            expression.root === "system" ? ' Register a plugin that declares conditionNamespaces: ["system"].' : "";
           this.addError(
             expression.loc.start,
             `Condition namespace "${expression.root}" is not compile-supported.${hint}`,

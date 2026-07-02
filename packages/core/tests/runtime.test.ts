@@ -314,9 +314,7 @@ scene start:
     const document = createDocument([instruction]);
 
     const result = stepRuntime(document, createInitialRuntimeState(document), {
-      conditionResolvers: [
-        resolver("system", (path) => ok(path.join(".") === "flags.secondRoute")),
-      ],
+      conditionResolvers: [resolver("system", (path) => ok(path.join(".") === "flags.secondRoute"))],
     });
 
     expect(result.event).toEqual({
@@ -356,9 +354,7 @@ scene start:
     const document = createDocument([instruction]);
 
     const result = stepRuntime(document, createInitialRuntimeState(document), {
-      conditionResolvers: [
-        resolver("system", (path) => ok(path.join(".") === "gallery.unlocked")),
-      ],
+      conditionResolvers: [resolver("system", (path) => ok(path.join(".") === "gallery.unlocked"))],
     });
 
     expect(result.event).toEqual({

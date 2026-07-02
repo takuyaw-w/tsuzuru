@@ -191,9 +191,7 @@ function throwInvalidRuntimeArguments(instruction: CommandInstruction): never {
   throw new Error(`Invalid @${instruction.name} runtime arguments. Expected validated std system command arguments.`);
 }
 
-function getSupportedSystemConditionPath(
-  path: readonly string[],
-): readonly [keyof StdSystemState, string] | undefined {
+function getSupportedSystemConditionPath(path: readonly string[]): readonly [keyof StdSystemState, string] | undefined {
   if (path.length !== 3 || path[1] === undefined || path[2] !== "unlocked") {
     return undefined;
   }

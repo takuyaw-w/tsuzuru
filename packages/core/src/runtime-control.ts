@@ -207,7 +207,11 @@ type IfBranchSelection =
       readonly error: TzrConditionEvaluationError;
     };
 
-function selectIfBranch(instruction: IfInstruction, state: RuntimeState, options: RuntimeStepOptions): IfBranchSelection {
+function selectIfBranch(
+  instruction: IfInstruction,
+  state: RuntimeState,
+  options: RuntimeStepOptions,
+): IfBranchSelection {
   const thenResult = evaluateTzrCondition(instruction.condition, state, conditionEvaluationOptions(options));
   if (!thenResult.ok) {
     return thenResult;
