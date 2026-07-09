@@ -1,5 +1,5 @@
 import type { SourceLocation, SourceRange, TextLine, TzrArgument, TzrValue } from "./ast.js";
-import { isCoreCommandName } from "./commands.js";
+import { DSL_ADD_COMMAND_NAME, DSL_SET_REFERENCE_COMMAND_NAME, isCoreCommandName } from "./commands.js";
 import { createDiagnostic, type Diagnostic } from "./diagnostic.js";
 import type {
   BodyChoiceInstruction,
@@ -57,8 +57,6 @@ import type {
   TzrWaitStatement,
 } from "./scenario-ast.js";
 
-const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
-const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 const STD_EFFECT_HEX_COLOR_PATTERN = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 const STD_TRANSITION_DIRECTIONS = ["left", "right", "up", "down"] as const;
 type StdVisualBackgroundTransitionEffect = Extract<

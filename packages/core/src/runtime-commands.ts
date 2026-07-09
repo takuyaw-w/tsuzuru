@@ -1,10 +1,7 @@
-import { isCoreCommandName } from "./commands.js";
+import { DSL_ADD_COMMAND_NAME, DSL_SET_REFERENCE_COMMAND_NAME, isCoreCommandName } from "./commands.js";
 import type { CommandInstruction, RuntimeDocument } from "./ir.js";
 import { getNamedNumber, getNamedRuntimeValue, getNamedString, getPositionalNumber } from "./runtime-args.js";
 import type { RuntimeState, RuntimeStepOptions, RuntimeStepResult, RuntimeValue } from "./runtime-types.js";
-
-export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
-export const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
 
 export function stepCommandInstruction(
   _document: RuntimeDocument,

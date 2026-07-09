@@ -114,6 +114,12 @@ interface ParsedVisualStatementBody {
   readonly transition?: TzrVisualTransition;
 }
 
+interface ParsedStaticAssetRef {
+  readonly kind: "string" | "identifier";
+  readonly value: string;
+  readonly loc: SourceRange;
+}
+
 type StateStatementKeyword = "set" | "add";
 type CallWaitStatementKeyword = "call" | "wait" | "transition" | HotspotStatementKeyword;
 type VisualAssetStatementKeyword = "bg" | "show" | "hide";
@@ -523,19 +529,7 @@ class TzrParser {
       return undefined;
     }
 
-    const headerLoc = this.lineRange(header);
-    this.cursor += 1;
-    const textBlock = this.collectTextBlock(header, indentLevel);
-    const lines = textBlock.lines;
-    const end = lines.at(-1)?.loc.end ?? headerLoc.end;
-    return {
-      type: "DialogueStatement",
-      speaker,
-      explicit: true,
-      ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
-      lines,
-      loc: { start: this.location(header.line, statementColumn), end },
-    };
+    return this.parseDialogueTextBlock(header, speaker, statementColumn, indentLevel, true);
   }
 
   private parseShorthandDialogueStatement(
@@ -551,6 +545,16 @@ class TzrParser {
       return undefined;
     }
 
+    return this.parseDialogueTextBlock(header, speaker, statementColumn, indentLevel, false);
+  }
+
+  private parseDialogueTextBlock(
+    header: SourceLine,
+    speaker: string,
+    statementColumn: number,
+    indentLevel: number,
+    explicit: boolean,
+  ): TzrDialogueStatement {
     const headerLoc = this.lineRange(header);
     this.cursor += 1;
     const textBlock = this.collectTextBlock(header, indentLevel);
@@ -559,7 +563,7 @@ class TzrParser {
     return {
       type: "DialogueStatement",
       speaker,
-      explicit: false,
+      explicit,
       ...(textBlock.meta === undefined ? {} : { meta: textBlock.meta }),
       lines,
       loc: { start: this.location(header.line, statementColumn), end },
@@ -1154,7 +1158,7 @@ class TzrParser {
     };
 
     if (source.startsWith("'") || source.startsWith("`") || source.startsWith('"')) {
-      return this.parseStringValue(line, source, sourceColumn);
+      return this.parseStringValue(line, source, sourceColumn, "set statement must not have extra trailing tokens.");
     }
     if (source.startsWith("$")) {
       return this.parseVariableReferenceValue(line, source, sourceColumn, "set");
@@ -1181,16 +1185,17 @@ class TzrParser {
     return undefined;
   }
 
-  private parseStringValue(line: SourceLine, source: string, sourceColumn: number): TzrStringValue | undefined {
+  private parseStringValue(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    trailingTokenMessage: string,
+  ): TzrStringValue | undefined {
     const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
     if (literalEnd !== undefined) {
       const trailing = source.slice(literalEnd + 1);
       if (trailing.trim().length > 0) {
-        this.addError(
-          line,
-          sourceColumn + literalEnd + 1 + trailing.search(/\S/),
-          "set statement must not have extra trailing tokens.",
-        );
+        this.addError(line, sourceColumn + literalEnd + 1 + trailing.search(/\S/), trailingTokenMessage);
         return undefined;
       }
     }
@@ -1570,7 +1575,7 @@ class TzrParser {
     };
 
     if (source.startsWith("'") || source.startsWith("`") || source.startsWith('"')) {
-      return this.parseArgumentStringValue(line, source, sourceColumn, keyword);
+      return this.parseStringValue(line, source, sourceColumn, `Invalid ${keyword} argument value.`);
     }
     if (source.startsWith("$")) {
       return this.parseArgumentVariableReferenceValue(line, source, sourceColumn, keyword);
@@ -1594,40 +1599,6 @@ class TzrParser {
 
     this.addError(line, sourceColumn, `Invalid ${keyword} argument value.`);
     return undefined;
-  }
-
-  private parseArgumentStringValue(
-    line: SourceLine,
-    source: string,
-    sourceColumn: number,
-    keyword: CallWaitStatementKeyword,
-  ): TzrStringValue | undefined {
-    const literalEnd = source.startsWith('"') ? this.findStringLiteralEnd(source) : undefined;
-    if (literalEnd !== undefined) {
-      const trailing = source.slice(literalEnd + 1);
-      if (trailing.trim().length > 0) {
-        this.addError(
-          line,
-          sourceColumn + literalEnd + 1 + trailing.search(/\S/),
-          `Invalid ${keyword} argument value.`,
-        );
-        return undefined;
-      }
-    }
-
-    const value = this.parseStringLiteral(line, source, sourceColumn);
-    if (value === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "StringValue",
-      value,
-      loc: {
-        start: this.location(line.line, sourceColumn),
-        end: this.location(line.line, sourceColumn + source.length),
-      },
-    };
   }
 
   private parseArgumentVariableReferenceValue(
@@ -1806,68 +1777,14 @@ class TzrParser {
     sourceColumn: number,
     keyword: VisualAssetStatementKeyword,
   ): TzrVisualAssetRef | undefined {
-    if (source.startsWith("$")) {
-      this.addError(line, sourceColumn, `${keyword} visual assetRef must be static.`);
+    const assetRef = this.parseStaticAssetRef(line, source, sourceColumn, keyword, "visual");
+    if (assetRef === undefined) {
       return undefined;
     }
 
-    if (source.startsWith("'") || source.startsWith("`")) {
-      this.parseStringLiteral(line, source, sourceColumn);
-      return undefined;
-    }
-
-    if (source.startsWith('"')) {
-      const literalEnd = this.findStringLiteralEnd(source);
-      if (literalEnd !== undefined) {
-        const trailing = source.slice(literalEnd + 1);
-        if (trailing.trim().length > 0) {
-          this.addError(
-            line,
-            sourceColumn + literalEnd + 1 + trailing.search(/\S/),
-            `${keyword} statement must not have extra trailing tokens.`,
-          );
-          return undefined;
-        }
-      }
-
-      const value = this.parseStringLiteral(line, source, sourceColumn);
-      if (value === undefined) {
-        return undefined;
-      }
-      if (value.length === 0) {
-        this.addError(line, sourceColumn, `${keyword} visual assetRef must not be empty.`);
-        return undefined;
-      }
-
-      return {
-        type: "VisualStringAssetRef",
-        value,
-        loc: {
-          start: this.location(line.line, sourceColumn),
-          end: this.location(line.line, sourceColumn + source.length),
-        },
-      };
-    }
-
-    const firstWhitespace = source.search(/\s/);
-    if (firstWhitespace !== -1) {
-      this.addError(line, sourceColumn + firstWhitespace, `${keyword} statement must not have extra trailing tokens.`);
-      return undefined;
-    }
-
-    if (!isValidTzrDottedIdentifier(source)) {
-      this.addError(line, sourceColumn, `Invalid ${keyword} visual assetRef.`);
-      return undefined;
-    }
-
-    return {
-      type: "VisualIdentifierAssetRef",
-      value: source,
-      loc: {
-        start: this.location(line.line, sourceColumn),
-        end: this.location(line.line, sourceColumn + source.length),
-      },
-    };
+    return assetRef.kind === "string"
+      ? { type: "VisualStringAssetRef", value: assetRef.value, loc: assetRef.loc }
+      : { type: "VisualIdentifierAssetRef", value: assetRef.value, loc: assetRef.loc };
   }
 
   private parseVisualPlacement(line: SourceLine, source: string, sourceColumn: number): TzrVisualPlacement | undefined {
@@ -2197,8 +2114,25 @@ class TzrParser {
     sourceColumn: number,
     keyword: AudioAssetStatementKeyword,
   ): TzrAudioAssetRef | undefined {
+    const assetRef = this.parseStaticAssetRef(line, source, sourceColumn, keyword, "audio");
+    if (assetRef === undefined) {
+      return undefined;
+    }
+
+    return assetRef.kind === "string"
+      ? { type: "AudioStringAssetRef", value: assetRef.value, loc: assetRef.loc }
+      : { type: "AudioIdentifierAssetRef", value: assetRef.value, loc: assetRef.loc };
+  }
+
+  private parseStaticAssetRef(
+    line: SourceLine,
+    source: string,
+    sourceColumn: number,
+    keyword: VisualAssetStatementKeyword | AudioAssetStatementKeyword,
+    assetKind: "visual" | "audio",
+  ): ParsedStaticAssetRef | undefined {
     if (source.startsWith("$")) {
-      this.addError(line, sourceColumn, `${keyword} audio assetRef must be static.`);
+      this.addError(line, sourceColumn, `${keyword} ${assetKind} assetRef must be static.`);
       return undefined;
     }
 
@@ -2226,12 +2160,12 @@ class TzrParser {
         return undefined;
       }
       if (value.length === 0) {
-        this.addError(line, sourceColumn, `${keyword} audio assetRef must not be empty.`);
+        this.addError(line, sourceColumn, `${keyword} ${assetKind} assetRef must not be empty.`);
         return undefined;
       }
 
       return {
-        type: "AudioStringAssetRef",
+        kind: "string",
         value,
         loc: {
           start: this.location(line.line, sourceColumn),
@@ -2247,12 +2181,12 @@ class TzrParser {
     }
 
     if (!isValidTzrDottedIdentifier(source)) {
-      this.addError(line, sourceColumn, `Invalid ${keyword} audio assetRef.`);
+      this.addError(line, sourceColumn, `Invalid ${keyword} ${assetKind} assetRef.`);
       return undefined;
     }
 
     return {
-      type: "AudioIdentifierAssetRef",
+      kind: "identifier",
       value: source,
       loc: {
         start: this.location(line.line, sourceColumn),

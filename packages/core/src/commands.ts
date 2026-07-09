@@ -1,5 +1,8 @@
 export const CORE_COMMAND_NAMES = ["waitClick", "page", "stop", "wait", "set"] as const;
 
+export const DSL_ADD_COMMAND_NAME = "__tsuzuru_add";
+export const DSL_SET_REFERENCE_COMMAND_NAME = "__tsuzuru_set_reference";
+
 export type CoreCommandName = (typeof CORE_COMMAND_NAMES)[number];
 
 export interface CoreCommandDefinition {

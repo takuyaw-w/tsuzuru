@@ -74,7 +74,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-hotspot build && pnpm run build:self",
-    "build:self": "tsc -p tsconfig.json && node scripts/copy-css.mjs",
+    "build:self": "tsc -p tsconfig.json && node ../../scripts/copy-package-css.mjs",
     "test": "vitest run --dir tests",
     "typecheck": "pnpm --filter @tsuzuru/preact build && pnpm --filter @tsuzuru/plugin-std-visual build && pnpm --filter @tsuzuru/plugin-std-audio build && pnpm --filter @tsuzuru/plugin-std-effect build && pnpm --filter @tsuzuru/plugin-std-camera build && pnpm --filter @tsuzuru/plugin-std-particle build && pnpm --filter @tsuzuru/plugin-std-hotspot build && pnpm run typecheck:self",
     "typecheck:self": "tsc -p tsconfig.json --noEmit"

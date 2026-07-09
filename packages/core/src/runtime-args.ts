@@ -37,14 +37,6 @@ export function getNamedRuntimeValue(args: readonly TzrArgument[], name: string)
   return valueToRuntimeValue(argument.value);
 }
 
-export function getPositionalString(args: readonly TzrArgument[], index: number): string | undefined {
-  const argument = args[index];
-  if (argument?.type !== "PositionalArgument" || argument.value.type !== "StringValue") {
-    return undefined;
-  }
-  return argument.value.value;
-}
-
 function valueToRuntimeValue(value: TzrValue): RuntimeValue | undefined {
   switch (value.type) {
     case "StringValue":
