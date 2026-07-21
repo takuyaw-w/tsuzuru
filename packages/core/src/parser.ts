@@ -3991,14 +3991,3 @@ function isHotspotStatementSource(source: string): boolean {
     source.startsWith("clear hotspots ")
   );
 }
-
-function countIndent(text: string): number {
-  let indent = 0;
-  for (const char of text) {
-    if (char !== " ") {
-      break;
-    }
-    indent += 1;
-  }
-  return indent;
-}

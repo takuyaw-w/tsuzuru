@@ -534,7 +534,11 @@ function readNumberToken(
   filePath: string,
   startIndex: number,
 ):
-  | { readonly token: Extract<ConditionToken, { type: "number" }>; readonly nextIndex: number; readonly error?: undefined }
+  | {
+      readonly token: Extract<ConditionToken, { type: "number" }>;
+      readonly nextIndex: number;
+      readonly error?: undefined;
+    }
   | { readonly nextIndex: number; readonly error: ParseDiagnostic } {
   let cursor = startIndex;
   if (source[cursor] === "-") {
