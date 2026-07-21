@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import type { CompiledTzrDocument } from "@tsuzuru/core";
 import type { Plugin } from "vite";
 import { afterEach, describe, expect, it } from "vitest";
 import { tsuzuru } from "../src/index.js";
@@ -359,7 +360,7 @@ async function loadScenarioModule(plugin: Plugin, root: string, id: string) {
   const modulePath = join(root, "compiled-scenario.mjs");
   await writeFile(modulePath, code, "utf8");
   const imported = (await import(`${pathToFileURL(modulePath).href}?${Date.now()}`)) as {
-    readonly default: { readonly type: string; readonly scenes: Record<string, unknown> };
+    readonly default: CompiledTzrDocument;
   };
 
   return {
