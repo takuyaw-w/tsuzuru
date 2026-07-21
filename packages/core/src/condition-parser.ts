@@ -1,5 +1,6 @@
 import type { SourceLocation, SourceRange } from "./ast.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
+import { describeTzrNumberLiteralError, parseTzrNumberLiteral } from "./numeric-literal.js";
 import { isValidTzrDottedIdentifier } from "./parser.js";
 import type {
   TzrConditionBinaryExpression,
@@ -404,9 +405,13 @@ function tokenizeConditionExpression(source: string, filePath: string): Tokenize
     }
 
     if (isNumberStart(source, cursor)) {
-      const token = readNumberToken(source, filePath, cursor);
-      tokens.push(token.token);
-      cursor = token.nextIndex;
+      const result = readNumberToken(source, filePath, cursor);
+      cursor = result.nextIndex;
+      if (result.error !== undefined) {
+        errors.push(result.error);
+        break;
+      }
+      tokens.push(result.token);
       continue;
     }
 
@@ -503,7 +508,9 @@ function readNumberToken(
   source: string,
   filePath: string,
   startIndex: number,
-): { readonly token: Extract<ConditionToken, { type: "number" }>; readonly nextIndex: number } {
+):
+  | { readonly token: Extract<ConditionToken, { type: "number" }>; readonly nextIndex: number; readonly error?: undefined }
+  | { readonly nextIndex: number; readonly error: ParseDiagnostic } {
   let cursor = startIndex;
   if (source[cursor] === "-") {
     cursor += 1;
@@ -521,10 +528,21 @@ function readNumberToken(
   const raw = source.slice(startIndex, cursor);
   const startColumn = startIndex + 1;
   const endColumn = cursor + 1;
+  const parsed = parseTzrNumberLiteral(raw);
+  if (!parsed.ok) {
+    return {
+      nextIndex: cursor,
+      error: createDiagnostic(
+        { filePath, line: 1, column: startColumn },
+        describeTzrNumberLiteralError(raw, parsed.reason),
+        source,
+      ),
+    };
+  }
   return {
     token: {
       type: "number",
-      value: Number(raw),
+      value: parsed.value,
       loc: {
         start: { filePath, line: 1, column: startColumn },
         end: { filePath, line: 1, column: endColumn },

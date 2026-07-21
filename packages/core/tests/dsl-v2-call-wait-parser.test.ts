@@ -168,6 +168,16 @@ describe("parseTzr call and wait statements", () => {
     expect(expectCallWaitFailure("scene start:\n  wait 1s\n")).toContain("wait duration must be a number literal.");
   });
 
+  it("rejects unsafe numeric call arguments and wait durations", () => {
+    expect(expectCallWaitFailure("scene start:\n  call inventory.add(count=9007199254740992)\n")).toContain(
+      'Number literal "9007199254740992" is outside the safe integer range.',
+    );
+    const overflow = "9".repeat(400);
+    expect(expectCallWaitFailure(`scene start:\n  wait ${overflow}\n`)).toContain(
+      `Number literal "${overflow}" must be finite.`,
+    );
+  });
+
   it("rejects missing closing parenthesis", () => {
     expect(expectCallWaitFailure("scene start:\n  call screen.open(id=notebook\n")).toContain(
       "call statement is missing closing parenthesis.",

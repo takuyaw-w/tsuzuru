@@ -100,4 +100,13 @@ describe("parseTzr std camera sugar statements", () => {
       "Invalid reset camera argument value.",
     );
   });
+
+  it("accepts finite decimals and rejects unsafe integer arguments", () => {
+    expect(parseSingleStatement("scene start:\n  camera zoom=1.25\n")).toMatchObject({
+      args: [{ name: "zoom", value: { value: 1.25 } }],
+    });
+    expect(expectCameraFailure("scene start:\n  camera duration=9007199254740992\n")).toContain(
+      'Number literal "9007199254740992" is outside the safe integer range.',
+    );
+  });
 });

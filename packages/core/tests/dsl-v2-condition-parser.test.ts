@@ -68,6 +68,17 @@ describe("parseTzrConditionExpression", () => {
     });
   });
 
+  it("rejects unsafe and non-finite condition number literals", () => {
+    expect(expectConditionFailure("scenario.score == 9007199254740992")).toContain(
+      'Number literal "9007199254740992" is outside the safe integer range.',
+    );
+    const overflow = "9".repeat(400);
+    expect(expectConditionFailure(`scenario.score == ${overflow}`)).toContain(
+      `Number literal "${overflow}" must be finite.`,
+    );
+    expect(parseCondition("scenario.zoom == 1.25")).toMatchObject({ right: { value: 1.25 } });
+  });
+
   it("parses boolean and null comparisons", () => {
     expect(parseCondition("scenario.inventory.hasNotebook == true")).toMatchObject({
       type: "ConditionComparisonExpression",

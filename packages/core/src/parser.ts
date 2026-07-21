@@ -1,6 +1,7 @@
 import type { SourceLocation, SourceRange, TzrArgument, TzrValue } from "./ast.js";
 import { parseTzrConditionExpression } from "./condition-parser.js";
 import { createDiagnostic, type ParseDiagnostic } from "./diagnostic.js";
+import { describeTzrNumberLiteralError, parseTzrNumberLiteral } from "./numeric-literal.js";
 import type {
   TzrAddStatement,
   TzrArgumentValue,
@@ -1164,7 +1165,8 @@ class TzrParser {
       return this.parseVariableReferenceValue(line, source, sourceColumn, "set");
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
-      return { type: "NumberValue", value: Number(source), loc } satisfies TzrNumberValue;
+      const value = this.parseNumberLiteral(line, source, sourceColumn);
+      return value === undefined ? undefined : ({ type: "NumberValue", value, loc } satisfies TzrNumberValue);
     }
     if (source === "true" || source === "false") {
       return { type: "BooleanValue", value: source === "true", loc } satisfies TzrBooleanValue;
@@ -1264,9 +1266,13 @@ class TzrParser {
       return undefined;
     }
 
+    const value = this.parseNumberLiteral(line, source, sourceColumn);
+    if (value === undefined) {
+      return undefined;
+    }
     return {
       type: "NumberValue",
-      value: Number(source),
+      value,
       loc: {
         start: this.location(line.line, sourceColumn),
         end: this.location(line.line, sourceColumn + source.length),
@@ -1329,9 +1335,13 @@ class TzrParser {
       return undefined;
     }
 
+    const value = this.parseNumberLiteral(line, source, sourceColumn);
+    if (value === undefined) {
+      return undefined;
+    }
     return {
       type: "NumberValue",
-      value: Number(source),
+      value,
       loc: {
         start: this.location(line.line, sourceColumn),
         end: this.location(line.line, sourceColumn + source.length),
@@ -1581,7 +1591,8 @@ class TzrParser {
       return this.parseArgumentVariableReferenceValue(line, source, sourceColumn, keyword);
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
-      return { type: "NumberValue", value: Number(source), loc } satisfies TzrNumberValue;
+      const value = this.parseNumberLiteral(line, source, sourceColumn);
+      return value === undefined ? undefined : ({ type: "NumberValue", value, loc } satisfies TzrNumberValue);
     }
     if (source === "true" || source === "false") {
       return { type: "BooleanValue", value: source === "true", loc } satisfies TzrBooleanValue;
@@ -1807,11 +1818,16 @@ class TzrParser {
         this.addError(line, sourceColumn, "Malformed show coordinate placement.");
         return undefined;
       }
+      const x = this.parseNumberLiteral(line, xSource, sourceColumn + source.indexOf(xSource));
+      const y = this.parseNumberLiteral(line, ySource, sourceColumn + source.lastIndexOf(ySource));
+      if (x === undefined || y === undefined) {
+        return undefined;
+      }
 
       return {
         type: "VisualCoordinatePlacement",
-        x: Number(xSource),
-        y: Number(ySource),
+        x,
+        y,
         loc: {
           start: this.location(line.line, sourceColumn),
           end: this.location(line.line, sourceColumn + source.length),
@@ -2745,7 +2761,8 @@ class TzrParser {
       return { type: "StringValue", value, loc };
     }
     if (NUMBER_LITERAL_PATTERN.test(source)) {
-      return { type: "NumberValue", value: Number(source), loc };
+      const value = this.parseNumberLiteral(line, source, sourceColumn);
+      return value === undefined ? undefined : { type: "NumberValue", value, loc };
     }
     if (source === "true" || source === "false") {
       return { type: "BooleanValue", value: source === "true", loc };
@@ -3029,7 +3046,10 @@ class TzrParser {
         this.addError(line, valueColumn, `Invalid :meta ${key} value.`);
         return undefined;
       }
-      const value = Number(valueSource);
+      const value = this.parseNumberLiteral(line, valueSource, valueColumn);
+      if (value === undefined) {
+        return undefined;
+      }
       const min = key === "size" ? 1 : 0;
       if (value < min) {
         this.addError(line, valueColumn, `Invalid :meta ${key} value.`);
@@ -3384,14 +3404,22 @@ class TzrParser {
         continue;
       }
 
-      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 1) {
+      if (!/^-?\d+$/.test(attribute.value)) {
+        this.addError(line, attribute.valueColumn, "Invalid {text} size value.");
+        return undefined;
+      }
+      const value = this.parseNumberLiteral(line, attribute.value, attribute.valueColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+      if (value < 1) {
         this.addError(line, attribute.valueColumn, "Invalid {text} size value.");
         return undefined;
       }
       parsed.push({
         type: "InlineTextSizeAttribute",
         name: "size",
-        value: Number(attribute.value),
+        value,
         loc: attribute.loc,
       });
     }
@@ -3415,11 +3443,19 @@ class TzrParser {
         this.addError(line, attribute.keyColumn, 'Duplicate {delay} attribute "ms".');
         return undefined;
       }
-      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 0) {
+      if (!/^-?\d+$/.test(attribute.value)) {
         this.addError(line, attribute.valueColumn, "Invalid {delay} ms value.");
         return undefined;
       }
-      ms = Number(attribute.value);
+      const value = this.parseNumberLiteral(line, attribute.value, attribute.valueColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+      if (value < 0) {
+        this.addError(line, attribute.valueColumn, "Invalid {delay} ms value.");
+        return undefined;
+      }
+      ms = value;
     }
 
     if (ms === undefined) {
@@ -3446,11 +3482,19 @@ class TzrParser {
         this.addError(line, attribute.keyColumn, 'Duplicate {wait} attribute "ms".');
         return undefined;
       }
-      if (!/^-?\d+$/.test(attribute.value) || Number(attribute.value) < 0) {
+      if (!/^-?\d+$/.test(attribute.value)) {
         this.addError(line, attribute.valueColumn, "Invalid {wait} ms value.");
         return undefined;
       }
-      ms = Number(attribute.value);
+      const value = this.parseNumberLiteral(line, attribute.value, attribute.valueColumn);
+      if (value === undefined) {
+        return undefined;
+      }
+      if (value < 0) {
+        this.addError(line, attribute.valueColumn, "Invalid {wait} ms value.");
+        return undefined;
+      }
+      ms = value;
     }
 
     if (ms === undefined) {
@@ -3698,6 +3742,15 @@ class TzrParser {
 
   private isIgnorable(line: SourceLine): boolean {
     return line.code.trim() === "";
+  }
+
+  private parseNumberLiteral(line: SourceLine, source: string, sourceColumn: number): number | undefined {
+    const result = parseTzrNumberLiteral(source);
+    if (!result.ok) {
+      this.addError(line, sourceColumn, describeTzrNumberLiteralError(source, result.reason));
+      return undefined;
+    }
+    return result.value;
   }
 
   private addError(line: SourceLine, column: number, message: string): void {

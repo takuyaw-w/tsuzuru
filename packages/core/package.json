@@ -28,6 +28,7 @@
     "dist/src/diagnostic.*",
     "dist/src/index.*",
     "dist/src/ir.*",
+    "dist/src/numeric-literal.*",
     "dist/src/parser.*",
     "dist/src/plugin-command.*",
     "dist/src/project-compiler.*",

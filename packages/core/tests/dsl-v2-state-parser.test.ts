@@ -49,6 +49,18 @@ describe("parseTzr state statements", () => {
     });
   });
 
+  it("accepts safe integer boundaries and rejects unsafe integer literals", () => {
+    expect(parseSingleStatement("scene start:\n  set scenario.max = 9007199254740991\n")).toMatchObject({
+      value: { value: Number.MAX_SAFE_INTEGER },
+    });
+    expect(expectStateFailure("scene start:\n  set scenario.max = 9007199254740992\n")).toContain(
+      'Number literal "9007199254740992" is outside the safe integer range.',
+    );
+    expect(expectStateFailure(`scene start:\n  add scenario.max += ${"9".repeat(400)}\n`)).toContain(
+      `Number literal "${"9".repeat(400)}" must be finite.`,
+    );
+  });
+
   it("parses set boolean values", () => {
     expect(parseSingleStatement("scene start:\n  set scenario.hasNotebook = true\n")).toMatchObject({
       type: "SetStatement",
