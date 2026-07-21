@@ -2331,15 +2331,18 @@ scene start:
     );
   });
 
-  it("rejects narration with text click wait", () => {
-    expect(
-      expectCompileFailure(`scene start:
+  it("compiles narration containing paragraph blank lines", () => {
+    const document = compileSource(`scene start:
   narration:
     First.
 
     Second.
-`),
-    ).toContain("Text click wait is not compile-supported yet.");
+`);
+
+    expect(document.instructions[1]).toMatchObject({
+      type: "NarrationInstruction",
+      lines: [{ text: "First." }, { text: "Second." }],
+    });
   });
 
   it("rejects narration with text page break", () => {

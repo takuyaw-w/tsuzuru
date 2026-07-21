@@ -244,13 +244,16 @@ scene commonRoute:
     });
   });
 
-  it("parses a blank line as click wait with page kept", () => {
+  it("ignores leading, consecutive, and trailing blank lines in text blocks", () => {
     const result = parseTzr(
       `scene start:
   mio:
+
     You're late.
 
+
     I waited thirty minutes.
+
 `,
       { filePath: "scenario/v2.tzr" },
     );
@@ -266,8 +269,29 @@ scene commonRoute:
           type: "DialogueStatement",
           lines: [
             { type: "TextLine", text: "You're late." },
-            { type: "TextClickWait" },
             { type: "TextLine", text: "I waited thirty minutes." },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("ignores blank lines in CRLF text blocks", () => {
+    const result = parseTzr("scene start:\r\n  narration:\r\n    First.\r\n\r\n    Second.\r\n", {
+      filePath: "scenario/v2.tzr",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("expected parser success");
+    }
+    expect(result.document.declarations[0]).toMatchObject({
+      body: [
+        {
+          type: "NarrationStatement",
+          lines: [
+            { type: "TextLine", text: "First." },
+            { type: "TextLine", text: "Second." },
           ],
         },
       ],
@@ -396,7 +420,6 @@ scene commonRoute:
           type: "DialogueStatement",
           lines: [
             { type: "TextLine", text: "First." },
-            { type: "TextClickWait" },
             { type: "TextLine", text: "Second." },
             { type: "TextPageBreak" },
             { type: "TextLine", text: "Third." },
@@ -634,7 +657,6 @@ scene commonRoute:
           meta: { attributes: [{ name: "delay", value: 70 }] },
           lines: [
             { type: "TextLine", text: "First." },
-            { type: "TextClickWait" },
             { type: "TextLine", text: "Second." },
             { type: "TextPageBreak" },
             { type: "TextLine", text: "Third." },

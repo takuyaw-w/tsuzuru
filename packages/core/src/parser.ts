@@ -2846,26 +2846,6 @@ class TzrParser {
     while (!this.isAtEnd()) {
       const line = this.currentRequired();
       if (this.isIgnorable(line)) {
-        if (line.hasComment) {
-          this.cursor += 1;
-          continue;
-        }
-
-        const nextTextLine = this.findNextTextBlockLine(this.cursor + 1, headerIndentLevel);
-        if (nextTextLine === undefined) {
-          break;
-        }
-
-        if (items.length === 0) {
-          this.addError(line, 1, "Text block must not start with a blank line.");
-          this.cursor += 1;
-          continue;
-        }
-
-        items.push({
-          type: "TextClickWait",
-          loc: this.lineRange(line),
-        });
         this.cursor += 1;
         continue;
       }
@@ -3074,21 +3054,6 @@ class TzrParser {
       return undefined;
     }
     return { type: "TextBlockMoodMetaAttribute", name: "mood", value: valueSource, valueKind: "identifier", loc };
-  }
-
-  private findNextTextBlockLine(startCursor: number, headerIndentLevel: number): SourceLine | undefined {
-    for (let index = startCursor; index < this.lines.length; index += 1) {
-      const line = this.lines[index];
-      if (line === undefined) {
-        return undefined;
-      }
-      if (line.code.trim() === "") {
-        continue;
-      }
-      const indent = countIndent(line.original);
-      return indent > headerIndentLevel * 2 ? line : undefined;
-    }
-    return undefined;
   }
 
   private parseTextBlockText(line: SourceLine, source: string, sourceColumn: number): ParsedInlineContent | undefined {
