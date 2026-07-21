@@ -237,6 +237,26 @@ function expectCommandInstruction(
 }
 
 describe("compileTzr", () => {
+  it("preserves prototype-named scene and character ids through JSON serialization", () => {
+    const document = compileSource(`character __proto__ name="Prototype"
+character constructor name="Constructor"
+scene start:
+  jump __proto__
+scene __proto__:
+  __proto__:
+    Reached.
+  jump constructor
+scene constructor:
+  end
+`);
+    const restored = JSON.parse(JSON.stringify(document)) as CompiledTzrDocument;
+
+    expect(Object.keys(restored.scenes)).toEqual(["start", "__proto__", "constructor"]);
+    expect(restored.scenes["__proto__"]).toMatchObject({ id: "__proto__" });
+    expect(restored.metadata.characters["__proto__"]).toMatchObject({ id: "__proto__" });
+    expect(restored.metadata.characters.constructor).toMatchObject({ id: "constructor" });
+  });
+
   it("compiles a document with one scene", () => {
     const document = compileSource("scene start:\n");
 

@@ -33,6 +33,12 @@ function expectProjectFailure(
 }
 
 describe("compileTzrProject", () => {
+  it("handles prototype-named project document ids", () => {
+    const errors = expectProjectFailure([{ id: "__proto__", source: "scene start:\n  jump missing\n" }], "__proto__");
+
+    expect(errors).toContainEqual(expect.objectContaining({ filePath: "__proto__", line: 2 }));
+  });
+
   it("resolves includes from the entry document id", () => {
     const document = compileProject([
       {

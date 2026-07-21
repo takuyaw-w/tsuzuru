@@ -1229,24 +1229,26 @@ class TzrCompiler {
   }
 
   private buildMetadata(): TzrDocumentMetadata {
-    const characters: Record<string, TzrCompiledCharacter> = {};
-    const scenes: Record<string, TzrCompiledSceneMetadata> = {};
-
-    for (const character of this.characters.values()) {
-      characters[character.id] = {
-        id: character.id,
-        name: character.name,
-        loc: character.loc,
-      };
-    }
-
-    for (const scene of this.scenes.values()) {
-      scenes[scene.id] = {
-        id: scene.id,
-        ...(scene.title === undefined ? {} : { title: scene.title }),
-        loc: scene.loc,
-      };
-    }
+    const characters = Object.fromEntries(
+      [...this.characters.values()].map((character) => [
+        character.id,
+        {
+          id: character.id,
+          name: character.name,
+          loc: character.loc,
+        } satisfies TzrCompiledCharacter,
+      ]),
+    );
+    const scenes = Object.fromEntries(
+      [...this.scenes.values()].map((scene) => [
+        scene.id,
+        {
+          id: scene.id,
+          ...(scene.title === undefined ? {} : { title: scene.title }),
+          loc: scene.loc,
+        } satisfies TzrCompiledSceneMetadata,
+      ]),
+    );
 
     return {
       ...(this.title === undefined ? {} : { title: this.title.title }),
@@ -1408,17 +1410,20 @@ function backgroundTransitionDirectionError(effect: StdVisualBackgroundTransitio
 }
 
 function buildSceneIndexes(instructions: readonly TzrInstruction[]): Readonly<Record<string, DeclarationIndexEntry>> {
-  const scenes: Record<string, DeclarationIndexEntry> = {};
+  const entries: [string, DeclarationIndexEntry][] = [];
 
   for (const [statementIndex, instruction] of instructions.entries()) {
     if (instruction.type === "SceneInstruction") {
-      scenes[instruction.id] = {
-        id: instruction.id,
-        statementIndex,
-        loc: instruction.loc,
-      };
+      entries.push([
+        instruction.id,
+        {
+          id: instruction.id,
+          statementIndex,
+          loc: instruction.loc,
+        },
+      ]);
     }
   }
 
-  return scenes;
+  return Object.fromEntries(entries);
 }

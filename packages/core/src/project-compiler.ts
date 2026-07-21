@@ -27,7 +27,7 @@ export function compileTzrProject(
 class TzrProjectCompiler {
   private readonly errors: Diagnostic[] = [];
   private readonly documents = new Map<string, TzrProjectDocumentInput>();
-  private readonly sourceLineMap: Record<string, readonly string[]> = {};
+  private readonly sourceLineMap = Object.create(null) as Record<string, readonly string[]>;
   private readonly parsedDocuments: TzrDocument[] = [];
   private readonly visiting = new Set<string>();
   private readonly visited = new Set<string>();

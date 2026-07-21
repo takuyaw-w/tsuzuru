@@ -88,8 +88,9 @@ export function tsuzuru(options: TsuzuruVitePluginOptions = {}): Plugin {
         this.error(createViteDiagnosticError(result.errors, project.fileByDocumentId));
       }
 
+      const serializedDocument = JSON.stringify(result.document);
       return {
-        code: `const scenario = ${JSON.stringify(result.document)};\nexport default scenario;\n`,
+        code: `const scenario = JSON.parse(${JSON.stringify(serializedDocument)});\nexport default scenario;\n`,
         map: null,
       };
     },

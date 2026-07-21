@@ -19,6 +19,20 @@ afterEach(async () => {
 });
 
 describe("tsuzuru", () => {
+  it("preserves prototype-named ids in the generated ESM module", async () => {
+    const root = await createTempRoot();
+    const scenarioPath = await writeScenario(
+      root,
+      "scenario/main.tzr",
+      'character __proto__ name="Prototype"\nscene __proto__:\n  end\n',
+    );
+    const result = await loadScenarioModule(tsuzuru(), root, scenarioPath);
+
+    expect(Object.keys(result.document.scenes)).toContain("__proto__");
+    expect(result.document.scenes["__proto__"]).toMatchObject({ id: "__proto__" });
+    expect(result.document.metadata.characters["__proto__"]).toMatchObject({ id: "__proto__" });
+  });
+
   it("loads a .tzr file as an ESM module that exports a compiled document", async () => {
     const root = await createTempRoot();
     const scenarioPath = await writeScenario(root, "scenario/main.tzr", "scene start:\n  end\n");
