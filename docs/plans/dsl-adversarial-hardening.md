@@ -1,6 +1,6 @@
 # DSL Adversarial Hardening Backlog
 
-> Status: deferred follow-up
+> Status: Batch A completed; Batch B and C deferred
 >
 > Created: 2026-07-19
 >
@@ -9,22 +9,23 @@
 現行 `.tzr` DSLの敵対的検証で確認した9件を、後日対応するための追跡用
 バックログ。詳細な再現入力、原因、改善案、回帰テスト案はsource reviewを参照する。
 
-現時点では調査と文書化のみ完了しており、実装には着手していない。
+Batch Aは2026-07-22に実装した。Batch BとCはwarning API、strict mode、
+host初期値の扱いを別途設計してから着手する。
 
 ## Recommended order
 
 ### Batch A: 必須の安全性修正
 
-- [ ] `ADV-001` prototype-safeなscene / character辞書を構築する
+- [x] `ADV-001` prototype-safeなscene / character辞書を構築する (`9b40ef4`)
   - 必要性: 必須
   - 概算: 1〜2日
-- [ ] `ADV-002` 数値リテラルのfinite / safe-integer検証を共通化する
+- [x] `ADV-002` 数値リテラルのfinite / safe-integer検証を共通化する (`199ba5f`)
   - 必要性: 必須
   - 概算: 1.5〜3日
-- [ ] `ADV-003` 条件式にネスト上限と通常診断を追加する
+- [x] `ADV-003` 条件式にネスト上限と通常診断を追加する (`33093af`)
   - 必要性: 必須に近い
   - 概算: 0.5〜1日
-- [ ] `ADV-004` text block空行のstable subset上の意味を決定して実装する
+- [x] `ADV-004` text block空行のstable subset上の意味を決定して実装する (`8430267`)
   - 必要性: 高い
   - 推奨: 空行から暗黙の `TextClickWait` を生成しない
   - 概算: 1〜2日。クリック待ちを正式実装する場合は3〜5日以上

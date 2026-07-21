@@ -31,6 +31,8 @@ Build all string-keyed compiled-document records from entries rather than by
 assigning properties to `{}`. The resulting records must preserve
 `__proto__`, `constructor`, and `toString` as own enumerable properties and
 must survive a JSON round trip. Valid identifiers are not reserved or rejected.
+Vite-generated modules reconstruct the serialized document with `JSON.parse`
+so JavaScript object-literal `__proto__` semantics cannot reinterpret the key.
 
 The affected compiled records are:
 

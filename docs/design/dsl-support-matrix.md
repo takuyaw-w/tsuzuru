@@ -38,8 +38,8 @@ The v1.0 stable candidate is the plain, compile-supported DSL subset:
 
 The main non-stable DSL areas are explicitly post-v1.0 or optional tooling:
 
-- rich inline markup and text block controls are parser-only today and are
-  explicitly not part of the v1.0 stable subset
+- rich inline markup and explicit text block controls are parser-only today and
+  are explicitly not part of the v1.0 stable subset
 - namespaced `wait namespace.event(...)` remains design-only
 - `system.*` condition reads are plugin-dependent: compile-time support
   requires std-system condition namespace metadata, and runtime support requires
@@ -51,8 +51,9 @@ The main non-stable DSL areas are explicitly post-v1.0 or optional tooling:
 - editor / syntax highlighting is optional tooling, not a v1.0 release blocker
 
 For v1.0, plain narration, dialogue, and `say` text are the stable text
-authoring target. Rich text, inline events, blank-line click waits, page breaks,
-and text block metadata remain post-v1.0 design work.
+authoring target. Blank physical lines are ignored as authoring whitespace.
+Rich text, inline events, explicit click waits, page breaks, and text block
+metadata remain post-v1.0 design work.
 
 For v1.0 conditions, `scenario.*` references are the stable target. `system.*`
 condition reads are supported only for the current std-system runtime plugin
@@ -82,16 +83,16 @@ this matrix instead of defining a separate supported syntax.
 | `character id name="..."` | Core metadata | yes | metadata | dialogue validation | n/a | yes | yes | yes | `stable` | Dialogue speaker IDs are validated by compiler. |
 | `include "./path.tzr"` | Core project directive | yes | project compiler | n/a | n/a | yes | yes | yes | `stable` | `compileTzrProject` resolves includes; single-document compile ignores project loading. |
 | `scene id:` / `scene id "title":` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Static scene IDs only. |
-| `narration:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Rich inline nodes, page breaks, click waits, and `:meta` are parser-only and not included in the v1.0 stable subset. |
+| `narration:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Blank physical lines are ignored. Rich inline nodes, page breaks, explicit click waits, and `:meta` are not included in the v1.0 stable subset. |
 | `say id:` plain text | Core text | yes | plain text only | yes | n/a | yes | tests | yes | `stable` | Compiles like dialogue shorthand; plain text only for v1.0. |
 | `<characterId>:` plain text | Core text | yes | plain text only | yes | n/a | yes | yes | yes | `stable` | Requires a declared character; plain text only for v1.0. |
 | `choice "..."` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Runtime emits body-choice events and resumes selected body. |
 | `"label" id=... if scenario.*:` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Conditional choice filtering supports `scenario.*` conditions. |
-| `if` / `elif` / `else` with `scenario.*` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Logical `and` / `or` / `not`, comparisons, literals, and parentheses are covered. |
+| `if` / `elif` / `else` with `scenario.*` | Core flow | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Logical `and` / `or` / `not`, comparisons, literals, and parentheses are covered; nesting is limited to 128 levels. |
 | `if system.*` | Core / std-system boundary | yes | yes with condition namespace metadata | resolver-dependent | std-system resolver | yes | no | yes | `plugin-dependent` | Supported paths are `system.endings.<id>.unlocked`, `system.cgs.<id>.unlocked`, and `system.achievements.<id>.unlocked`; compile with `createStdSystemPlugin()` metadata and run with `createStdSystemConditionResolver()`. |
 | `jump sceneId` | Core flow | yes | yes | yes | n/a | yes | yes | yes | `stable` | Cross-file jump validation is supported through `compileTzrProject`. |
 | `end` | Core flow | yes | stop command | yes | n/a | yes | yes | yes | `stable` | Compiles to the core stop command. |
-| `set scenario.x = <value>` | Core state | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Values: string, number, boolean, `null`, or existing `scenario.*` reference. |
+| `set scenario.x = <value>` | Core state | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Values: string, finite number, boolean, `null`, or existing `scenario.*` reference; integer syntax is limited to safe integers. |
 | `set system.* = ...` | Core / std-system boundary | rejected or compile-rejected | rejected | no | std-system | yes | no | yes | `unsupported` | System mutation must use `call system.*(...)`. |
 | `add scenario.x += <number>` | Core state | yes | yes | yes | n/a | yes | unit tests | yes | `stable` | Missing value starts from `0`; non-number existing values produce runtime error. |
 | `call namespace.action(...)` | Plugin command | yes | yes with plugin metadata | handler-dependent | required | yes | yes for std-system | yes | `plugin-dependent` | Without plugin metadata the compiler rejects generic `call`; registered plugin metadata validates args. |
@@ -102,7 +103,7 @@ this matrix instead of defining a separate supported syntax.
 | Inline `{wait ms=...}` | Core text event | yes | rejected | no | host future | yes | no | yes | `parser-only` | Not compiled into runtime events. Not included in the v1.0 stable subset. |
 | Inline `{se assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `se` is supported; inline `se` is not included in the v1.0 stable subset. |
 | Inline `{voice assetId=...}` | std-audio inline event | yes | rejected | no | std-audio future | yes | no | yes | `parser-only` | Statement-level `voice` is supported; inline `voice` is not included in the v1.0 stable subset. |
-| Text block blank line click wait | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextClickWait`. Not included in the v1.0 stable subset. |
+| Text block blank line | Core text whitespace | ignored | n/a | n/a | n/a | yes | yes | yes | `stable` | Blank physical lines do not create AST nodes or runtime events. |
 | Text block `---` page break | Core text control | yes | rejected | no | host future | yes | no | yes | `parser-only` | Compiler rejects `TextPageBreak`. Not included in the v1.0 stable subset. |
 | Text block `:meta` | Core text metadata | yes | rejected | no | renderer future | yes | no | yes | `parser-only` | Metadata attributes parse but compiler rejects the block metadata. Not included in the v1.0 stable subset. |
 
@@ -166,8 +167,8 @@ There are no unresolved DSL support-scope blockers in this matrix. Remaining
 v1.0 blockers are tracked in
 [`v1.0-release-gate.md`](../plans/v1.0-release-gate.md).
 
-Closed for v1.0: parser-only text features (`:meta`, page break, click wait,
-rich inline text, inline waits, inline audio events) are not part of the v1.0
+Closed for v1.0: parser-only text features (`:meta`, page break, rich inline
+text, inline waits, inline audio events) and future explicit click waits are not part of the v1.0
 stable subset. They remain post-v1.0 design work.
 `system.*` condition reads are plugin-dependent and limited to current
 std-system runtime plugin state; std-system write-side
@@ -194,7 +195,7 @@ The implemented first-scope design for `system.*` condition reads is tracked in
 - Purpose: design text block controls and inline syntax without overpromising
   them in v1.0.
 - Scope: renderer message model, text reveal timing, backlog representation,
-  save/load interaction, inline audio events, `:meta`, blank-line click waits,
+  save/load interaction, inline audio events, `:meta`, explicit click waits,
   `---` page breaks, `{text}`, `{delay}`, `{wait}`, inline `{se}`, and inline
   `{voice}`.
 - Done when: each feature has a compiler/runtime design, renderer contract,

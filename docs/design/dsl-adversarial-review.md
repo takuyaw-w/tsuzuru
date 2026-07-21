@@ -2,7 +2,7 @@
 schema_version: 1
 document_type: adversarial_review
 subject: tsuzuru_tzr_dsl
-status: verified
+status: batch_a_resolved
 verified_date: 2026-07-19
 verified_commit: 8e555fb
 source_of_truth: main
@@ -17,6 +17,7 @@ implementation_scope:
 finding_count: 9
 confirmed_defect_count: 4
 design_risk_count: 5
+resolved_finding_count: 4
 ---
 
 # `.tzr` DSL 敵対的検証レポート
@@ -37,9 +38,9 @@ design_risk_count: 5
 4. 通常の段落区切りに見える空行が、未サポートのクリック待ち構文として
    暗黙に解釈され、parse成功後にcompile失敗する。
 
-最初の改善バッチでは `ADV-001`、`ADV-002`、`ADV-003`、`ADV-004` を扱う。
-その後、作者のミスを早期に発見する静的診断として `ADV-005` 以降を進めるのが
-妥当である。
+最初の改善バッチで `ADV-001`、`ADV-002`、`ADV-003`、`ADV-004` を解決した。
+残る作者のミスを早期に発見する静的診断は、warning APIとstrict modeを設計してから
+`ADV-005` 以降として進める。
 
 ## 2. 判定規則
 
@@ -86,10 +87,10 @@ design_risk_count: 5
 
 | 順位 | ID | 重大度 | 状態 | 要約 | 推奨バッチ |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `ADV-001` | high | confirmed_defect | `__proto__` IDがJSON直列化で消失する | A |
-| 2 | `ADV-002` | high | confirmed_defect | 数値が丸め・非有限値化・`null`化する | A |
-| 3 | `ADV-003` | medium | confirmed_defect | 深い条件式がスタックオーバーフローする | A |
-| 4 | `ADV-004` | medium | design_risk | 空行が暗黙の未サポート構文になる | A |
+| 1 | `ADV-001` | high | resolved | `__proto__` IDがJSON直列化で消失する | A |
+| 2 | `ADV-002` | high | resolved | 数値が丸め・非有限値化・`null`化する | A |
+| 3 | `ADV-003` | medium | resolved | 深い条件式がスタックオーバーフローする | A |
+| 4 | `ADV-004` | medium | resolved | 空行が暗黙の未サポート構文になる | A |
 | 5 | `ADV-005` | medium | design_risk | `end` / `jump` 後の到達不能文を受理する | B |
 | 6 | `ADV-006` | medium | design_risk | 条件付きchoiceが実行時に0件になり得る | B |
 | 7 | `ADV-007` | medium | design_risk | 明白な条件型不一致を実行時まで遅延する | B |
@@ -101,7 +102,8 @@ design_risk_count: 5
 ### ADV-001: `__proto__` IDが辞書のプロトタイプを書き換える
 
 - severity: `high`
-- status: `confirmed_defect`
+- status: `resolved`
+- resolved_commit: `9b40ef4`
 - confidence: `high`
 - category: `identifier-safety`, `serialization`, `runtime-index`
 - affected:
@@ -137,6 +139,8 @@ scene __proto__:
 
 `Record<string, ...> = {}` に対して `record["__proto__"] = value` と代入している。
 これはown propertyの追加ではなく、オブジェクトのプロトタイプ変更として扱われる。
+さらにVite生成moduleへJSONをobject literalとして埋め込むと、JSON文字列に残った
+`"__proto__"` もJavaScript評価時にprototype設定として再解釈される。
 
 #### Improvement
 
@@ -160,10 +164,17 @@ scene __proto__:
 既存の通常IDには影響しない。`__proto__` を拒否する案を追加する場合のみ、
 これまで構文上受理されていた入力への破壊的変更になる。
 
+#### Resolution
+
+compiled recordを`Object.fromEntries`で構築し、project source-line mapを
+prototypeなしのrecordへ変更した。Vite生成moduleはobject literalではなく
+`JSON.parse`で復元し、`__proto__`をown propertyとして維持する。
+
 ### ADV-002: 数値リテラルが無言で変質する
 
 - severity: `high`
-- status: `confirmed_defect`
+- status: `resolved`
+- resolved_commit: `199ba5f`
 - confidence: `high`
 - category: `numeric-safety`, `serialization`, `save-load`
 - affected:
@@ -214,10 +225,16 @@ compileは成功するが、ViteプラグインのJSON直列化では `Infinity`
 安全整数外または非有限値に依存するシナリオだけが拒否される。これらは現状でも
 値を正確に表現できないため、拒否が望ましい。
 
+#### Resolution
+
+共通のnumber literal parserを導入し、すべてのsource由来numberにfinite検証を、
+整数構文にsafe-integer検証を適用した。
+
 ### ADV-003: 深い条件式が未捕捉の `RangeError` を起こす
 
 - severity: `medium`
-- status: `confirmed_defect`
+- status: `resolved`
+- resolved_commit: `33093af`
 - confidence: `high`
 - category: `parser-robustness`, `resource-limit`, `diagnostics`
 - affected: `packages/core/src/condition-parser.ts`
@@ -253,10 +270,16 @@ compileは成功するが、ViteプラグインのJSON直列化では `Infinity`
 - 深い `not` 連鎖と括弧連鎖の両方を検証する
 - `parseTzr` 内のif条件でも同じ診断になる
 
+#### Resolution
+
+括弧と単項`not`を合算した最大ネスト深度を128に固定し、上限超過を
+source-location付きparse diagnosticとして返す。
+
 ### ADV-004: 通常の空行が暗黙の未サポート構文になる
 
 - severity: `medium`
-- status: `design_risk`
+- status: `resolved`
+- resolved_commit: `8430267`
 - confidence: `high`
 - category: `authoring-ux`, `stable-subset`, `parser-compiler-gap`
 - affected:
@@ -302,6 +325,11 @@ Option Bはrenderer、backlog、save/loadの設計を早期固定するため、
 - 末尾空行とブロック間空行の区別
 - CRLFでも同じ挙動
 - author-facing診断が空行の位置を指す
+
+#### Resolution
+
+Option Aを採用した。text block内の空行は先頭、末尾、連続、LF、CRLFを問わず
+authoring whitespaceとして無視し、`TextClickWait`を暗黙生成しない。
 
 ### ADV-005: `end` / `jump` 後の到達不能文を受理する
 
@@ -556,11 +584,23 @@ rtk git diff --check
 
 | Check | Result |
 | --- | --- |
-| `rtk pnpm --filter @tsuzuru/core test` | 26 files / 511 tests passed |
-| 決定的parse/compile/runtime probes | findingsの再現結果を確認 |
-| random parser probes | 5,000 cases / 0 crashes |
-| deep condition probes | depth 5,000で `RangeError` を再現 |
-| `git diff --check` | 文書保存後に実行する |
+| `rtk pnpm --filter @tsuzuru/core test` | 26 files / 520 tests passed |
+| `rtk pnpm --filter @tsuzuru/core typecheck` | passed |
+| `rtk pnpm --filter @tsuzuru/vite-plugin test` | 1 file / 18 tests passed |
+| `rtk pnpm --filter @tsuzuru/vite-plugin typecheck` | passed |
+| deep condition probe | depth 5,000を上限128の診断として処理 |
+| `rtk pnpm --filter @tsuzuru/example-preact-basic check:scenario:self` | 4 documents passed |
+| `rtk pnpm --filter @tsuzuru/example-preact-basic build` | passed |
+| `rtk pnpm test` | passed |
+| `rtk pnpm typecheck` | passed |
+| `rtk pnpm release-readiness:check` | package build、全example、pack、publish readiness、local create smokeを含めてpassed |
+| `rtk pnpm format:check` / `lint` / `check` | passed |
+| `rtk git diff --check` | passed |
+
+clean worktreeではpnpmが `tsuzuru` bin shimを生成しなかったため、通常の
+`check:scenario` とそれを使う `examples:check` は `spawn ENOENT` になった。
+同じscenario検査はbuild済みCLIを直接使う `check:scenario:self` と
+`release-readiness:check` 内の `examples:check:self` で完走した。
 
 ## 10. レポート更新規則
 

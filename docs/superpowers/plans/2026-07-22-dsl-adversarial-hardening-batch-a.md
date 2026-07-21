@@ -28,6 +28,7 @@
 - Modify `packages/core/src/condition-parser.ts`: use shared numeric validation and enforce nesting depth.
 - Modify `packages/core/src/compiler.ts`: create prototype-safe compiled indexes.
 - Modify `packages/core/src/project-compiler.ts`: make the user-keyed source-line map prototype-safe.
+- Modify `packages/vite-plugin/src/index.ts`: reconstruct serialized documents with `JSON.parse`.
 - Modify focused core parser/compiler/project tests and Vite plugin tests.
 - Modify `docs/design/dsl-v2.md` and `docs/design/dsl-support-matrix.md`: document the stable behavior.
 - Modify `docs/design/dsl-adversarial-review.md` and `docs/plans/dsl-adversarial-hardening.md`: mark Batch A resolved after implementation commits exist.
@@ -154,6 +155,17 @@ In `packages/core/src/project-compiler.ts`, initialize the source map without a 
 
 ```ts
 private readonly sourceLineMap = Object.create(null) as Record<string, readonly string[]>;
+```
+
+In `packages/vite-plugin/src/index.ts`, avoid evaluating serialized JSON as an
+object literal because `__proto__` has special literal semantics:
+
+```ts
+const serializedDocument = JSON.stringify(result.document);
+return {
+  code: `const scenario = JSON.parse(${JSON.stringify(serializedDocument)});\nexport default scenario;\n`,
+  map: null,
+};
 ```
 
 - [ ] **Step 5: Run focused tests and verify GREEN**

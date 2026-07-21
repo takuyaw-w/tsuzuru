@@ -413,9 +413,10 @@ narration:
 Text block semantics apply inside `say` / character dialogue / `narration`.
 
 v1.0 stable subset note: plain text lines inside narration, dialogue shorthand,
-and `say` blocks are stable candidates. Blank-line click waits, `---` page
-breaks, and `:meta` metadata are parser-level design syntax today; they are
-rejected by the compiler and are not part of the v1.0 stable subset. See
+and `say` blocks are stable candidates. Blank physical lines are ignored as
+authoring whitespace. `---` page breaks and `:meta` metadata are parser-level
+design syntax today; they are rejected by the compiler and are not part of the
+v1.0 stable subset. See
 [`dsl-support-matrix.md`](dsl-support-matrix.md) for the current support status.
 
 ### 10.1 Normal Text Line
@@ -441,9 +442,13 @@ text + lineBreak
 Meaning:
 
 ```txt
-clickWait
-page is kept
+authoring whitespace
+no runtime event
 ```
+
+Leading, trailing, and consecutive blank physical lines inside a text block are
+also ignored. Click waits require a future explicit syntax; blank lines do not
+implicitly control runtime progression.
 
 ### 10.3 Page Break
 
@@ -867,6 +872,12 @@ boolean
 null
 ```
 
+Number literals must be finite. Integer syntax is limited to JavaScript safe
+integers (`-9007199254740991` through `9007199254740991`); finite decimal
+literals remain supported. Condition expressions may nest parentheses and
+unary `not` up to 128 levels. Deeper expressions are rejected with a parse
+diagnostic.
+
 ### 15.3 Comparison Operators
 
 ```txt
@@ -1108,6 +1119,7 @@ Rules:
 - `system.*` variable references remain deferred for `set`.
 - `add` accepts number only.
 - `add` right-hand side must be a number literal.
+- Number literals follow the finite and safe-integer rules in section 15.2.
 
 Invalid:
 
@@ -1192,6 +1204,8 @@ wait 1000
 
 - `wait <durationMs>` is the current compile-supported timed wait authoring
   form. Duration is milliseconds and must be a non-negative number literal.
+- Timed waits and command arguments follow the finite and safe-integer rules in
+  section 15.2.
 - Namespaced `wait <namespace.event>(...)` remains design syntax and is not
   compile-supported yet.
 - Parentheses are required for `call` and namespaced `wait`.
@@ -2246,7 +2260,7 @@ Phase 1:
 
 Phase 2:
   text block control
-  blank-line clickWait
+  explicit clickWait syntax (deferred)
   --- pageBreak
   comments
   escape
