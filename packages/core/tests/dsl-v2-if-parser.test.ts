@@ -195,6 +195,13 @@ describe("parseTzr if statements", () => {
     expect(expectIfFailure("scene start:\n  if:\n    jump route\n")).toContain("if condition is required.");
   });
 
+  it("reports excessive condition nesting through parseTzr", () => {
+    const condition = `${"(".repeat(129)}scenario.flag${")".repeat(129)}`;
+    expect(expectIfFailure(`scene start:\n  if ${condition}:\n    end\n`)).toContain(
+      "Invalid if condition: Condition expression nesting must not exceed 128 levels.",
+    );
+  });
+
   it("rejects if missing a colon", () => {
     expect(expectIfFailure("scene start:\n  if scenario.a\n    jump route\n")).toContain(
       "if header must end with `:`.",

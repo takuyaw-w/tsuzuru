@@ -20,6 +20,8 @@ import type {
 type ComparisonOperator = "==" | "!=" | ">=" | "<=" | ">" | "<";
 type LogicalOperator = "and" | "or" | "not";
 
+const MAX_CONDITION_NESTING = 128;
+
 type ConditionToken =
   | { readonly type: "reference"; readonly value: string; readonly loc: SourceRange }
   | { readonly type: "string"; readonly value: string; readonly loc: SourceRange }
@@ -50,6 +52,7 @@ export function parseTzrConditionExpression(source: string, options: TzrParseOpt
 class TzrConditionExpressionParser {
   private readonly errors: ParseDiagnostic[] = [];
   private cursor = 0;
+  private nestingDepth = 0;
 
   public constructor(
     private readonly source: string,
@@ -178,7 +181,11 @@ class TzrConditionExpressionParser {
       return undefined;
     }
 
+    if (!this.enterNesting(operator.loc.start)) {
+      return undefined;
+    }
     const expression = this.parseNotExpression();
+    this.leaveNesting();
     if (expression === undefined) {
       return undefined;
     }
@@ -198,7 +205,11 @@ class TzrConditionExpressionParser {
   private parsePrimaryExpression(): TzrConditionExpression | undefined {
     const token = this.peek();
     if (this.match("leftParen")) {
+      if (!this.enterNesting(token.loc.start)) {
+        return undefined;
+      }
       const expression = this.parseOrExpression();
+      this.leaveNesting();
       if (expression === undefined) {
         return undefined;
       }
@@ -299,6 +310,20 @@ class TzrConditionExpressionParser {
       throw new Error("Condition parser previous token is unavailable.");
     }
     return token;
+  }
+
+  private enterNesting(location: SourceLocation): boolean {
+    this.nestingDepth += 1;
+    if (this.nestingDepth <= MAX_CONDITION_NESTING) {
+      return true;
+    }
+    this.addError(location, `Condition expression nesting must not exceed ${MAX_CONDITION_NESTING} levels.`);
+    this.nestingDepth -= 1;
+    return false;
+  }
+
+  private leaveNesting(): void {
+    this.nestingDepth -= 1;
   }
 
   private addError(location: SourceLocation, message: string): void {

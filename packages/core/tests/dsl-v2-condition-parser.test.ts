@@ -176,6 +176,17 @@ describe("parseTzrConditionExpression", () => {
     });
   });
 
+  it("limits parenthesis and not nesting without throwing", () => {
+    expect(parseTzrConditionExpression(`${"(".repeat(128)}scenario.flag${")".repeat(128)}`).ok).toBe(true);
+    expect(expectConditionFailure(`${"(".repeat(129)}scenario.flag${")".repeat(129)}`)).toContain(
+      "Condition expression nesting must not exceed 128 levels.",
+    );
+    expect(parseTzrConditionExpression(`${"not ".repeat(128)}scenario.flag`).ok).toBe(true);
+    expect(expectConditionFailure(`${"not ".repeat(129)}scenario.flag`)).toContain(
+      "Condition expression nesting must not exceed 128 levels.",
+    );
+  });
+
   it("rejects empty expressions", () => {
     expect(expectConditionFailure("")).toContain("Condition expression must not be empty.");
   });
